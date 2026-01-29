@@ -3,7 +3,7 @@ import { TextCursor} from 'lucide-react'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { TextPlugin } from 'gsap/TextPlugin';
-
+import heroImg from "../../assets/e-book-dashboard.jpg"
 // Register the plugin
 gsap.registerPlugin(TextPlugin);
    
@@ -20,7 +20,7 @@ gsap.registerPlugin(TextPlugin);
       
             <div className="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
 
-        <div className='hero-section-content p-3'>
+        <div className='hero-section-content p-3 flex flex-col gap-5'>
             <div className='text-conetnt'>
                 <h1 className='text-4xl sm:text-5xl font-bold leading-tight sm:leading-snug text-center font-display'>Study Smarter
                     <br></br>
@@ -29,6 +29,9 @@ gsap.registerPlugin(TextPlugin);
                                 <span className='inline-block sm:w-1 w-[0.1em] h-[1em] sm:h-[1.2em] bg-accent-primary ml-1 animate-blink'></span>
                         </span> 
                 </h1>
+            </div>
+            <div className="img-content">
+                <img src={heroImg} alt="Apex dashboard" className="hero-img ml-auto" />
             </div>
         </div>
     </div>
