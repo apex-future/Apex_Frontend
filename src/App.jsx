@@ -3,7 +3,7 @@
  import LandingPage from './components/landing-page/LandingPage'
  function App() {
    return (
-     <div className='bg-bg-elevated h-screen'>
+     <div className=' h-screen'>
         <LandingPage />
      </div>
    
