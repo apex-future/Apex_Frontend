@@ -50,6 +50,7 @@ function NavBar() {
                 <ul className='flex flex-col gap-2 px-5'>
                     <li className='text-white text-lg font-medium'>Features</li>
                     <li className='text-white text-lg font-medium'>About</li>
+                    <li className='text-white text-lg font-medium'>Q&A</li>
                     
                 </ul>
 

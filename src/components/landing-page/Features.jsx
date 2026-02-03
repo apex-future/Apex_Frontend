@@ -1,8 +1,4 @@
 import React from 'react'
-import feature1Img from "../../assets/ask-apex-ai.jpg"
-import feature2Img from "../../assets/highlighting.jpg"
-import feature3Img from "../../assets/dictionary.jpg"
-import feature4Img from "../../assets/video.png"
 import {Sparkles,Pen,Book,PlaySquare} from 'lucide-react';
 function Features() {
   return (
@@ -15,7 +11,7 @@ function Features() {
         </header>
 
         <div className="feature-list grid sm:grid-cols-2 max-w-[1000px] gap-5 w-[90%] mx-auto mt-5">
-            <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-3  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
+            <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
             <Sparkles className="inline-block size-12   text-purple-500  "/>
                 
                  <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
@@ -33,7 +29,7 @@ function Features() {
                 
             </div>
 
-            <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-3  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
+            <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
         
             <Pen className="inline-block size-10  text-yellow-500 "/>
                  <div className='paragraph-overlay h-full flex flex-col gap-2   rounded-lg  p-2 '>
@@ -51,7 +47,7 @@ function Features() {
                 
             </div>
 
-            <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-3  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
+            <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
         
             <Book className="inline-block size-12  text-blue-500 "/>
         
@@ -70,7 +66,7 @@ function Features() {
             
         </div>
 
-        <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-3  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
+        <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
         
        
         <PlaySquare className="inline-block size-12  text-red-500 "/>
