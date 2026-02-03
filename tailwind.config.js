@@ -19,6 +19,11 @@ export default {
           '50%': { opacity: '0' },
         },
       },
+      boxShadow: {
+        'inner-thick': 'inset 0 0 20px 10px rgba(0, 0, 0, 0.2)',
+        'inner-thick-white': 'inset 0 0 20px 10px rgba(0, 0, 0, 0.2), 0 0 10px 2px rgba(255, 255, 255, 0.5)',
+
+      },
       colors: {
         // Backgrounds (Light & Dark)
         'bg-primary': '#FAFAFA',
