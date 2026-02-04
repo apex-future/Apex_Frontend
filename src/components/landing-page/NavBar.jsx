@@ -39,6 +39,7 @@ function NavBar() {
             <ul className='md:flex hidden  gap-4 px-5 '>
                     <li className='  font-medium'>Features</li>
                     <li className=' font-medium'>About</li>
+                    <li className=' font-medium'>FAQ</li>
                     
                 </ul>
         </nav>
@@ -50,7 +51,7 @@ function NavBar() {
                 <ul className='flex flex-col gap-2 px-5'>
                     <li className='text-white text-lg font-medium'>Features</li>
                     <li className='text-white text-lg font-medium'>About</li>
-                    <li className='text-white text-lg font-medium'>Q&A</li>
+                    <li className='text-white text-lg font-medium'>FAQ</li>
                     
                 </ul>
 

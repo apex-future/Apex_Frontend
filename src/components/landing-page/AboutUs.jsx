@@ -13,9 +13,11 @@ function AboutUs() {
         })
     }
   return (
-    <section className="info-section pt-12 relative ">
-    
-        <div className='info-wrapper grid grid-cols-1 md:grid-cols-2 gap-5 w-[90%] mx-auto'>
+    <section className="info-section pt-14 relative ">
+      <h2 className="about-us-heading text-3xl font-semibold font-display p-2 px-4 ">
+            About Us
+        </h2>
+        <div className='info-wrapper grid grid-cols-1 md:grid-cols-2 gap-5 w-[90%] mx-auto  mt-5'>
             <div className="about-us relative rounded-lg overflow-auto max-h-[400px]">
                    <img src={studySetup} alt="dark theme study setup" srcSet="" className="h-full w-full object-cover" />
                    <div className={`paragragh-layer absolute flex flex-col justify-center transition-all duration-300 bottom-0 ${isAboutOpen?'h-full pt-12':"h-[35%]" }   p-3 
