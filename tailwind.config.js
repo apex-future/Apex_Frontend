@@ -12,11 +12,16 @@ export default {
       },
       animation: {
         blink: 'blink 1s step-end infinite',
+        'slide-up': 'slideUp 0.3s ease-out',
       },
       keyframes: {
         blink: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateX(-50%) translateY(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(-50%) translateY(0)', opacity: '1' },
         },
       },
       boxShadow: {
