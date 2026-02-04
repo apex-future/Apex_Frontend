@@ -7,7 +7,7 @@ function AboutUs() {
     let aboutParagraph = useRef(null)
     const openAbout = ()=>{
         // console.log(aboutParagraph.current)
-        aboutParagraph.current.classList.toggle("line-clamp-3");
+        aboutParagraph.current.classList.toggle("line-clamp-2");
         setIsAboutOpen((previousState)=>{
             return !previousState //negate the previous state creates a toggle effect
         })
@@ -16,9 +16,9 @@ function AboutUs() {
     <section className="info-section pt-12 relative ">
     
         <div className='info-wrapper grid grid-cols-1 md:grid-cols-2 gap-5 w-[90%] mx-auto'>
-            <div className="about-us relative rounded-lg overflow-hidden max-h-[400px]">
+            <div className="about-us relative rounded-lg overflow-auto max-h-[400px]">
                    <img src={studySetup} alt="dark theme study setup" srcSet="" className="h-full w-full object-cover" />
-                   <div className={`paragragh-layer absolute bottom-0 ${isAboutOpen?'h-full pt-12':"h-[35%]" }   p-3 
+                   <div className={`paragragh-layer absolute flex flex-col justify-center transition-all duration-300 bottom-0 ${isAboutOpen?'h-full pt-12':"h-[35%]" }   p-3 
                 bg-black/50 backdrop-blur-md
                 [mask-image:linear-gradient(to_top,black_70%,transparent)] w-full`}>
                     <header className="about-us-header flex justify-between items-center mb-1">
@@ -27,7 +27,7 @@ function AboutUs() {
                   
                     </header>
              
-                    <p className='text-white line-clamp-3' ref={aboutParagraph}>Apex is an AI-powered reading platform that keeps students in their flow. 
+                    <p className='text-white line-clamp-2' ref={aboutParagraph}>Apex is an AI-powered reading platform that keeps students in their flow. 
         Get instant explanations, definitions, and educational videos without losing focus. 
         We're evolving into a complete learning hub with study scheduling, practice questions, 
         and collaboration tools — everything designed to help you study smarter and reach your apex.
