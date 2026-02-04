@@ -4,6 +4,7 @@ import HeroSection from './HeroSection'
 import Features from './Features'
 import AboutUs from './AboutUs'
 import FAQ from "./FAQ.jsx"
+import CTA from "./CTA.jsx"
 function LandingPage() {
   return (
     <div className='bg-bg-subtle'>
@@ -12,6 +13,7 @@ function LandingPage() {
         <Features />
         <AboutUs />
         <FAQ />
+        <CTA />
     </div>
   )
 }
