@@ -13,8 +13,8 @@ function AboutUs() {
         })
     }
   return (
-    <section className="info-section pt-14 relative " id='about'>
-      <h2 className="about-us-heading text-3xl font-semibold font-display p-2 px-4 ">
+    <section className="info-section pt-14 md:pt-20 " id='about'>
+      <h2 className="about-us-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold font-display p-2 px-4  text-center ">
             About Us
         </h2>
         <div className='info-wrapper grid grid-cols-1 md:grid-cols-2 gap-5 w-[90%] mx-auto  mt-5'>
