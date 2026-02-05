@@ -12,10 +12,12 @@ _raw_url = os.getenv("DATABASE_URL", "").strip()
 if not _raw_url or _raw_url.lower().startswith("sqlite"):
     # Local SQLite – no internet needed. File: apex-backend/apex.db
     DATABASE_URL = "sqlite:///./apex.db"
+    DATABASE_KIND = "sqlite"
     _engine_args = {"connect_args": {"check_same_thread": False}}
     _pool_pre_ping = False
 else:
     DATABASE_URL = _raw_url
+    DATABASE_KIND = "postgres"
     _engine_args = {}
     _pool_pre_ping = True
     if "sslmode" not in DATABASE_URL and "supabase" in DATABASE_URL.lower():

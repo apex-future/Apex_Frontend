@@ -8,7 +8,7 @@ import os
 from dotenv import load_dotenv
 
 from app import models, schemas, crud
-from app.database import engine, get_db
+from app.database import engine, get_db, DATABASE_KIND
 
 # Load environment variables
 load_dotenv()
@@ -53,12 +53,13 @@ def handle_db_unavailable(request, exc):
         content={"detail": detail},
     )
 
-# Root endpoint
+# Root endpoint (shows which database is in use)
 @app.get("/")
 def read_root():
     return {
         "message": "Apex Waitlist API",
         "status": "running",
+        "database": DATABASE_KIND,
         "docs": "/docs"
     }
 
