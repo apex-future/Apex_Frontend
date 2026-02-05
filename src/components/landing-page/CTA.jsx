@@ -3,7 +3,7 @@ import sparkle from "../../assets/star-project.png"
 import WaitlistForm from './WaitlistForm'
 function CTA() {
   return (
-    <section className="mt-14 relative min-h-[500px] p-5 bg-black ">
+    <section className="mt-14 relative min-h-[500px] p-5 bg-black " id="cta">
      <div className="wrapper py-8 md:pt-10 relative z-[10] gap-5 grid grid-cols-1 md:grid-cols-2 jsutify-center items-center">
      <div className="flex flex-col gap-5 w-full p-3 ">
         <h3 className="CTA-heading text-white font-display text-xl text-center">

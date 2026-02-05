@@ -29,19 +29,23 @@ function NavBar() {
     }
   return (
     <div className='w-full nav-div p-3 py-4 fixed z-[100]'>
-        <nav className='sm:w-[80%] w-[90%] justify-between p-2 mx-auto flex items-center backdrop-blur-md shadow-sm h-12 bg-white/50 rounded-full border-2 border-default'>
+        <nav className='sm:w-[80%] w-[90%] justify-between p-3 mx-auto flex items-center backdrop-blur-md shadow-sm h-full bg-white/50 rounded-full border-2 border-default'>
             <div>
+                <a href="#home"></a>
                 <img  className="size-8 rounded-full" alt="apex-logo" src={logoLight} />
             </div>
-            <div className="nav-icon">
-                <Menu onClick={openAside} className='md:hidden' />
+            <div className="nav-icon md:hidden">
+                <Menu onClick={openAside} />
             </div>
-            <ul className='md:flex hidden  gap-4 px-5 '>
-                    <li className='  font-medium'>Features</li>
-                    <li className=' font-medium'>About</li>
-                    <li className=' font-medium'>FAQ</li>
-                    
+            <ul className='md:flex hidden items-center gap-4 px-5 '>
+                    <li className='  font-medium'> <a href="#features">Features </a> </li>
+                    <li className=' font-medium'> <a href="#about">About </a> </li>
+                    <li className=' font-medium'> <a href="#faq">FAQ</a> </li>
+                   
                 </ul>
+                <div className="nav-bar-cta hidden md:block">
+                <a href="#cta" className='p-3 rounded-full  px-5 text-center text-white bg-accent-primary font-medium '>Join the Waitlist</a>
+                </div>
         </nav>
         
         {asideIsOpen &&
@@ -49,14 +53,15 @@ function NavBar() {
                 <X onClick={closeAside} className='md:hidden text-white'/>
                 <div className='flex flex-col justify-between h-full pb-5'>
                 <ul className='flex flex-col gap-2 px-5'>
-                    <li className='text-white text-lg font-medium'>Features</li>
-                    <li className='text-white text-lg font-medium'>About</li>
-                    <li className='text-white text-lg font-medium'>FAQ</li>
+                <li className=' text-white text-lg font-medium'> <a href="#features">Features </a> </li>
+                    <li className='text-white text-lg font-medium'> <a href="#about">About </a> </li>
+                    <li className='text-white text-lg font-medium'> <a href="#faq">FAQ</a> </li>
+                 
                     
                 </ul>
 
                     <div className='h-12'>
-                        <a href="" className='p-3 rounded-full w-[272px] border-4 px-5 text-center text-white border-purple-200/50 bg-accent-primary font-medium '>Join the Waitlist</a>
+                        <a href="#cta" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium '>Join the Waitlist</a>
                     </div>
                 </div>
           

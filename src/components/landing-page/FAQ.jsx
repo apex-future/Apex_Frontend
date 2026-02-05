@@ -16,7 +16,7 @@ function FAQ() {
         })
     }
   return (
-    <section className='pt-14 '>
+    <section className='pt-14 ' id="faq">
         <h2 className="FAQ-heading text-3xl font-semibold font-display p-2 px-4 ">
             Frequently Asked Question
         </h2>

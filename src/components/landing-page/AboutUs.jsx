@@ -13,7 +13,7 @@ function AboutUs() {
         })
     }
   return (
-    <section className="info-section pt-14 relative ">
+    <section className="info-section pt-14 relative " id='about'>
       <h2 className="about-us-heading text-3xl font-semibold font-display p-2 px-4 ">
             About Us
         </h2>

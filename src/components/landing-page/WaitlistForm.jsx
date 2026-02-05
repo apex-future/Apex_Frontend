@@ -79,7 +79,7 @@ function WaitlistForm() {
             placeholder="Enter your email"
             required
             disabled={status === 'loading'}
-            className='w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed'
+            className='w-full px-4 py-3  bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-primary rounded-full focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed'
             autoComplete="email"
           />
         </div>
@@ -88,7 +88,7 @@ function WaitlistForm() {
         <button 
           type="submit" 
           disabled={status === 'loading' || !email}
-          className="w-full py-3 rounded-lg bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
+          className="w-full py-3  rounded-full bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
         >
           {status === 'loading' ? (
             <span className='flex items-center justify-center gap-2'>

@@ -2,7 +2,7 @@ import React from 'react'
 import {Sparkles,Pen,Book,PlaySquare} from 'lucide-react';
 function Features() {
   return (
-    <section className='fetaures-section pt-14 '>
+    <section className='fetaures-section pt-14 ' id='features'>
           
             
             
