@@ -6,7 +6,7 @@ function CTA() {
     <section className="mt-14 relative min-h-[500px] p-5 bg-black " id="cta">
      <div className="wrapper py-8 md:pt-10 relative z-[10] gap-5 grid grid-cols-1 md:grid-cols-2 jsutify-center items-center">
      <div className="flex flex-col gap-5 w-full p-3 ">
-        <h3 className="CTA-heading text-white font-display text-xl text-center">
+        <h3 className="CTA-heading text-white font-display text-xl sm:text-2xl p-2 leading-relaxed text-center">
             Studying that keeps you in your zone, not lost in tabs. <br />
             Join the waitlist and be first to reach your <span className='inline-flex items-center'>
                                 <span className='  italic px-2 inline-block h-[1.3em] py-0 bg-accent-primary/50 '> Apex</span>
