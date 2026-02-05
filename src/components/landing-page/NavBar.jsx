@@ -53,9 +53,9 @@ function NavBar() {
                 <X onClick={closeAside} className='md:hidden text-white'/>
                 <div className='flex flex-col justify-between h-full pb-5'>
                 <ul className='flex flex-col gap-2 px-5'>
-                <li className=' text-white text-lg font-medium'> <a href="#features">Features </a> </li>
-                    <li className='text-white text-lg font-medium'> <a href="#about">About </a> </li>
-                    <li className='text-white text-lg font-medium'> <a href="#faq">FAQ</a> </li>
+                <li className=' text-white text-lg font-medium'  onClick={closeAside}> <a href="#features">Features </a> </li>
+                <li className='text-white text-lg font-medium' onClick={closeAside}> <a href="#about">About </a> </li>
+                <li className='text-white text-lg font-medium'  onClick={closeAside}> <a href="#faq">FAQ</a> </li>
                  
                     
                 </ul>
