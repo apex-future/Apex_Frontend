@@ -36,7 +36,7 @@ gsap.registerPlugin(TextPlugin);
 
         <div className='hero-section-content p-3 flex flex-col gap-8 relative z-[50]'>
             <div className='text-content max-w-[800px] mx-auto'>
-                <h1 className='text-4xl sm:text-5xl md:text-6xl font-bold leading-tight sm:leading-snug md:leading-normal text-center font-display'>Study Smarter
+                <h1 className='text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight sm:leading-snug md:leading-normal  text-center font-display'>Study Smarter
                     <br></br>
                     Reach Your <span className='inline-flex items-center'>
                                 <span className=' apex italic px-2 inline-block h-[1.3em] py-0 bg-accent-primary/30 '> </span>

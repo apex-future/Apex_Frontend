@@ -2,13 +2,13 @@ import React from 'react'
 import {Sparkles,Pen,Book,PlaySquare} from 'lucide-react';
 function Features() {
   return (
-    <section className='fetaures-section pt-14 ' id='features'>
+    <section className='fetaures-section pt-14 md:pt-20' id='features'>
           
             
             
-        <header>
-            <h2 className='text-3xl font-semibold font-display p-2 px-4'>Four Ways <span className='italic px-2 inline-block h-[1.3em] py-0 bg-accent-primary/30 '> Apex </span> keeps you focused</h2>
-        </header>
+        
+            <h2 className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold font-display p-2 px-4 ml-3  lg:text-center'>Four Ways <span className='italic px-2 inline-block h-[1.3em] py-0 bg-accent-primary/30 '> Apex </span> keeps you focused</h2>
+        
 
         <div className="feature-list grid sm:grid-cols-2 max-w-[1000px] gap-5 w-[90%] mx-auto mt-5">
             <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
@@ -19,8 +19,8 @@ function Features() {
                         24/7
                     </div>
                     <div className="feature-main-text">
-                    <h3 className='font-medium text-black text-base pb-2'>Instant AI Explainatons:</h3>
-                 <p className="text-sm text-text-secondary">
+                    <h3 className='font-medium text-black text- md:text-lg pb-2'>Instant AI Explainatons:</h3>
+                 <p className="text-sm md:text-base text-text-secondary">
    Highlight any text and get clear explanations without 
    opening a new tab.</p>
                     </div>
@@ -37,8 +37,8 @@ function Features() {
                     ∞
                     </div>
                     <div className="feature-main-text">
-                    <h3 className='font-medium text-black text-base pb-2'>Smart Highlighting & Notes:</h3>
-                 <p className="text-sm text-text-secondary">
+                    <h3 className='font-medium text-black text-base md:text-lg pb-2'>Smart Highlighting & Notes:</h3>
+                 <p className="text-sm md:text-base text-text-secondary">
                  Capture insights and build your personal study guide 
                  as you read.</p>
                     </div>
@@ -56,8 +56,8 @@ function Features() {
                     500K +
                 </div>
                 <div className="feature-main-text">
-                <h3 className='font-medium text-black text-base pb-2'>Built-in Dictionary:</h3>
-             <p className="text-sm text-text-secondary">
+                <h3 className='font-medium text-black text-base md:text-lg pb-2'>Built-in Dictionary:</h3>
+             <p className="text-sm md:text-base text-text-secondary">
              Look up definitions instantly—no app switching, no 
    breaking flow.</p>
                 </div>
@@ -75,8 +75,8 @@ function Features() {
                 10K +
             </div>
             <div className="feature-main-text">
-            <h3 className='font-medium text-black text-base pb-2'>Curated Video Library:</h3>
-         <p className="text-sm text-text-secondary">
+            <h3 className='font-medium text-black text-base md:text-lg pb-2'>Curated Video Library:</h3>
+         <p className="text-sm md:text-base text-text-secondary">
          Expert video explanations for every topic—delivered right where you are</p>
             </div>
       
