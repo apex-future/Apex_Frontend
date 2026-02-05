@@ -39,12 +39,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Return clear JSON when database is unreachable (e.g. no network to Supabase)
+# Return clear JSON when database is unreachable; in DEBUG log the real error
 @app.exception_handler(OperationalError)
 def handle_db_unavailable(request, exc):
+    err_msg = str(exc.orig) if getattr(exc, "orig", None) else str(exc)
+    logging.warning("Database OperationalError: %s", err_msg)
+    # User-friendly message; in DEBUG you can check server logs for the real error
+    detail = "A network issue is preventing us from saving your request. Please check your connection and try again."
+    if os.getenv("DEBUG") == "True":
+        detail = f"Database error: {err_msg}"
     return JSONResponse(
         status_code=503,
-        content={"detail": "Database unavailable. Please check your connection and try again later."},
+        content={"detail": detail},
     )
 
 # Root endpoint

@@ -45,10 +45,10 @@ function WaitlistForm() {
             ? detail
             : Array.isArray(detail) && detail[0]?.msg
               ? detail[0].msg
-              : response.status === 503
-                ? 'Service temporarily unavailable. Please try again in a moment.'
+              : response.status === 503 || response.status === 502 || response.status === 504
+                ? 'A network issue prevented your request. Please check your connection and try again.'
                 : response.status === 404 || response.status === 0
-                  ? 'Cannot reach the server. Is the backend running at ' + API_BASE + '?'
+                  ? 'A network issue prevented connecting. Please check your connection and try again.'
                   : 'Something went wrong. Please try again.';
         setMessage(message);
         setShowToast(true);
@@ -57,9 +57,7 @@ function WaitlistForm() {
     } catch (error) {
       setStatus('error');
       setMessage(
-        error.message?.includes('Failed to fetch')
-          ? 'Cannot reach the server. Start the backend with: uvicorn app.main:app --reload'
-          : 'Network error. Please check your connection.'
+        'A network issue prevented your request. Please check your connection and try again.'
       );
       setShowToast(true);
       setTimeout(() => setShowToast(false), 5000);
