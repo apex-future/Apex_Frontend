@@ -1,75 +1,114 @@
 from app.database import supabase
 
 # ==============================
-# Supabase CRUD functions
+# CONFIG
 # ==============================
+TABLE_NAME = "waitlist"   # Must match Supabase table exactly
 
-TABLE_NAME = "waitlist"   # ← Use lowercase unless you created quoted table
 
-
+# ==============================
+# CREATE
+# ==============================
 def create_waitlist_entry(email: str):
     """Add email to waitlist using Supabase"""
 
-    response = supabase.table(TABLE_NAME).insert({
-        "email": email
-    }).execute()
+    try:
+        response = (
+            supabase
+            .table(TABLE_NAME)
+            .insert({"email": email})
+            .execute()
+        )
 
-    # Debug logging (helps in prod logs)
-    print("INSERT RESPONSE:", response)
+        print("INSERT RESPONSE:", response)
 
-    # Handle Supabase errors properly
-    if getattr(response, "error", None):
-        print("SUPABASE INSERT ERROR:", response.error)
+        # Handle errors
+        if hasattr(response, "error") and response.error:
+            print("SUPABASE INSERT ERROR:", response.error)
+            return None
+
+        if response.data:
+            return response.data[0]
+
+        print("INSERT FAILED — No data returned")
         return None
 
-    if response.data:
-        return response.data[0]
+    except Exception as e:
+        print("EXCEPTION DURING INSERT:", str(e))
+        return None
 
-    return None
 
-
+# ==============================
+# READ ONE
+# ==============================
 def get_waitlist_entry_by_email(email: str):
-    """Check if email already exists in Supabase"""
+    """Check if email already exists"""
 
-    response = supabase.table(TABLE_NAME)\
-        .select("*")\
-        .eq("email", email)\
-        .execute()
+    try:
+        response = (
+            supabase
+            .table(TABLE_NAME)
+            .select("*")
+            .eq("email", email)
+            .execute()
+        )
 
-    if getattr(response, "error", None):
-        print("SUPABASE SELECT ERROR:", response.error)
+        if hasattr(response, "error") and response.error:
+            print("SUPABASE SELECT ERROR:", response.error)
+            return None
+
+        if response.data:
+            return response.data[0]
+
         return None
 
-    if response.data:
-        return response.data[0]
+    except Exception as e:
+        print("EXCEPTION DURING SELECT:", str(e))
+        return None
 
-    return None
 
-
+# ==============================
+# READ ALL
+# ==============================
 def get_all_waitlist_entries(skip: int = 0, limit: int = 100):
-    """Get all waitlist entries from Supabase"""
+    try:
+        response = (
+            supabase
+            .table(TABLE_NAME)
+            .select("*")
+            .range(skip, skip + limit - 1)
+            .execute()
+        )
 
-    response = supabase.table(TABLE_NAME)\
-        .select("*")\
-        .range(skip, skip + limit - 1)\
-        .execute()
+        if hasattr(response, "error") and response.error:
+            print("SUPABASE FETCH ERROR:", response.error)
+            return []
 
-    if getattr(response, "error", None):
-        print("SUPABASE FETCH ERROR:", response.error)
+        return response.data or []
+
+    except Exception as e:
+        print("EXCEPTION DURING FETCH:", str(e))
         return []
 
-    return response.data or []
 
-
+# ==============================
+# COUNT
+# ==============================
 def get_waitlist_count():
-    """Get total number of waitlist entries"""
+    try:
+        response = (
+            supabase
+            .table(TABLE_NAME)
+            .select("*", count="exact")
+            .execute()
+        )
 
-    response = supabase.table(TABLE_NAME)\
-        .select("*", count="exact")\
-        .execute()
+        if hasattr(response, "error") and response.error:
+            print("SUPABASE COUNT ERROR:", response.error)
+            return 0
 
-    if getattr(response, "error", None):
-        print("SUPABASE COUNT ERROR:", response.error)
+        return response.count or 0
+
+    except Exception as e:
+        print("EXCEPTION DURING COUNT:", str(e))
         return 0
-
-    return response.count or 0
