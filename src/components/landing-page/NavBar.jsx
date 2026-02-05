@@ -31,8 +31,10 @@ function NavBar() {
     <div className='w-full nav-div p-3 py-4 fixed z-[100]'>
         <nav className='sm:w-[80%] w-[90%] justify-between p-3 mx-auto flex items-center backdrop-blur-md shadow-sm h-full bg-white/50 rounded-full border-2 border-default'>
             <div>
-                <a href="#home"></a>
+                <a href="#hero">
                 <img  className="size-8 rounded-full" alt="apex-logo" src={logoLight} />
+                </a>
+               
             </div>
             <div className="nav-icon md:hidden">
                 <Menu onClick={openAside} />
