@@ -7,13 +7,16 @@ function WaitlistForm() {
   const [message, setMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
 
+  // Backend API URL: use VITE_API_URL in .env or default to local dev server
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('loading');
     setMessage('');
 
     try {
-      const response = await fetch('YOUR_BACKEND_URL/api/waitlist', {
+      const response = await fetch(`${API_BASE}/api/waitlist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -21,25 +24,43 @@ function WaitlistForm() {
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json();
+      let data = {};
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json().catch(() => ({}));
+      }
 
       if (response.ok) {
         setStatus('success');
-        setMessage('🎉 You\'re on the list! Check your email for updates.');
+        setMessage("🎉 You're on the list! Check your email for updates.");
         setEmail('');
         setShowToast(true);
-        
-        // Auto-hide after 5 seconds
         setTimeout(() => setShowToast(false), 5000);
       } else {
         setStatus('error');
-        setMessage(data.detail || 'Something went wrong. Please try again.');
+        // FastAPI returns detail as string or array of { msg }
+        const detail = data.detail;
+        const message =
+          typeof detail === 'string'
+            ? detail
+            : Array.isArray(detail) && detail[0]?.msg
+              ? detail[0].msg
+              : response.status === 503
+                ? 'Service temporarily unavailable. Please try again in a moment.'
+                : response.status === 404 || response.status === 0
+                  ? 'Cannot reach the server. Is the backend running at ' + API_BASE + '?'
+                  : 'Something went wrong. Please try again.';
+        setMessage(message);
         setShowToast(true);
         setTimeout(() => setShowToast(false), 5000);
       }
     } catch (error) {
       setStatus('error');
-      setMessage('Network error. Please check your connection.');
+      setMessage(
+        error.message?.includes('Failed to fetch')
+          ? 'Cannot reach the server. Start the backend with: uvicorn app.main:app --reload'
+          : 'Network error. Please check your connection.'
+      );
       setShowToast(true);
       setTimeout(() => setShowToast(false), 5000);
     }

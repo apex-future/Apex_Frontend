@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
 import logging
@@ -32,11 +33,19 @@ app = FastAPI(
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url, "http://localhost:3000"],  # Add your frontend URLs
+    allow_origins=[frontend_url, "http://localhost:3000", "http://127.0.0.1:5173"],  # Add your frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Return clear JSON when database is unreachable (e.g. no network to Supabase)
+@app.exception_handler(OperationalError)
+def handle_db_unavailable(request, exc):
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database unavailable. Please check your connection and try again later."},
+    )
 
 # Root endpoint
 @app.get("/")
