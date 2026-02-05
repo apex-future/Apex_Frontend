@@ -6,7 +6,7 @@ from app.database import supabase
 
 def create_waitlist_entry(email: str):
     """Add email to waitlist using Supabase"""
-    table_name = "Waitlist"
+    table_name = "waitlist"
     response = supabase.table(table_name).insert({"email": email}).execute()
 
     if response.status_code in (200, 201):
