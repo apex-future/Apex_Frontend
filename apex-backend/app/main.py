@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 import logging
 import os
 from dotenv import load_dotenv
+print(" APEX BACKEND VERSION 1.0 - CONTAINER STARTED ")
 
 from app import schemas, crud
 from app.database import DATABASE_KIND
