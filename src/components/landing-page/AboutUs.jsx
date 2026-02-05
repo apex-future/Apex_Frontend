@@ -37,7 +37,7 @@ function AboutUs() {
                    </div>
             </div>
             <div className='flex w-full gap-5 flex-col sm:flex-row md:flex-col'>
-                <div className="mission-box rounded-lg sm:w-1/2 md:w-full md:h-1/2 h-[200px] flex flex-col gap-2 justify-center items-center bg-purple-500 p-3">
+                <div className="mission-box rounded-lg sm:w-1/2 md:w-full md:h-1/2 h-[200px] flex flex-col gap-2 justify-center items-center bg-purple-500 p-3" id='mission'>
                 <h3 className='font-display text-2xl text-white font-semibold text-center'>Our Mission</h3>
                 <p className="mission-paragraph text-white text-center">To empower students to learn deeply and reach their apex by eliminating distractions and making focused studying effortless.</p> </div>
                 <div className="vision-box rounded-lg sm:w-1/2  md:w-full md:h-1/2 h-[200px] flex flex-col gap-2 justify-center items-center bg-purple-300 p-3">
