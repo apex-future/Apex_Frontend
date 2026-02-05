@@ -1,28 +1,33 @@
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-from app import models, schemas
+from app.database import supabase
 
-def create_waitlist_entry(db: Session, email: str):
-    """Add email to waitlist"""
-    db_entry = models.Waitlist(email=email)
-    
-    try:
-        db.add(db_entry)
-        db.commit()
-        db.refresh(db_entry)
-        return db_entry
-    except IntegrityError:
-        db.rollback()
-        return None  # Email already exists
+# ==============================
+# Supabase CRUD functions
+# ==============================
 
-def get_waitlist_entry_by_email(db: Session, email: str):
-    """Check if email already exists"""
-    return db.query(models.Waitlist).filter(models.Waitlist.email == email).first()
+def create_waitlist_entry(email: str):
+    """Add email to waitlist using Supabase"""
+    table_name = "Waitlist"
+    response = supabase.table(table_name).insert({"email": email}).execute()
 
-def get_all_waitlist_entries(db: Session, skip: int = 0, limit: int = 100):
-    """Get all waitlist entries (for admin)"""
-    return db.query(models.Waitlist).offset(skip).limit(limit).all()
+    if response.status_code in (200, 201):
+        return response.data[0]
+    return None
 
-def get_waitlist_count(db: Session):
+def get_waitlist_entry_by_email(email: str):
+    """Check if email already exists in Supabase"""
+    table_name = "Waitlist"
+    response = supabase.table(table_name).select("*").eq("email", email).execute()
+    if response.data:
+        return response.data[0]
+    return None
+
+def get_all_waitlist_entries(skip: int = 0, limit: int = 100):
+    """Get all waitlist entries from Supabase"""
+    table_name = "Waitlist"
+    response = supabase.table(table_name).select("*").range(skip, skip + limit - 1).execute()
+    return response.data or []
+
+def get_waitlist_count():
     """Get total number of waitlist entries"""
-    return db.query(models.Waitlist).count()
+    response = supabase.table("Waitlist").select("*", count="exact").execute()
+    return response.count or 0
