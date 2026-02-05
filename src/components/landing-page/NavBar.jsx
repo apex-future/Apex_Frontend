@@ -51,7 +51,7 @@ function NavBar() {
         </nav>
         
         {asideIsOpen &&
-            <aside className='aside-bar fixed h-screen w-screen p-3 flex bg-[rgb(8,9,12)] flex-col gap-10 top-0 bottom-0 left-0 mx-auto right-0' ref={asideRef}>
+            <aside className='aside-bar fixed max-h-screen w-screen p-3 flex bg-[rgb(8,9,12)] flex-col gap-10 top-0 bottom-0 left-0 mx-auto right-0' ref={asideRef}>
                 <X onClick={closeAside} className='md:hidden text-white'/>
                 <div className='flex flex-col justify-between h-full pb-5'>
                 <ul className='flex flex-col gap-2 px-5'>
@@ -63,7 +63,7 @@ function NavBar() {
                 </ul>
 
                     <div className='h-12'>
-                        <a href="#cta" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium '>Join the Waitlist</a>
+                        <a href="#cta" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium ' onClick={closeAside}>Join the Waitlist</a>
                     </div>
                 </div>
           
