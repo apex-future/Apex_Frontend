@@ -4,7 +4,9 @@ from fastapi.responses import JSONResponse
 import logging
 import os
 from dotenv import load_dotenv
-print(" APEX BACKEND VERSION 1.0 - CONTAINER STARTED ")
+
+#  Debug print to verify container start
+print(" APEX BACKEND VERSION 1.1 - CONTAINER STARTED ")
 
 from app import schemas, crud
 from app.database import DATABASE_KIND
@@ -29,7 +31,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Root endpoint
+# ============================
+# Root & Health endpoints
+# ============================
+
 @app.get("/")
 def read_root():
     return {
@@ -39,42 +44,74 @@ def read_root():
         "docs": "/docs"
     }
 
-# Health check
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
 
-# Add email to waitlist
+# ============================
+# Waitlist Endpoints
+# ============================
+
 @app.post("/api/waitlist", response_model=schemas.WaitlistResponse, status_code=status.HTTP_201_CREATED)
 def join_waitlist(waitlist_entry: schemas.WaitlistCreate):
     """
     Add an email to the waitlist using Supabase.
-    """
-    existing_entry = crud.get_waitlist_entry_by_email(waitlist_entry.email)
-    if existing_entry:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This email is already on the waitlist!"
-        )
 
-    supa_entry = crud.create_waitlist_entry(waitlist_entry.email)
-    if supa_entry is None:
+    Headers:
+    Cache-Control: no-store to prevent 304 responses
+    """
+    try:
+        # Check if email already exists
+        existing_entry = crud.get_waitlist_entry_by_email(waitlist_entry.email)
+        if existing_entry:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This email is already on the waitlist!"
+            )
+
+        # Insert into Supabase
+        supa_entry = crud.create_waitlist_entry(waitlist_entry.email)
+        print("DEBUG: Supabase insert result:", supa_entry)
+
+        if supa_entry is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to add email to waitlist. Please check Supabase logs."
+            )
+
+        # Force no caching for this POST
+        headers = {"Cache-Control": "no-store"}
+        return JSONResponse(content=supa_entry, status_code=201, headers=headers)
+
+    except Exception as e:
+        logging.error("Unexpected error in join_waitlist: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to add email to waitlist. Please try again."
+            detail=f"Unexpected server error: {e}"
         )
 
-    return supa_entry
-
-# Get waitlist count
 @app.get("/api/waitlist/count")
 def get_count():
     """Get total number of people on waitlist"""
-    count = crud.get_waitlist_count()
-    return {"count": count}
+    try:
+        count = crud.get_waitlist_count()
+        return {"count": count}
+    except Exception as e:
+        logging.error("Error fetching waitlist count: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected server error: {e}"
+        )
 
-# Get all waitlist entries
 @app.get("/api/waitlist", response_model=list[schemas.WaitlistResponse])
 def get_all_entries(skip: int = 0, limit: int = 100):
-    entries = crud.get_all_waitlist_entries(skip=skip, limit=limit)
-    return entries
+    """Get all waitlist entries"""
+    try:
+        entries = crud.get_all_waitlist_entries(skip=skip, limit=limit)
+        return entries
+    except Exception as e:
+        logging.error("Error fetching all waitlist entries: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected server error: {e}"
+        )
