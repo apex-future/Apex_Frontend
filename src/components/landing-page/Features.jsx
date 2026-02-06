@@ -8,7 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 function Features() {
     useGSAP(() => {
-        gsap.from(".feature-list > div", {
+        gsap.from(".feature-card-wrapper", {
             scrollTrigger: {
                 trigger: ".feature-list",
                 start: "top 80%", // Start when top of list is 80% down viewport
@@ -32,77 +32,85 @@ function Features() {
 
 
             <div className="feature-list grid sm:grid-cols-2 max-w-[1000px] gap-5 w-[90%] mx-auto mt-5">
-                <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
-                    <Sparkles className="inline-block size-12   text-purple-500  " />
+                <div className="feature-card-wrapper h-full">
+                    <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
+                        <Sparkles className="inline-block size-12   text-purple-500  " />
 
-                    <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
-                        <div className='font-display font-semibold text-3xl'>
-                            24/7
-                        </div>
-                        <div className="feature-main-text">
-                            <h3 className='font-medium text-black text- md:text-lg pb-2'>Instant AI Explainatons:</h3>
-                            <p className="text-sm md:text-base text-text-secondary">
-                                Highlight any text and get clear explanations without
-                                opening a new tab.</p>
+                        <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
+                            <div className='font-display font-semibold text-3xl'>
+                                24/7
+                            </div>
+                            <div className="feature-main-text">
+                                <h3 className='font-medium text-black text- md:text-lg pb-2'>Instant AI Explainatons:</h3>
+                                <p className="text-sm md:text-base text-text-secondary">
+                                    Highlight any text and get clear explanations without
+                                    opening a new tab.</p>
+                            </div>
+
                         </div>
 
                     </div>
-
                 </div>
 
-                <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
+                <div className="feature-card-wrapper h-full">
+                    <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
 
-                    <Pen className="inline-block size-10  text-yellow-500 " />
-                    <div className='paragraph-overlay h-full flex flex-col gap-2   rounded-lg  p-2 '>
-                        <div className='font-display font-semibold text-7xl'>
-                            ∞
-                        </div>
-                        <div className="feature-main-text">
-                            <h3 className='font-medium text-black text-base md:text-lg pb-2'>Smart Highlighting & Notes:</h3>
-                            <p className="text-sm md:text-base text-text-secondary">
-                                Capture insights and build your personal study guide
-                                as you read.</p>
+                        <Pen className="inline-block size-10  text-yellow-500 " />
+                        <div className='paragraph-overlay h-full flex flex-col gap-2   rounded-lg  p-2 '>
+                            <div className='font-display font-semibold text-7xl'>
+                                ∞
+                            </div>
+                            <div className="feature-main-text">
+                                <h3 className='font-medium text-black text-base md:text-lg pb-2'>Smart Highlighting & Notes:</h3>
+                                <p className="text-sm md:text-base text-text-secondary">
+                                    Capture insights and build your personal study guide
+                                    as you read.</p>
+                            </div>
+
                         </div>
 
                     </div>
-
                 </div>
 
-                <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
+                <div className="feature-card-wrapper h-full">
+                    <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
 
-                    <Book className="inline-block size-12  text-blue-500 " />
+                        <Book className="inline-block size-12  text-blue-500 " />
 
-                    <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
-                        <div className='font-display font-semibold text-3xl'>
-                            500K +
-                        </div>
-                        <div className="feature-main-text">
-                            <h3 className='font-medium text-black text-base md:text-lg pb-2'>Built-in Dictionary:</h3>
-                            <p className="text-sm md:text-base text-text-secondary">
-                                Look up definitions instantly—no app switching, no
-                                breaking flow.</p>
+                        <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
+                            <div className='font-display font-semibold text-3xl'>
+                                500K +
+                            </div>
+                            <div className="feature-main-text">
+                                <h3 className='font-medium text-black text-base md:text-lg pb-2'>Built-in Dictionary:</h3>
+                                <p className="text-sm md:text-base text-text-secondary">
+                                    Look up definitions instantly—no app switching, no
+                                    breaking flow.</p>
+                            </div>
+
                         </div>
 
                     </div>
-
                 </div>
 
-                <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] flex flex-col overflow-hidden'>
+                <div className="feature-card-wrapper h-full">
+                    <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
 
 
-                    <PlaySquare className="inline-block size-12  text-red-500 " />
-                    <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
-                        <div className='font-display font-semibold text-3xl'>
-                            10K +
-                        </div>
-                        <div className="feature-main-text">
-                            <h3 className='font-medium text-black text-base md:text-lg pb-2'>Curated Video Library:</h3>
-                            <p className="text-sm md:text-base text-text-secondary">
-                                Expert video explanations for every topic—delivered right where you are</p>
+                        <PlaySquare className="inline-block size-12  text-red-500 " />
+                        <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
+                            <div className='font-display font-semibold text-3xl'>
+                                10K +
+                            </div>
+                            <div className="feature-main-text">
+                                <h3 className='font-medium text-black text-base md:text-lg pb-2'>Curated Video Library:</h3>
+                                <p className="text-sm md:text-base text-text-secondary">
+                                    Expert video explanations for every topic—delivered right where you are</p>
+                            </div>
+
                         </div>
 
                     </div>
-
                 </div>
                 {/* <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-3  rounded-lg backdrop-blur-md  h-[250px] flex flex-col overflow-hidden'>
         
