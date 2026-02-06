@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 function WaitlistForm() {
   const [email, setEmail] = useState('');
@@ -9,6 +14,21 @@ function WaitlistForm() {
 
   // Backend API URL: use VITE_API_URL in .env or default to local dev server
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+  useGSAP(() => {
+    gsap.from("form > *", {
+      scrollTrigger: {
+        trigger: "form",
+        start: "top 85%",
+        toggleActions: "play none none reverse"
+      },
+      y: 20,
+      opacity: 0,
+      duration: 0.6,
+      stagger: 0.1,
+      ease: "power2.out"
+    });
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,19 +86,19 @@ function WaitlistForm() {
 
   return (
     <>
-      <form 
+      <form
         onSubmit={handleSubmit}
         className='bg-black/30 backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-lg p-6 sm:p-8 w-full mx-auto'
         aria-labelledby="waitlist-heading"
       >
         {/* Heading */}
-        <h3 
+        <h3
           id="waitlist-heading"
           className='font-display text-2xl md:text-3xl font-bold text-white mb-2 text-center'
         >
           Grab A Spot
         </h3>
-        
+
         {/* Subtext */}
         <p className='font-sans text-white/80 text-sm mb-6 text-center'>
           Be first to experience focused studying with Apex
@@ -104,8 +124,8 @@ function WaitlistForm() {
         </div>
 
         {/* Submit Button */}
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={status === 'loading' || !email}
           className="w-full py-3  rounded-full bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
         >
@@ -132,27 +152,26 @@ function WaitlistForm() {
 
       {/* Toast Portal - Renders outside form */}
       {showToast && createPortal(
-        <div 
+        <div
           role="alert"
           aria-live="polite"
-          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up ${
-            status === 'success' 
-              ? 'bg-success text-white' 
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up ${status === 'success'
+              ? 'bg-success text-white'
               : 'bg-error text-white'
-          } px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-lg w-[80%]`}
+            } px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-lg w-[80%]`}
         >
           {/* Icon */}
           <span className='text-2xl'>
             {status === 'success' ? '✓' : '⚠'}
           </span>
-          
+
           {/* Message */}
           <p className='font-sans text-sm font-medium flex-1'>
             {message}
           </p>
-          
+
           {/* Close Button */}
-          <button 
+          <button
             onClick={() => setShowToast(false)}
             className='hover:opacity-70 transition-opacity'
             aria-label="Close notification"
