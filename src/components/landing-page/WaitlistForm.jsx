@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -15,20 +15,26 @@ function WaitlistForm() {
   // Backend API URL: use VITE_API_URL in .env or default to local dev server
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+  const formRef = useRef(null);
   useGSAP(() => {
-    gsap.from("form > *", {
-      scrollTrigger: {
-        trigger: "form",
-        start: "top 85%",
-        toggleActions: "play none none reverse"
-      },
-      y: 20,
-      opacity: 0,
-      duration: 0.6,
-      stagger: 0.1,
-      ease: "power2.out"
-    });
+    if (!formRef.current) return;
+    gsap.fromTo(
+      formRef.current,
+      { x: 20, opacity: 0 },
+      {
+        x: 0,
+        opacity: 1,
+        duration: 0.6,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: formRef.current,
+          start: "top 85%",
+          toggleActions: "play none none play"
+        }
+      }
+    );
   }, []);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,8 +93,9 @@ function WaitlistForm() {
   return (
     <>
       <form
+        ref={formRef}
         onSubmit={handleSubmit}
-        className='bg-black/30 backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-lg p-6 sm:p-8 w-full mx-auto'
+        className='bg-black/30 relative backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-lg p-6 z-[20] sm:p-8 w-full mx-auto'
         aria-labelledby="waitlist-heading"
       >
         {/* Heading */}
@@ -127,7 +134,7 @@ function WaitlistForm() {
         <button
           type="submit"
           disabled={status === 'loading' || !email}
-          className="w-full py-3  rounded-full bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
+          className="w-full py-3   rounded-full bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
         >
           {status === 'loading' ? (
             <span className='flex items-center justify-center gap-2'>

@@ -99,15 +99,7 @@ function HeroSection() {
             <div className="CTA-buttons flex flex-col mx-auto w-[80%] sm:flex-row justify-center items-center gap-3">
                 <a href="#cta" className='p-3 rounded-full w-full sm:w-1/2 max-w-[272px] border-2 px-5 text-center hover:bg-black hover:text-white text-white border-subtle bg-accent-primary font-medium md:text-lg cursor-pointer transition-all duration-200 '>Join the Waitlist</a>
                 <a href="#features" className=" p-3 px-5  w-full text-center rounded-full max-w-[272px] shadow-md md:text-lg sm:w-1/2 font-medium border-2   border-subtle bg-bg-elevated  hover:bg-black hover:text-white cursor-pointer transition-all duration-200 ">Learn More</a>
-             
-
-                </div>
-                <div className="CTA-buttons flex flex-col mx-auto w-[80%] sm:flex-row justify-center items-center gap-3">
-                    <a href="" className='p-3 rounded-full w-full sm:w-1/2 max-w-[272px] border-2 px-5 text-center hover:bg-black hover:text-white text-white border-subtle bg-accent-primary font-medium md:text-lg cursor-pointer transition-all duration-200 '>Join the Waitlist</a>
-                    <a className=" p-3 px-5  w-full text-center rounded-full max-w-[272px] shadow-md md:text-lg sm:w-1/2 font-medium border-2   border-subtle bg-bg-elevated  hover:bg-black hover:text-white cursor-pointer transition-all duration-200 ">Learn More</a>
-
-
-                </div>
+            </div>
                 <div className="img-content overflow-hidden relative z-[50] p-3">
                     <div className="hero-img-wrapper">
                         <img src={heroImg} alt="Apex dashboard" className="hero-img z-[50] rounded-xl mx-auto hover:rotate-2 duration-300 transition-all  shadow-lg" />

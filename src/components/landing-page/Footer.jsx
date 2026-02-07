@@ -33,10 +33,6 @@ function Footer() {
         </h2>
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid sm:grid-cols-4 gap-8">
-               APEX
-            </h2>
-    <div className="max-w-6xl mx-auto px-4">
-    <div className="grid sm:grid-cols-4 gap-8">
       
       {/* Column 1: Brand */}
       <div>
@@ -62,31 +58,7 @@ function Footer() {
         </div>
       </div>
 
-            {/* Column 1: Brand */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                {/* Logo */}
-                <h3 className="font-display text-2xl font-bold">Apex</h3>
-              </div>
-              <p className="text-text-dark-secondary text-sm md:text-base mb-4">
-                Study smarter. <span className="text-purple-500">  Reach your apex. </span>
-              </p>
-              {/* Social Links */}
-              <div className="flex gap-4">
-                <a href="#" className="text-text-dark-secondary hover:text-accent-primary">
-
-                  <Twitter className="w-5 h-5" />
-                </a>
-                <a href="#" className="text-text-dark-secondary hover:text-accent-primary">
-                  <Instagram className="w-5 h-5" />
-                </a>
-                <a href="#" className="text-text-dark-secondary hover:text-accent-primary">
-                  <Linkedin className="w-5 h-5" />
-                </a>
-              </div>
-            </div>
-
-            {/* Column 2: Product */}
+      {/* Column 2: Product */}
             <div>
               <h4 className="font-display font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm md:text-base text-text-dark-secondary">
@@ -127,11 +99,6 @@ function Footer() {
           <div className="border-t border-border-default/20 mt-12 pt-8 text-center text-sm text-text-dark-tertiary">
             <p>&copy; 2025 Apex. All rights reserved.</p>
           </div>
-    {/* Bottom Bar */}
-    <div className="border-t border-border-default/20 mt-12 pt-8 text-center text-sm text-text-dark-tertiary">
-      <p>&copy; 2026 Apex. All rights reserved.</p>
-    </div>
-  </div>
         </div>
       </div>
     </footer>
