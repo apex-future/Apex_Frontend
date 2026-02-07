@@ -14,7 +14,7 @@ function CTA() {
         trigger: "#cta",
         start: "top 75%",
       },
-      x: 50,
+      y: 50,
       opacity: 0,
       duration: 1,
       ease: "power2.out"
@@ -25,7 +25,7 @@ function CTA() {
         trigger: "#cta",
         start: "top 75%",
       },
-      x: 50,
+      y: 50,
       duration: 1,
       delay: 0.3,
       ease: "power2.out"
@@ -65,7 +65,7 @@ function CTA() {
 
       <img src={sparkle} className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none' aria-hidden="true" />
 
-      {/* Ice Storm1$$ */}
+      
     </section>
   )
 }

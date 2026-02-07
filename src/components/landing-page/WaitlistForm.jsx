@@ -20,9 +20,9 @@ function WaitlistForm() {
     if (!formRef.current) return;
     gsap.fromTo(
       formRef.current,
-      { x: 20, opacity: 0 },
+      { y: 20, opacity: 0 },
       {
-        x: 0,
+        y: 0,
         opacity: 1,
         duration: 0.6,
         ease: "power2.out",
