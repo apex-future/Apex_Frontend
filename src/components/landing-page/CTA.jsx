@@ -25,14 +25,14 @@ function CTA() {
         trigger: "#cta",
         start: "top 75%",
       },
-      x: 50,
-      opacity: 0,
+      y: 50,
       duration: 1,
       delay: 0.3,
       ease: "power2.out"
     });
 
-    gsap.from(".absolute.top-1\\/2", { // Sparkle image
+    //apply animation when only on desktop view
+    gsap.from(".sparkle-animation", { // Sparkle image
       scrollTrigger: {
         trigger: "#cta",
         start: "top center",
@@ -64,9 +64,9 @@ function CTA() {
 
       </div>
 
-      <img src={sparkle} className='absolute top-1/2 left-1/2  -translate-x-1/2 -translate-y-1/2' />
+      <img src={sparkle} className='absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none lg:sparkle-animation' aria-hidden="true" />
 
-      {/* Ice Storm1$$ */}
+      
     </section>
   )
 }
