@@ -36,7 +36,7 @@ function WaitlistForm() {
     setMessage('');
 
     try {
-      const response = await fetch(`${API_BASE}/api/waitlist`, {
+      const response = await fetch(`https://apex-waitlist-api.onrender.com/api/waitlist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

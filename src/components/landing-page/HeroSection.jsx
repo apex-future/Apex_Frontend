@@ -94,6 +94,12 @@ function HeroSection() {
                         explanation, definitions, and videos right where you're reading—
                         so you can stay focused</h3>
 
+                
+            </div>
+            <div className="CTA-buttons flex flex-col mx-auto w-[80%] sm:flex-row justify-center items-center gap-3">
+                <a href="#cta" className='p-3 rounded-full w-full sm:w-1/2 max-w-[272px] border-2 px-5 text-center hover:bg-black hover:text-white text-white border-subtle bg-accent-primary font-medium md:text-lg cursor-pointer transition-all duration-200 '>Join the Waitlist</a>
+                <a href="#features" className=" p-3 px-5  w-full text-center rounded-full max-w-[272px] shadow-md md:text-lg sm:w-1/2 font-medium border-2   border-subtle bg-bg-elevated  hover:bg-black hover:text-white cursor-pointer transition-all duration-200 ">Learn More</a>
+             
 
                 </div>
                 <div className="CTA-buttons flex flex-col mx-auto w-[80%] sm:flex-row justify-center items-center gap-3">

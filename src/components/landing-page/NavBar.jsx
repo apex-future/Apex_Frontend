@@ -89,6 +89,22 @@ function NavBar() {
                         <div className='h-12'>
                             <a href="#cta" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium block mx-auto hover:bg-opacity-90 active:scale-95 transition-all'>Join the Waitlist</a>
                         </div>
+        </nav>
+        
+        {asideIsOpen &&
+            <aside className='aside-bar fixed max-h-screen w-screen p-3 flex bg-[rgb(8,9,12)] flex-col gap-10 top-0 bottom-0 left-0 mx-auto right-0' ref={asideRef}>
+                <X onClick={closeAside} className='md:hidden text-white'/>
+                <div className='flex flex-col justify-between h-full pb-5'>
+                <ul className='flex flex-col gap-2 px-5'>
+                <li className=' text-white text-lg font-medium'  onClick={closeAside}> <a href="#features">Features </a> </li>
+                <li className='text-white text-lg font-medium' onClick={closeAside}> <a href="#about">About </a> </li>
+                <li className='text-white text-lg font-medium'  onClick={closeAside}> <a href="#faq">FAQ</a> </li>
+                 
+                    
+                </ul>
+
+                    <div className='h-12'>
+                        <a href="#cta" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium ' onClick={closeAside}>Join the Waitlist</a>
                     </div>
 
                 </aside>}
