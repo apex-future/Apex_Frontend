@@ -31,7 +31,8 @@ function CTA() {
       ease: "power2.out"
     });
 
-    gsap.from(".absolute.top-1\\/2", { // Sparkle image
+    //apply animation when only on desktop view
+    gsap.from(".sparkle-animation", { // Sparkle image
       scrollTrigger: {
         trigger: "#cta",
         start: "top center",
@@ -63,7 +64,7 @@ function CTA() {
 
       </div>
 
-      <img src={sparkle} className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none' aria-hidden="true" />
+      <img src={sparkle} className='absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none lg:sparkle-animation' aria-hidden="true" />
 
       
     </section>
