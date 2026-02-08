@@ -23,19 +23,6 @@ function NavBar() {
         })
 
 
-        const showAnim = gsap.from(".nav-div", {
-            yPercent: -100,
-            paused: true,
-            duration: 0.2
-        }).progress(1);
-
-        ScrollTrigger.create({
-            start: "top top",
-            end: "max",
-            onUpdate: (self) => {
-                self.direction === -1 ? showAnim.play() : showAnim.reverse()
-            }
-        });
     }, [])
     let [asideIsOpen, setAsideIsOpen] = useState(false);
 
