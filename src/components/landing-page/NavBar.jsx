@@ -77,7 +77,7 @@ function NavBar() {
             </nav>
 
             {asideIsOpen &&
-                <aside className='aside-bar fixed h-screen w-screen p-3 flex bg-[rgb(8,9,12)] flex-col gap-10 top-0 bottom-0 left-0 mx-auto right-0' ref={asideRef}>
+                <aside className='aside-bar fixed max-h-screen w-screen p-3 flex bg-[rgb(8,9,12)] flex-col gap-10 top-0 bottom-0 left-0 mx-auto right-0' ref={asideRef}>
                     <X onClick={closeAside} className='md:hidden text-white cursor-pointer hover:text-accent-primary transition-colors' />
                     <div className='flex flex-col justify-between h-full pb-5'>
                         <ul className='flex flex-col gap-4 px-5'>
