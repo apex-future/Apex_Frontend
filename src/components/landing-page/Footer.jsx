@@ -99,7 +99,7 @@ function Footer() {
 
           {/* Bottom Bar */}
           <div className="border-t border-border-default/20 mt-12 pt-8 text-center text-sm text-text-dark-tertiary">
-            <p>&copy; 2025 Apex. All rights reserved.</p>
+            <p>&copy; 2026 Apex. All rights reserved.</p>
           </div>
         </div>
       </div>
