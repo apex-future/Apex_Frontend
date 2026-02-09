@@ -1,11 +1,15 @@
 import React from 'react'
+import {useContext} from 'react'
+import { NavBarContext } from './NavBarContext'
 import { Sparkle,Home,X, Book,Pen,Star,Cog, WholeWord } from 'lucide-react'
 function NavBar() {
+    let {openAside, closeAside} = useContext(NavBarContext)
   return (
+
     <div className=' w-screen fixed bg-bg-subtle h-screen p-5 '>
         <aside className="navbar-wrapper flex flex-col justify-between h-full">
             <nav className='flex flex-col gap-10'>
-            <X />
+            <X  onClick={closeAside}/>
             <ul className='flex flex-col gap-5'>
                 <li className='text-lg font-medium'><a href="#books"><Book className='inline-block pr-1' /> Books</a></li>
                 <li className='text-lg font-medium'><a href=""><Star className='inline-block pr-1' /> Favourite</a></li>
