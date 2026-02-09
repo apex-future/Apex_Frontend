@@ -1,5 +1,5 @@
 import React from 'react'
-import logoLight from "../../assets/logo/logo-light.jpg"
+import logoLight from "../../../assets/logo/logo-light.jpg"
 import { Menu, X } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { useGSAP } from '@gsap/react';
