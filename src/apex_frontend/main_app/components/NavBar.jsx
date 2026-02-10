@@ -27,7 +27,7 @@ function NavBar() {
       {/* Mobile Menu Button - Only visible on mobile */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="sm:hidden fixed top-4 left-4 z-40 p-2 rounded-lg bg-bg-subtle hover:bg-gray-200 transition-colors"
+        className="md:hidden fixed top-4 left-4 z-40 p-2 rounded-lg bg-bg-subtle hover:bg-gray-200 transition-colors"
         aria-label="Open menu"
       >
         <Menu size={24} />
@@ -36,7 +36,7 @@ function NavBar() {
       {/* Overlay for mobile */}
       {isMobileOpen && (
         <div
-          className="sm:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={closeMobileNav}
         />
       )}
@@ -44,15 +44,16 @@ function NavBar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-screen bg-bg-subtle z-50
+          bg-bg-subtle z-50
           transition-all duration-300 ease-in-out
-          flex flex-col
+          flex flex-col h-screen
+          
+          fixed md:sticky top-0
           
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-          sm:translate-x-0
+          md:translate-x-0
           
           ${isExpanded ? 'w-64' : 'w-16'}
-          sm:${isExpanded ? 'w-64' : 'w-16'}
         `}
       >
         {/* Header with toggle button */}
@@ -60,7 +61,7 @@ function NavBar() {
           {/* Close button for mobile */}
           <button
             onClick={closeMobileNav}
-            className="sm:hidden p-1 hover:bg-gray-200 rounded transition-colors"
+            className="md:hidden p-1 hover:bg-gray-200 rounded transition-colors"
             aria-label="Close menu"
           >
             <X size={20} />
@@ -69,7 +70,7 @@ function NavBar() {
           {/* Toggle button for desktop */}
           <button
             onClick={toggleNavLink}
-            className={`hidden sm:block p-1 hover:bg-gray-200 rounded transition-colors ${
+            className={`hidden md:block p-1 hover:bg-gray-200 rounded transition-colors ${
               !isExpanded ? 'mx-auto' : 'ml-auto'
             }`}
             aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
@@ -138,13 +139,6 @@ function NavBar() {
           </ul>
         </nav>
       </aside>
-
-      {/* Spacer for main content - adjusts based on sidebar state */}
-      <div
-        className={`hidden sm:block transition-all duration-300 ${
-          isExpanded ? 'sm:w-64' : 'sm:w-16'
-        }`}
-      />
     </>
   );
 }

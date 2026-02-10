@@ -17,11 +17,14 @@ function MainApp() {
     openAside
   }
   return (
-    <div>
+    <div className='flex min-h-screen'>
+
       <NavBarProvider asideToggleFunctions={asideToggle}>
         {asideIsOpen && <NavBar />}
       </NavBarProvider>
-     
+     <main className="flex-1 overflow-auto">
+
+     </main>
     </div>
   )
 }
