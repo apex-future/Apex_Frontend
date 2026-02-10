@@ -27,7 +27,7 @@ function NavBar() {
       {/* Mobile Menu Button - Only visible on mobile */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-40 p-2 rounded-lg bg-bg-subtle hover:bg-gray-200 transition-colors"
+        className="md:hidden fixed top-4 left-2 z-40 p-2 rounded-lg hover:bg-gray-200 transition-colors"
         aria-label="Open menu"
       >
         <Menu size={24} />

@@ -2,6 +2,7 @@ import React from 'react'
 import {useState} from "react"
 import NavBar from './components/NavBar'
 import NavBarProvider from './components/NavBarContext';
+import Header from './components/Header';
 function MainApp() {
   let [asideIsOpen, setAsideIsOpen] = useState(true);
 
@@ -22,8 +23,8 @@ function MainApp() {
       <NavBarProvider asideToggleFunctions={asideToggle}>
         {asideIsOpen && <NavBar />}
       </NavBarProvider>
-     <main className="flex-1 overflow-auto">
-
+     <main className="flex-1 overflow-auto pt-12">
+        <Header/>
      </main>
     </div>
   )
