@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu } from 'lucide-react';
+import logo from "../../../assets/logo/logo-light.jpg";
 
 function NavBar() {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -24,6 +25,7 @@ function NavBar() {
 
   return (
     <>
+             
       {/* Mobile Menu Button - Only visible on mobile */}
       <button
         onClick={() => setIsMobileOpen(true)}
@@ -68,6 +70,7 @@ function NavBar() {
           </button>
 
           {/* Toggle button for desktop */}
+       
           <button
             onClick={toggleNavLink}
             className={`hidden md:block p-1 hover:bg-gray-200 rounded transition-colors ${
@@ -80,6 +83,9 @@ function NavBar() {
         </div>
 
         {/* Navigation Links */}
+        {/* <div>
+                <img className="size-12 rounded-full mx-12 md:mx-8" src={logo} alt="" />
+            </div> */}
         <nav className="flex-1 flex flex-col justify-between p-4 overflow-hidden">
           {/* Main navigation items */}
           <ul className="flex flex-col gap-2">
