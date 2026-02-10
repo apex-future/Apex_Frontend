@@ -21,8 +21,8 @@ export default function Header() {
                 </h1>
 
                 {/* Continue Reading Card */}
-                <div className="bg-gradient-to-br from-accent-primary/5 to-accent-subtle/30 rounded-2xl p-2 border border-accent-primary/20">
-                    <div className="flex gap-3">
+                <div className="bg-gradient-to-br from-accent-primary/5 to-accent-subtle/30 rounded-2xl p-2 md:p-4 border border-accent-primary/20">
+                    <div className="flex gap-3 md:gap-5">
                         
                         {/* Book Cover */}
                         <div className="w-32 h-44 rounded-lg overflow-hidden shadow-lg flex-shrink-0">
