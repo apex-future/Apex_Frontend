@@ -1,5 +1,5 @@
 import React from 'react'
-import logoLight from "../../assets/logo/logo-light.jpg"
+import logoLight from "../../../assets/logo/logo-light.jpg"
 import { Menu, X } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { useGSAP } from '@gsap/react';
@@ -23,19 +23,6 @@ function NavBar() {
         })
 
 
-        const showAnim = gsap.from(".nav-div", {
-            yPercent: -100,
-            paused: true,
-            duration: 0.2
-        }).progress(1);
-
-        ScrollTrigger.create({
-            start: "top top",
-            end: "max",
-            onUpdate: (self) => {
-                self.direction === -1 ? showAnim.play() : showAnim.reverse()
-            }
-        });
     }, [])
     let [asideIsOpen, setAsideIsOpen] = useState(false);
 

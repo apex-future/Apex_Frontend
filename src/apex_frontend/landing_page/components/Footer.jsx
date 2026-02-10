@@ -3,19 +3,21 @@ import { Twitter, Linkedin, Instagram } from 'lucide-react'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { TextPlugin } from 'gsap/TextPlugin';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(TextPlugin, ScrollTrigger);
 
 function Footer() {
   useGSAP(() => {
     gsap.to(".brand-name", {
+      text: "APEX", // <-- This is what the text will animate to
+      duration: 2,
       scrollTrigger: {
-        trigger: "footer",
-        start: "top bottom",
-        end: "bottom bottom",
-        scrub: true
+        trigger: ".brand-name", // Animate when this element enters the viewport
+        start: "top 80%",       // When the top of the element hits 80% of viewport
+        end: "top 60%",         // Optional: end scroll position
+        toggleActions: "play none none none", // Only play once
       },
-      y: -50,
     });
   }, []);
 
@@ -29,7 +31,7 @@ function Footer() {
         <h2 className="brand-name pointer-events-none  absolute top-0 text-[12rem] sm:text-[17rem] text-transparent italic [-webkit-text-stroke:1px_rgba(192,192,192,0.4)]
   [mask-image:linear-gradient(to_bottom,black_50%,transparent_100%)]
   blur-[1px] font-display">
-          APEX
+          
         </h2>
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid sm:grid-cols-4 gap-8">
@@ -97,7 +99,7 @@ function Footer() {
 
           {/* Bottom Bar */}
           <div className="border-t border-border-default/20 mt-12 pt-8 text-center text-sm text-text-dark-tertiary">
-            <p>&copy; 2025 Apex. All rights reserved.</p>
+            <p>&copy; 2026 Apex. All rights reserved.</p>
           </div>
         </div>
       </div>

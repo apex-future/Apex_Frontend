@@ -4,7 +4,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { TextPlugin } from 'gsap/TextPlugin';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import heroImg from "../../assets/e-book-dashboard.jpg"
+import heroImg from "../../../assets/e-book-dashboard.jpg"
 
 gsap.registerPlugin(TextPlugin, ScrollTrigger);
 
@@ -53,27 +53,15 @@ function HeroSection() {
             }, "-=0.8");
 
         // Parallax effect for the hero image
-        gsap.to(".hero-img-wrapper", {
-            y: -50,
-            scrollTrigger: {
-                trigger: "#hero",
-                start: "top top",
-                end: "bottom top",
-                scrub: true
-            }
-        });
-
-        // Fade out text AND buttons on scroll
-        gsap.to([".hero-section-content .text-content", ".CTA-buttons"], {
-            opacity: 0,
-            y: -30,
-            scrollTrigger: {
-                trigger: "#hero",
-                start: "top top",
-                end: "bottom center",
-                scrub: true
-            }
-        });
+        // gsap.to(".hero-img-wrapper", {
+        //     scale: 1,
+        //     scrollTrigger: {
+        //         trigger: "#hero",
+        //         start: "top top",
+        //         end: "bottom top",
+        //         scrub: true
+        //     }
+        // });
 
     }, [])
     return (
