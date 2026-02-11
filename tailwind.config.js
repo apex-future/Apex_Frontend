@@ -14,6 +14,10 @@ export default {
         blink: 'blink 1s step-end infinite',
         'slide-up': 'slideUp 0.3s ease-out',
       },
+            screens: {
+        'xs': '425px',
+      },
+
       keyframes: {
         blink: {
           '0%, 100%': { opacity: '1' },

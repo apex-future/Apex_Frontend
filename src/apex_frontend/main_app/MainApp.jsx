@@ -1,10 +1,12 @@
 import React from 'react'
 import {useState} from "react"
-import NavBar from './components/NavBar'
+import AsideNavBar from './components/AsideNavBar'
 import NavBarProvider from './components/NavBarContext';
 import Header from './components/Header'
+import NavBar from './components/NavBar';
 function MainApp() {
   let [asideIsOpen, setAsideIsOpen] = useState(true);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const openAside = () => {
       setAsideIsOpen(true)
@@ -19,13 +21,18 @@ function MainApp() {
   }
   return (
     <div className='flex min-h-screen'>
-
+   
       <NavBarProvider asideToggleFunctions={asideToggle}>
-        {asideIsOpen && <NavBar />}
+        {asideIsOpen && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />}
       </NavBarProvider>
-     <main className="flex-1 overflow-auto pt-12">
+      
+      <div className='flex-1 overflow-auto '>
+      <NavBar setIsMobileOpen={setIsMobileOpen}/>
+      <main className="pt-12">
         <Header/>
      </main>
+      </div>
+    
     </div>
   )
 }
