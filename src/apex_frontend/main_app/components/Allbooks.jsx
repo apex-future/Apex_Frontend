@@ -10,9 +10,9 @@ export default function Allbooks() {
     ];
 
     const statusStyles = {
-        Literature: 'bg-green-100 text-green-700',
-        Science: 'bg-yellow-100 text-yellow-700',
-        Commerce: 'bg-indigo-100 text-indigo-700',
+        Literature: 'bg-white text-black border border-gray-200',
+        Science: 'bg-black text-white',
+        Commerce: 'bg-black text-white',
     };
 
     return (
