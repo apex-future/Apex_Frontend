@@ -4,26 +4,25 @@ import accounting from "../../../assets/book_covers/accounts.jpeg";
 
 export default function Allbooks() {
     const allBooks = [
-        { id: 1, title: 'Atomic Habits', author: 'James Clear', progress: 50, cover: atomicHabits, status: 'uncompleted' },
-        { id: 2, title: 'Biology', author: 'Thomas D. Polad', progress: 75, cover: biology, status: 'uncompleted' },
-        { id: 3, title: 'Accounting', author: 'Greg Shields', progress: 25, cover: accounting, status: 'new' },
+        { id: 1, title: 'Atomic Habits', author: 'James Clear', progress: 50, cover: atomicHabits, status: 'Literature' },
+        { id: 2, title: 'Biology', author: 'Thomas D. Polad', progress: 75, cover: biology, status: 'Science' },
+        { id: 3, title: 'Accounting', author: 'Greg Shields', progress: 25, cover: accounting, status: 'Commerce' },
     ];
 
     const statusStyles = {
-        completed: 'bg-green-100 text-green-700',
-        uncompleted: 'bg-yellow-100 text-yellow-700',
-        new: 'bg-indigo-100 text-indigo-700',
+        Literature: 'bg-green-100 text-green-700',
+        Science: 'bg-yellow-100 text-yellow-700',
+        Commerce: 'bg-indigo-100 text-indigo-700',
     };
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-3">
             {allBooks.map((book) => (
-                <div key={book.id} className="group relative flex flex-col bg-white p-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
+                <div key={book.id} className="group relative flex flex-col bg-white p-3 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
                     <button className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100 z-10">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
                     </button>
-
-                    <div className="flex flex-row gap-4 mb-4">
+                    <div className="flex flex-row gap-4 mb-2">
                         {/* Cover - Left Side */}
                         <div className="relative w-24 h-36 flex-shrink-0 rounded-lg overflow-hidden shadow-sm">
                             <img
