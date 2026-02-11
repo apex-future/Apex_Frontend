@@ -75,7 +75,7 @@ export default function Header() {
 
                 <div className="border-b border-gray-200 overflow-x-auto">
                     <nav className="flex">
-                        <ul className="flex flex-row gap-5 sm:gap-8 lg:gap-10 my-5 font-medium whitespace-nowrap">
+                        <ul className="flex flex-row gap-10 sm:gap-8 lg:gap-10 my-5 font-medium whitespace-nowrap">
                             <li className="relative group cursor-pointer">
                                 <a href="#" className="group-hover:text-indigo-600 transition-colors duration-300">All</a>
                                 <span className="absolute bottom-[-4px] left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-300 group-hover:w-full"></span>

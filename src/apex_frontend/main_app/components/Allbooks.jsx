@@ -20,7 +20,7 @@ export default function Allbooks() {
             {allBooks.map((book) => (
                 <div key={book.id} className="group cursor-pointer">
                     {/* Cover */}
-                    <div className="relative w-32 h-44 mx-auto rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow duration-300">
+                    <div className="relative w-40 h-56 mx-auto rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow duration-300">
                         <img
                             src={book.cover}
                             alt={book.title}

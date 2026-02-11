@@ -5,7 +5,7 @@ import logo from "../../../assets/logo/logo-light.jpg";
 function NavBar({ setIsMobileOpen }) {
   return (
     <nav className='w-full bg-bg-primary border-b border-border-default'>
-      <div className="nav-wrapper flex justify-between w-full p-2 items-center">
+      <div className="nav-wrapper flex justify-between w-full p-0 md:p-4 items-center">
 
         {/* Mobile Menu Button - Only visible on mobile */}
         <button
