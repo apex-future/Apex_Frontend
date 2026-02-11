@@ -25,10 +25,10 @@ function MainApp() {
       <NavBarProvider asideToggleFunctions={asideToggle}>
         {asideIsOpen && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />}
       </NavBarProvider>
-      
+
       <div className='flex-1 overflow-auto '>
       <NavBar setIsMobileOpen={setIsMobileOpen}/>
-      <main className="pt-12">
+      <main className="pt-5">
         <Header/>
      </main>
       </div>

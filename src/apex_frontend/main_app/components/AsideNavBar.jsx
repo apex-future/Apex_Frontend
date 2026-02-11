@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu } from 'lucide-react';
-import logo from "../../../assets/logo/logo-light.jpg";
+
 
 function AsideNavBar({isMobileOpen,setIsMobileOpen}) {
 
