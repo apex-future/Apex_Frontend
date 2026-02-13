@@ -13,7 +13,7 @@ export default function Header() {
     };
 
     return (
-        <div className="bg-bg-elevated ">
+        <div className=" ">
             <div className=" w-full px-3">
 
                 {/* Welcome */}
