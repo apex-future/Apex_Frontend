@@ -1,6 +1,6 @@
-import atomicHabits from "../../../assets/book_covers/Atomic-habits.jpeg";
-import biology from "../../../assets/book_covers/biology.jpeg";
-import accounting from "../../../assets/book_covers/accounts.jpeg";
+import atomicHabits from "../../../../assets/book_covers/Atomic-habits.jpeg";
+import biology from "../../../../assets/book_covers/biology.jpeg";
+import accounting from "../../../../assets/book_covers/accounts.jpeg";
 
 export default function Allbooks() {
     const allBooks = [

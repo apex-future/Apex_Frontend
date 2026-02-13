@@ -2,8 +2,9 @@ import React from 'react'
 import {useState} from "react"
 import AsideNavBar from './components/AsideNavBar'
 import NavBarProvider from './components/NavBarContext';
-import Header from './components/Header'
+import Header from './components/home/Header'
 import TopNavBar from './components/TopNavBar';
+import HomePage from './components/home/HomePage';
 function MainApp() {
   let [asideIsOpen, setAsideIsOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -21,7 +22,7 @@ function MainApp() {
   }
   return (
     <div className='flex relative min-h-screen'>
-   <div class="absolute top-0 z-[-2] min-h-full w-screen bg-bg-subtle bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))]"></div>
+   <div className="absolute top-0 z-[-2] min-h-full w-screen bg-bg-subtle bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))]"></div>
       <NavBarProvider asideToggleFunctions={asideToggle}>
         {asideIsOpen && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />}
       </NavBarProvider>
@@ -29,7 +30,7 @@ function MainApp() {
       <div className='flex-1 overflow-auto relative z-[10]'>
       <TopNavBar setIsMobileOpen={setIsMobileOpen}/>
       <main className="pt-5 ">
-        <Header/>
+        <HomePage />
      </main>
       </div>
     

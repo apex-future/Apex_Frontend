@@ -1,5 +1,5 @@
 import React from 'react'
-import physics from "../../../assets/book_covers/physics.jpeg";
+import physics from "../../../../assets/book_covers/physics.jpeg";
 import Allbooks from './Allbooks';
 
 export default function Header() {
@@ -95,9 +95,9 @@ export default function Header() {
                         </ul>
                     </nav>
                 </div>
-                <div className='flex-1'>
+                {/* <div className='flex-1'>
                     <Allbooks />
-                </div>
+                </div> */}
 
             </div>
         </div>
