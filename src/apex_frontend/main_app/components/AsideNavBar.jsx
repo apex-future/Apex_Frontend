@@ -39,9 +39,10 @@ function AsideNavBar({isMobileOpen,setIsMobileOpen}) {
       <aside
         className={`
           bg-bg-subtle z-50
+          shadow-inner shadow-white/50
           transition-all duration-300 ease-in-out
           flex flex-col h-screen
-          
+          backdrop-blur-md
           fixed md:sticky top-0
           
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}

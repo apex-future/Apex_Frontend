@@ -6,7 +6,7 @@
     //form a placeholder backend signing functionality
     let [isLoggedIn,setIsLoggedIn] =useState(true)
    return (
-     <div className=' h-screen'>
+     <div className={`min-h-screen `}>
       {/* when the user see if not logged in */}
        {!isLoggedIn && <LandingPage /> }
 

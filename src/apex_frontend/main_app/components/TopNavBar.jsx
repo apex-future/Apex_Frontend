@@ -1,11 +1,10 @@
 import { Menu, Search } from 'lucide-react'
-import React from 'react'
 import logo from "../../../assets/logo/logo-light.jpg";
 
-function NavBar({ setIsMobileOpen }) {
+function TopNavBar({ setIsMobileOpen }) {
   return (
     <nav className='w-full  p-2 border-border-default'>
-      <div className="nav-wrapper flex justify-between w-full p-0 md:p-4 items-center">
+      <div className="nav-wrapper flex justify-between w-full p-0 md:p-1 items-center">
 
         {/* Mobile Menu Button - Only visible on mobile */}
         <button
@@ -15,14 +14,14 @@ function NavBar({ setIsMobileOpen }) {
         >
           <Menu size={24} />
         </button>
-        <form className="search-bar flex justify-center gap-2 rounded-full p-1 flex-1 max-w-[200px] md:max-w-[400px] lg:max-w-[500px] h-full mx-auto">
-          <input type="text" className="border border-white backdrop-blur-md p-1 px-3 w-full rounded-full placeholder:text-sm bg-bg-subtle" placeholder='Search books' />
-          <button type="submit" className='border border-white backdrop-blur-md  p-1 rounded-full bg-bg-subtle'>
+        <form className="search-bar flex justify-center gap-2 rounded-full p-1  w-[80%] h-full mx-auto">
+          <input type="text" className="shadow-inner shadow-white/50 backdrop-blur-md p-1 px-3 h-10 w-full rounded-full placeholder:text-sm bg-bg-subtle" placeholder='Search books' />
+          <button type="submit" className='shadow-inner shadow-white/50 backdrop-blur-md  p-1 rounded-full bg-bg-subtle'>
             <Search className='p-1' />
           </button>
 
         </form>
-        <div className="logo-wrapper">
+        <div className="logo-wrapper p-2">
           <img src={logo} alt="" className='size-10 rounded-full' />
         </div>
 
@@ -31,4 +30,4 @@ function NavBar({ setIsMobileOpen }) {
   )
 }
 
-export default NavBar
+export default TopNavBar
