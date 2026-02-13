@@ -16,15 +16,18 @@ export default function Allbooks() {
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-3 p-3 divide-y-2 divide-border-default">
             {allBooks.map((book) => (
-                <div key={book.id} className="group relative flex flex-col bg-white p-3 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
-                    <button className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100 z-10">
+                <div key={book.id} className="group relative flex flex-col  p-1 pt-5  transition-shadow duration-300 ">
+                    {/* <div className="top-icon">
+                              <button className="justify-end text-gray-400 hover:text-gray-600 transition-colors p-1 bg-transparent rounded-full hover:bg-gray-100 z-10">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
                     </button>
-                    <div className="flex flex-row gap-4 mb-2">
+                    </div> */}
+                  
+                    <div className="flex flex-row gap-4 ">
                         {/* Cover - Left Side */}
-                        <div className="relative w-24 h-36 flex-shrink-0 rounded-lg overflow-hidden shadow-sm">
+                        <div className="relative w-28 h-40 flex-shrink-0 rounded-lg overflow-hidden shadow-sm">
                             <img
                                 src={book.cover}
                                 alt={book.title}
@@ -37,14 +40,15 @@ export default function Allbooks() {
                         </div>
 
                         {/* Info - Right Side */}
-                        <div className="flex-1 flex flex-col justify-center">
-                            <h3 className="font-semibold text-base text-text-primary line-clamp-2 mb-1">{book.title}</h3>
+                        <div className="flex-1 flex flex-col justify-start">
+                            div.book
+                            <h3 className="font-semibold text-xl font-display text-text-primary line-clamp-2 mb-1">{book.title}</h3>
                             <p className="text-sm text-black/50 mb-3">{book.author}</p>
 
                             {/* Progress Bar */}
-                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                            <div className="w-full bg-gray-200 rounded-full h-1">
                                 <div
-                                    className="bg-accent-primary h-1.5 rounded-full transition-all duration-500"
+                                    className="bg-accent-primary h-1 rounded-full transition-all duration-500"
                                     style={{ width: `${book.progress}%` }}
                                 />
                             </div>
@@ -53,7 +57,7 @@ export default function Allbooks() {
                     </div>
 
                     {/* Icon Footer */}
-                    <div className="flex justify-end gap-3 pt-2 border-t border-gray-100 mt-auto">
+                    {/* <div className="flex justify-end gap-3 pt-2 border-t border-gray-100 mt-auto">
                         <button className="text-gray-400 hover:text-red-500 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
                         </button>
@@ -63,7 +67,7 @@ export default function Allbooks() {
                         <button className="text-gray-400 hover:text-indigo-600 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" /></svg>
                         </button>
-                    </div>
+                    </div> */}
                 </div>
             ))}
         </div>
