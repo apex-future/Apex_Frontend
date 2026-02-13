@@ -73,7 +73,7 @@ export default function Header() {
                     </div>
                 </div>
 
-                <div className="border-b border-gray-200 overflow-x-auto">
+                <div className=" overflow-x-auto">
                     <nav className="flex">
                         <ul className="flex flex-row gap-10 sm:gap-8 lg:gap-10 my-5 font-medium whitespace-nowrap">
                             <li className="relative group cursor-pointer">
