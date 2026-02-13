@@ -5,6 +5,7 @@ import NavBarProvider from './components/NavBarContext';
 import Header from './components/home/Header'
 import TopNavBar from './components/TopNavBar';
 import HomePage from './components/home/HomePage';
+import BottomNavBar from './components/BottomNavBar';
 function MainApp() {
   let [asideIsOpen, setAsideIsOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -32,6 +33,7 @@ function MainApp() {
       <main className="pt-5 ">
         <HomePage />
      </main>
+     <BottomNavBar />
       </div>
     
     </div>

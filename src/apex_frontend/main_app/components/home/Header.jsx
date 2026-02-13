@@ -27,7 +27,7 @@ export default function Header() {
 
                 {/* Continue Reading Card */}
                 <h2 className='text-xl p-2 font-medium'>Last Read</h2>
-                <div className="bg-gradient-to-br from-accent-primary/5 to-accent-subtle/30 rounded-2xl p-2 md:p-4 border border-accent-primary/20">
+                <div className="bg-gradient-to-br from-accent-primary/5 to-accent-subtle/30 rounded-2xl p-2 md:p-4 border border-accent-primary/20 backdrop-blur-md">
                     <div className="flex gap-3 md:gap-5">
 
                         {/* Book Cover */}
