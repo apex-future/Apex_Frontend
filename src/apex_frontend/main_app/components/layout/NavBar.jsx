@@ -1,6 +1,6 @@
 import { Menu, Search } from 'lucide-react'
 import React from 'react'
-import logo from "../../../assets/logo/logo-light.jpg";
+import logo from "../../../../assets/logo/logo-light.jpg";
 
 function NavBar({ setIsMobileOpen }) {
   return (

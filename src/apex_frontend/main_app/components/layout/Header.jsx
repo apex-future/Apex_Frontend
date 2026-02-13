@@ -1,6 +1,6 @@
 import React from 'react'
-import physics from "../../../assets/book_covers/physics.jpeg";
-import Allbooks from './Allbooks';
+import physics from "../../../../assets/book_covers/physics.jpeg";
+import Allbooks from '../book UI/Allbooks';
 
 export default function Header() {
     const user = { name: "User" };
