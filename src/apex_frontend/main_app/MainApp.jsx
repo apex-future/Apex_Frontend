@@ -6,6 +6,7 @@ import Header from './components/home/Header'
 import TopNavBar from './components/layout/TopNavBar';
 import HomePage from './components/home/HomePage';
 import BottomNavBar from './components/layout/BottomNavBar';
+import Profile from './components/layout/user/Profile';
 function MainApp() {
   let [asideIsOpen, setAsideIsOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -29,9 +30,10 @@ function MainApp() {
       </NavBarProvider>
 
       <div className='flex-1 overflow-auto relative z-[10]'>
-      <TopNavBar setIsMobileOpen={setIsMobileOpen}/>
-      <main className="pt-5 ">
-        <HomePage />
+      {/* <TopNavBar setIsMobileOpen={setIsMobileOpen}/> */}
+      <main className="">
+        {/* <HomePage /> */}
+        <Profile/>
      </main>
      <BottomNavBar />
       </div>
