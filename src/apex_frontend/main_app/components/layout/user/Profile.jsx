@@ -142,31 +142,7 @@ function Profile() {
     iconBg="bg-neutral-600"
   />
 </div>
-        {/* Reading Activity - Glassmorphic Card */}
-        {/* <div className="bg-white/60 backdrop-blur-md border border-white/40 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-base font-semibold mb-4 text-[#0A0A0A]">Reading Activity</h2>
-          <div className="space-y-3">
-            <ActivityRow label="Total Pages Read" value={user.stats.totalPagesRead.toLocaleString()} />
-            <ActivityRow label="Highlights Created" value={user.stats.highlightsCreated} />
-            <ActivityRow label="Current Streak" value={`${user.stats.streak} days`} />
-            <ActivityRow label="Avg. Session" value="32 min" />
-          </div>
-        </div> */}
-
-        {/* Continue Reading - Glassmorphic Card */}
-        {/* <div className="bg-white/60 backdrop-blur-md border border-white/40 rounded-2xl p-5 shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-base font-semibold text-[#0A0A0A]">Continue Reading</h2>
-            <button className="text-[#8B5CF6] text-sm font-medium hover:text-[#7C3AED] transition-colors">
-              View All
-            </button>
-          </div>
-          <div className="space-y-3">
-            {user.recentBooks.map(book => (
-              <BookRow key={book.id} book={book} />
-            ))}
-          </div>
-        </div> */}
+    
 
         {/* Upgrade CTA - Glassmorphic Gradient Card */}
         {user.plan === 'Free' && (
