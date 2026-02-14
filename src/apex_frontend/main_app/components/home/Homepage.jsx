@@ -2,7 +2,7 @@ import Header from "./Header"
 import Allbooks from "./Allbooks"
 function HomePage() {
   return (
-    <div>
+    <div className="pt-3">
         <Header/>
         <Allbooks/>
     </div>

@@ -3,26 +3,37 @@ import logo from "../../../../assets/logo/logo-light-removebg-preview.png";
 
 function TopNavBar({ setIsMobileOpen }) {
   return (
-    <nav className='w-full  p-2 border-border-default'>
-      <div className="nav-wrapper flex justify-between w-full p-0 md:p-1 items-center">
+    <nav className='w-full p-2'>
+      <div className="nav-wrapper flex justify-between w-full p-0 md:p-1 items-center gap-3">
 
         {/* Mobile Menu Button - Only visible on mobile */}
         <button
           onClick={() => setIsMobileOpen(true)}
-          className="md:hidden z-40 p-2 rounded-lg hover:bg-gray-200 transition-colors"
+          className="md:hidden z-40 p-2 rounded-lg hover:bg-bg-subtle transition-all"
           aria-label="Open menu"
         >
-          <Menu size={24} />
+          <Menu size={24} className="text-text-primary" />
         </button>
-        <form className="search-bar flex justify-center gap-2 rounded-full p-1  w-[80%] h-full mx-auto">
-          <input type="text" className=" border-2 border-subtle  p-1 px-3 h-10 w-full rounded-full placeholder:text-sm placeholder:text-gray-500 focus:outline-none focus:border-accent-primary bg-gray-300" placeholder='Search books' />
-          <button type="submit" className=' border-2 border-subtle   p-1 rounded-full bg-gray-300'>
-            <Search className='p-1' />
-          </button>
 
+        {/* Search Bar - Glassmorphic with Thick Border */}
+        <form className="search-bar flex justify-center items-center gap-2 w-full max-w-2xl mx-auto">
+          <div className="relative flex-1 flex items-center bg-white/60 backdrop-blur-md border-2 border-border-default rounded-full hover:border-text-tertiary focus-within:border-accent-primary transition-all">
+            <Search className='absolute left-4 text-text-tertiary pointer-events-none' size={18} />
+            <input 
+              type="text" 
+              className="w-full pl-11 pr-4 py-2.5 rounded-full placeholder:text-sm placeholder:text-text-placeholder focus:outline-none bg-transparent text-text-primary" 
+              placeholder='Search books...' 
+            />
+          </div>
         </form>
-        <div className="logo-wrapper p-2">
-          <img src={logo} alt="" className='size-10 rounded-full' />
+
+        {/* Logo */}
+        <div className="logo-wrapper flex-shrink-0">
+          <img 
+            src={logo} 
+            alt="Apex Logo" 
+            className='size-10 rounded-full object-cover' 
+          />
         </div>
 
       </div>
