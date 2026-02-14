@@ -1,10 +1,10 @@
 import React from 'react'
 import {useState} from "react"
-import AsideNavBar from './components/AsideNavBar'
-import NavBarProvider from './components/NavBarContext';
+import AsideNavBar from './components/layout/AsideNavBar'
+import NavBarProvider from './components/layout/NavBarContext';
 import Header from './components/home/Header'
 import TopNavBar from './components/TopNavBar';
-import HomePage from './components/home/HomePage';
+import HomePage from './components/home/Homepage';
 import BottomNavBar from './components/BottomNavBar';
 function MainApp() {
   let [asideIsOpen, setAsideIsOpen] = useState(true);

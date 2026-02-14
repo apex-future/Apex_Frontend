@@ -1,10 +1,6 @@
 import React from 'react'
 import physics from "../../../../assets/book_covers/physics.jpeg";
-<<<<<<<< HEAD:src/apex_frontend/main_app/components/home/Header.jsx
 import Allbooks from './Allbooks';
-========
-import Allbooks from '../book UI/Allbooks';
->>>>>>>> 9e98580391fb4c08f914dce66c41944e7bdd6d4e:src/apex_frontend/main_app/components/layout/Header.jsx
 
 export default function Header() {
     const user = { name: "User" };
