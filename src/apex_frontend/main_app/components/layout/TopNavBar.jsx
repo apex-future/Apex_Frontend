@@ -1,10 +1,5 @@
 import { Menu, Search } from 'lucide-react'
-<<<<<<<< HEAD:src/apex_frontend/main_app/components/TopNavBar.jsx
-import logo from "../../../assets/logo/logo-light.jpg";
-========
-import React from 'react'
 import logo from "../../../../assets/logo/logo-light.jpg";
->>>>>>>> 9e98580391fb4c08f914dce66c41944e7bdd6d4e:src/apex_frontend/main_app/components/layout/NavBar.jsx
 
 function TopNavBar({ setIsMobileOpen }) {
   return (
