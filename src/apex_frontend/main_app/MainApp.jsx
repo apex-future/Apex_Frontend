@@ -11,13 +11,13 @@ function MainApp() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const openAside = () => {
-      setAsideIsOpen(true)
+    setAsideIsOpen(true)
   }
   const closeAside = () => {
-      setAsideIsOpen(false)
+    setAsideIsOpen(false)
   }
 
-  let asideToggle ={
+  let asideToggle = {
     closeAside,
     openAside
   }
@@ -35,7 +35,7 @@ function MainApp() {
      </main>
      <BottomNavBar />
       </div>
-    
+
     </div>
   )
 }

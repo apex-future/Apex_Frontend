@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu } from 'lucide-react';
 
 
-function AsideNavBar({isMobileOpen,setIsMobileOpen}) {
+function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
 
 
   const [isExpanded, setIsExpanded] = useState(true);
@@ -63,12 +63,11 @@ function AsideNavBar({isMobileOpen,setIsMobileOpen}) {
           </button>
 
           {/* Toggle button for desktop */}
-       
+
           <button
             onClick={toggleNavLink}
-            className={`hidden md:block p-1 hover:bg-gray-200 rounded transition-colors ${
-              !isExpanded ? 'mx-auto' : 'ml-auto'
-            }`}
+            className={`hidden md:block p-1 hover:bg-gray-200 rounded transition-colors ${!isExpanded ? 'mx-auto' : 'ml-auto'
+              }`}
             aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             <Menu size={20} />
