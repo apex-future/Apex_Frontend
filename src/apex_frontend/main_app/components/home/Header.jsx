@@ -1,22 +1,23 @@
 import React from 'react'
 import physics from "../../../../assets/book_covers/physics.jpeg";
-import Allbooks from './Allbooks';
 
-export default function Header() {
+export default function Header({ activeTab = 'All', setActiveTab = () => { }, lastReadBook }) {
     const user = { name: "User" };
-    const currentBook = {
-        title: "Advanced Physics for Schools",
-        author: "Albert Einstein",
-        progress: 67,
-        currentPage: 134,
-        totalPages: 200,
+
+    const currentBook = lastReadBook || {
+        title: "Welcome to Apex!",
+        author: "Start your first book",
+        progress: 0,
+        currentPage: 0,
+        totalPages: 0,
+        cover: physics
     };
 
-    return (
-        <div className=" ">
-            <div className=" w-full px-3">
+    const tabs = ['All', 'Completed', 'Uncompleted', 'New'];
 
-                {/* Welcome */}
+    return (
+        <div className="">
+            <div className="w-full px-3">
                 <div className="welcome-message mb-6">
                     <h1 className="font-display text-3xl font-bold text-text-primary mb-1">
                         Hey, {user.name}
@@ -24,33 +25,25 @@ export default function Header() {
                     <p>What's your pick today?</p>
                 </div>
 
-
-                {/* Continue Reading Card */}
                 <h2 className='text-xl p-2 font-medium'>Last Read</h2>
                 <div className="bg-gradient-to-br from-accent-primary/5 to-accent-subtle/30 rounded-2xl p-2 md:p-4 border border-accent-primary/20 backdrop-blur-md">
                     <div className="flex gap-3 md:gap-5">
-
-                        {/* Book Cover */}
                         <div className="w-30 h-40 xs:w-32 xs:h-44 rounded-lg overflow-hidden shadow-lg flex-shrink-0 ">
-                            <img src={physics} alt="Book cover" className="w-full h-full object-cover" />
+                            <img src={currentBook.cover} alt="Book cover" className="w-full h-full object-cover" />
                         </div>
 
-                        {/* Info */}
                         <div className="flex-1 flex flex-col justify-between">
-
-                            <div className=" mb-3">
+                            <div className="mb-3">
                                 <h2 className="font-display text-xl xs:text-2xl sm:text-3xl font-bold text-text-primary mb-1 ">
                                     {currentBook.title}
                                 </h2>
                                 <p className="text-sm text-black/50">by {currentBook.author}</p>
                             </div>
 
-
-                            {/* Progress */}
                             <div className="mb-4">
                                 <div className="flex justify-between mb-2">
                                     <span className="text-sm text-text-secondary">
-                                        Page {currentBook.currentPage} of {currentBook.totalPages}
+                                        {currentBook.progress > 0 ? `Page ${currentBook.currentPage || '?'} of ${currentBook.totalPages || '?'}` : 'Not started'}
                                     </span>
                                     <span className="text-sm font-semibold text-accent-primary">
                                         {currentBook.progress}%
@@ -63,42 +56,27 @@ export default function Header() {
                                     />
                                 </div>
                             </div>
-
-                            {/* Button */}
-                            {/* <button className="bg-accent-primary hover:bg-accent-hover text-white font-semibold py-3 px-2 w-full rounded-full ">
-                                
-                                Continue Reading
-                            </button> */}
                         </div>
                     </div>
                 </div>
 
-                <div className=" overflow-x-auto">
+                <div className="overflow-x-auto">
                     <nav className="flex">
                         <ul className="flex flex-row gap-10 sm:gap-8 lg:gap-10 my-5 font-medium whitespace-nowrap">
-                            <li className="relative group cursor-pointer">
-                                <a href="#" className="group-hover:text-indigo-600 transition-colors duration-300">All</a>
-                                <span className="absolute bottom-[-4px] left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-300 group-hover:w-full"></span>
-                            </li>
-                            <li className="relative group cursor-pointer">
-                                <a href="#" className="group-hover:text-indigo-600 transition-colors duration-300">Completed</a>
-                                <span className="absolute bottom-[-4px] left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-300 group-hover:w-full"></span>
-                            </li>
-                            <li className="relative group cursor-pointer">
-                                <a href="#" className="group-hover:text-indigo-600 transition-colors duration-300">Uncompleted</a>
-                                <span className="absolute bottom-[-4px] left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-300 group-hover:w-full"></span>
-                            </li>
-                            <li className="relative group cursor-pointer">
-                                <a href="#" className="group-hover:text-indigo-600 transition-colors duration-300">New</a>
-                                <span className="absolute bottom-[-4px] left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-300 group-hover:w-full"></span>
-                            </li>
+                            {tabs.map((tab) => (
+                                <li key={tab}
+                                    className={`relative group cursor-pointer ${activeTab === tab ? 'text-indigo-600' : ''}`}
+                                    onClick={() => setActiveTab(tab)}
+                                >
+                                    <a href="#" className="group-hover:text-indigo-600 transition-colors duration-300" onClick={(e) => e.preventDefault()}>
+                                        {tab}
+                                    </a>
+                                    <span className={`absolute bottom-[-4px] left-0 h-0.5 bg-indigo-600 transition-all duration-300 ${activeTab === tab ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                                </li>
+                            ))}
                         </ul>
                     </nav>
                 </div>
-                {/* <div className='flex-1'>
-                    <Allbooks />
-                </div> */}
-
             </div>
         </div>
     )
