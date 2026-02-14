@@ -4,6 +4,7 @@ import AsideNavBar from './components/layout/AsideNavBar'
 import NavBarProvider from './components/layout/NavBarContext';
 import Header from './components/home/Header'
 import TopNavBar from './components/layout/TopNavBar';
+import { Routes, Route } from 'react-router-dom';
 import HomePage from './components/home/HomePage';
 import BottomNavBar from './components/layout/BottomNavBar';
 import Profile from './components/layout/user/Profile';
@@ -30,10 +31,12 @@ function MainApp() {
       </NavBarProvider>
 
       <div className='flex-1 overflow-hidden relative z-[10]'>
-      <TopNavBar setIsMobileOpen={setIsMobileOpen}/>
+     
       <main className="">
-        <HomePage />
-        {/* <Profile/> */}
+        <Routes>
+          <Route path="/" element={<HomePage setIsMobileOpen={setIsMobileOpen} />} />
+          <Route path="/profile" element={<Profile />} />
+        </Routes>
      </main>
      <BottomNavBar />
       </div>
