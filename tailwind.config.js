@@ -14,10 +14,9 @@ export default {
         blink: 'blink 1s step-end infinite',
         'slide-up': 'slideUp 0.3s ease-out',
       },
-            screens: {
+      screens: {
         'xs': '425px',
       },
-
       keyframes: {
         blink: {
           '0%, 100%': { opacity: '1' },
@@ -31,7 +30,6 @@ export default {
       boxShadow: {
         'inner-thick': 'inset 0 0 20px 10px rgba(0, 0, 0, 0.2)',
         'inner-thick-white': 'inset 0 0 20px 10px rgba(0, 0, 0, 0.2), 0 0 10px 2px rgba(255, 255, 255, 0.5)',
-
       },
       colors: {
         // Backgrounds (Light & Dark)
@@ -68,6 +66,21 @@ export default {
         'error': '#EF4444',
         'warning': '#F59E0B',
         'info': '#3B82F6',
+        
+        // Card Backgrounds - Glassmorphic Neutrals
+        'card': {
+          glass: 'rgba(255, 255, 255, 0.6)', // Use with backdrop-blur
+          'glass-border': 'rgba(229, 229, 229, 1)', // #E5E5E5
+          'glass-hover': 'rgba(212, 212, 212, 1)', // Slightly darker for hover
+        },
+        
+        // Icon Backgrounds - Monochrome Gradient
+        'icon': {
+          900: '#0A0A0A',
+          800: '#262626',
+          700: '#404040',
+          600: '#525252',
+        },
       },
     },
   },
