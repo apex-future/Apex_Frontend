@@ -1,5 +1,5 @@
 import { Menu, Search } from 'lucide-react'
-import logo from "../../../../assets/logo/logo-light.jpg";
+import logo from "../../../../assets/logo/logo-light-removebg-preview.png";
 
 function TopNavBar({ setIsMobileOpen }) {
   return (
@@ -15,8 +15,8 @@ function TopNavBar({ setIsMobileOpen }) {
           <Menu size={24} />
         </button>
         <form className="search-bar flex justify-center gap-2 rounded-full p-1  w-[80%] h-full mx-auto">
-          <input type="text" className="shadow-inner shadow-white/50 backdrop-blur-md p-1 px-3 h-10 w-full rounded-full placeholder:text-sm bg-bg-subtle" placeholder='Search books' />
-          <button type="submit" className='shadow-inner shadow-white/50 backdrop-blur-md  p-1 rounded-full bg-bg-subtle'>
+          <input type="text" className=" border-2 border-subtle  p-1 px-3 h-10 w-full rounded-full placeholder:text-sm placeholder:text-gray-500 focus:outline-none focus:border-accent-primary bg-gray-300" placeholder='Search books' />
+          <button type="submit" className=' border-2 border-subtle   p-1 rounded-full bg-gray-300'>
             <Search className='p-1' />
           </button>
 
