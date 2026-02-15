@@ -1,6 +1,15 @@
 import React from 'react';
-import { Bookmark, Plus } from 'lucide-react';
+import { Bookmark, Plus, Heart, Share2 } from 'lucide-react';
 import BookCard from '../books/BookCard';
+
+const statusStyles = {
+    literature: 'bg-blue-100 text-blue-600',
+    science: 'bg-green-100 text-green-600',
+    commerce: 'bg-purple-100 text-purple-600',
+    new: 'bg-orange-100 text-orange-600',
+    completed: 'bg-indigo-100 text-indigo-600',
+    uncompleted: 'bg-amber-100 text-amber-600',
+};
 
 export default function Allbooks({ books, onBookClick }) {
     if (!books || books.length === 0) {
@@ -19,7 +28,7 @@ export default function Allbooks({ books, onBookClick }) {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-0 p-3 divide-y-2 divide-border-default">
-            {allBooks.map((book) => (
+            {books.map((book) => (
                 <div key={book.id} className="group relative flex flex-col  p-1 pt-5  transition-shadow duration-300 ">
                     {/* <div className="top-icon">
                               <button className="justify-end text-gray-400 hover:text-gray-600 transition-colors p-1 bg-transparent rounded-full hover:bg-gray-100 z-10">

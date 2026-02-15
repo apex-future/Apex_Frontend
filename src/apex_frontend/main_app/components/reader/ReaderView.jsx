@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Settings, Bookmark, Share2 } from 'lucide-react';
+import { BookContext } from '../../context/BookContext';
 
-function ReaderView({ books = [], onUpdateProgress }) {
+function ReaderView() {
+    const { books, updateBookProgress } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
     const [fileUrl, setFileUrl] = useState(null);
@@ -20,9 +22,9 @@ function ReaderView({ books = [], onUpdateProgress }) {
     });
 
     // Refs for stability
-    const onUpdateRef = useRef(onUpdateProgress);
+    const updateProgressRef = useRef(updateBookProgress);
     const currentBookRef = useRef(book);
-    useEffect(() => { onUpdateRef.current = onUpdateProgress; }, [onUpdateProgress]);
+    useEffect(() => { updateProgressRef.current = updateBookProgress; }, [updateBookProgress]);
     useEffect(() => { currentBookRef.current = book; }, [book]);
 
     // 1. Loading & Redirect logic
@@ -89,7 +91,7 @@ function ReaderView({ books = [], onUpdateProgress }) {
             if (now - lastUpdateRef.current > 300) {
                 const hasChanged = progress !== b.progress || currentPage !== b.currentPage || totalPages !== b.totalPages;
                 if (hasChanged || progress === 100) {
-                    onUpdateRef.current(b.id, progress, currentPage, totalPages);
+                    updateProgressRef.current(b.id, progress, currentPage, totalPages);
                     lastUpdateRef.current = now;
                 }
             }
