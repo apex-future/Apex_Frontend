@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import AsideNavBar from './components/layout/AsideNavBar';
-import NavBarProvider from './components/layout/NavBarContext';
-import TopNavBar from './components/layout/TopNavBar';
+import AsideNavBar from './components/layout/navigation/AsideNavBar';
+import NavBarProvider from './components/layout/navigation/NavBarContext';
+import TopNavBar from './components/layout/navigation/TopNavBar';
 import { Routes, Route } from 'react-router-dom';
+// Page level components
 import HomePage from './components/home/HomePage';
-import BottomNavBar from './components/layout/BottomNavBar';
+import BottomNavBar from './components/layout/navigation/BottomNavBar';
 import Profile from './components/layout/user/Profile';
 import ReaderView from './components/reader/ReaderView';
 

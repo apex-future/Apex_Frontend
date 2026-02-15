@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "./Header";
 import Allbooks from "./Allbooks";
-import TopNavBar from "../layout/TopNavBar";
+import TopNavBar from "../layout/navigation/TopNavBar";
 
 function HomePage({ setIsMobileOpen, books = [], onUpload, onBookClick }) {
   const [activeTab, setActiveTab] = useState('All');
