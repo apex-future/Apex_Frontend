@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
 
 
 function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
-
+  const location = useLocation();
 
   const [isExpanded, setIsExpanded] = useState(true);
   const toggleNavLink = () => {
@@ -15,12 +16,12 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
   };
 
   const navItems = [
-    { icon: Home, label: 'Home', href: '#home' },
-    { icon: Book, label: 'Books', href: '#books' },
-    { icon: Star, label: 'Favourite', href: '#favourite' },
-    { icon: WholeWord, label: 'Dictionary', href: '#dictionary' },
-    { icon: Sparkle, label: 'ApexAi', href: '#apexai' },
-    { icon: Pen, label: 'Notes', href: '#notes' },
+    { icon: Home, label: 'Home', path: '/' },
+    { icon: Book, label: 'Book Shelf', path: '/bookshelf' },
+    { icon: Star, label: 'Favourite', path: '#favourite' },
+    { icon: WholeWord, label: 'Dictionary', path: '#dictionary' },
+    { icon: Sparkle, label: 'ApexAi', path: '#apexai' },
+    { icon: Pen, label: 'Notes', path: '#notes' },
   ];
 
   return (
@@ -83,17 +84,27 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
           <ul className="flex flex-col gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
+              
+              // Custom active check to handle hashes and overlapping routes
+              const isActive = item.path.startsWith('#') 
+                ? location.hash === item.path 
+                : (item.path === '/' 
+                    ? location.pathname === '/' && location.hash === '' 
+                    : location.pathname === item.path);
+
               return (
                 <li key={item.label}>
-                  <a
-                    href={item.href}
+                  <NavLink
+                    to={item.path}
                     className={`
                       flex items-center gap-3 p-2 rounded-lg
-                      hover:bg-gray-200 transition-all duration-200
-                      text-gray-700 font-medium
+                      transition-all duration-200
+                      font-medium relative group
                       ${!isExpanded ? 'justify-center' : ''}
+                      ${isActive ? 'bg-accent-primary text-white shadow-md' : 'text-gray-700 hover:bg-gray-200'}
                     `}
                     title={!isExpanded ? item.label : ''}
+                    onClick={() => isMobileOpen && closeMobileNav()}
                   >
                     <Icon size={20} className="flex-shrink-0" />
                     <span
@@ -104,7 +115,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                     >
                       {item.label}
                     </span>
-                  </a>
+                  </NavLink>
                 </li>
               );
             })}
@@ -113,13 +124,14 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
           {/* Bottom navigation (Settings) */}
           <ul className="border-t border-gray-200 pt-4">
             <li>
-              <a
-                href="#settings"
+              <NavLink
+                to="#settings"
                 className={`
                   flex items-center gap-3 p-2 rounded-lg
-                  hover:bg-gray-200 transition-all duration-200
-                  text-gray-700 font-medium
+                  transition-all duration-200
+                  font-medium relative
                   ${!isExpanded ? 'justify-center' : ''}
+                  ${location.hash === '#settings' ? 'bg-accent-primary text-white shadow-md' : 'text-gray-700 hover:bg-gray-200'}
                 `}
                 title={!isExpanded ? 'Settings' : ''}
               >
@@ -132,7 +144,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                 >
                   Settings
                 </span>
-              </a>
+              </NavLink>
             </li>
           </ul>
         </nav>

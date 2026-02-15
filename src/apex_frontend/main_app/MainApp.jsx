@@ -8,6 +8,7 @@ import { Routes, Route } from 'react-router-dom';
 import HomePage from './components/home/HomePage';
 import BottomNavBar from './components/layout/navigation/BottomNavBar';
 import Profile from './components/layout/user/Profile';
+import BookShelf from './components/layout/book_shelf/BookShelf';
 function MainApp() {
   let [asideIsOpen, setAsideIsOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -36,6 +37,8 @@ function MainApp() {
         <Routes>
           <Route path="/" element={<HomePage setIsMobileOpen={setIsMobileOpen} />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/bookshelf" element={<BookShelf />} />
+          
         </Routes>
      </main>
      <BottomNavBar />
