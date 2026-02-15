@@ -39,7 +39,7 @@ export default {
         'bg-dark-primary': '#0A0A0A',
         'bg-dark-elevated': '#171717',
         'bg-dark-subtle': '#262626',
-        
+
         // Text (Light & Dark)
         'text-primary': '#0A0A0A',
         'text-secondary': '#404040',
@@ -48,11 +48,11 @@ export default {
         'text-dark-primary': '#FAFAFA',
         'text-dark-secondary': '#D4D4D4',
         'text-dark-tertiary': '#A3A3A3',
-        
+
         // Borders (same for both modes)
         'border-default': '#E5E5E5',
         'border-subtle': '#F3F4F6',
-        
+
         // Accent - Purple (same for both modes)
         'accent': {
           primary: '#8B5CF6',
@@ -60,20 +60,20 @@ export default {
           pressed: '#7C3AED',
           subtle: '#F3E8FF',
         },
-        
+
         // Semantic (same for both modes)
         'success': '#10B981',
         'error': '#EF4444',
         'warning': '#F59E0B',
         'info': '#3B82F6',
-        
+
         // Card Backgrounds - Glassmorphic Neutrals
         'card': {
           glass: 'rgba(255, 255, 255, 0.6)', // Use with backdrop-blur
           'glass-border': 'rgba(229, 229, 229, 1)', // #E5E5E5
           'glass-hover': 'rgba(212, 212, 212, 1)', // Slightly darker for hover
         },
-        
+
         // Icon Backgrounds - Monochrome Gradient
         'icon': {
           900: '#0A0A0A',
