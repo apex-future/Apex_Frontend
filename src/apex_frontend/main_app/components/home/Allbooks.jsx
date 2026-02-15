@@ -1,14 +1,9 @@
-import atomicHabits from "../../../../assets/book_covers/Atomic-habits.jpeg";
-import biology from "../../../../assets/book_covers/biology.jpeg";
-import accounting from "../../../../assets/book_covers/accounts.jpeg";
+import React, { useContext } from 'react';
+import { BookContext } from "../../context/BookContext";
 import { Heart, Share2, Bookmark } from "lucide-react";
 
 export default function Allbooks() {
-    const allBooks = [
-        { id: 1, title: 'Atomic Habits', author: 'James Clear', progress: 50, cover: atomicHabits, status: 'Literature' },
-        { id: 2, title: 'Biology', author: 'Thomas D. Polad', progress: 75, cover: biology, status: 'Science' },
-        { id: 3, title: 'Accounting', author: 'Greg Shields', progress: 25, cover: accounting, status: 'Commerce' },
-    ];
+    const { books } = useContext(BookContext);
 
     const statusStyles = {
         Literature: 'bg-white text-black border border-gray-200',
@@ -18,7 +13,7 @@ export default function Allbooks() {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-0 p-3 divide-y-2 divide-border-default">
-            {allBooks.map((book) => (
+            {books.map((book) => (
                 <div key={book.id} className="group relative flex flex-col  p-1 pt-5  transition-shadow duration-300 ">
                     {/* <div className="top-icon">
                               <button className="justify-end text-gray-400 hover:text-gray-600 transition-colors p-1 bg-transparent rounded-full hover:bg-gray-100 z-10">
