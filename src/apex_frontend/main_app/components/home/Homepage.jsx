@@ -1,6 +1,6 @@
 import Header from "./Header"
 import Allbooks from "./Allbooks"
-import TopNavBar from "../layout/TopNavBar"
+import TopNavBar from "../layout/navigation/TopNavBar"
 function HomePage({setIsMobileOpen}) {
   return (
     <div className="pt-3">

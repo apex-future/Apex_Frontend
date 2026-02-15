@@ -1,5 +1,5 @@
 import { Menu, Search } from 'lucide-react'
-import logo from "../../../../assets/logo/logo-light-removebg-preview.png";
+import logo from "../../../../../assets/logo/logo-light-removebg-preview.png";
 
 function TopNavBar({ setIsMobileOpen }) {
   return (
