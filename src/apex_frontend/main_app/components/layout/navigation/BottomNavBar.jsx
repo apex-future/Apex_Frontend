@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom'
 
 function BottomNavBar() {
   return (
-    <div className='fixed bottom-5 left-0 right-0 flex justify-between w-[60%] mx-auto min-h-10 border border-[#E5E5E5] bg-white/60 backdrop-blur-md rounded-full items-center p-2 px-3 shadow-lg'>
+    <div className='fixed bottom-5 md:hidden left-0 right-0 flex justify-between w-[60%] mx-auto min-h-10 border border-[#E5E5E5] bg-white/60 backdrop-blur-md rounded-full items-center p-2 px-3 shadow-lg'>
         <NavLink 
           to="/" 
           className={({ isActive }) => `p-2 hover:bg-neutral-100/50 rounded-full transition-all relative flex flex-col items-center group`}
