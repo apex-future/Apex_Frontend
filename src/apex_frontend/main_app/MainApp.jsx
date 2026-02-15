@@ -25,7 +25,7 @@ function MainApp() {
   };
 
   return (
-    <div className='flex relative min-h-screen max-w-full overflow-x-hidden'>
+    <div className='flex relative min-h-screen'>
       <div className="absolute top-0 z-[-2] min-h-full w-full bg-bg-primary bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))]"></div>
 
       <BookProvider>
@@ -33,7 +33,7 @@ function MainApp() {
           {asideIsOpen && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />}
         </NavBarProvider>
 
-        <div className='flex-1 relative z-[10]'>
+        <div className='flex-1 min-w-0 relative z-[10]'>
           <main className="">
             <Routes>
               <Route path="/" element={
