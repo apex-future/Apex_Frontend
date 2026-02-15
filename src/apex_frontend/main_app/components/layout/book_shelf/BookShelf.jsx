@@ -15,7 +15,7 @@ function BookShelf() {
   const { shelves } = useContext(BookContext);
 
   return (
-    <div className='min-h-screen w-full'>
+    <div className='w-full'>
         {/* Page Header */}
         <div className="relative flex justify-between items-center p-4">
           {/* Back button placeholder */}

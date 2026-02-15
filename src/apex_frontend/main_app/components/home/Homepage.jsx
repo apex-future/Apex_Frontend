@@ -38,7 +38,7 @@ function HomePage({ setIsMobileOpen }) {
     return true;
   });
   return (
-    <div className="pt-3 h-screen flex flex-col">
+    <div className="pt-3 flex flex-col">
       <TopNavBar setIsMobileOpen={setIsMobileOpen} onUpload={onUpload} />
 
       <Header
@@ -47,9 +47,9 @@ function HomePage({ setIsMobileOpen }) {
         lastReadBook={lastReadBook}
       />
 
-      <div className="flex-1 overflow-auto">
+    
         <Allbooks books={filteredBooks} onBookClick={handleBookNavigate} />
-      </div>
+    
     </div>
   )
 }

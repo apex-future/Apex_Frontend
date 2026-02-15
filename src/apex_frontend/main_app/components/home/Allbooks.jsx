@@ -29,12 +29,8 @@ export default function Allbooks({ books, onBookClick }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-0 p-3 divide-y-2 divide-border-default">
             {books.map((book) => (
-                <div key={book.id} className="group relative flex flex-col  p-1 pt-5  transition-shadow duration-300 ">
-                    {/* <div className="top-icon">
-                              <button className="justify-end text-gray-400 hover:text-gray-600 transition-colors p-1 bg-transparent rounded-full hover:bg-gray-100 z-10">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
-                    </button>
-                    </div> */}
+                <div key={book.id} className="flex flex-col  p-1 pt-5  transition-shadow duration-300 ">
+            
                   
                     <div className="flex flex-row gap-4 ">
                         {/* Cover - Left Side */}

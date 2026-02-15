@@ -39,7 +39,7 @@ function MainApp() {
         </NavBarProvider>
 
         {/* Content Wrapper: flex-1 ensures this container takes up all available space besides the sidebar. */}
-        <div className='flex-1  overflow-hidden relative z-[10]'>
+        <div className='flex-1 relative z-[10]'>
              {/* Main Content: Houses the Router's view and applies thematic rounding to its container. */}
           <main className="rounded-l-xl">
               <Routes>

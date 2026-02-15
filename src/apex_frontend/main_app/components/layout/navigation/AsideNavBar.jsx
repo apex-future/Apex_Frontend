@@ -39,7 +39,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
       {/* Overlay: Rendered on mobile when the sidebar is open to dim the background and allow closing on click */}
       {isMobileOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+          className="md:hidden fixed max-h-screen inset-0 bg-black/40 backdrop-blur-sm z-40"
           onClick={closeMobileNav}
         />
       )}
