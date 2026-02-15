@@ -25,7 +25,7 @@ function MainApp() {
     openAside
   }
   return (
-    <div className='flex relative min-h-screen max-w-full overflow-x-hidden'>
+    <div className='flex relative min-h-screen max-w-full'>
    <div className="absolute top-0  z-[-2] min-h-full w-full bg-bg-primary bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))]"></div>
       <NavBarProvider asideToggleFunctions={asideToggle}>
         {asideIsOpen && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />}
