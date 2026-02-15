@@ -1,8 +1,10 @@
 import React from 'react'
-import physics from "../../../../assets/book_covers/physics.jpeg";
+import BookCover from '../books/BookCover';
+import { useNavigate } from 'react-router-dom';
 
 export default function Header({ activeTab = 'All', setActiveTab = () => { }, lastReadBook }) {
     const user = { name: "User" };
+    const navigate = useNavigate();
 
     const currentBook = lastReadBook || {
         title: "Welcome to Apex!",
@@ -10,7 +12,7 @@ export default function Header({ activeTab = 'All', setActiveTab = () => { }, la
         progress: 0,
         currentPage: 0,
         totalPages: 0,
-        cover: physics
+        cover: null
     };
 
     const tabs = ['All', 'Completed', 'Uncompleted', 'New'];
@@ -26,18 +28,25 @@ export default function Header({ activeTab = 'All', setActiveTab = () => { }, la
                 </div>
 
                 <h2 className='text-xl p-2 font-medium'>Last Read</h2>
-                <div className="bg-gradient-to-br from-accent-primary/5 to-accent-subtle/30 rounded-2xl p-2 md:p-4 border border-accent-primary/20 backdrop-blur-md">
+                <div
+                    onClick={() => lastReadBook && navigate(`/reader/${lastReadBook.id}`)}
+                    className={`bg-gradient-to-br from-accent-primary/5 to-accent-subtle/30 rounded-2xl p-2 md:p-4 border border-accent-primary/20 backdrop-blur-md ${lastReadBook ? 'cursor-pointer hover:bg-accent-primary/10 transition-colors' : ''}`}
+                >
                     <div className="flex gap-3 md:gap-5">
-                        <div className="w-30 h-40 xs:w-32 xs:h-44 rounded-lg overflow-hidden shadow-lg flex-shrink-0 ">
-                            <img src={currentBook.cover} alt="Book cover" className="w-full h-full object-cover" />
+                        <div className="w-30 h-40 xs:w-32 xs:h-44 rounded-lg overflow-hidden shadow-lg flex-shrink-0 bg-white">
+                            {currentBook.cover ? (
+                                <img src={currentBook.cover} alt="Book cover" className="w-full h-full object-cover" />
+                            ) : (
+                                <BookCover title={currentBook.title} author={currentBook.author} className="w-full h-full" />
+                            )}
                         </div>
 
                         <div className="flex-1 flex flex-col justify-between">
                             <div className="mb-3">
-                                <h2 className="font-display text-xl xs:text-2xl sm:text-3xl font-bold text-text-primary mb-1 ">
+                                <h2 className="font-display text-xl xs:text-2xl sm:text-3xl font-bold text-text-primary mb-1 line-clamp-2">
                                     {currentBook.title}
                                 </h2>
-                                <p className="text-sm text-black/50">by {currentBook.author}</p>
+                                <p className="text-sm text-black/50 line-clamp-1">by {currentBook.author}</p>
                             </div>
 
                             <div className="mb-4">
@@ -51,7 +60,7 @@ export default function Header({ activeTab = 'All', setActiveTab = () => { }, la
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-1">
                                     <div
-                                        className="bg-accent-primary h-1 rounded-full"
+                                        className="bg-accent-primary h-1 rounded-full transition-all duration-500"
                                         style={{ width: `${currentBook.progress}%` }}
                                     />
                                 </div>

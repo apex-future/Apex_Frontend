@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AsideNavBar from './components/layout/AsideNavBar';
 import NavBarProvider from './components/layout/NavBarContext';
 import TopNavBar from './components/layout/TopNavBar';
@@ -7,20 +7,19 @@ import HomePage from './components/home/HomePage';
 import BottomNavBar from './components/layout/BottomNavBar';
 import Profile from './components/layout/user/Profile';
 import ReaderView from './components/reader/ReaderView';
-import { books as initialBooks } from './data/books';
 
 function MainApp() {
   const [asideIsOpen, setAsideIsOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [books, setBooks] = useState(initialBooks || []);
+  const [books, setBooks] = useState([]);
 
   const asideToggle = {
     closeAside: () => setAsideIsOpen(false),
     openAside: () => setAsideIsOpen(true)
   };
 
-  // Upload Logic
-  const handleUpload = (fileObject) => {
+  // Upload Logic - Stabilized
+  const handleUpload = useCallback((fileObject) => {
     const newBook = {
       id: Date.now(),
       title: fileObject.name || "New Document",
@@ -36,13 +35,19 @@ function MainApp() {
     };
 
     setBooks(prev => [newBook, ...prev]);
-  };
+  }, []);
 
-  const handleBookClick = (bookId) => {
+  const handleUpdateProgress = useCallback((bookId, progress, currentPage, totalPages) => {
     setBooks(prev => prev.map(book =>
-      book.id === bookId ? { ...book, lastAccessed: new Date().toISOString() } : book
+      book.id === bookId ? { ...book, progress, currentPage, totalPages } : book
     ));
-  };
+  }, []);
+
+  const handleBookClick = useCallback((bookId) => {
+    setBooks(prev => prev.map(book =>
+      book.id === parseInt(bookId) ? { ...book, lastAccessed: new Date().toISOString() } : book
+    ));
+  }, []);
 
   return (
     <div className='flex relative min-h-screen max-w-full overflow-x-hidden'>
@@ -64,7 +69,7 @@ function MainApp() {
               />
             } />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/reader/:bookId" element={<ReaderView books={books} />} />
+            <Route path="/reader/:bookId" element={<ReaderView books={books} onUpdateProgress={handleUpdateProgress} />} />
           </Routes>
         </main>
         <BottomNavBar onUpload={handleUpload} />
