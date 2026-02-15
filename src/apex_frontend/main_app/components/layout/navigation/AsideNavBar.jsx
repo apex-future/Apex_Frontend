@@ -1,19 +1,30 @@
 import React, { useState } from 'react';
+// Import Lucide icons for visual representation in the navigation
 import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu } from 'lucide-react';
+// Import navigation hooks and components from react-router-dom
 import { NavLink, useLocation } from 'react-router-dom';
 
+/**
+ * AsideNavBar Component:
+ * Provides side navigation with support for both desktop (collapsible/sticky) and mobile (slide-over) layouts.
+ */
 function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
+  // useLocation: Hook to track the current URL, used for custom active state logic (especially hash handling)
   const location = useLocation();
+  // isExpanded: State to toggle between the full-width (expanded) and icon-only (collapsed) sidebar views
   const [isExpanded, setIsExpanded] = useState(true);
 
+  // toggleNavLink: Flips the expansion state of the sidebar
   const toggleNavLink = () => {
     setIsExpanded(!isExpanded);
   };
 
+  // closeMobileNav: Callback to hide the sidebar on mobile screens
   const closeMobileNav = () => {
     setIsMobileOpen(false);
   };
 
+  // navItems: Configuration array for the links to be displayed in the primary navigation list
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Book, label: 'Book Shelf', path: '/bookshelf' },
@@ -25,7 +36,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
 
   return (
     <>
-      {/* Overlay for mobile (only on mobile) */}
+      {/* Overlay: Rendered on mobile when the sidebar is open to dim the background and allow closing on click */}
       {isMobileOpen && (
         <div
           className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
@@ -33,7 +44,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar: Main container for the navigation links */}
       <aside
         className={`
           bg-neutral-200/90 backdrop-blur-xl border-r border-neutral-300/80
@@ -41,20 +52,20 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
           transition-all duration-300 ease-in-out
           flex flex-col h-screen
           rounded-r-xl
-          /* FIXED on mobile, STICKY on desktop */
+          /* Layout Switching: Fixed on small screens, Sticky within flow on md+ screens */
           fixed md:sticky top-0 left-0 bottom-0 md:bottom-auto md:left-auto md:translate-x-0
           
-          /* Mobile: slides in/out */
+          /* Mobile Visibility: Moves off-screen based on isMobileOpen state */
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0
           
-          /* Width transitions smoothly */
+          /* Dynamic Width: Swaps between 64 and 20 based on isExpanded state */
           ${isExpanded ? 'w-64' : 'w-20'}
         `}
       >
-        {/* Header with toggle button */}
+        {/* Sidebar Header: Contains the close button (mobile) or the toggle button (desktop) */}
         <div className={`flex items-center h-16 px-4 border-b border-neutral-300/80 flex-shrink-0 ${!isExpanded ? 'justify-center' : 'justify-between'}`}>
-          {/* Close button for mobile */}
+          {/* X button for mobile dismissal */}
           {isExpanded && (
             <button
               onClick={closeMobileNav}
@@ -65,7 +76,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
             </button>
           )}
 
-          {/* Toggle button for desktop */}
+          {/* Menu button for desktop expansion/collapse toggle */}
           <button
             onClick={toggleNavLink}
             className="hidden md:flex items-center justify-center p-2 hover:bg-white/50 rounded-lg transition-colors"
@@ -75,13 +86,18 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
           </button>
         </div>
 
-        {/* Navigation Links - Scrollable */}
+        {/* Navigation Links: flex-1 ensures this section takes up the available vertical space */}
         <nav className="flex-1 flex flex-col justify-between p-4 overflow-y-auto overflow-x-hidden">
-          {/* Main navigation items */}
           <ul className="flex flex-col gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               
+              /**
+               * Custom isActive Logic:
+               * 1. Hash Links (#): Match exactly only if the URL hash matches.
+               * 2. Home (/): Matches only if path is exactly '/' and there is no hash.
+               * 3. Other Routes: Match the pathname directly.
+               */
               const isActive = item.path.startsWith('#') 
                 ? location.hash === item.path 
                 : (item.path === '/' 
@@ -119,6 +135,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                       {item.label}
                     </span>
 
+                    {/* Left Accent Bar: Displayed only for the active route */}
                     {isActive && (
                       <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-accent-primary rounded-r-full" />
                     )}
@@ -128,7 +145,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
             })}
           </ul>
 
-          {/* Bottom navigation (Settings) */}
+          {/* Footer Navigation Section: Separated by a border, used for settings or low-priority links */}
           <ul className="border-t border-neutral-300/80 pt-4 mt-4">
             <li>
               <NavLink

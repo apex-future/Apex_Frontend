@@ -1,24 +1,42 @@
-import React, { useContext } from 'react'
-import { BookContext } from "../../../context/BookContext"
+import React from 'react'
 
-function Shelf() {
-  const { books } = useContext(BookContext);
-
+/**
+ * Shelf Component:
+ * Now a stateless presentation component that renders a specific list of books passed via props.
+ * This allows it to be reused for different shelves within the BookShelf view.
+ */
+function Shelf({ shelves }) {
+  // If no books are provided, don't render anything
+  if (!shelves || shelves.length === 0) return null;
+console.log(shelves)
   return (
+    // Grid: Displays the passed list of books in a 2-column layout
     <div className='grid grid-cols-1 md:grid-cols-2 gap-4 p-4'>
-        {books.map(book => (
-          <div key={book.id} className='border-2 border-border-default rounded-2xl p-5 hover:border-text-tertiary transition-all'>
-            <div className="flex gap-4">
-              <img src={book.cover} alt={book.title} className="w-20 h-28 object-cover rounded-lg shadow-sm" />
-              <div>
-                <h4 className="font-semibold">{book.title}</h4>
-                <p className="text-sm text-gray-500">{book.author}</p>
-                <div className="mt-2 w-full bg-gray-200 rounded-full h-1">
-                  <div className="bg-accent-primary h-1 rounded-full" style={{ width: `${book.progress}%` }} />
+        {shelves.map((shelf,index) => (
+              <div key={index} className='border-2 flex flex-col border-border-default p-4 rounded-2xl bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md'>
+                <div className='shelf-things border-b flex flex-col'>
+                  <div className="shelf-img flex gap-2 items-center justify-center">
+
+{shelf.books?.slice(0, 3).map((book, index) => (
+  <img 
+    key={index} 
+    src={book.cover} 
+    alt={book.title} 
+    className='object-cover w-24 h-32 rounded-sm shadow-sm' 
+  />
+))}
+
+                   
+                    {/* <img src={shelf.books[1].cover} alt={shelf.books[0].title} className='object-cover w-24 h-32' />
+                    <img src={shelf.books[2].cover} alt={shelf.books[0].title} className='object-cover w-24 h-32' /> */}
+                  </div>
+                  <div className="shelf-info">
+                    <h5>Total Books</h5>
+                    <p>{shelf.books.length}</p>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
+                <h3 className='text-center font-display text-xl pt-2'>{shelf.shelfName}</h3>
+            </div >
         ))}
     </div>
   )
