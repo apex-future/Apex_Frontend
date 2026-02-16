@@ -1,11 +1,14 @@
 import React from 'react';
-import { Heart, Share2, Bookmark } from "lucide-react";
+import { Heart, Eye, Bookmark } from "lucide-react";
 import BookCover from './BookCover';
 
 const statusStyles = {
-    completed: 'bg-green-100 text-green-700',
-    uncompleted: 'bg-yellow-100 text-yellow-700',
-    new: 'bg-indigo-100 text-indigo-700',
+    literature: 'bg-blue-100 text-blue-600',
+    science: 'bg-green-100 text-green-600',
+    commerce: 'bg-purple-100 text-purple-600',
+    new: 'bg-orange-100 text-orange-600',
+    completed: 'bg-indigo-100 text-indigo-600',
+    uncompleted: 'bg-amber-100 text-amber-600',
 };
 
 export default function BookCard({ book, onClick }) {
@@ -52,12 +55,12 @@ export default function BookCard({ book, onClick }) {
                                 style={{ width: `${book.progress}%` }}
                             />
                         </div>
-                        <p className="text-xs text-black/50 mt-1 text-left">{book.progress}% complete</p>
+                        <p className="text-xs text-black/50 mt-1 text-left">Page {book.currentPage || 0} of {book.totalPages || 0} completed</p>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2 mt-auto text-gray-400">
                         <button className="hover:text-red-500 transition-colors" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
-                        <button className="hover:text-indigo-600 transition-colors" onClick={(e) => e.stopPropagation()}><Share2 size={18} /></button>
+                        <button className="hover:text-indigo-600 transition-colors" onClick={(e) => e.stopPropagation()}><Eye size={18} /></button>
                         <button className="hover:text-indigo-600 transition-colors" onClick={(e) => e.stopPropagation()}><Bookmark size={18} /></button>
                     </div>
                 </div>

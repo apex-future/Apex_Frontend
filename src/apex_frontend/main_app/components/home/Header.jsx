@@ -68,7 +68,7 @@ export default function Header({ activeTab = 'All', setActiveTab = () => { }, la
                         </div>
                     </div>
                 </div>
-
+{/* 
                 <div className="overflow-x-auto">
                     <nav className="flex">
                         <ul className="flex flex-row gap-10 sm:gap-8 lg:gap-10 my-5 font-medium whitespace-nowrap">
@@ -85,7 +85,7 @@ export default function Header({ activeTab = 'All', setActiveTab = () => { }, la
                             ))}
                         </ul>
                     </nav>
-                </div>
+                </div> */}
             </div>
         </div>
     )
