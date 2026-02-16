@@ -15,11 +15,11 @@ export default function BookCard({ book, onClick }) {
     return (
         <div
             onClick={() => onClick && onClick(book.id)}
-            className="group relative flex flex-col p-4 transition-shadow duration-300 cursor-pointer hover:bg-slate-50/50"
+            className="group relative flex flex-col p-2 transition-shadow duration-300 cursor-pointer hover:bg-slate-50/50"
         >
             <div className="flex flex-row gap-4">
                 {/* Cover - Left Side */}
-                <div className="relative w-28 h-40 flex-shrink-0 rounded-lg overflow-hidden shadow-sm bg-white">
+                <div className="relative w-28 h-40 rounded-lg overflow-hidden shadow-sm bg-white flex-shrink-0">
                     {book.cover ? (
                         <img
                             src={book.cover}
@@ -41,7 +41,7 @@ export default function BookCard({ book, onClick }) {
                 </div>
 
                 {/* Info - Right Side */}
-                <div className="flex-1 flex flex-col justify-between">
+                <div className="flex-1 flex flex-col justify-between min-w-0">
                     <div className="flex flex-col">
                         <h3 className="font-semibold text-xl font-display text-text-primary line-clamp-2 mb-1 group-hover:text-accent-primary transition-colors">
                             {book.title}

@@ -27,7 +27,7 @@ export default function Allbooks({ books, onBookClick }) {
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,390px),1fr))] border-t-2 border-l-2 border-border-default mx-3">
+                <div className="grid gap-4  grid-cols-[repeat(auto-fill,minmax(min(100%,390px),1fr))]   border-border-default mx-3">
                     {books.map((book) => (
                         <div key={book.id} className="border-r-2 border-b-2 border-border-default p-2">
                             <BookCard 
