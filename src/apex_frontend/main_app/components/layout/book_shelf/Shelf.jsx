@@ -1,4 +1,5 @@
 import React from 'react'
+import BookCover from '../../books/BookCover'
 
 /**
  * Shelf Component:
@@ -23,20 +24,29 @@ function Shelf({ shelves }) {
             <div className="shelf-img-container flex gap-2 items-center justify-center absolute inset-x-0 bottom-20 z-0 transition-transform duration-500 ease-out group-hover:-translate-y-8">
               
               {/* 1. Actual Books */}
-              {shelf.books?.slice(0, 3).map((book, bIndex) => (
-                <img 
-                  key={`book-${book.id}`} 
-                  src={book.cover} 
-                  alt={book.title} 
-                  className={`object-cover w-24 h-32 rounded-sm shadow-md border border-white/20 transition-all duration-500 ${
-                    bIndex === 0 
-                      ? '-rotate-6 group-hover:-rotate-9 group-hover:-translate-x-2' 
-                      : bIndex === 1 
-                        ? 'rotate-0 group-hover:scale-105' 
-                        : 'rotate-6 group-hover:rotate-9 group-hover:translate-x-2'
-                  }`}
-                />
-              ))}
+              {shelf.books?.slice(0, 3).map((book, bIndex) => {
+                const rotationClasses = bIndex === 0 
+                  ? '-rotate-6 group-hover:-rotate-9 group-hover:-translate-x-2' 
+                  : bIndex === 1 
+                    ? 'rotate-0 group-hover:scale-105' 
+                    : 'rotate-6 group-hover:rotate-9 group-hover:translate-x-2';
+
+                return book.cover ? (
+                  <img 
+                    key={`book-${book.id}`} 
+                    src={book.cover} 
+                    alt={book.title} 
+                    className={`object-cover w-24 h-32 rounded-sm shadow-md border border-white/20 transition-all duration-500 ${rotationClasses}`}
+                  />
+                ) : (
+                  <BookCover 
+                    key={`book-${book.id}`}
+                    title={book.title}
+                    author={book.author}
+                    className={`w-24 h-32 rounded-sm shadow-md border border-white/20 transition-all duration-500 ${rotationClasses}`}
+                  />
+                );
+              })}
 
               {/* 2. Filler/Skeleton Books */}
               {Array.from({ length: fillersCount }).map((_, fIndex) => {
