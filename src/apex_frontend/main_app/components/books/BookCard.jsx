@@ -15,7 +15,7 @@ export default function BookCard({ book, onClick }) {
     return (
         <div
             onClick={() => onClick && onClick(book.id)}
-            className="group relative flex flex-col p-1 pt-5 transition-shadow duration-300 cursor-pointer border-t border-border-default md:border-t-0 hover:bg-slate-50/50"
+            className="group relative flex flex-col p-4 transition-shadow duration-300 cursor-pointer hover:bg-slate-50/50"
         >
             <div className="flex flex-row gap-4">
                 {/* Cover - Left Side */}
