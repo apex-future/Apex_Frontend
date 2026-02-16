@@ -1,20 +1,11 @@
 import React from 'react';
-import { Bookmark, Plus, Heart, Share2, Eye } from 'lucide-react';
+import { Bookmark, Plus } from 'lucide-react';
 import BookCard from '../books/BookCard';
-
-const statusStyles = {
-    literature: 'bg-blue-100 text-blue-600',
-    science: 'bg-green-100 text-green-600',
-    commerce: 'bg-purple-100 text-purple-600',
-    new: 'bg-orange-100 text-orange-600',
-    completed: 'bg-indigo-100 text-indigo-600',
-    uncompleted: 'bg-amber-100 text-amber-600',
-};
 
 export default function Allbooks({ books, onBookClick }) {
     return (
         <section className='all-book-section py-4'>
-            <h2 className='text-xl px-4 font-medium mb-4 font-display'>All Books</h2>
+            <h2 className='text-xl px-4 font-medium mb-4 font-display text-text-primary'>All Books</h2>
 
             {!books || books.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 px-6 text-center animate-in fade-in zoom-in duration-700">
