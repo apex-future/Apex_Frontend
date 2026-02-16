@@ -1,16 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "./Header";
 import Allbooks from "./Allbooks";
 import TopNavBar from "../layout/navigation/TopNavBar";
+import { BookContext } from "../../context/BookContext";
 
-function HomePage({ setIsMobileOpen, books = [], onUpload, onBookClick }) {
+function HomePage({ setIsMobileOpen }) {
+  const { books, addBookToShelf, handleBookClick } = useContext(BookContext);
   const [activeTab, setActiveTab] = useState('All');
   const navigate = useNavigate();
 
   const handleBookNavigate = (id) => {
-    onBookClick(id); // update timestamp
+    handleBookClick(id); // update timestamp
     navigate(`/reader/${id}`); // open reader
+  };
+
+  const onUpload = (file) => {
+    addBookToShelf(file);
   };
 
   // 1. Sort logic
@@ -31,9 +37,8 @@ function HomePage({ setIsMobileOpen, books = [], onUpload, onBookClick }) {
     if (activeTab === 'Uncompleted') return status === 'uncompleted' || (book.progress > 0 && book.progress < 100);
     return true;
   });
-
   return (
-    <div className="pt-3 h-screen flex flex-col">
+    <div className="pt-3 flex flex-col">
       <TopNavBar setIsMobileOpen={setIsMobileOpen} onUpload={onUpload} />
 
       <Header
@@ -42,9 +47,9 @@ function HomePage({ setIsMobileOpen, books = [], onUpload, onBookClick }) {
         lastReadBook={lastReadBook}
       />
 
-      <div className="flex-1 overflow-auto">
+    
         <Allbooks books={filteredBooks} onBookClick={handleBookNavigate} />
-      </div>
+    
     </div>
   )
 }

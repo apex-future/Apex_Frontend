@@ -1,33 +1,44 @@
 import React from 'react';
-import { Heart, Share2, Bookmark } from "lucide-react";
+import { Heart, Eye, Bookmark } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
 
 const statusStyles = {
-    completed: 'bg-green-100 text-green-700',
-    uncompleted: 'bg-yellow-100 text-yellow-700',
-    new: 'bg-indigo-100 text-indigo-700',
+    literature: 'bg-blue-100 text-blue-600',
+    science: 'bg-green-100 text-green-600',
+    commerce: 'bg-purple-100 text-purple-600',
+    new: 'bg-orange-100 text-orange-600',
+    completed: 'bg-indigo-100 text-indigo-600',
+    uncompleted: 'bg-amber-100 text-amber-600',
 };
 
 export default function BookCard({ book, onClick }) {
+    const navigate = useNavigate();
+
+    const handleDetailsClick = (e) => {
+        e.stopPropagation();
+        navigate(`/book/${book.id}`);
+    };
+
     return (
         <div
             onClick={() => onClick && onClick(book.id)}
-            className="group relative flex flex-col p-1 pt-5 transition-shadow duration-300 cursor-pointer border-t border-border-default md:border-t-0 hover:bg-slate-50/50"
+            className="group relative flex flex-col p-2 transition-shadow duration-300 cursor-pointer hover:bg-slate-50/50"
         >
             <div className="flex flex-row gap-4">
                 {/* Cover - Left Side */}
-                <div className="relative w-28 h-40 flex-shrink-0 rounded-lg overflow-hidden shadow-sm bg-white">
+                <div className="relative w-28 h-40 rounded-lg overflow-hidden shadow-sm bg-white flex-shrink-0">
                     {book.cover ? (
                         <img
                             src={book.cover}
                             alt={book.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:-rotate-6 transition-transform duration-300"
                         />
                     ) : (
                         <BookCover
                             title={book.title}
                             author={book.author}
-                            className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full group-hover:-rotate-6 transition-transform duration-300"
                         />
                     )}
 
@@ -38,7 +49,7 @@ export default function BookCard({ book, onClick }) {
                 </div>
 
                 {/* Info - Right Side */}
-                <div className="flex-1 flex flex-col justify-between">
+                <div className="flex-1 flex flex-col justify-between min-w-0">
                     <div className="flex flex-col">
                         <h3 className="font-semibold text-xl font-display text-text-primary line-clamp-2 mb-1 group-hover:text-accent-primary transition-colors">
                             {book.title}
@@ -52,13 +63,22 @@ export default function BookCard({ book, onClick }) {
                                 style={{ width: `${book.progress}%` }}
                             />
                         </div>
-                        <p className="text-xs text-black/50 mt-1 text-left">{book.progress}% complete</p>
+                        <p className="text-xs text-black/50 mt-1 text-left">Page {book.currentPage || 0} of {book.totalPages || 0} completed</p>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2 mt-auto text-gray-400">
-                        <button className="hover:text-red-500 transition-colors" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
-                        <button className="hover:text-indigo-600 transition-colors" onClick={(e) => e.stopPropagation()}><Share2 size={18} /></button>
-                        <button className="hover:text-indigo-600 transition-colors" onClick={(e) => e.stopPropagation()}><Bookmark size={18} /></button>
+                        <button className="text-gray-400 hover:text-red-500 transition-colors">
+                            <Heart size={20} />
+                        </button>
+                        <button 
+                            className="text-gray-400 hover:text-indigo-600 transition-colors"
+                            onClick={handleDetailsClick}
+                        >
+                            <Eye size={20} />
+                        </button>
+                        <button className="text-gray-400 hover:text-indigo-600 transition-colors" onClick={(e) => e.stopPropagation()}>
+                            <Bookmark size={20} />
+                        </button>
                     </div>
                 </div>
             </div>
