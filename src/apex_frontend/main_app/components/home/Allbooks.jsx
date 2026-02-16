@@ -11,7 +11,9 @@ export default function Allbooks({ books, onBookClick }) {
                 </div>
                 <h3 className="text-2xl font-display font-bold text-text-primary mb-2">No library found</h3>
                 <p className="text-gray-500 max-w-xs mx-auto mb-8">
-                    Your collection is currently empty. Tap the <span className="p-1.5 bg-accent-primary text-white rounded-lg inline-flex items-center justify-center scale-75 mx-0.5"><Plus size={14} /></span> button below to upload your first PDF.
+                    Your collection is currently empty.
+                    <span className="hidden md:inline"> Click the <span className="font-semibold text-accent-primary underline underline-offset-4 decoration-2">Upload</span> button above to get started.</span>
+                    <span className="md:hidden"> Tap the <span className="p-1.5 bg-accent-primary text-white rounded-lg inline-flex items-center justify-center scale-75 mx-0.5"><Plus size={14} /></span> button below to upload your first PDF.</span>
                 </p>
             </div>
         )

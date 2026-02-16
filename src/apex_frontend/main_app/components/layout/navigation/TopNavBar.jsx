@@ -1,7 +1,15 @@
-import { Menu, Search } from 'lucide-react'
+import { Menu, Search, Plus } from 'lucide-react'
 import logo from "../../../../../assets/logo/logo-light-removebg-preview.png";
 
-function TopNavBar({ setIsMobileOpen }) {
+function TopNavBar({ setIsMobileOpen, onUpload }) {
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (onUpload) {
+      onUpload(file);
+      e.target.value = '';
+    }
+  };
   return (
     <nav className='w-full p-2'>
       <div className="nav-wrapper flex justify-between w-full p-0 md:p-1 items-center gap-3">
@@ -28,13 +36,33 @@ function TopNavBar({ setIsMobileOpen }) {
           </div>
         </form>
 
-        {/* Logo */}
-        <div className="logo-wrapper flex-shrink-0">
-          <img
-            src={logo}
-            alt="Apex Logo"
-            className='size-10 rounded-full object-cover'
-          />
+        {/* Upload & Logo Group */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Desktop Upload Button */}
+          <div className="hidden md:flex items-center">
+            <input
+              type="file"
+              id="top-nav-upload"
+              className="hidden"
+              onChange={handleFileChange}
+              accept=".pdf"
+            />
+            <label
+              htmlFor="top-nav-upload"
+              className="flex items-center gap-2 px-4 py-2 bg-accent-primary hover:bg-accent-hover text-white rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <Plus size={18} />
+              <span className="text-sm font-medium">Upload</span>
+            </label>
+          </div>
+
+          <div className="logo-wrapper">
+            <img
+              src={logo}
+              alt="Apex Logo"
+              className='size-10 rounded-full object-cover'
+            />
+          </div>
         </div>
 
       </div>
