@@ -12,6 +12,7 @@ import Profile from './components/layout/user/Profile';
 import ReaderView from './components/reader/ReaderView';
 
 import BookShelf from './components/layout/book_shelf/BookShelf';
+import BookDetails from './components/books/BookDetails';
 
 function MainApp() {
   // asideIsOpen: State variable that determines if the desktop-style sidebar should be rendered.
@@ -44,6 +45,7 @@ function MainApp() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/reader/:bookId" element={<ReaderView />} />
               <Route path="/bookshelf" element={<BookShelf />} />
+              <Route path="/book/:bookId" element={<BookDetails />} />
             </Routes>
           </main>
           <BottomNavBar />

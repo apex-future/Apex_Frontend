@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, Eye, Bookmark } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
 
 const statusStyles = {
@@ -12,6 +13,13 @@ const statusStyles = {
 };
 
 export default function BookCard({ book, onClick }) {
+    const navigate = useNavigate();
+
+    const handleDetailsClick = (e) => {
+        e.stopPropagation();
+        navigate(`/book/${book.id}`);
+    };
+
     return (
         <div
             onClick={() => onClick && onClick(book.id)}
@@ -59,9 +67,18 @@ export default function BookCard({ book, onClick }) {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2 mt-auto text-gray-400">
-                        <button className="hover:text-red-500 transition-colors" onClick={(e) => e.stopPropagation()}><Heart size={18} /></button>
-                        <button className="hover:text-indigo-600 transition-colors" onClick={(e) => e.stopPropagation()}><Eye size={18} /></button>
-                        <button className="hover:text-indigo-600 transition-colors" onClick={(e) => e.stopPropagation()}><Bookmark size={18} /></button>
+                        <button className="text-gray-400 hover:text-red-500 transition-colors">
+                            <Heart size={20} />
+                        </button>
+                        <button 
+                            className="text-gray-400 hover:text-indigo-600 transition-colors"
+                            onClick={handleDetailsClick}
+                        >
+                            <Eye size={20} />
+                        </button>
+                        <button className="text-gray-400 hover:text-indigo-600 transition-colors" onClick={(e) => e.stopPropagation()}>
+                            <Bookmark size={20} />
+                        </button>
                     </div>
                 </div>
             </div>
