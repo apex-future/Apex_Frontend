@@ -40,7 +40,7 @@ function BottomNavBar() {
   return (
     <div 
       ref={navRef}
-      className='fixed bottom-5 md:hidden left-0 right-0 flex justify-between w-[60%] mx-auto z-[100] min-h-10 border-2 border-border-default bg-white/60 backdrop-blur-md rounded-full items-center p-2 px-3 shadow-lg'
+      className='fixed bottom-8 md:hidden left-0 right-0 flex justify-between w-[64%] mx-auto z-[100] min-h-12 border-2 border-border-default bg-white/70 backdrop-blur-xl rounded-full items-center p-2 px-4 shadow-2xl shadow-neutral-400/20'
     >
       <NavLink
         to="/"

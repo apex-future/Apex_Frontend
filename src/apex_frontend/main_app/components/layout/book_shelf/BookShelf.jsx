@@ -15,15 +15,15 @@ function BookShelf() {
   const { shelves } = useContext(BookContext);
 
   return (
-    <div className='w-full'>
+    <div className='max-w-7xl mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4'>
         {/* Page Header */}
-        <div className="relative flex justify-between items-center p-4">
+        <div className="relative flex justify-between items-center py-4 px-2">
           {/* Back button placeholder */}
-          <button className="p-2 hover:bg-neutral-100 rounded-lg transition-all">
-            <ArrowLeft size={20} />
+          <button className="p-2 hover:bg-neutral-100 rounded-lg transition-all group">
+            <ArrowLeft size={20} className="text-text-secondary group-hover:-translate-x-1 transition-transform" />
           </button>
           
-          <h3 className='text-lg font-semibold text-text-primary'>Book Shelf</h3>
+          <h3 className='text-lg font-bold text-text-primary tracking-tight'>Book Shelf</h3>
           
           {/* Spacer for alignment */}
           <div className="w-9" />
