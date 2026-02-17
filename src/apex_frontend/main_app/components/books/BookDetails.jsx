@@ -28,26 +28,43 @@ function BookDetails() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto p-6 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <button 
-                onClick={() => navigate(-1)} 
-                className="group flex items-center gap-2 text-gray-500 hover:text-accent-primary mb-10 transition-colors bg-white/50 px-4 py-2 rounded-full border border-border-default hover:border-accent-primary/50 shadow-sm"
-            >
-                <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
-                <span className="font-medium">Back to Library</span>
-            </button>
-            
-            <div className="flex flex-col md:flex-row gap-12 items-start">
-                <div className="w-64 h-80 flex-shrink-0 shadow-2xl rounded-2xl overflow-hidden bg-white border-4 border-white transform hover:rotate-1 transition-transform duration-300">
-                    {book.cover ? (
-                        <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
-                    ) : (
-                        <BookCover title={book.title} author={book.author} className="w-full h-full" />
-                    )}
-                </div>
+        <div className="  px-4 md:p- animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+                    {/* Page Header */}
+                    <div className="relative flex justify-between items-center p-4">
+                      {/* Back button placeholder */}
                 
-                <div className="flex-1">
-                    <div className="flex flex-wrap gap-2 mb-4">
+                                   <button 
+                onClick={() => navigate(-1)} 
+                className="p-2 hover:bg-neutral-100 rounded-lg transition-all"
+            >
+                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> 
+                
+            </button>
+                      
+                      <h3 className='text-lg font-semibold text-text-primary'>Book Details</h3>
+                      
+                      {/* Spacer for alignment */}
+                      <div className="w-9" />
+                    </div>
+            
+           
+            
+            <div className="flex flex-col pt-10  items-start">
+                <div className="book-header  flex md:flex-row gap-12 flex-col w-full">
+
+<div className='img-wrapper  flex flex-col items-center justify-center gap-2'>
+                    <div className="w-64 h-80  flex-shrink-0 rounded-2xl overflow-hidden mx-auto md:mx-0 border-4 border-white transform hover:rotate-1 transition-transform duration-300">
+                                {book.cover ? (
+                                    <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
+                                ) : (
+                                    <BookCover title={book.title} author={book.author} className="w-full h-full" />
+                                )}
+
+
+                            </div>
+
+                                     <div className="flex flex-wrap gap-2 mb-4">
                         <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                             {book.status || 'Library'}
                         </span>
@@ -55,19 +72,33 @@ function BookDetails() {
                             {Math.round(book.progress || 0)}% Completed
                         </span>
                     </div>
-                    
-                    <h1 className="text-4xl md:text-5xl font-bold font-display text-text-primary mb-4 leading-tight">
-                        {book.title}
-                    </h1>
-                    <p className="text-2xl text-gray-500 font-medium mb-10">by {book.author}</p>
-                    
-                    <div className="space-y-8">
-                        <div>
-                            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">About this book</h2>
-                            <div className="bg-white/40 backdrop-blur-sm p-6 rounded-2xl border border-border-default shadow-sm text-gray-700 leading-relaxed max-w-2xl">
-                                {book.description || "In a hole in the ground there lived a hobbit. Not a nasty, dirty, wet hole, filled with the ends of worms and an oozy smell, nor yet a dry, bare, sandy hole with nothing in it to sit down on or to eat: it was a hobbit-hole, and that means comfort..."}
+</div>
+
+
+
+
+                         <div className="book-main-info md:w-full">
+                        <h1 className="text-4xl md:text-5xl font-bold font-display text-text-primary mb-2 leading-tight">
+                            {book.title}
+                        </h1>
+                        <p className="text-sm text-gray-400 font-medium ">by {book.author}</p>
+                             <div className="flex-1 mt-6">
+                            <h2 className="text-sm sm:text-base font-bold text-gray-500 uppercase tracking-widest mb-2">About this book</h2>
+                            <div className="bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md border-2 border-border-default rounded-2xl p-4 hover:border-accent-primary/20 transition-all text-gray-700 leading-relaxed max-w-2xl">
+                                {book.description || " No Description"}
                             </div>
                         </div>
+                    </div>
+                </div>
+             
+                
+                <div className="flex-1">
+           
+                    
+               
+                    
+                    <div className="space-y-8">
+                   
 
                         <div className="flex gap-4 p-1">
                             <button 
