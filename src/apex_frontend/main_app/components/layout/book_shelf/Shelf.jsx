@@ -59,7 +59,7 @@ function Shelf({ shelves }) {
                         ? '-rotate-6 group-hover:-rotate-9 group-hover:-translate-x-2' 
                         : absoluteIndex === 1 
                           ? 'rotate-0 group-hover:scale-105' 
-                          : 'rotate-6 group-hover:rotate-9 group-hover:-translate-x-2'
+                          : 'rotate-6 group-hover:rotate-9 group-hover:translate-x-2'
                     }`}
                   >
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-neutral-300/50" />
