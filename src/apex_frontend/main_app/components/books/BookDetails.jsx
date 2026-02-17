@@ -118,10 +118,10 @@ function BookDetails() {
                 </div>
              
                 
-                <div className="overflow-hidden max-w-full bg-neutral-200 p-2 border-2 border-border-subtle rounded-2xl">
+                <div className="overflow-hidden max-w-full bg-bg-subtle p-2 border-2 border-border-default rounded-2xl">
            
-                    <ul className="flex gap-6 overflow-x-auto py-2 items-center ">
-                        <li className='text-base font-medium bg-neutral-300 p-2 rounded-lg text-text-primary'>Chat</li>
+                    <ul className="flex gap-6 overflow-x-auto py-2 bg-bg-primary px-2 rounded-full items-center ">
+                        <li className='text-base font-medium text-accent-primary p-2 rounded-full px-4 bg-accent-subtle transition-all hover:bg-accent-hover hover:text-accent-primary'>Chat</li>
                         <li className='text-base font-medium text-text-primary'>Bookmarks</li>
                         <li className='text-base font-medium text-text-primary'>Notes</li>
                         <li className='text-base font-medium text-text-primary'>Words</li>
