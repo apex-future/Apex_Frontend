@@ -1,7 +1,7 @@
 import React, { useContext } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContext';
-import { ArrowLeft,Heart } from 'lucide-react';
+import { ArrowLeft,Heart,Share2,MoreHorizontal,Bookmark,Pen,Star,CheckCircle2,Trash2 } from 'lucide-react';
 
 import BookCover from './BookCover';
 
@@ -28,7 +28,7 @@ function BookDetails() {
     }
 
     return (
-        <div className="  px-4 md:p- animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className=" max-w-full px-4 md:p- animate-in fade-in slide-in-from-bottom-4 duration-500">
 
                     {/* Page Header */}
                     <div className="relative flex justify-between items-center p-4">
@@ -51,9 +51,9 @@ function BookDetails() {
            
             
             <div className="flex flex-col pt-10  items-start">
-                <div className="book-header  flex md:flex-row gap-12 flex-col w-full">
+                <div className="book-header  flex md:flex-row gap-8 flex-col w-full">
 
-<div className='img-wrapper  flex flex-col items-center justify-center gap-2'>
+<div className='img-wrapper  flex flex-col items-center justify-start gap-2'>
                     <div className="w-64 h-80  flex-shrink-0 rounded-2xl overflow-hidden mx-auto md:mx-0 border-4 border-white transform hover:rotate-1 transition-transform duration-300">
                                 {book.cover ? (
                                     <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
@@ -77,16 +77,52 @@ function BookDetails() {
 
 
 
-                         <div className="book-main-info md:w-full">
-                        <h1 className="text-4xl md:text-5xl font-bold font-display text-text-primary mb-2 leading-tight">
-                            {book.title}
-                        </h1>
-                        <p className="text-sm text-gray-400 font-medium ">by {book.author}</p>
-                             <div className="flex-1 mt-6">
-                            <h2 className="text-sm sm:text-base font-bold text-gray-500 uppercase tracking-widest mb-2">About this book</h2>
+                         <div className="book-main-info flex flex-col gap-6 md:w-full">
+                            <div className="book-title">
+
+                                <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold font-display text-text-primary mb-2 break-all leading-tight md:leading-snug">
+                                    {book.title}
+                                </h1>
+
+                                <p className="text-sm text-gray-400 font-medium ">by {book.author}</p>
+                            </div>
+                    
+                             <div className="">
+                            <h2 className="text-sm sm:text-base font-bold text-gray-500  tracking-widest mb-2">About this book</h2>
                             <div className="bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md border-2 border-border-default rounded-2xl p-4 hover:border-accent-primary/20 transition-all text-gray-700 leading-relaxed max-w-2xl">
                                 {book.description || " No Description"}
                             </div>
+                        </div>
+
+                        <div className="book-actions flex gap-2 p-1 flex-col">
+                            
+                            <div className="book-icons">
+        <button className="p-3 text-gray-400 rounded-x hover:text-red-500 hover:border-red-100 transition-all">
+                                <Heart size={20} />
+                            </button>
+                                <button className="p-3 text-gray-400 rounded-x hover:text-red-500 hover:border-red-100 transition-all">
+                                <CheckCircle2 size={20} />
+                            </button>
+                               
+                                <button className="p-3 text-gray-400 rounded-x hover:text-red-500 hover:border-red-100 transition-all">
+                                <Bookmark size={20} />
+                            </button>
+                            <button className="p-3 text-gray-400 rounded-x hover:text-red-500 hover:border-red-100 transition-all">
+                                <Share2 size={20} />
+                            </button>
+                             <button className="p-3 text-gray-400 rounded-x hover:text-red-500 hover:border-red-100 transition-all">
+                                <Trash2 size={20} />
+                            </button>
+                            </div>
+ <div className="">
+                            <button 
+                                onClick={() => navigate(`/reader/${book.id}`)}
+                                className="px-8 py-3 bg-accent-primary text-white rounded-xl font-bold hover:shadow-lg hover:shadow-accent-primary/20 hover:-translate-y-0.5 transition-all"
+                            >
+                                Continue Reading
+                            </button>
+                            </div>                    
+                        
                         </div>
                     </div>
                 </div>
@@ -100,7 +136,7 @@ function BookDetails() {
                     <div className="space-y-8">
                    
 
-                        <div className="flex gap-4 p-1">
+                        {/* <div className="flex gap-4 p-1">
                             <button 
                                 onClick={() => navigate(`/reader/${book.id}`)}
                                 className="px-8 py-3 bg-accent-primary text-white rounded-xl font-bold hover:shadow-lg hover:shadow-accent-primary/20 hover:-translate-y-0.5 transition-all"
@@ -110,7 +146,7 @@ function BookDetails() {
                             <button className="p-3 bg-white border border-border-default text-gray-400 rounded-xl hover:text-red-500 hover:border-red-100 transition-all">
                                 <Heart size={24} />
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>
