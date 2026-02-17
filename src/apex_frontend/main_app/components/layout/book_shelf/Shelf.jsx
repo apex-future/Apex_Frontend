@@ -12,7 +12,7 @@ function Shelf({ shelves }) {
 
   return (
     // Main Container: A responsive grid displaying each shelf as a separate card.
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10 py-8'>
+    <div className='grid grid-cols-[repeat(auto-fill,minmax(min(100%,360px),1fr))] gap-8 lg:gap-10 py-8'>
       {shelves.map((shelf, index) => {
         const actualBooksCount = shelf.books?.length || 0;
         const fillersCount = Math.max(0, 3 - actualBooksCount);

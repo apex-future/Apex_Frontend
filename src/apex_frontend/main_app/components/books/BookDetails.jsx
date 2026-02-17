@@ -79,7 +79,7 @@ function BookDetails() {
                 
                         <div className="max-w-2xl">
                             <h2 className="text-xs sm:text-sm font-bold text-text-placeholder uppercase tracking-[0.2em] mb-4">About this book</h2>
-                            <div className="bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md border-2 border-border-default rounded-2xl p-6 sm:p-8 hover:border-accent-primary/10 hover:shadow-xl hover:shadow-neutral-200/50 transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base">
+                            <div className="bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md border-2 border-border-default rounded-2xl p-6 sm:p-8 hover:border-accent-primary/10 hover:shadow-sm hover:shadow-neutral-200/50 transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base">
                                 {book.description || "No description available for this title."}
                             </div>
                         </div>
@@ -118,9 +118,9 @@ function BookDetails() {
                 </div>
              
                 
-                <div className="overflow-hidden max-w-full bg-bg-subtle p-2 border-2 border-border-default rounded-2xl">
+                <div className="overflow-hidden max-w-full bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md  p-2 border-2 border-border-default rounded-2xl">
            
-                    <ul className="flex gap-6 overflow-x-auto py-2 bg-bg-primary px-2 rounded-full items-center ">
+                    <ul className="flex gap-6 overflow-x-auto py-2 bg-white px-2 rounded-full items-center ">
                         <li className='text-base font-medium text-accent-primary p-2 rounded-full px-4 bg-accent-subtle transition-all hover:bg-accent-hover hover:text-accent-primary'>Chat</li>
                         <li className='text-base font-medium text-text-primary'>Bookmarks</li>
                         <li className='text-base font-medium text-text-primary'>Notes</li>
