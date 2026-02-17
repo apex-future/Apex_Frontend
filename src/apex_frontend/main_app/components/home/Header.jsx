@@ -30,7 +30,7 @@ export default function Header({ activeTab = 'All', setActiveTab = () => { }, la
                 <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
                 <div
                     onClick={() => lastReadBook && navigate(`/reader/${lastReadBook.id}`)}
-                    className={`bg-white rounded-2xl p-4 md:p-6 border-2 border-border-default hover:border-text-tertiary hover:shadow-xl hover:shadow-neutral-200/50 transition-all duration-300 group ${lastReadBook ? 'cursor-pointer' : ''}`}
+                    className={`bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md rounded-2xl p-4 md:p-6 border-2 border-border-default hover:border-text-tertiary hover:shadow-xl hover:shadow-neutral-200/50 transition-all duration-300 group ${lastReadBook ? 'cursor-pointer' : ''}`}
                 >
                     <div className="flex gap-4 md:gap-8">
                         <div className="w-28 h-40 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-lg flex-shrink-0 bg-neutral-100 border border-border-subtle group-hover:scale-[1.02] transition-transform duration-300">

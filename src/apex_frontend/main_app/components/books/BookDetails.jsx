@@ -4,7 +4,7 @@ import { BookContext } from '../../context/BookContext';
 import { ArrowLeft,Heart,Share2,MoreHorizontal,Bookmark,Pen,Star,CheckCircle2,Trash2 } from 'lucide-react';
 
 import BookCover from './BookCover';
-
+import DocumentChatHistory from './book_details_related/DocumentChatHistory';
 function BookDetails() {
     const { bookId } = useParams();
     const navigate = useNavigate();
@@ -35,10 +35,10 @@ function BookDetails() {
                     onClick={() => navigate(-1)} 
                     className="p-2 hover:bg-neutral-100 rounded-lg transition-all group"
                 >
-                    <ArrowLeft size={20} className="text-text-secondary group-hover:-translate-x-1 transition-transform" /> 
+                    <ArrowLeft size={20} className="text-text-primary group-hover:-translate-x-1 transition-transform" /> 
                 </button>
                 
-                <h3 className='text-lg font-bold text-text-primary tracking-tight'>Book Details</h3>
+                <h3 className='text-lg font-semibold text-text-tertiary tracking-tight'>Book Details</h3>
                 
                 <div className="w-9" />
             </div>
@@ -57,10 +57,10 @@ function BookDetails() {
                         </div>
 
                         <div className="flex flex-wrap items-center justify-center gap-3">
-                            <span className="bg-accent-subtle text-accent-pressed text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
+                            <span className="bg-accent-subtle text-accent-pressed text-xs font-semibold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
                                 {book.status || 'Library'}
                             </span>
-                            <span className="bg-neutral-100 text-text-tertiary text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
+                            <span className="bg-neutral-100 text-text-tertiary text-xs font-semibold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
                                 {Math.round(book.progress || 0)}% Completed
                             </span>
                         </div>
@@ -71,7 +71,7 @@ function BookDetails() {
 
                     <div className="book-main-info flex flex-col gap-8 md:w-full">
                         <div className="book-title">
-                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-display text-text-primary mb-3 tracking-tightest leading-premium-tight">
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-display text-text-primary mb-3 tracking-tightest break-all leading-premium-tight">
                                 {book.title}
                             </h1>
                             <p className="text-base sm:text-lg text-text-tertiary font-medium tracking-tight italic">by {book.author}</p>
@@ -79,7 +79,7 @@ function BookDetails() {
                 
                         <div className="max-w-2xl">
                             <h2 className="text-xs sm:text-sm font-bold text-text-placeholder uppercase tracking-[0.2em] mb-4">About this book</h2>
-                            <div className="bg-white border border-border-default rounded-2xl p-6 sm:p-8 hover:border-accent-primary/10 hover:shadow-xl hover:shadow-neutral-200/50 transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base">
+                            <div className="bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md border-2 border-border-default rounded-2xl p-6 sm:p-8 hover:border-accent-primary/10 hover:shadow-xl hover:shadow-neutral-200/50 transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base">
                                 {book.description || "No description available for this title."}
                             </div>
                         </div>
@@ -118,25 +118,20 @@ function BookDetails() {
                 </div>
              
                 
-                <div className="flex-1">
+                <div className="overflow-hidden max-w-full bg-neutral-200 p-2 border-2 border-border-subtle rounded-2xl">
            
-                    
+                    <ul className="flex gap-6 overflow-x-auto py-2 items-center ">
+                        <li className='text-base font-medium bg-neutral-300 p-2 rounded-lg text-text-primary'>Chat</li>
+                        <li className='text-base font-medium text-text-primary'>Bookmarks</li>
+                        <li className='text-base font-medium text-text-primary'>Notes</li>
+                        <li className='text-base font-medium text-text-primary'>Words</li>
+                        <li className='text-base font-medium text-text-primary'>Review</li>
+                        <li className='text-base font-medium text-text-primary'>Advanced</li>
+                    </ul>
                
                     
-                    <div className="space-y-8">
-                   
-
-                        {/* <div className="flex gap-4 p-1">
-                            <button 
-                                onClick={() => navigate(`/reader/${book.id}`)}
-                                className="px-8 py-3 bg-accent-primary text-white rounded-xl font-bold hover:shadow-lg hover:shadow-accent-primary/20 hover:-translate-y-0.5 transition-all"
-                            >
-                                Continue Reading
-                            </button>
-                            <button className="p-3 bg-white border border-border-default text-gray-400 rounded-xl hover:text-red-500 hover:border-red-100 transition-all">
-                                <Heart size={24} />
-                            </button>
-                        </div> */}
+                    <div className="selected-section">
+<DocumentChatHistory />
                     </div>
                 </div>
             </div>
