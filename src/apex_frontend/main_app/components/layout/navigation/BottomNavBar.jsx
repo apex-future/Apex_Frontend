@@ -1,10 +1,33 @@
 import { Home, Plus, User } from 'lucide-react'
-import React, { useContext } from 'react'
+import React, { useContext, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BookContext } from '../../../context/BookContext';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
+
+gsap.registerPlugin(ScrollTrigger);
 
 function BottomNavBar() {
   const { addBookToShelf } = useContext(BookContext);
+  const navRef = useRef(null);
+
+  useGSAP(() => {
+    const showAnim = gsap.from(navRef.current, {
+      yPercent: 200,
+      paused: true,
+      duration: 0.4,
+      ease: "back.out(1.2)"
+    }).progress(1);
+
+    ScrollTrigger.create({
+      start: "top top",
+      end: "+=1000000",
+      onUpdate: (self) => {
+        self.direction === -1 ? showAnim.play() : showAnim.reverse();
+      }
+    });
+  }, { scope: navRef });
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -15,7 +38,10 @@ function BottomNavBar() {
     e.target.value = '';
   };
   return (
-    <div className='fixed bottom-5 md:hidden left-0 right-0 flex justify-between w-[60%] mx-auto z-[100] min-h-10 border-2 border-border-default bg-white/60 backdrop-blur-md rounded-full items-center p-2 px-3 shadow-lg'>
+    <div 
+      ref={navRef}
+      className='fixed bottom-8 md:hidden left-0 right-0 flex justify-between w-[64%] mx-auto z-[100] min-h-12 border-2 border-border-default bg-white/70 backdrop-blur-xl rounded-full items-center p-2 px-4 shadow-2xl shadow-neutral-400/20'
+    >
       <NavLink
         to="/"
         className={({ isActive }) => `p-2 hover:bg-neutral-100/50 rounded-full transition-all relative flex flex-col items-center group`}

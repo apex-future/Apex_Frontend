@@ -38,7 +38,7 @@ function HomePage({ setIsMobileOpen }) {
     return true;
   });
   return (
-    <div className="pt-3 flex flex-col">
+    <div className="pt-4 flex flex-col gap-6 lg:gap-8">
       <TopNavBar setIsMobileOpen={setIsMobileOpen} onUpload={onUpload} />
 
       <Header

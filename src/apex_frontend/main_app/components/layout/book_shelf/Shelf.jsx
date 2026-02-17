@@ -12,7 +12,7 @@ function Shelf({ shelves }) {
 
   return (
     // Main Container: A responsive grid displaying each shelf as a separate card.
-    <div className='grid grid-cols-1 md:grid-cols-2 gap-8 p-4 pt-10'>
+    <div className='grid grid-cols-[repeat(auto-fill,minmax(min(100%,360px),1fr))] gap-8 lg:gap-10 py-8'>
       {shelves.map((shelf, index) => {
         const actualBooksCount = shelf.books?.length || 0;
         const fillersCount = Math.max(0, 3 - actualBooksCount);
@@ -72,14 +72,14 @@ function Shelf({ shelves }) {
             </div>
 
             {/* Shelf Info: The "Glass" front panel */}
-            <div className="shelf-info absolute inset-x-0 bottom-0 z-10 h-32 rounded-3xl p-5 bg-white/40 backdrop-blur-md border-t border-white/40 flex flex-col justify-end transition-all duration-500 group-hover:bg-white/60">
-               <div className="flex justify-between items-center mb-1">
-                  <h5 className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Shelf Collection</h5>
-                  <span className="text-[10px] font-bold bg-neutral-200/80 px-2 py-0.5 rounded-full text-neutral-600">
+            <div className="shelf-info absolute inset-x-0 bottom-0 z-10 h-32 rounded-3xl p-6 bg-white/60 backdrop-blur-xl border-t-2 border-white/40 flex flex-col justify-end transition-all duration-500 group-hover:bg-white/80 group-hover:shadow-2xl group-hover:shadow-neutral-400/20">
+               <div className="flex justify-between items-center mb-2">
+                  <h5 className="text-[10px] uppercase tracking-[0.2em] text-text-tertiary font-bold">Shelf Collection</h5>
+                  <span className="text-[10px] font-bold bg-accent-subtle/50 px-3 py-1 rounded-full text-accent-pressed shadow-sm">
                     {actualBooksCount} {actualBooksCount === 1 ? 'Book' : 'Books'}
                   </span>
                </div>
-               <h3 className='font-display text-2xl text-text-primary text-center font-bold'>{shelf.shelfName}</h3>
+               <h3 className='font-display text-2xl text-text-primary text-center font-bold tracking-tightest leading-premium-tight'>{shelf.shelfName}</h3>
             </div>
               
           </div>

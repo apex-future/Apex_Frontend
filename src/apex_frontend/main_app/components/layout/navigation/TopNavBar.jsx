@@ -37,9 +37,9 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
         </form>
 
         {/* Upload & Logo Group */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-3 ">
           {/* Desktop Upload Button */}
-          <div className="hidden md:flex items-center">
+          <div className="hidden md:flex items-center h-full">
             <input
               type="file"
               id="top-nav-upload"
@@ -49,14 +49,14 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
             />
             <label
               htmlFor="top-nav-upload"
-              className="flex items-center gap-2 px-4 py-2 bg-accent-primary hover:bg-accent-hover text-white rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
+              className="flex items-center gap-2 px-4 py-2.5 bg-accent-primary hover:bg-accent-hover text-white rounded-full transition-all cursor-pointer shadow-sm "
             >
               <Plus size={18} />
               <span className="text-sm font-medium">Upload</span>
             </label>
           </div>
 
-          <div className="logo-wrapper">
+          <div className="logo-wrapper h-full">
             <img
               src={logo}
               alt="Apex Logo"
