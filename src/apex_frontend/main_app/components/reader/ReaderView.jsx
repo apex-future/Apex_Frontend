@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useMemo, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Settings, Bookmark, Share2 } from 'lucide-react';
 import { BookContext } from '../../context/BookContext';
+import PDFReader from './PDFReader';
 
 function ReaderView() {
     const { books, updateBookProgress } = useContext(BookContext);
@@ -68,6 +69,8 @@ function ReaderView() {
     // 3. Ultra-Stable Scroll Logic (Ref-Based)
     const lastUpdateRef = useRef(0);
     useEffect(() => {
+        if (isPdf) return; // PDF Reader handles its own progress
+
         const handleScroll = () => {
             const b = currentBookRef.current;
             if (!b) return;
@@ -105,17 +108,17 @@ function ReaderView() {
             window.removeEventListener('scroll', handleScroll);
             clearTimeout(timer);
         };
-    }, [bookId, textContent, fileUrl]); // Only re-run if content literally changes
+    }, [bookId, textContent, fileUrl, isPdf]); // Only re-run if content changes
 
     if (!book) return null;
 
     return (
-        <div className="min-h-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-accent-primary/20 flex flex-col relative overflow-hidden">
+        <div className="min-h-screen  bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-accent-primary/20 flex gap-6 flex-col relative overflow-hidden">
             {/* Background elements */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-primary/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-subtle/10 rounded-full blur-[120px] pointer-events-none" />
+            {/* <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-primary/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-subtle/10 rounded-full blur-[120px] pointer-events-none" /> */}
 
-            <header className="fixed top-4 left-4 right-4 bg-white/40 backdrop-blur-2xl border border-white/40 px-4 py-3 flex items-center justify-between z-50 rounded-2xl shadow-sm">
+            <header className="  border-2 border-border-default bg-white/70 backdrop-blur-xl  items-center p-2  shadow-2xl shadow-neutral-400/20">
                 <div className="flex items-center gap-4">
                     <button onClick={() => navigate('/')} className="p-2.5 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700">
                         <ArrowLeft size={22} />
@@ -135,16 +138,24 @@ function ReaderView() {
                 </div>
             </header>
 
-            <main className="flex-1 w-full mx-auto pb-40 pt-28">
+            <main className="flex-1 w-full mx-auto ">
                 {fileUrl ? (
                     isPdf ? (
-                        <div className="h-[calc(100vh-220px)] px-2 sm:px-6 flex flex-col gap-4">
-                            <iframe src={fileUrl} className="w-full h-full border border-white/30 rounded-3xl shadow-2xl bg-white/10 backdrop-blur-sm" title="PDF Reader" />
-                            <div className="text-center font-sans">
-                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-widest text-accent-primary hover:underline font-black">
-                                    Enhanced View ↗
-                                </a>
-                            </div>
+                        <div className="h-[calc(100vh-140px)] w-full flex flex-col">
+                            <PDFReader 
+                                fileUrl={fileUrl} 
+                                initialPage={localPages.current}
+                                onPageChange={(newPage, totalPages) => {
+                                    setLocalPages({ current: newPage, total: totalPages || localPages.total });
+                                    const newProgress = Math.round((newPage / (totalPages || 1)) * 100);
+                                    setLocalProgress(newProgress);
+                                    
+                                    // Sync with backend
+                                    if (book) {
+                                        updateBookProgress(book.id, newProgress, newPage, totalPages);
+                                    }
+                                }}
+                            />
                         </div>
                     ) : (
                         <div className="flex justify-center p-4">
@@ -165,7 +176,7 @@ function ReaderView() {
                 )}
             </main>
 
-            <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] sm:w-[500px] bg-[#1a1a1a]/95 backdrop-blur-2xl px-6 py-4 flex flex-col gap-3 rounded-[24px] shadow-2xl z-50 border border-white/10 group transition-all duration-500 hover:scale-[1.02]">
+            {/* <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] sm:w-[500px] bg-[#1a1a1a]/95 backdrop-blur-2xl px-6 py-4 flex flex-col gap-3 rounded-[24px] shadow-2xl z-50 border border-white/10 group transition-all duration-500 hover:scale-[1.02]">
                 <div className="flex items-center justify-between text-[10px] font-sans font-black uppercase tracking-[0.25em] text-gray-400">
                     <span className="text-accent-primary brightness-125">{isPdf ? 'Interactive PDF' : 'Immersive Reading'}</span>
                     <span className="text-white/80 tabular-nums">{`Page ${localPages.current} / ${localPages.total}`}</span>
@@ -176,7 +187,7 @@ function ReaderView() {
                     </div>
                     <span className="font-sans font-black text-white text-xs tabular-nums w-8">{localProgress}%</span>
                 </div>
-            </footer>
+            </footer> */}
         </div>
     );
 }
