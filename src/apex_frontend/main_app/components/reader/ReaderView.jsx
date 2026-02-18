@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Settings, Bookmark, Share2 } from 'lucide-react';
 import { BookContext } from '../../context/BookContext';
 import PDFReader from './PDFReader';
+import ReaderNavBar from './ReaderNavBar';
 
 function ReaderView() {
     const { books, updateBookProgress } = useContext(BookContext);
@@ -114,31 +114,10 @@ function ReaderView() {
 
     return (
         <div className="min-h-screen  bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-accent-primary/20 flex gap-6 flex-col relative overflow-hidden">
-            {/* Background elements */}
-            {/* <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-primary/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-subtle/10 rounded-full blur-[120px] pointer-events-none" /> */}
-
-            <header className="  border-2 border-border-default bg-white/70 backdrop-blur-xl  items-center p-2  shadow-2xl shadow-neutral-400/20">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/')} className="p-2.5 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700">
-                        <ArrowLeft size={22} />
-                    </button>
-                    <div className="flex flex-col">
-                        <h1 className="font-display font-bold text-sm sm:text-base line-clamp-1">{book.title}</h1>
-                        <p className="font-sans text-[10px] uppercase tracking-widest text-gray-500 font-bold">{book.author}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button className="p-2 hover:bg-white/60 rounded-lg hidden sm:block"><Bookmark size={18} /></button>
-                    <button className="p-2 hover:bg-white/60 rounded-lg hidden sm:block"><Settings size={18} /></button>
-                    <button className="p-2 hover:bg-white/60 rounded-lg"><Share2 size={18} /></button>
-                    <button className="px-4 py-2 bg-accent-primary text-white rounded-xl text-xs font-bold shadow-lg hover:shadow-accent-primary/40 transition-all active:scale-95">
-                        Ask Apex
-                    </button>
-                </div>
-            </header>
-
-            <main className="flex-1 w-full mx-auto ">
+            
+          
+            <ReaderNavBar book={book} navigate={navigate} />
+            {/* <main className="flex-1 w-full mx-auto ">
                 {fileUrl ? (
                     isPdf ? (
                         <div className="h-[calc(100vh-140px)] w-full flex flex-col">
@@ -174,7 +153,7 @@ function ReaderView() {
                         )}
                     </div>
                 )}
-            </main>
+            </main> */}
 
             {/* <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] sm:w-[500px] bg-[#1a1a1a]/95 backdrop-blur-2xl px-6 py-4 flex flex-col gap-3 rounded-[24px] shadow-2xl z-50 border border-white/10 group transition-all duration-500 hover:scale-[1.02]">
                 <div className="flex items-center justify-between text-[10px] font-sans font-black uppercase tracking-[0.25em] text-gray-400">
