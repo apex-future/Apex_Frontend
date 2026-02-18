@@ -1,14 +1,33 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContext';
 import { ArrowLeft,Heart,Share2,MoreHorizontal,Bookmark,Pen,Star,CheckCircle2,Trash2 } from 'lucide-react';
 
 import BookCover from './BookCover';
 import DocumentChatHistory from './book_details_related/DocumentChatHistory';
+import DocumentBookmarks from './book_details_related/DocumentBookmarks';
+import DocumentNotes from './book_details_related/DocumentNotes';
+import DocumentsWords from './book_details_related/DocumentsWords';
+import DocumentsReviews from './book_details_related/DocumentsReviews';
+import DocumentsAdvanced from './book_details_related/DocumentsAdvanced';
+
 function BookDetails() {
     const { bookId } = useParams();
     const navigate = useNavigate();
     const { books } = useContext(BookContext);
+
+    const [activeTab, setActiveTab] = useState('chat');
+
+    const tabs = [
+        { id: 'chat', label: 'Chat', component: DocumentChatHistory },
+        { id: 'bookmarks', label: 'Bookmarks', component: DocumentBookmarks },
+        { id: 'notes', label: 'Notes', component: DocumentNotes },
+        { id: 'words', label: 'Words', component: DocumentsWords },
+        { id: 'review', label: 'Review', component: DocumentsReviews },
+        { id: 'advanced', label: 'Advanced', component: DocumentsAdvanced }
+    ];
+
+    const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || tabs[0].component;
 
     // Find the book by converting ID to string for comparison (as useParams returns strings)
     const book = books.find(b => String(b.id) === bookId);
@@ -118,20 +137,27 @@ function BookDetails() {
                 </div>
              
                 
-                <div className="overflow-hidden max-w-full bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md  p-2 border-2 border-border-default rounded-2xl">
+                <div className="overflow-hidden max-w-[750px] mx-auto w-full bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md  p-2 border-2 border-border-default rounded-2xl">
            
                     <ul className="flex gap-6 overflow-x-auto py-2 bg-white px-2 rounded-full items-center ">
-                        <li className='text-base font-medium text-accent-primary p-2 rounded-full px-4 bg-accent-subtle transition-all hover:bg-accent-hover hover:text-accent-primary'>Chat</li>
-                        <li className='text-base font-medium text-text-primary'>Bookmarks</li>
-                        <li className='text-base font-medium text-text-primary'>Notes</li>
-                        <li className='text-base font-medium text-text-primary'>Words</li>
-                        <li className='text-base font-medium text-text-primary'>Review</li>
-                        <li className='text-base font-medium text-text-primary'>Advanced</li>
+                        {tabs.map((tab) => (
+                            <li 
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`text-base font-medium transition-all p-2 px-4 rounded-full cursor-pointer whitespace-nowrap
+                                    ${activeTab === tab.id 
+                                        ? 'text-accent-primary bg-accent-subtle hover:border border-accent-hover' 
+                                        : 'text-text-primary hover:text-text-secondary hover:bg-neutral-50'
+                                    }`}
+                            >
+                                {tab.label}
+                            </li>
+                        ))}
                     </ul>
                
                     
-                    <div className="selected-section">
-<DocumentChatHistory />
+                    <div className="selected-section mt-2 min-h-[400px]">
+                        <ActiveComponent />
                     </div>
                 </div>
             </div>

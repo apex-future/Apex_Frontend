@@ -110,14 +110,14 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                   <NavLink
                     to={item.path}
                     className={`
-                      flex items-center gap-3 px-3 py-2.5 rounded-lg
-                      transition-all duration-200
+                      flex items-center px-3 py-2.5 rounded-full
+                      transition-all duration-300
                       font-medium relative group
-                      ${!isExpanded ? 'justify-center' : ''}
+                      ${!isExpanded ? 'justify-center' : 'gap-3'}
                       ${
                         isActive 
-                          ? 'bg-white/80 text-neutral-900 border border-neutral-300/60 shadow-sm' 
-                          : 'text-neutral-600 hover:bg-white/50 hover:text-neutral-900'
+                          ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm' 
+                          : 'text-neutral-600 hover:bg-neutral-300/50 hover:text-neutral-900'
                       }
                     `}
                     title={!isExpanded ? item.label : ''}
@@ -125,21 +125,18 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                   >
                     <Icon 
                       size={20} 
-                      className={`flex-shrink-0 transition-colors ${isActive ? 'text-accent-primary' : ''}`}
+                      className={`flex-shrink-0 transition-colors z-10`}
                     />
                     <span
                       className={`
-                        whitespace-nowrap transition-all duration-300 text-sm
+                        whitespace-nowrap transition-all duration-300 text-sm z-10
                         ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
                       `}
                     >
                       {item.label}
                     </span>
-
-                    {/* Left Accent Bar: Displayed only for the active route */}
-                    {isActive && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-accent-primary rounded-r-full" />
-                    )}
+                    
+                    {/* Glowing effect overlay - optional extra layer for more depth if needed, but the gradient bg handles most of it */}
                   </NavLink>
                 </li>
               );
@@ -152,13 +149,13 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
               <NavLink
                 to="#settings"
                 className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-lg
-                  transition-all duration-200
-                  font-medium relative
-                  ${!isExpanded ? 'justify-center' : ''}
+                  flex items-center px-3 py-2.5 rounded-full
+                  transition-all duration-300
+                  font-medium relative overflow-hidden
+                  ${!isExpanded ? 'justify-center' : 'gap-3'}
                   ${
                     location.hash === '#settings' 
-                      ? 'bg-white/80 text-neutral-900 border border-neutral-300/60 shadow-sm' 
+                       ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm' 
                       : 'text-neutral-600 hover:bg-white/50 hover:text-neutral-900'
                   }
                 `}
@@ -166,20 +163,16 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
               >
                 <Cog 
                   size={20} 
-                  className={`flex-shrink-0 transition-colors ${location.hash === '#settings' ? 'text-accent-primary' : ''}`}
+                  className={`flex-shrink-0 transition-colors z-10`}
                 />
                 <span
                   className={`
-                    whitespace-nowrap transition-all duration-300 text-sm
+                    whitespace-nowrap transition-all duration-300 text-sm z-10
                     ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
                   `}
                 >
                   Settings
                 </span>
-
-                {location.hash === '#settings' && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-accent-primary rounded-r-full" />
-                )}
               </NavLink>
             </li>
           </ul>
