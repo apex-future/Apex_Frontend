@@ -4,8 +4,8 @@ import FirstLayerNavBar from './reading_navigations/FirstLayerNavBar';
 function ReaderNavBar({ book, navigate }) {
     return (
         <div className='reading-nav-bar h-full w-full relative'>
-        <FirstLayerNavBar />
-          
+            <FirstLayerNavBar navigate={navigate} />
+
         </div>
     )
 }

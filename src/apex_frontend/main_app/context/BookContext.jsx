@@ -1,34 +1,30 @@
-import React, { createContext, useState, useCallback, useEffect } from 'react';
-// Import the restructured shelves data
+import React, { createContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { shelves as initialShelves } from '../data/shelves';
 import { getAllBooks, saveBook, updateBook } from '../utils/db';
 
-// Create a Context object to provide data to the rest of the application
 export const BookContext = createContext();
 
-/**
- * BookProvider:
- * Manages the global state for books organized into named shelves.
- */
 export const BookProvider = ({ children }) => {
-  // State for the array of shelf objects
   const [shelves, setShelves] = useState(initialShelves);
 
-  // Derived state: Flatten all shelf.books arrays into a single list.
-  const books = shelves.flatMap((shelf) => shelf.books);
+  // Directly calculate books instead of complex memo to ensure zero delay in reactivity
+  const books = (shelves || []).flatMap((shelf) => shelf.books || []);
 
-  // 1. Initial Load from IndexedDB
   useEffect(() => {
     const loadBooks = async () => {
       try {
         const storedBooks = await getAllBooks();
-        if (storedBooks && storedBooks.length > 0) {
-          // Reconstruct shelves with stored books
-          setShelves(prevShelves => 
+        console.log("Loaded books from DB:", storedBooks?.length);
+
+        if (storedBooks && Array.isArray(storedBooks) && storedBooks.length > 0) {
+          setShelves(prevShelves =>
             prevShelves.map(shelf => {
-              // Filter stored books that belong to this shelf name (defaulting to 'Active Reading' if not found)
-              // Note: We might want to store shelfName in the book object itself for better tracking
-              const shelfBooks = storedBooks.filter(b => b.shelfName === shelf.shelfName);
+              const shelfBooks = storedBooks.filter(b => {
+                if (shelf.shelfName === 'Active Reading') {
+                  return b.shelfName === shelf.shelfName || !b.shelfName;
+                }
+                return b.shelfName === shelf.shelfName;
+              });
               return { ...shelf, books: shelfBooks };
             })
           );
@@ -40,27 +36,28 @@ export const BookProvider = ({ children }) => {
     loadBooks();
   }, []);
 
-  /**
-   * Function to add a book to a specific shelf.
-   */
   const addBookToShelf = useCallback(async (fileObject, shelfName = 'Active Reading') => {
+    if (!fileObject) return;
+
     const newBook = {
       id: Date.now(),
       title: fileObject.name || "New Document",
       author: "Uploaded User",
       progress: 0,
       currentPage: 0,
-      totalPages: 1, // Default
+      totalPages: 1,
       status: 'new',
-      shelfName: shelfName, // Store shelf association
+      shelfName: shelfName,
       lastAccessed: new Date().toISOString(),
-      cover: null, // Default cover
-      file: fileObject, // STORE THE ACTUAL FILE!
+      cover: null,
+      file: fileObject,
       isLocal: true
     };
 
     try {
       await saveBook(newBook);
+      console.log("Saved new book:", newBook.title);
+
       setShelves((prevShelves) =>
         prevShelves.map((shelf) =>
           shelf.shelfName === shelfName
@@ -73,9 +70,6 @@ export const BookProvider = ({ children }) => {
     }
   }, []);
 
-  /**
-   * Function to update the progress of a book by its unique ID.
-   */
   const updateBookProgress = useCallback(async (id, progress, currentPage, totalPages) => {
     setShelves((prevShelves) => {
       let updatedBook = null;
@@ -89,7 +83,7 @@ export const BookProvider = ({ children }) => {
           return book;
         }),
       }));
-      
+
       if (updatedBook) {
         updateBook(updatedBook).catch(err => console.error("Failed to update progress in IDB:", err));
       }
@@ -97,16 +91,16 @@ export const BookProvider = ({ children }) => {
     });
   }, []);
 
-  /**
-   * Function to update the last accessed timestamp of a book.
-   */
   const handleBookClick = useCallback((id) => {
+    if (!id) return;
+    const targetId = typeof id === 'string' ? parseInt(id) : id;
+
     setShelves((prevShelves) => {
       let updatedBook = null;
       const newShelves = prevShelves.map((shelf) => ({
         ...shelf,
         books: shelf.books.map((book) => {
-          if (book.id === parseInt(id)) {
+          if (book.id === targetId) {
             updatedBook = { ...book, lastAccessed: new Date().toISOString() };
             return updatedBook;
           }
@@ -122,13 +116,12 @@ export const BookProvider = ({ children }) => {
   }, []);
 
   return (
-    // Provide both the structured shelves and the flat list of books
-    <BookContext.Provider value={{ 
-      shelves, 
-      books, 
-      addBookToShelf, 
-      updateBookProgress, 
-      handleBookClick 
+    <BookContext.Provider value={{
+      shelves,
+      books,
+      addBookToShelf,
+      updateBookProgress,
+      handleBookClick
     }}>
       {children}
     </BookContext.Provider>

@@ -1,7 +1,9 @@
 import { ArrowLeft, Settings, Flame, Book, BookOpen, Calendar, TrendingUp } from 'lucide-react'
 import dummyProfileImg from "../../../../../assets/user_imgs/user_img_1.jpg"
+import { useNavigate } from 'react-router-dom'
 
 function Profile() {
+  const navigate = useNavigate();
   // Mock data - replace with actual user data from context/state
   const user = {
     name: 'User',
@@ -29,10 +31,13 @@ function Profile() {
       <div className="top-wrapper relative overflow-hidden bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] rounded-b-[2rem] pb-8">
         {/* Glassmorphic overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,255,255,0.1),rgba(255,255,255,0))]"></div>
-        
+
         {/* Navigation */}
         <div className="relative flex justify-between items-center p-4">
-          <button className="p-2 hover:bg-white/10 rounded-lg transition-all">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-white/10 rounded-lg transition-all"
+          >
             <ArrowLeft className='text-white' size={20} />
           </button>
           <h3 className='text-white text-lg font-semibold'>Profile</h3>
@@ -46,10 +51,10 @@ function Profile() {
           {/* Avatar with glassmorphic ring */}
           <div className="relative">
             <div className="absolute inset-0 bg-white/20 rounded-full blur-md"></div>
-            <img 
-              src={dummyProfileImg} 
-              alt="Profile" 
-              className='relative size-20 object-cover rounded-full ring-4 ring-white/30' 
+            <img
+              src={dummyProfileImg}
+              alt="Profile"
+              className='relative size-20 object-cover rounded-full ring-4 ring-white/30'
             />
           </div>
 
@@ -79,7 +84,7 @@ function Profile() {
 
       {/* Main Content */}
       <div className="px-4 py-6 space-y-6">
-        
+
         {/* Stats Grid - Minimalistic Monochrome with THICK BORDERS */}
         <div className="grid grid-cols-2 gap-3">
           <StatCard
@@ -181,7 +186,7 @@ const BookRow = ({ book }) => (
       <h3 className="font-medium text-sm text-text-primary truncate mb-1.5">{book.title}</h3>
       <div className="flex items-center gap-2">
         <div className="flex-1 h-1.5 bg-border-default rounded-full overflow-hidden">
-          <div 
+          <div
             className="h-full bg-accent-primary rounded-full transition-all"
             style={{ width: `${book.progress}%` }}
           />

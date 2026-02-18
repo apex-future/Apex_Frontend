@@ -2,7 +2,7 @@ import React from 'react'
 import BookCover from '../books/BookCover';
 import { useNavigate } from 'react-router-dom';
 
-export default function Header({ activeTab = 'All', setActiveTab = () => { }, lastReadBook }) {
+export default function Header({ lastReadBook }) {
     const user = { name: "User" };
     const navigate = useNavigate();
 
@@ -14,8 +14,6 @@ export default function Header({ activeTab = 'All', setActiveTab = () => { }, la
         totalPages: 0,
         cover: null
     };
-
-    const tabs = ['All', 'Completed', 'Uncompleted', 'New'];
 
     return (
         <div className="w-full">
@@ -68,24 +66,6 @@ export default function Header({ activeTab = 'All', setActiveTab = () => { }, la
                         </div>
                     </div>
                 </div>
-{/* 
-                <div className="overflow-x-auto">
-                    <nav className="flex">
-                        <ul className="flex flex-row gap-10 sm:gap-8 lg:gap-10 my-5 font-medium whitespace-nowrap">
-                            {tabs.map((tab) => (
-                                <li key={tab}
-                                    className={`relative group cursor-pointer ${activeTab === tab ? 'text-indigo-600' : ''}`}
-                                    onClick={() => setActiveTab(tab)}
-                                >
-                                    <a href="#" className="group-hover:text-indigo-600 transition-colors duration-300" onClick={(e) => e.preventDefault()}>
-                                        {tab}
-                                    </a>
-                                    <span className={`absolute bottom-[-4px] left-0 h-0.5 bg-indigo-600 transition-all duration-300 ${activeTab === tab ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
-                                </li>
-                            ))}
-                        </ul>
-                    </nav>
-                </div> */}
             </div>
         </div>
     )

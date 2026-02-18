@@ -29,7 +29,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
     { icon: Home, label: 'Home', path: '/' },
     { icon: Book, label: 'Book Shelf', path: '/bookshelf' },
     { icon: Star, label: 'Favourite', path: '#favourite' },
-    { icon: WholeWord, label: 'Dictionary', path: '#dictionary' },
+    { icon: WholeWord, label: 'Dictionary', path: '/dictionary' },
     { icon: Sparkle, label: 'ApexAi', path: '#apexai' },
     { icon: Pen, label: 'Notes', path: '#notes' },
   ];
@@ -92,18 +92,18 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
           <ul className="flex flex-col gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
-              
+
               /**
                * Custom isActive Logic:
                * 1. Hash Links (#): Match exactly only if the URL hash matches.
                * 2. Home (/): Matches only if path is exactly '/' and there is no hash.
                * 3. Other Routes: Match the pathname directly.
                */
-              const isActive = item.path.startsWith('#') 
-                ? location.hash === item.path 
-                : (item.path === '/' 
-                    ? location.pathname === '/' && location.hash === '' 
-                    : location.pathname === item.path);
+              const isActive = item.path.startsWith('#')
+                ? location.hash === item.path
+                : (item.path === '/'
+                  ? location.pathname === '/' && location.hash === ''
+                  : location.pathname === item.path);
 
               return (
                 <li key={item.label}>
@@ -114,17 +114,16 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                       transition-all duration-300
                       font-medium relative group
                       ${!isExpanded ? 'justify-center' : 'gap-3'}
-                      ${
-                        isActive 
-                          ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm' 
-                          : 'text-neutral-600 hover:bg-neutral-300/50 hover:text-neutral-900'
+                      ${isActive
+                        ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm'
+                        : 'text-neutral-600 hover:bg-neutral-300/50 hover:text-neutral-900'
                       }
                     `}
                     title={!isExpanded ? item.label : ''}
                     onClick={() => isMobileOpen && closeMobileNav()}
                   >
-                    <Icon 
-                      size={20} 
+                    <Icon
+                      size={20}
                       className={`flex-shrink-0 transition-colors z-10`}
                     />
                     <span
@@ -135,7 +134,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                     >
                       {item.label}
                     </span>
-                    
+
                     {/* Glowing effect overlay - optional extra layer for more depth if needed, but the gradient bg handles most of it */}
                   </NavLink>
                 </li>
@@ -153,16 +152,15 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                   transition-all duration-300
                   font-medium relative overflow-hidden
                   ${!isExpanded ? 'justify-center' : 'gap-3'}
-                  ${
-                    location.hash === '#settings' 
-                       ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm' 
-                      : 'text-neutral-600 hover:bg-white/50 hover:text-neutral-900'
+                  ${location.hash === '#settings'
+                    ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm'
+                    : 'text-neutral-600 hover:bg-white/50 hover:text-neutral-900'
                   }
                 `}
                 title={!isExpanded ? 'Settings' : ''}
               >
-                <Cog 
-                  size={20} 
+                <Cog
+                  size={20}
                   className={`flex-shrink-0 transition-colors z-10`}
                 />
                 <span
