@@ -116,8 +116,8 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                       ${!isExpanded ? 'justify-center' : ''}
                       ${
                         isActive 
-                          ? 'bg-white/80 text-neutral-900 border border-neutral-300/60 shadow-sm' 
-                          : 'text-neutral-600 hover:bg-white/50 hover:text-neutral-900'
+                          ? 'bg-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm' 
+                          : 'text-neutral-600 hover:bg-neutral-300/50 hover:text-neutral-900'
                       }
                     `}
                     title={!isExpanded ? item.label : ''}

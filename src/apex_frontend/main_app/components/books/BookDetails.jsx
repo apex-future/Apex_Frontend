@@ -9,6 +9,7 @@ import DocumentBookmarks from './book_details_related/DocumentBookmarks';
 import DocumentNotes from './book_details_related/DocumentNotes';
 import DocumentsWords from './book_details_related/DocumentsWords';
 import DocumentsReviews from './book_details_related/DocumentsReviews';
+import DocumentsAdvanced from './book_details_related/DocumentsAdvanced';
 
 function BookDetails() {
     const { bookId } = useParams();
@@ -23,7 +24,7 @@ function BookDetails() {
         { id: 'notes', label: 'Notes', component: DocumentNotes },
         { id: 'words', label: 'Words', component: DocumentsWords },
         { id: 'review', label: 'Review', component: DocumentsReviews },
-        { id: 'advanced', label: 'Advanced', component: () => <div className="p-4 text-center text-text-tertiary">Advanced features coming soon</div> }
+        { id: 'advanced', label: 'Advanced', component: DocumentsAdvanced }
     ];
 
     const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || tabs[0].component;
@@ -155,7 +156,7 @@ function BookDetails() {
                     </ul>
                
                     
-                    <div className="selected-section min-h-[400px]">
+                    <div className="selected-section mt-2 min-h-[400px]">
                         <ActiveComponent />
                     </div>
                 </div>
