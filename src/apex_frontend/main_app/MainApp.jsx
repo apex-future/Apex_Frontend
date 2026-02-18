@@ -4,7 +4,7 @@ import AsideNavBar from './components/layout/navigation/AsideNavBar';
 import NavBarProvider from './components/layout/navigation/NavBarContext';
 import { BookProvider } from './context/BookContext';
 import TopNavBar from './components/layout/navigation/TopNavBar';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 // Page level components
 import HomePage from './components/home/HomePage';
 import BottomNavBar from './components/layout/navigation/BottomNavBar';
@@ -24,6 +24,8 @@ function MainApp() {
     closeAside: () => setAsideIsOpen(false),
     openAside: () => setAsideIsOpen(true)
   };
+
+      const location = useLocation();
 
   return (
     <div className='flex relative min-h-screen bg-bg-elevated'>
@@ -48,7 +50,9 @@ function MainApp() {
               <Route path="/book/:bookId" element={<BookDetails />} />
             </Routes>
           </main>
-          <BottomNavBar />
+          
+          {/* Hide bottom navbar when reading a book */}
+          {!location.pathname.startsWith('/reader') && <BottomNavBar />}
         </div>
       </BookProvider>
     </div>

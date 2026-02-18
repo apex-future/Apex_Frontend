@@ -3,7 +3,7 @@ import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen,Lock } from 'lucide-r
 function FirstLayerNavBar() {
   return (
     <div className='absolute top-0 left-0 right-0 z-50 flex flex-col  justify-between  p-2 w-full h-screen'>
-        <div className='flex top-bar items-center justify-between w-full'>
+        <div className='flex top-bar pb-4 items-center justify-between w-full'>
           <div>
              <button onClick={() => navigate('/')} className="p-2.5 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700">
                     <ArrowLeft size={20} strokeWidth={1.5} />
@@ -19,7 +19,7 @@ function FirstLayerNavBar() {
             </div>
         </div>
 
-        <div className="bottom-bar flex flex-col gap-4  items-center">
+        <div className="bottom-bar flex flex-col gap-2  items-center">
             <div className='flex items-center justify-between w-full'>
                <button className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'>
                <Lock strokeWidth={1.5}  size={20} />
@@ -29,6 +29,11 @@ function FirstLayerNavBar() {
                </button>
             </div>
             <div className="progress w-[90%] ">
+                
+                <div className="text-progress mb-2 flex items-center justify-between">
+                  <span className="percent text-sm">50%</span>
+                  <span className="chapter text-sm">page 1 of 10</span>
+                </div>
                 <div className="progress-bar h-1.5 rounded-full w-full bg-accent-subtle">
                     <div className="progress-fill h-1.5 rounded-full w-[50%] bg-accent-primary"></div>
                 </div>
