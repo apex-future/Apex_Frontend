@@ -13,6 +13,7 @@ import ReaderView from './components/reader/ReaderView';
 
 import BookShelf from './components/layout/book_shelf/BookShelf';
 import BookDetails from './components/books/BookDetails';
+import Dictionary from './components/dictionary/Dictionary';
 
 function MainApp() {
   // asideIsOpen: State variable that determines if the desktop-style sidebar should be rendered.
@@ -48,6 +49,7 @@ function MainApp() {
               <Route path="/reader/:bookId" element={<ReaderView />} />
               <Route path="/bookshelf" element={<BookShelf />} />
               <Route path="/book/:bookId" element={<BookDetails />} />
+              <Route path="/dictionary" element={<Dictionary />} />
             </Routes>
           </main>
           

@@ -1,28 +1,34 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Bookmark, Plus } from 'lucide-react';
 import BookCard from '../books/BookCard';
 
-export default function Allbooks({ books, onBookClick }) {
-    return (
-        <section className='all-book-section py-4'>
-            <h2 className='text-xl px-4 font-medium mb-4 font-display text-text-primary'>All Books</h2>
+export default function Allbooks({ books = [], onBookClick }) {
+    // Debug: Log books count (will show in user's browser console)
+    console.log("Rendering Allbooks with:", books?.length, "books");
 
-            {!books || books.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 px-6 text-center animate-in fade-in zoom-in duration-700">
+    return (
+        <section className='all-book-section py-4 px-4'>
+            <div className="flex justify-between items-center mb-6">
+                <h2 className='text-2xl font-bold font-display text-text-primary'>Your Library</h2>
+                <span className="text-sm text-text-tertiary bg-bg-subtle px-3 py-1 rounded-full">
+                    {books.length} {books.length === 1 ? 'Book' : 'Books'}
+                </span>
+            </div>
+
+            {(!books || books.length === 0) ? (
+                <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-white/50 rounded-3xl border-2 border-dashed border-border-default">
                     <div className="w-20 h-20 bg-accent-primary/10 rounded-full flex items-center justify-center mb-6 text-accent-primary">
                         <Bookmark size={32} />
                     </div>
-                    <h3 className="text-2xl font-display font-bold text-text-primary mb-2">No library found</h3>
+                    <h3 className="text-2xl font-display font-bold text-text-primary mb-2">Your library is empty</h3>
                     <p className="text-gray-500 max-w-xs mx-auto mb-8">
-                        Your collection is currently empty.
-                        <span className="hidden md:inline"> Click the <span className="font-semibold text-accent-primary underline underline-offset-4 decoration-2">Upload</span> button above to get started.</span>
-                        <span className="md:hidden"> Tap the <span className="p-1.5 bg-accent-primary text-white rounded-lg inline-flex items-center justify-center scale-75 mx-0.5"><Plus size={14} /></span> button below to upload your first PDF.</span>
+                        Upload some PDFs to start building your collection.
                     </p>
                 </div>
             ) : (
-                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,390px),1fr))]  mx-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {books.map((book) => (
-                        <div key={book.id} className="border-r-2  rounded-2xl  border-b-2 border-border-default p-2">
+                        <div key={book.id} className="h-full">
                             <BookCard
                                 book={book}
                                 onClick={onBookClick}

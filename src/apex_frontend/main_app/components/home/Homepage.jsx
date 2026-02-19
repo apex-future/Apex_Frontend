@@ -1,4 +1,4 @@
-import React, { useState, useContext,useEffect } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "./Header";
 import Allbooks from "./Allbooks";
@@ -7,7 +7,6 @@ import { BookContext } from "../../context/BookContext";
 
 function HomePage({ setIsMobileOpen }) {
   const { books, addBookToShelf, handleBookClick } = useContext(BookContext);
-  const [activeTab, setActiveTab] = useState('All');
   const navigate = useNavigate();
 
   const handleBookNavigate = (id) => {
@@ -19,7 +18,7 @@ function HomePage({ setIsMobileOpen }) {
     addBookToShelf(file);
   };
 
-  // 1. Sort logic
+  // Sort logic for "Last Read"
   const sortedByDate = [...books].sort((a, b) => {
     const dateA = a.lastAccessed ? new Date(a.lastAccessed) : new Date(0);
     const dateB = b.lastAccessed ? new Date(b.lastAccessed) : new Date(0);
@@ -28,28 +27,13 @@ function HomePage({ setIsMobileOpen }) {
 
   const lastReadBook = sortedByDate.length > 0 ? sortedByDate[0] : null;
 
-  // 2. Filter logic
-  const filteredBooks = books.filter(book => {
-    const status = (book.status || '').toLowerCase();
-    if (activeTab === 'All') return true;
-    if (activeTab === 'New') return status === 'new' || book.progress === 0;
-    if (activeTab === 'Completed') return status === 'completed' || book.progress === 100;
-    if (activeTab === 'Uncompleted') return status === 'uncompleted' || (book.progress > 0 && book.progress < 100);
-    return true;
-  });
   return (
     <div className="pt-4 flex flex-col gap-6 lg:gap-8">
       <TopNavBar setIsMobileOpen={setIsMobileOpen} onUpload={onUpload} />
 
-      <Header
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        lastReadBook={lastReadBook}
-      />
+      <Header lastReadBook={lastReadBook} />
 
-    
-        <Allbooks books={filteredBooks} onBookClick={handleBookNavigate} />
-    
+      <Allbooks books={books} onBookClick={handleBookNavigate} />
     </div>
   )
 }
