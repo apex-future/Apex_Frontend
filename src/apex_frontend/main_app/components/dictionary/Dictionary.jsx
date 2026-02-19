@@ -57,7 +57,7 @@ function Dictionary() {
     return (
         <div className="w-full min-h-screen bg-bg-primary overflow-x-hidden">
             {/* Header - Glassmorphic with Subtle Gradient */}
-            <div className="relative bg-white/40 backdrop-blur-md border-b border-border-default z-20">
+            <div className="relative bg-white/40 backdrop-blur-md  z-20">
                 <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
                     <button
                         onClick={() => navigate(-1)}
@@ -67,9 +67,9 @@ function Dictionary() {
                     </button>
 
                     <div className="flex items-center gap-2">
-                        <div className="p-2 bg-accent-primary/10 rounded-lg text-accent-primary">
+                        {/* <div className="p-2 bg-accent-primary/10 rounded-lg text-accent-primary">
                             <Book size={20} />
-                        </div>
+                        </div> */}
                         <h1 className="text-xl font-bold font-display text-text-primary">Dictionary</h1>
                     </div>
 
@@ -81,15 +81,15 @@ function Dictionary() {
                 {/* Search Bar - Premium Thick Border System */}
                 <form onSubmit={handleSearch} className="mb-10">
                     <div className="relative group">
-                        <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                        {/* <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                             <Search className="text-text-tertiary group-focus-within:text-accent-primary transition-colors" size={20} />
-                        </div>
+                        </div> */}
                         <input
                             type="text"
                             value={word}
                             onChange={(e) => setWord(e.target.value)}
                             placeholder="Search for a word..."
-                            className="w-full h-16 pl-14 pr-6 bg-white/80 backdrop-blur-sm border-2 border-border-default rounded-2xl text-lg font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm group-hover:border-text-tertiary"
+                            className="w-full h-16 pl-6 pr-6 bg-white/80 backdrop-blur-sm border-2 border-border-default rounded-2xl text-lg font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm placeholder:text-sm group-hover:border-text-tertiary"
                         />
                         <button
                             type="submit"

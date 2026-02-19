@@ -29,7 +29,7 @@ function BookShelf() {
       </div>
 
       {/* Shelves List */}
-      <div className="flex flex-col gap-8 pb-10">
+      <div className="flex mx-auto flex-col w-[90%] gap-8 py-4 pb-10">
         <Shelf shelves={shelves} />
       </div>
     </div>
