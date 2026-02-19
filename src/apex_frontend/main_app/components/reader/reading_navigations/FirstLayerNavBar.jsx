@@ -12,6 +12,8 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
     onResetZoom,
     progress = 0,
     pages = { current: 1, total: 1 },
+    isBookmarked = false,
+    onToggleBookmark,
   } = readerControls || {};
 
   useEffect(() => {
@@ -40,15 +42,35 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         className='flex top-bar pb-4 items-center justify-between w-full pointer-events-auto'
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Back button */}
         <div>
-          <button onClick={() => navigate('/')} className="p-2.5 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700">
+          <button
+            onClick={() => navigate('/')}
+            className="p-2.5 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700"
+          >
             <ArrowLeft size={20} strokeWidth={1.5} />
           </button>
         </div>
-        <div className='left-side flex items-center gap-2'>
-          <button className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'>
-            <Bookmark strokeWidth={1.5} size={20} />
+
+        <div className='flex items-center gap-2'>
+          {/* Bookmark button — purple fill when bookmarked */}
+          <button
+            className={`p-2 rounded-xl transition-all active:scale-95 ${
+              isBookmarked
+                ? 'text-accent-primary'
+                : 'hover:bg-white/60 text-gray-700'
+            }`}
+            onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
+            title={isBookmarked ? 'Remove bookmark' : 'Bookmark this page'}
+          >
+            <Bookmark
+              strokeWidth={1.5}
+              size={20}
+              className={`transition-all duration-200 ${isBookmarked ? 'fill-accent-primary' : 'fill-none'}`}
+            />
           </button>
+
+          {/* Dots — open second layer */}
           <button
             className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'
             onClick={onDotsClick}
@@ -64,7 +86,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className='flex items-center justify-between w-full'>
-          {/* Lock — toggles pan/scroll lock on the PDF canvas */}
+          {/* Lock — toggles pan/scroll lock */}
           <button
             className={`p-2 rounded-xl transition-all active:scale-95 ${
               locked

@@ -51,7 +51,12 @@ export const BookProvider = ({ children }) => {
       lastAccessed: new Date().toISOString(),
       cover: null,
       file: fileObject,
-      isLocal: true
+      isLocal: true,
+      metadata: {
+        bookmarks: [],   // [{ page, label, addedAt }]
+        highlights: [],  // reserved
+        notes: [],       // reserved
+      },
     };
 
     try {
@@ -91,6 +96,38 @@ export const BookProvider = ({ children }) => {
     });
   }, []);
 
+  const toggleBookmark = useCallback(async (bookId, page) => {
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== bookId) return book;
+
+          const existingBookmarks = book.metadata?.bookmarks || [];
+          const isBookmarked = existingBookmarks.some(b => b.page === page);
+          const nextBookmarks = isBookmarked
+            ? existingBookmarks.filter(b => b.page !== page)
+            : [
+                ...existingBookmarks,
+                { page, label: `Page ${page}`, addedAt: new Date().toISOString() },
+              ].sort((a, b) => a.page - b.page);
+
+          updatedBook = {
+            ...book,
+            metadata: { ...(book.metadata || {}), bookmarks: nextBookmarks },
+          };
+          return updatedBook;
+        }),
+      }));
+
+      if (updatedBook) {
+        updateBook(updatedBook).catch(err => console.error('Failed to save bookmark:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
   const handleBookClick = useCallback((id) => {
     if (!id) return;
     const targetId = typeof id === 'string' ? parseInt(id) : id;
@@ -121,7 +158,8 @@ export const BookProvider = ({ children }) => {
       books,
       addBookToShelf,
       updateBookProgress,
-      handleBookClick
+      handleBookClick,
+      toggleBookmark,
     }}>
       {children}
     </BookContext.Provider>

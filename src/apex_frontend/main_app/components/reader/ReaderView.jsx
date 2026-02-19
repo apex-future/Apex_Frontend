@@ -8,7 +8,7 @@ import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 function ReaderView() {
-    const { books, updateBookProgress } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
     const [fileUrl, setFileUrl] = useState(null);
@@ -84,9 +84,19 @@ function ReaderView() {
         updateBookProgress(book.id, progress, page, total);
     }
 
+    function goToPage(n) {
+        const page = Math.min(Math.max(1, n), numPages || n);
+        setPageNumber(page);
+        syncProgress(page, numPages);
+    }
+
+    // Bookmarks
+    const bookmarks = book?.metadata?.bookmarks || [];
+    const isCurrentPageBookmarked = bookmarks.some(bm => bm.page === pageNumber);
+
     // Expose pdfControls object
     const pdfControls = isPdf
-        ? { pageNumber, numPages, scale, rotation, nextPage, previousPage, zoomIn, zoomOut, rotate }
+        ? { pageNumber, numPages, scale, rotation, nextPage, previousPage, zoomIn, zoomOut, rotate, goToPage }
         : null;
 
     // Reader UI controls passed to FirstLayerNavBar
@@ -96,6 +106,12 @@ function ReaderView() {
         onResetZoom: resetZoom,
         progress: localProgress,
         pages: localPages,
+        // Bookmarks
+        isBookmarked: isCurrentPageBookmarked,
+        onToggleBookmark: () => toggleBookmark(book.id, pageNumber),
+        bookmarks,
+        onJumpToBookmark: goToPage,
+        onRemoveBookmark: (page) => toggleBookmark(book.id, page),
     };
 
     // Screen click handler — standard toggle cycle
@@ -202,7 +218,7 @@ function ReaderView() {
         >
             <div className="flex h-screen overflow-hidden relative">
                 {/* Far-left panel — shown when Menu is clicked */}
-                {leftPanel && <LeftPanel setLeftPanel={setLeftPanel} />}
+                {leftPanel && <LeftPanel setLeftPanel={setLeftPanel} readerControls={readerControls} pdfControls={pdfControls} />}
 
                 {/* Main reading area */}
                 <div className="flex-1 relative min-w-0 flex flex-col overflow-hidden">
