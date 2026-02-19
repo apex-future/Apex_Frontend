@@ -2,14 +2,14 @@ import React from 'react'
 import FirstLayerNavBar from './reading_navigations/FirstLayerNavBar';
 import SecondLayerNavBar from './reading_navigations/SecondLayerNavBar';
 
-function ReaderNavBar({ book, navigate, navState, setNavState, aiModal, setAiModal, leftPanel, setLeftPanel }) {
+function ReaderNavBar({ book, navigate, navState, setNavState, aiModal, setAiModal, leftPanel, setLeftPanel, pdfControls }) {
   const handleDotsClick = (e) => {
     e.stopPropagation();
     setNavState('second');
   };
 
   return (
-    <div className="reading-nav-bar h-full w-full relative pointer-events-none">
+    <div className="reading-nav-bar absolute inset-0 z-50 pointer-events-none">
       {navState === 'first' && (
         <FirstLayerNavBar navigate={navigate} onDotsClick={handleDotsClick} />
       )}
@@ -19,6 +19,7 @@ function ReaderNavBar({ book, navigate, navState, setNavState, aiModal, setAiMod
         setAiModal={setAiModal}
         leftPanel={leftPanel}
         setLeftPanel={setLeftPanel}
+        pdfControls={pdfControls}
       />
     </div>
   );

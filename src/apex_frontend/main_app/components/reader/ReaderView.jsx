@@ -5,6 +5,7 @@ import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 function ReaderView() {
     const { books, updateBookProgress } = useContext(BookContext);
@@ -17,7 +18,13 @@ function ReaderView() {
     const book = useMemo(() => books.find(b => b.id.toString() === bookId), [books, bookId]);
     const isPdf = useMemo(() => book?.file?.type === 'application/pdf' || book?.file?.name.toLowerCase().endsWith('.pdf'), [book]);
 
-    // UI States
+    // --- Lifted PDF Controls State ---
+    const [pageNumber, setPageNumber] = useState(book?.currentPage || 1);
+    const [numPages, setNumPages] = useState(null);
+    const [scale, setScale] = useState(1.0);
+    const [rotation, setRotation] = useState(0);
+
+    // Progress state
     const [localProgress, setLocalProgress] = useState(book?.progress || 0);
     const [localPages, setLocalPages] = useState({
         current: book?.currentPage || 1,
@@ -29,6 +36,53 @@ function ReaderView() {
     const [navState, setNavState] = useState('none');
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
+
+    // --- PDF Control Handlers ---
+    function nextPage() {
+        setPageNumber(prev => {
+            const next = Math.min(prev + 1, numPages || prev);
+            syncProgress(next, numPages);
+            return next;
+        });
+    }
+
+    function previousPage() {
+        setPageNumber(prev => {
+            const next = Math.max(prev - 1, 1);
+            syncProgress(next, numPages);
+            return next;
+        });
+    }
+
+    function zoomIn() {
+        setScale(prev => Math.min(prev + 0.1, 2.5));
+    }
+
+    function zoomOut() {
+        setScale(prev => Math.max(prev - 0.1, 0.5));
+    }
+
+    function rotate() {
+        setRotation(prev => (prev + 90) % 360);
+    }
+
+    function handleDocumentLoad({ numPages: total }) {
+        setNumPages(total);
+        syncProgress(pageNumber, total);
+    }
+
+    function syncProgress(page, total) {
+        if (!book || !total) return;
+        const progress = Math.round((page / total) * 100);
+        setLocalProgress(progress);
+        setLocalPages({ current: page, total });
+        updateBookProgress(book.id, progress, page, total);
+    }
+
+    // Expose pdfControls object
+    const pdfControls = isPdf
+        ? { pageNumber, numPages, scale, rotation, nextPage, previousPage, zoomIn, zoomOut, rotate }
+        : null;
 
     // Screen click handler — standard toggle cycle
     const handleScreenClick = () => {
@@ -53,7 +107,6 @@ function ReaderView() {
             return;
         }
 
-        // Load the file content
         if (book?.file) {
             const { file } = book;
             const isTypePdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
@@ -71,23 +124,23 @@ function ReaderView() {
                 reader.readAsText(file);
             }
         }
-    }, [bookId, book?.file]); // Only when file or ID changes
+    }, [bookId, book?.file]);
 
     // 2. Initial Reset effect
     useEffect(() => {
         if (!bookId) return;
         window.scrollTo(0, 0);
-        // Initial sync from book data
         if (book) {
             setLocalProgress(book.progress || 0);
             setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
+            setPageNumber(book.currentPage || 1);
         }
     }, [bookId]);
 
-    // 3. Ultra-Stable Scroll Logic (Ref-Based)
+    // 3. Scroll logic for text content
     const lastUpdateRef = useRef(0);
     useEffect(() => {
-        if (isPdf) return; // PDF Reader handles its own progress
+        if (isPdf) return;
 
         const handleScroll = () => {
             const b = currentBookRef.current;
@@ -107,7 +160,6 @@ function ReaderView() {
             setLocalProgress(progress);
             setLocalPages({ current: currentPage, total: totalPages });
 
-            // Throttled Global Sync
             const now = Date.now();
             if (now - lastUpdateRef.current > 300) {
                 const hasChanged = progress !== b.progress || currentPage !== b.currentPage || totalPages !== b.totalPages;
@@ -119,14 +171,13 @@ function ReaderView() {
         };
 
         window.addEventListener('scroll', handleScroll, { passive: true });
-        // Trigger calculation when content loads
         const timer = setTimeout(handleScroll, 500);
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
             clearTimeout(timer);
         };
-    }, [bookId, textContent, fileUrl, isPdf]); // Only re-run if content changes
+    }, [bookId, textContent, fileUrl, isPdf]);
 
     if (!book) return null;
 
@@ -135,13 +186,14 @@ function ReaderView() {
             className="min-h-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-accent-primary/20 relative overflow-hidden"
             onClick={handleScreenClick}
         >
-            {/* Always flex row — panels appear/disappear as flex siblings */}
-            <div className="flex h-screen overflow-hidden">
+            <div className="flex h-screen overflow-hidden relative">
                 {/* Far-left panel — shown when Menu is clicked */}
                 {leftPanel && <LeftPanel setLeftPanel={setLeftPanel} />}
 
                 {/* Main reading area */}
-                <div className="flex-1 relative min-w-0">
+                <div className="flex-1 relative min-w-0 flex flex-col overflow-hidden">
+
+                    {/* ── Nav overlay (click/tap to reveal) ── */}
                     <ReaderNavBar
                         book={book}
                         navigate={navigate}
@@ -151,62 +203,96 @@ function ReaderView() {
                         setAiModal={setAiModal}
                         leftPanel={leftPanel}
                         setLeftPanel={setLeftPanel}
+                        pdfControls={pdfControls}
                     />
+
+                    {/* ── PDF Content ── */}
+                    {fileUrl && isPdf && (
+                        <div className="flex-1 flex overflow-hidden relative">
+                            <PDFReader
+                                fileUrl={fileUrl}
+                                pageNumber={pageNumber}
+                                scale={scale}
+                                rotation={rotation}
+                                onDocumentLoad={handleDocumentLoad}
+                                onNextPage={nextPage}
+                                onPrevPage={previousPage}
+                            />
+
+                            {/* ── Desktop persistent prev/next buttons (md and up) ──
+                                Always visible, not gated by navState.
+                                Fixed to the left/right edges, vertically centred. */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); previousPage(); }}
+                                disabled={pageNumber <= 1}
+                                className="
+                                    hidden md:flex
+                                    absolute left-3 top-1/2 -translate-y-1/2
+                                    z-40 items-center justify-center
+                                    w-10 h-10 rounded-full
+                                    bg-black/10 hover:bg-black/20
+                                    backdrop-blur-sm border border-white/20
+                                    text-gray-700 hover:text-gray-900
+                                    transition-all duration-200 active:scale-95
+                                    disabled:opacity-20 disabled:cursor-not-allowed
+                                    shadow-md
+                                "
+                                title="Previous page"
+                                aria-label="Previous page"
+                            >
+                                <ChevronLeft size={22} strokeWidth={2} />
+                            </button>
+
+                            <button
+                                onClick={(e) => { e.stopPropagation(); nextPage(); }}
+                                disabled={pageNumber >= (numPages || 1)}
+                                className="
+                                    hidden md:flex
+                                    absolute right-3 top-1/2 -translate-y-1/2
+                                    z-40 items-center justify-center
+                                    w-10 h-10 rounded-full
+                                    bg-black/10 hover:bg-black/20
+                                    backdrop-blur-sm border border-white/20
+                                    text-gray-700 hover:text-gray-900
+                                    transition-all duration-200 active:scale-95
+                                    disabled:opacity-20 disabled:cursor-not-allowed
+                                    shadow-md
+                                "
+                                title="Next page"
+                                aria-label="Next page"
+                            >
+                                <ChevronRight size={22} strokeWidth={2} />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* ── Image content ── */}
+                    {fileUrl && !isPdf && (
+                        <div className="flex-1 flex justify-center overflow-auto p-4">
+                            <img src={fileUrl} alt="content" className="max-w-full rounded-3xl shadow-2xl border-4 border-white/50" />
+                        </div>
+                    )}
+
+                    {/* ── Text content ── */}
+                    {!fileUrl && (
+                        <div className="flex-1 overflow-auto">
+                            <div className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased">
+                                {textContent ? (
+                                    <div className="whitespace-pre-wrap animate-in fade-in duration-1000">{textContent}</div>
+                                ) : (
+                                    <div className="text-center py-40 flex flex-col items-center">
+                                        <div className="w-12 h-12 rounded-full border-t-2 border-accent-primary animate-spin mb-4" />
+                                        <p className="opacity-50 text-sm font-sans tracking-wide">Initializing view...</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* AI panel — shown when Sparkles is clicked */}
                 {aiModal && <AIModal setAiModal={setAiModal} />}
             </div>
-            {/* <main className="flex-1 w-full mx-auto ">
-                {fileUrl ? (
-                    isPdf ? (
-                        <div className="h-[calc(100vh-140px)] w-full flex flex-col">
-                            <PDFReader 
-                                fileUrl={fileUrl} 
-                                initialPage={localPages.current}
-                                onPageChange={(newPage, totalPages) => {
-                                    setLocalPages({ current: newPage, total: totalPages || localPages.total });
-                                    const newProgress = Math.round((newPage / (totalPages || 1)) * 100);
-                                    setLocalProgress(newProgress);
-                                    
-                                    // Sync with backend
-                                    if (book) {
-                                        updateBookProgress(book.id, newProgress, newPage, totalPages);
-                                    }
-                                }}
-                            />
-                        </div>
-                    ) : (
-                        <div className="flex justify-center p-4">
-                            <img src={fileUrl} alt="content" className="max-w-full rounded-3xl shadow-2xl border-4 border-white/50" />
-                        </div>
-                    )
-                ) : (
-                    <div className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased">
-                        {textContent ? (
-                            <div className="whitespace-pre-wrap animate-in fade-in duration-1000">{textContent}</div>
-                        ) : (
-                            <div className="text-center py-40 flex flex-col items-center">
-                                <div className="w-12 h-12 rounded-full border-t-2 border-accent-primary animate-spin mb-4" />
-                                <p className="opacity-50 text-sm font-sans tracking-wide">Initializing view...</p>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </main> */}
-
-            {/* <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] sm:w-[500px] bg-[#1a1a1a]/95 backdrop-blur-2xl px-6 py-4 flex flex-col gap-3 rounded-[24px] shadow-2xl z-50 border border-white/10 group transition-all duration-500 hover:scale-[1.02]">
-                <div className="flex items-center justify-between text-[10px] font-sans font-black uppercase tracking-[0.25em] text-gray-400">
-                    <span className="text-accent-primary brightness-125">{isPdf ? 'Interactive PDF' : 'Immersive Reading'}</span>
-                    <span className="text-white/80 tabular-nums">{`Page ${localPages.current} / ${localPages.total}`}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-white/10 h-1 rounded-full overflow-hidden relative">
-                        <div className="absolute top-0 left-0 bg-gradient-to-r from-accent-primary to-accent-subtle h-full transition-all duration-700 ease-out" style={{ width: `${localProgress}%` }} />
-                    </div>
-                    <span className="font-sans font-black text-white text-xs tabular-nums w-8">{localProgress}%</span>
-                </div>
-            </footer> */}
         </div>
     );
 }
