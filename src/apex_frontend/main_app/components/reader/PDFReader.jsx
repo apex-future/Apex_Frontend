@@ -19,11 +19,12 @@ const PDFReader = ({
   onDocumentLoad,
   onNextPage,
   onPrevPage,
+  locked = false,
 }) => {
   // Swipe handlers — only meaningful on touch devices (mobile/tablet < md)
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => onNextPage?.(),
-    onSwipedRight: () => onPrevPage?.(),
+    onSwipedLeft: () => !locked && onNextPage?.(),
+    onSwipedRight: () => !locked && onPrevPage?.(),
     trackMouse: false,       // desktop mouse drags should NOT trigger page turns
     preventScrollOnSwipe: true,
     delta: 50,               // minimum swipe distance in px
@@ -33,7 +34,7 @@ const PDFReader = ({
   return (
     <div
       {...swipeHandlers}
-      className="flex-1 overflow-auto flex justify-center items-start p-4 relative select-none touch-pan-y"
+      className={`flex-1 flex justify-center items-start p-4 relative select-none ${locked ? 'overflow-hidden' : 'overflow-auto touch-pan-y'}`}
       id="pdf-container"
     >
       <Document

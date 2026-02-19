@@ -34,6 +34,7 @@ function ReaderView() {
     // Navigation Visibility State
     // States: 'none' | 'first' | 'second'
     const [navState, setNavState] = useState('none');
+    const [locked, setLocked] = useState(false);
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
 
@@ -66,6 +67,10 @@ function ReaderView() {
         setRotation(prev => (prev + 90) % 360);
     }
 
+    function resetZoom() {
+        setScale(1.0);
+    }
+
     function handleDocumentLoad({ numPages: total }) {
         setNumPages(total);
         syncProgress(pageNumber, total);
@@ -83,6 +88,15 @@ function ReaderView() {
     const pdfControls = isPdf
         ? { pageNumber, numPages, scale, rotation, nextPage, previousPage, zoomIn, zoomOut, rotate }
         : null;
+
+    // Reader UI controls passed to FirstLayerNavBar
+    const readerControls = {
+        locked,
+        onToggleLock: () => setLocked(prev => !prev),
+        onResetZoom: resetZoom,
+        progress: localProgress,
+        pages: localPages,
+    };
 
     // Screen click handler — standard toggle cycle
     const handleScreenClick = () => {
@@ -204,6 +218,7 @@ function ReaderView() {
                         leftPanel={leftPanel}
                         setLeftPanel={setLeftPanel}
                         pdfControls={pdfControls}
+                        readerControls={readerControls}
                     />
 
                     {/* ── PDF Content ── */}
@@ -217,6 +232,7 @@ function ReaderView() {
                                 onDocumentLoad={handleDocumentLoad}
                                 onNextPage={nextPage}
                                 onPrevPage={previousPage}
+                                locked={locked}
                             />
 
                             {/* ── Desktop persistent prev/next buttons (md and up) ──

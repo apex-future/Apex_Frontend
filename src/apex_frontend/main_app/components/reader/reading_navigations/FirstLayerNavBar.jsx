@@ -1,13 +1,20 @@
 import React, { useRef, useEffect } from 'react'
-import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock } from 'lucide-react'
+import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen } from 'lucide-react'
 import { gsap } from 'gsap'
 
-function FirstLayerNavBar({ navigate, onDotsClick }) {
+function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
   const topBarRef = useRef(null);
   const bottomBarRef = useRef(null);
 
+  const {
+    locked = false,
+    onToggleLock,
+    onResetZoom,
+    progress = 0,
+    pages = { current: 1, total: 1 },
+  } = readerControls || {};
+
   useEffect(() => {
-    // Top bar bounces in from above
     if (topBarRef.current) {
       gsap.killTweensOf(topBarRef.current);
       gsap.fromTo(
@@ -16,7 +23,6 @@ function FirstLayerNavBar({ navigate, onDotsClick }) {
         { y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.7)' }
       );
     }
-    // Bottom bar bounces in from below
     if (bottomBarRef.current) {
       gsap.killTweensOf(bottomBarRef.current);
       gsap.fromTo(
@@ -58,20 +64,43 @@ function FirstLayerNavBar({ navigate, onDotsClick }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className='flex items-center justify-between w-full'>
-          <button className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'>
-            <Lock strokeWidth={1.5} size={20} />
+          {/* Lock — toggles pan/scroll lock on the PDF canvas */}
+          <button
+            className={`p-2 rounded-xl transition-all active:scale-95 ${
+              locked
+                ? 'bg-accent-primary/20 text-accent-primary hover:bg-accent-primary/30'
+                : 'hover:bg-white/60 text-gray-700'
+            }`}
+            onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
+            title={locked ? 'Unlock scroll' : 'Lock scroll'}
+          >
+            {locked
+              ? <Lock strokeWidth={1.5} size={20} />
+              : <LockOpen strokeWidth={1.5} size={20} />
+            }
           </button>
-          <button className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'>
+
+          {/* Fit-to-screen — resets zoom to 100% */}
+          <button
+            className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'
+            onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
+            title="Fit to screen (reset zoom)"
+          >
             <Fullscreen strokeWidth={1.5} size={20} />
           </button>
         </div>
+
+        {/* Real progress bar */}
         <div className="progress w-[90%]">
           <div className="text-progress mb-2 flex items-center justify-between">
-            <span className="percent text-sm">50%</span>
-            <span className="chapter text-sm">page 1 of 10</span>
+            <span className="percent text-sm">{progress}%</span>
+            <span className="chapter text-sm">page {pages.current} of {pages.total}</span>
           </div>
           <div className="progress-bar h-1.5 rounded-full w-full bg-accent-subtle">
-            <div className="progress-fill h-1.5 rounded-full w-[50%] bg-accent-primary"></div>
+            <div
+              className="progress-fill h-1.5 rounded-full bg-accent-primary transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
       </div>
