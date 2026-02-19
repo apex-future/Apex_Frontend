@@ -22,6 +22,10 @@ function ReaderView() {
         total: book?.totalPages || 1
     });
 
+    // Navigation Visibility State
+    const [showNav, setShowNav] = useState(false);
+    const toggleNav = () => setShowNav(prev => !prev);
+
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
     const currentBookRef = useRef(book);
@@ -113,10 +117,13 @@ function ReaderView() {
     if (!book) return null;
 
     return (
-        <div className="min-h-screen  bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-accent-primary/20 flex gap-6 flex-col relative overflow-hidden">
+        <div 
+            className="min-h-screen  bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-accent-primary/20 flex gap-6 flex-col relative overflow-hidden"
+            onClick={toggleNav}
+        >
             
           
-            <ReaderNavBar book={book} navigate={navigate} />
+            <ReaderNavBar book={book} navigate={navigate} showNav={showNav} />
             {/* <main className="flex-1 w-full mx-auto ">
                 {fileUrl ? (
                     isPdf ? (

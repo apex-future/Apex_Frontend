@@ -1,9 +1,9 @@
 import React from 'react'
 import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen,Lock } from 'lucide-react'
-function FirstLayerNavBar() {
+function FirstLayerNavBar({ navigate }) {
   return (
-    <div className='absolute top-0 left-0 right-0 z-50 flex flex-col  justify-between  p-2 w-full h-screen'>
-        <div className='flex top-bar pb-4 items-center justify-between w-full'>
+    <div className='absolute top-0 left-0 right-0 z-50 flex flex-col  justify-between  p-2 w-full h-screen pointer-events-none'>
+        <div className='flex top-bar pb-4 items-center justify-between w-full pointer-events-auto'>
           <div>
              <button onClick={() => navigate('/')} className="p-2.5 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700">
                     <ArrowLeft size={20} strokeWidth={1.5} />
@@ -19,7 +19,7 @@ function FirstLayerNavBar() {
             </div>
         </div>
 
-        <div className="bottom-bar flex flex-col gap-2  items-center">
+        <div className="bottom-bar flex flex-col gap-2  items-center pointer-events-auto">
             <div className='flex items-center justify-between w-full'>
                <button className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'>
                <Lock strokeWidth={1.5}  size={20} />
