@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContext';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
+import AIModal from './reading_navigations/reading_layout/AIModal';
+import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 
 function ReaderView() {
     const { books, updateBookProgress } = useContext(BookContext);
@@ -25,14 +27,16 @@ function ReaderView() {
     // Navigation Visibility State
     // States: 'none' | 'first' | 'second'
     const [navState, setNavState] = useState('none');
+    const [aiModal, setAiModal] = useState(false);
+    const [leftPanel, setLeftPanel] = useState(false);
 
-    // Screen click handler – only cycles none↔first.
-    // The second-layer transition is handled inside ReaderNavBar.
+    // Screen click handler — when either panel is open, ignore screen clicks
     const handleScreenClick = () => {
+        if (aiModal || leftPanel) return;
         setNavState(prev => {
             if (prev === 'none') return 'first';
             if (prev === 'first') return 'none';
-            if (prev === 'second') return 'none'; // dismiss second, don't show first
+            if (prev === 'second') return 'none';
             return 'none';
         });
     };
@@ -128,13 +132,32 @@ function ReaderView() {
     if (!book) return null;
 
     return (
-        <div 
-            className="min-h-screen  bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-accent-primary/20 flex gap-6 flex-col relative overflow-hidden"
+        <div
+            className="min-h-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-accent-primary/20 relative overflow-hidden"
             onClick={handleScreenClick}
         >
-            
-          
-            <ReaderNavBar book={book} navigate={navigate} navState={navState} setNavState={setNavState} />
+            {/* Always flex row — panels appear/disappear as flex siblings */}
+            <div className="flex h-screen overflow-hidden">
+                {/* Far-left panel — shown when Menu is clicked */}
+                {leftPanel && <LeftPanel setLeftPanel={setLeftPanel} />}
+
+                {/* Main reading area */}
+                <div className="flex-1 relative min-w-0">
+                    <ReaderNavBar
+                        book={book}
+                        navigate={navigate}
+                        navState={navState}
+                        setNavState={setNavState}
+                        aiModal={aiModal}
+                        setAiModal={setAiModal}
+                        leftPanel={leftPanel}
+                        setLeftPanel={setLeftPanel}
+                    />
+                </div>
+
+                {/* AI panel — shown when Sparkles is clicked */}
+                {aiModal && <AIModal setAiModal={setAiModal} />}
+            </div>
             {/* <main className="flex-1 w-full mx-auto ">
                 {fileUrl ? (
                     isPdf ? (

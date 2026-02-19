@@ -2,12 +2,11 @@ import React, { useRef, useEffect } from 'react'
 import { Menu, RotateCcw, Sparkles, ZoomIn, ZoomOut } from 'lucide-react'
 import { gsap } from 'gsap'
 
-function SecondLayerNavBar({ visible }) {
+function SecondLayerNavBar({ visible, aiModal, setAiModal, leftPanel, setLeftPanel }) {
   const navRef = useRef(null);
 
   useEffect(() => {
     if (visible && navRef.current) {
-      // Kill any in-progress animation and restart clean
       gsap.killTweensOf(navRef.current);
       gsap.fromTo(
         navRef.current,
@@ -22,20 +21,22 @@ function SecondLayerNavBar({ visible }) {
   return (
     <div
       ref={navRef}
-      // Stop clicks on the nav bar itself from bubbling up to ReaderView's handler
       onClick={(e) => e.stopPropagation()}
       className='absolute top-0 left-0 right-0 z-50 p-2 w-full pointer-events-auto'
     >
       <div className='flex top-bar pb-4 items-center justify-between w-full'>
-        {/* Left: Menu */}
+        {/* Left: Menu — opens LeftPanel */}
         <div className='left-side'>
-          <button className="p-2.5 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700">
+          <button
+            className="p-2.5 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700"
+            onClick={(e) => { e.stopPropagation(); setLeftPanel(prev => !prev); }}
+          >
             <Menu size={20} strokeWidth={1.5} />
           </button>
         </div>
 
         {/* Center: Tool buttons */}
-        <div className="middle-tool-bar flex items-center justify-center gap-4 bg-neutral-300/70 backdrop-blur-md rounded-xl p-2">
+        <div className="middle-tool-bar flex items-center justify-center gap-4 bg-neutral-300/70 backdrop-blur-md rounded-xl border-2 p-2">
           <button className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'>
             <ZoomIn strokeWidth={1.5} size={20} />
           </button>
@@ -47,9 +48,12 @@ function SecondLayerNavBar({ visible }) {
           </button>
         </div>
 
-        {/* Right: Sparkles */}
+        {/* Right: Sparkles — opens AI panel */}
         <div className='right-side'>
-          <button className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'>
+          <button
+            className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'
+            onClick={(e) => { e.stopPropagation(); setAiModal(prev => !prev); }}
+          >
             <Sparkles strokeWidth={1.5} size={20} />
           </button>
         </div>
