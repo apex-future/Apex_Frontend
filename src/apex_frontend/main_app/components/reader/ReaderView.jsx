@@ -23,8 +23,19 @@ function ReaderView() {
     });
 
     // Navigation Visibility State
-    const [showNav, setShowNav] = useState(false);
-    const toggleNav = () => setShowNav(prev => !prev);
+    // States: 'none' | 'first' | 'second'
+    const [navState, setNavState] = useState('none');
+
+    // Screen click handler – only cycles none↔first.
+    // The second-layer transition is handled inside ReaderNavBar.
+    const handleScreenClick = () => {
+        setNavState(prev => {
+            if (prev === 'none') return 'first';
+            if (prev === 'first') return 'none';
+            if (prev === 'second') return 'none'; // dismiss second, don't show first
+            return 'none';
+        });
+    };
 
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
@@ -119,11 +130,11 @@ function ReaderView() {
     return (
         <div 
             className="min-h-screen  bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-accent-primary/20 flex gap-6 flex-col relative overflow-hidden"
-            onClick={toggleNav}
+            onClick={handleScreenClick}
         >
             
           
-            <ReaderNavBar book={book} navigate={navigate} showNav={showNav} />
+            <ReaderNavBar book={book} navigate={navigate} navState={navState} setNavState={setNavState} />
             {/* <main className="flex-1 w-full mx-auto ">
                 {fileUrl ? (
                     isPdf ? (

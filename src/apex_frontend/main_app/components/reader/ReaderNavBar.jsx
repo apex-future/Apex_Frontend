@@ -1,13 +1,26 @@
 import React from 'react'
-import { ArrowLeft, Settings, Bookmark, Share2 } from 'lucide-react';
 import FirstLayerNavBar from './reading_navigations/FirstLayerNavBar';
-function ReaderNavBar({ book, navigate, showNav }) {
-    return (
-        <div className={`reading-nav-bar h-full w-full relative transition-opacity duration-300 ${showNav ? 'opacity-100' : 'opacity-0'} pointer-events-none`}>
-        <FirstLayerNavBar navigate={navigate} />
-          
-        </div>
-    )
+import SecondLayerNavBar from './reading_navigations/SecondLayerNavBar';
+
+function ReaderNavBar({ book, navigate, navState, setNavState }) {
+  // Called from the three-dots button.
+  // stopPropagation prevents the click from also firing ReaderView's handleScreenClick.
+  const handleDotsClick = (e) => {
+    e.stopPropagation();
+    setNavState('second');
+  };
+
+  return (
+    <div className="reading-nav-bar h-full w-full relative pointer-events-none">
+      {/* First layer — only when state is 'first' */}
+      {navState === 'first' && (
+        <FirstLayerNavBar navigate={navigate} onDotsClick={handleDotsClick} />
+      )}
+
+      {/* Second layer — only when state is 'second' */}
+      <SecondLayerNavBar visible={navState === 'second'} />
+    </div>
+  );
 }
 
 export default ReaderNavBar
