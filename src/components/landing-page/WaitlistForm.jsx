@@ -66,22 +66,22 @@ function WaitlistForm() {
 
   return (
     <>
-      <form 
+      <form
         onSubmit={handleSubmit}
         className='bg-black/30 backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-lg p-6 sm:p-8 w-full mx-auto'
         aria-labelledby="waitlist-heading"
       >
         {/* Heading */}
-        <h3 
+        <h3
           id="waitlist-heading"
           className='font-display text-2xl md:text-3xl font-bold text-white mb-2 text-center'
         >
           Grab A Spot
         </h3>
-        
+
         {/* Subtext */}
         <p className='font-sans text-white/80 text-sm mb-6 text-center'>
-          Be first to experience focused studying with Apex
+          Request Private Access to focus with Apex
         </p>
 
         {/* Email Input */}
@@ -104,8 +104,8 @@ function WaitlistForm() {
         </div>
 
         {/* Submit Button */}
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={status === 'loading' || !email}
           className="w-full py-3  rounded-full bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
         >
@@ -115,12 +115,12 @@ function WaitlistForm() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Joining...
+              Requesting...
             </span>
           ) : status === 'success' ? (
-            '✓ Joined!'
+            '✓ Request Sent!'
           ) : (
-            'Join Waitlist'
+            'Request Private Access'
           )}
         </button>
 
@@ -132,27 +132,26 @@ function WaitlistForm() {
 
       {/* Toast Portal - Renders outside form */}
       {showToast && createPortal(
-        <div 
+        <div
           role="alert"
           aria-live="polite"
-          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up ${
-            status === 'success' 
-              ? 'bg-success text-white' 
-              : 'bg-error text-white'
-          } px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-lg w-[80%]`}
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up ${status === 'success'
+            ? 'bg-success text-white'
+            : 'bg-error text-white'
+            } px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-lg w-[80%]`}
         >
           {/* Icon */}
           <span className='text-2xl'>
             {status === 'success' ? '✓' : '⚠'}
           </span>
-          
+
           {/* Message */}
           <p className='font-sans text-sm font-medium flex-1'>
             {message}
           </p>
-          
+
           {/* Close Button */}
-          <button 
+          <button
             onClick={() => setShowToast(false)}
             className='hover:opacity-70 transition-opacity'
             aria-label="Close notification"
