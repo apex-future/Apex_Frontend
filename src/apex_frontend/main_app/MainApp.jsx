@@ -34,7 +34,7 @@ function MainApp() {
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>
-          {asideIsOpen && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />}
+          {asideIsOpen && !location.pathname.startsWith('/reader') && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />}
         </NavBarProvider>
 
         <div className='flex-1 min-w-0 relative z-[10]'>

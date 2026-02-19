@@ -30,9 +30,8 @@ function ReaderView() {
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
 
-    // Screen click handler — when either panel is open, ignore screen clicks
+    // Screen click handler — standard toggle cycle
     const handleScreenClick = () => {
-        if (aiModal || leftPanel) return;
         setNavState(prev => {
             if (prev === 'none') return 'first';
             if (prev === 'first') return 'none';

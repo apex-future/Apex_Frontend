@@ -3,7 +3,10 @@ import { BookOpen, List, Bookmark, X } from 'lucide-react'
 
 function LeftPanel({ setLeftPanel }) {
   return (
-    <aside className='flex flex-col absolute inset-0 z-[200] bg-white/95 backdrop-blur-md md:relative md:inset-auto md:w-64 md:h-full md:border-r md:border-border-default md:shrink-0'>
+    <aside
+      className='flex flex-col absolute inset-0 z-[200] bg-white/95 backdrop-blur-md md:relative md:inset-auto md:w-64 md:h-full md:border-r md:border-border-default md:shrink-0'
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className='flex items-center justify-between p-4 border-b border-border-default'>
         <h2 className='text-sm font-semibold text-gray-700 tracking-wide uppercase'>Contents</h2>
         <button
