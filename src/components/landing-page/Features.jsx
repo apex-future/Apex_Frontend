@@ -1,69 +1,136 @@
 import React from 'react'
-import { Brain, PenLine, Zap, Video } from 'lucide-react';
+import { Sparkles, Pen, Book, PlaySquare } from 'lucide-react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 function Features() {
+    useGSAP(() => {
+        gsap.from(".feature-card-wrapper", {
+            scrollTrigger: {
+                trigger: ".feature-list",
+                start: "top 80%", // Start when top of list is 80% down viewport
+                toggleActions: "play none none reverse"
+            },
+            y: 50,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.2, // 0.2s delay between each item
+            ease: "power2.out"
+        });
+    }, []);
+
     return (
         <section className='fetaures-section pt-14 md:pt-20' id='features'>
-            <h2 className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold font-display p-2 px-4 ml-3  lg:text-center text-text-primary'>
-                Why Serious Students Choose <span className='italic px-2 inline-block h-[1.3em] py-0 bg-accent-primary/30 '> Apex </span>
-            </h2>
 
-            <div className="feature-list grid sm:grid-cols-2 max-w-[1000px] gap-6 w-[90%] mx-auto mt-8">
-                {/* Feature 1: AI Explanations */}
-                <div className='relative bg-white shadow-xl border border-border-default/50 p-6 sm:p-8 rounded-3xl backdrop-blur-md min-h-[200px] flex flex-col group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500'>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-purple-100 rounded-2xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
-                            <Brain size={24} />
+
+
+
+            <h2 className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold font-display p-2 px-4 ml-3  lg:text-center'>Four Ways <span className='italic px-2 inline-block h-[1.3em] py-0 bg-accent-primary/30 '> Apex </span> keeps you focused</h2>
+
+
+            <div className="feature-list grid sm:grid-cols-2 max-w-[1000px] gap-5 w-[90%] mx-auto mt-5">
+                <div className="feature-card-wrapper h-full">
+                    <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
+                        <Sparkles className="inline-block size-12   text-purple-500  " />
+
+                        <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
+                            <div className='font-display font-semibold text-3xl'>
+                                24/7
+                            </div>
+                            <div className="feature-main-text">
+                                <h3 className='font-medium text-black text- md:text-lg pb-2'>Instant AI Explainatons:</h3>
+                                <p className="text-sm md:text-base text-text-secondary">
+                                    Highlight any text and get clear explanations without
+                                    opening a new tab.</p>
+                            </div>
+
                         </div>
-                        <h3 className='font-display font-bold text-2xl text-text-primary'>Instant Clarity</h3>
+
                     </div>
-                    <p className="text-lg text-text-secondary leading-tight font-medium">
-                        Highlight text. Get AI breakdowns. <br />
-                        Understand tough concepts in seconds.
-                    </p>
                 </div>
 
-                {/* Feature 2: Active Reading */}
-                <div className='relative bg-white shadow-xl border border-border-default/50 p-6 sm:p-8 rounded-3xl backdrop-blur-md min-h-[200px] flex flex-col group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500'>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-blue-100 rounded-2xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                            <PenLine size={24} />
+                <div className="feature-card-wrapper h-full">
+                    <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
+
+                        <Pen className="inline-block size-10  text-yellow-500 " />
+                        <div className='paragraph-overlay h-full flex flex-col gap-2   rounded-lg  p-2 '>
+                            <div className='font-display font-semibold text-7xl'>
+                                ∞
+                            </div>
+                            <div className="feature-main-text">
+                                <h3 className='font-medium text-black text-base md:text-lg pb-2'>Smart Highlighting & Notes:</h3>
+                                <p className="text-sm md:text-base text-text-secondary">
+                                    Capture insights and build your personal study guide
+                                    as you read.</p>
+                            </div>
+
                         </div>
-                        <h3 className='font-display font-bold text-2xl text-text-primary'>Active Knowledge</h3>
+
                     </div>
-                    <p className="text-lg text-text-secondary leading-tight font-medium">
-                        Capture insights. Build notes. <br />
-                        Turn reading into a structured study guide.
-                    </p>
                 </div>
 
-                {/* Feature 3: Integrated Tools */}
-                <div className='relative bg-white shadow-xl border border-border-default/50 p-6 sm:p-8 rounded-3xl backdrop-blur-md min-h-[200px] flex flex-col group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500'>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-yellow-100 rounded-2xl text-yellow-600 group-hover:bg-yellow-600 group-hover:text-white transition-colors duration-300">
-                            <Zap size={24} />
+                <div className="feature-card-wrapper h-full">
+                    <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
+
+                        <Book className="inline-block size-12  text-blue-500 " />
+
+                        <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
+                            <div className='font-display font-semibold text-3xl'>
+                                500K +
+                            </div>
+                            <div className="feature-main-text">
+                                <h3 className='font-medium text-black text-base md:text-lg pb-2'>Built-in Dictionary:</h3>
+                                <p className="text-sm md:text-base text-text-secondary">
+                                    Look up definitions instantly—no app switching, no
+                                    breaking flow.</p>
+                            </div>
+
                         </div>
-                        <h3 className='font-display font-bold text-2xl text-text-primary'>Infinite Focus</h3>
+
                     </div>
-                    <p className="text-lg text-text-secondary leading-tight font-medium">
-                        Built-in dictionary and tools. <br />
-                        No more tab jumping or broken focus.
-                    </p>
                 </div>
 
-                {/* Feature 4: Visual Mastery */}
-                <div className='relative bg-white shadow-xl border border-border-default/50 p-6 sm:p-8 rounded-3xl backdrop-blur-md min-h-[200px] flex flex-col group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500'>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-red-100 rounded-2xl text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors duration-300">
-                            <Video size={24} />
+                <div className="feature-card-wrapper h-full">
+                    <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-5  rounded-lg backdrop-blur-md  min-h-[250px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
+
+
+                        <PlaySquare className="inline-block size-12  text-red-500 " />
+                        <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
+                            <div className='font-display font-semibold text-3xl'>
+                                10K +
+                            </div>
+                            <div className="feature-main-text">
+                                <h3 className='font-medium text-black text-base md:text-lg pb-2'>Curated Video Library:</h3>
+                                <p className="text-sm md:text-base text-text-secondary">
+                                    Expert video explanations for every topic—delivered right where you are</p>
+                            </div>
+
                         </div>
-                        <h3 className='font-display font-bold text-2xl text-text-primary'>Visual Mastery</h3>
+
                     </div>
-                    <p className="text-lg text-text-secondary leading-tight font-medium">
-                        Expert video tutorials. <br />
-                        Connected directly to what you're reading.
-                    </p>
                 </div>
+                {/* <div className='relative bg-gray-200 shadow-inner shadow-white border-2 p-3  rounded-lg backdrop-blur-md  h-[250px] flex flex-col overflow-hidden'>
+        
+        
+    
+         <div className='paragraph-overlay h-full flex flex-col gap-5   rounded-lg  p-2 mt-3'>
+            <div className='font-display font-semibold text-3xl'>
+                24/7
+            </div>
+            <div className="feature-main-text">
+            <h3 className='font-medium text-black text-base pb-2'></h3>
+         <p className="text-sm text-text-secondary">
+       </p>
+            </div>
+      
+        </div> 
+        
+    </div> */}
+
+
             </div>
         </section>
     )

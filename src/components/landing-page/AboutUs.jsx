@@ -2,6 +2,12 @@ import React from 'react'
 import studySetup from "../../assets/study-setup.jpg"
 import { useRef, useState } from 'react'
 import { ArrowBigUp, SquareArrowOutUpRight } from 'lucide-react'
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
+
 function AboutUs() {
     let [isAboutOpen, setIsAboutOpen] = useState(false);
     let aboutParagraph = useRef(null)
@@ -12,6 +18,21 @@ function AboutUs() {
             return !previousState //negate the previous state creates a toggle effect
         })
     }
+
+    useGSAP(() => {
+        gsap.from(".info-wrapper > div", {
+            scrollTrigger: {
+                trigger: "#about",
+                start: "top 75%",
+            },
+            y: 50,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.2,
+            ease: "power2.out"
+        });
+    }, []);
+
     return (
         <section className="info-section pt-14 md:pt-20 " id='about'>
             <h2 className="about-us-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold font-display p-2 px-4  text-center ">
@@ -29,20 +50,20 @@ function AboutUs() {
 
                         </header>
 
-                        <p className='text-white line-clamp-2' ref={aboutParagraph}>Apex is a focused learning workspace designed to eliminate context switching and help students enter deep study mode.
+                        <p className='text-white line-clamp-2' ref={aboutParagraph}>Apex is an AI-powered reading platform that keeps students in their flow.
+                            Get instant explanations, definitions, and educational videos without losing focus.
                             We're evolving into a complete learning hub with study scheduling, practice questions,
                             and collaboration tools — everything designed to help you study smarter and reach your apex.
                         </p>
                     </div>
                 </div>
                 <div className='flex w-full gap-5 flex-col sm:flex-row md:flex-col'>
-                    <div className="mission-box rounded-[2rem] sm:w-1/2 md:w-full md:h-1/2 h-[200px] flex flex-col gap-2 justify-center items-center bg-purple-600/10 backdrop-blur-xl border border-purple-500/20 shadow-xl p-6 group hover:-translate-y-2 transition-all duration-500" id='mission'>
-                        <h3 className='font-display text-2xl text-purple-600 font-bold text-center group-hover:scale-110 transition-transform'>Our Mission</h3>
-                        <p className="mission-paragraph text-text-secondary text-center font-medium leading-relaxed">To empower students to learn deeply by eliminating distractions and making focused studying effortless.</p>
-                    </div>
-                    <div className="vision-box rounded-[2rem] sm:w-1/2  md:w-full md:h-1/2 h-[200px] flex flex-col gap-2 justify-center items-center bg-blue-600/10 backdrop-blur-xl border border-blue-500/20 shadow-xl p-6 group hover:-translate-y-2 transition-all duration-500">
-                        <h3 className='font-display text-2xl text-blue-600 font-bold text-center group-hover:scale-110 transition-transform'>Our Vision</h3>
-                        <p className="vision-paragraph text-text-secondary text-center font-medium leading-relaxed">Building the future of education: One platform where students read, practice, and reach their apex.</p>
+                    <div className="mission-box rounded-lg sm:w-1/2 md:w-full md:h-1/2 h-[200px] flex flex-col gap-2 justify-center items-center bg-purple-500 p-3" id='mission'>
+                        <h3 className='font-display text-2xl text-white font-semibold text-center'>Our Mission</h3>
+                        <p className="mission-paragraph text-white text-center">To empower students to learn deeply and reach their apex by eliminating distractions and making focused studying effortless.</p> </div>
+                    <div className="vision-box rounded-lg sm:w-1/2  md:w-full md:h-1/2 h-[200px] flex flex-col gap-2 justify-center items-center bg-purple-300 p-3">
+                        <h3 className='font-display text-2xl text-black font-semibold  text-center'>Our Vision</h3>
+                        <p className="vision-paragraph text-center">Building the future of education: One platform where students read, practice, collaborate, and reach their apex.</p>
                     </div>
                 </div>
             </div>

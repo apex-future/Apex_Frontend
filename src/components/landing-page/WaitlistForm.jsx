@@ -1,5 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 function WaitlistForm() {
   const [email, setEmail] = useState('');
@@ -10,13 +15,34 @@ function WaitlistForm() {
   // Backend API URL: use VITE_API_URL in .env or default to local dev server
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+  const formRef = useRef(null);
+  useGSAP(() => {
+    if (!formRef.current) return;
+    gsap.fromTo(
+      formRef.current,
+      { y: 20, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.6,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: formRef.current,
+          start: "top 85%",
+          toggleActions: "play none none play"
+        }
+      }
+    );
+  }, []);
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('loading');
     setMessage('');
 
     try {
-      const response = await fetch(`${API_BASE}/api/waitlist`, {
+      const response = await fetch(`https://apex-waitlist-api.onrender.com/api/waitlist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,8 +93,9 @@ function WaitlistForm() {
   return (
     <>
       <form
+        ref={formRef}
         onSubmit={handleSubmit}
-        className='bg-black/30 backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-lg p-6 sm:p-8 w-full mx-auto'
+        className='bg-black/30 relative backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-lg p-6 z-[20] sm:p-8 w-full mx-auto'
         aria-labelledby="waitlist-heading"
       >
         {/* Heading */}
@@ -81,7 +108,7 @@ function WaitlistForm() {
 
         {/* Subtext */}
         <p className='font-sans text-white/80 text-sm mb-6 text-center'>
-          Request Private Access to focus with Apex
+          Be first to experience focused studying with Apex
         </p>
 
         {/* Email Input */}
@@ -107,7 +134,7 @@ function WaitlistForm() {
         <button
           type="submit"
           disabled={status === 'loading' || !email}
-          className="w-full py-3  rounded-full bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
+          className="w-full py-3   rounded-full bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
         >
           {status === 'loading' ? (
             <span className='flex items-center justify-center gap-2'>
@@ -115,12 +142,12 @@ function WaitlistForm() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Requesting...
+              Joining...
             </span>
           ) : status === 'success' ? (
-            '✓ Request Sent!'
+            '✓ Joined!'
           ) : (
-            'Request Private Access'
+            'Join Waitlist'
           )}
         </button>
 
@@ -136,8 +163,8 @@ function WaitlistForm() {
           role="alert"
           aria-live="polite"
           className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up ${status === 'success'
-            ? 'bg-success text-white'
-            : 'bg-error text-white'
+              ? 'bg-success text-white'
+              : 'bg-error text-white'
             } px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-lg w-[80%]`}
         >
           {/* Icon */}
