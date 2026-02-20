@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { Lock, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -12,10 +13,8 @@ function WaitlistForm() {
   const [message, setMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
 
-  // Backend API URL: use VITE_API_URL in .env or default to local dev server
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
   const formRef = useRef(null);
+
   useGSAP(() => {
     if (!formRef.current) return;
     gsap.fromTo(
@@ -35,13 +34,13 @@ function WaitlistForm() {
     );
   }, []);
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('loading');
     setMessage('');
 
     try {
+      // Using the specific Render API provided by the user
       const response = await fetch(`https://apex-waitlist-api.onrender.com/api/waitlist`, {
         method: 'POST',
         headers: {
@@ -64,27 +63,19 @@ function WaitlistForm() {
         setTimeout(() => setShowToast(false), 5000);
       } else {
         setStatus('error');
-        // FastAPI returns detail as string or array of { msg }
         const detail = data.detail;
-        const message =
-          typeof detail === 'string'
-            ? detail
-            : Array.isArray(detail) && detail[0]?.msg
-              ? detail[0].msg
-              : response.status === 503 || response.status === 502 || response.status === 504
-                ? 'A network issue prevented your request. Please check your connection and try again.'
-                : response.status === 404 || response.status === 0
-                  ? 'A network issue prevented connecting. Please check your connection and try again.'
-                  : 'Something went wrong. Please try again.';
-        setMessage(message);
+        const errMsg = typeof detail === 'string'
+          ? detail
+          : Array.isArray(detail) && detail[0]?.msg
+            ? detail[0].msg
+            : 'Something went wrong. Please try again.';
+        setMessage(errMsg);
         setShowToast(true);
         setTimeout(() => setShowToast(false), 5000);
       }
     } catch (error) {
       setStatus('error');
-      setMessage(
-        'A network issue prevented your request. Please check your connection and try again.'
-      );
+      setMessage('A network issue prevented your request. Please check your connection.');
       setShowToast(true);
       setTimeout(() => setShowToast(false), 5000);
     }
@@ -98,6 +89,9 @@ function WaitlistForm() {
         className='bg-black/30 relative backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-lg p-6 z-[20] sm:p-8 w-full mx-auto'
         aria-labelledby="waitlist-heading"
       >
+        {/* Subtle Inner Glow */}
+        <div className="absolute top-0 left-1/4 w-1/2 h-1 bg-gradient-to-r from-transparent via-accent-primary/20 to-transparent" />
+
         {/* Heading */}
         <h3
           id="waitlist-heading"
@@ -122,7 +116,7 @@ function WaitlistForm() {
             name="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
+            placeholder="institution@email.com"
             required
             disabled={status === 'loading'}
             className='w-full px-4 py-3  bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-primary rounded-full focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed'
@@ -138,8 +132,8 @@ function WaitlistForm() {
         >
           {status === 'loading' ? (
             <span className='flex items-center justify-center gap-2'>
-              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
               Joining...
@@ -150,11 +144,6 @@ function WaitlistForm() {
             'Join Waitlist'
           )}
         </button>
-
-        {/* Privacy Notice */}
-        <p className='font-sans text-white/60 text-xs mt-4 text-center'>
-          We respect your privacy. No spam, ever.
-        </p>
       </form>
 
       {/* Toast Portal - Renders outside form */}
@@ -163,8 +152,8 @@ function WaitlistForm() {
           role="alert"
           aria-live="polite"
           className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up ${status === 'success'
-              ? 'bg-success text-white'
-              : 'bg-error text-white'
+            ? 'bg-success text-white'
+            : 'bg-error text-white'
             } px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-lg w-[80%]`}
         >
           {/* Icon */}

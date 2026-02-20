@@ -56,17 +56,11 @@ function CTA() {
               <span className='inline-block sm:w-1 w-[0.1em] h-[1em] sm:h-[1.2em] bg-accent-primary ml-1 animate-blink'></span>
             </span>
           </h3>
-          {/* <div className="button-wrapper flex justify-center">
-                <button className="p-3 rounded-full font-medium   w-[350px] text-white bg-purple-500">Join The Waitlist</button>
-            </div> */}
         </div>
         <WaitlistForm />
-
       </div>
 
       <img src={sparkle} className='absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none lg:sparkle-animation' aria-hidden="true" />
-
-      
     </section>
   )
 }

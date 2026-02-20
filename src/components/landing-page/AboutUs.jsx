@@ -1,7 +1,6 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import studySetup from "../../assets/study-setup.jpg"
-import { useRef, useState } from 'react'
-import { ArrowBigUp, SquareArrowOutUpRight } from 'lucide-react'
+import { SquareArrowOutUpRight } from 'lucide-react'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -11,12 +10,10 @@ gsap.registerPlugin(ScrollTrigger);
 function AboutUs() {
     let [isAboutOpen, setIsAboutOpen] = useState(false);
     let aboutParagraph = useRef(null)
+
     const openAbout = () => {
-        // console.log(aboutParagraph.current)
         aboutParagraph.current.classList.toggle("line-clamp-2");
-        setIsAboutOpen((previousState) => {
-            return !previousState //negate the previous state creates a toggle effect
-        })
+        setIsAboutOpen((previousState) => !previousState)
     }
 
     useGSAP(() => {
@@ -40,17 +37,17 @@ function AboutUs() {
             </h2>
             <div className='info-wrapper grid grid-cols-1 md:grid-cols-2 gap-5 w-[90%] mx-auto  mt-5'>
                 <div className="about-us relative rounded-lg overflow-auto max-h-[400px]">
-                    <img src={studySetup} alt="dark theme study setup" srcSet="" className="h-full w-full object-cover" />
+                    <img src={studySetup} alt="dark theme study setup" className="h-full w-full object-cover" />
                     <div className={`paragragh-layer absolute flex flex-col justify-center transition-all duration-300 bottom-0 ${isAboutOpen ? 'h-full pt-12' : "h-[35%]"}   p-3 
-                bg-black/50 backdrop-blur-md
-                [mask-image:linear-gradient(to_top,black_70%,transparent)] w-full`}>
+                        bg-black/50 backdrop-blur-md
+                        [mask-image:linear-gradient(to_top,black_70%,transparent)] w-full`}>
                         <header className="about-us-header flex justify-between items-center mb-1">
                             <h3 className='font-display text-2xl text-white font-semibold py-2 '>About Apex</h3>
-                            <SquareArrowOutUpRight className='text-white' onClick={openAbout} />
-
+                            <SquareArrowOutUpRight className='text-white cursor-pointer' onClick={openAbout} />
                         </header>
 
-                        <p className='text-white line-clamp-2' ref={aboutParagraph}>Apex is an AI-powered reading platform that keeps students in their flow.
+                        <p className='text-white line-clamp-2' ref={aboutParagraph}>
+                            Apex is an AI-powered reading platform that keeps students in their flow.
                             Get instant explanations, definitions, and educational videos without losing focus.
                             We're evolving into a complete learning hub with study scheduling, practice questions,
                             and collaboration tools — everything designed to help you study smarter and reach your apex.
