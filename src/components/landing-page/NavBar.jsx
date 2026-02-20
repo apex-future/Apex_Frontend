@@ -56,7 +56,7 @@ function NavBar() {
                     </li>
                 </ul>
                 <div className="nav-bar-cta hidden md:block">
-                    <a href="#cta" className='p-3 rounded-full px-6 text-center text-white bg-accent-primary font-medium transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--accent-primary-rgb),0.5)] hover:bg-opacity-90 active:scale-95 inline-block'>Join the Waitlist</a>
+                    <a href="#cta" className='p-3 rounded-full px-6 text-center text-white bg-accent-primary font-medium transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--accent-primary-rgb),0.5)] hover:bg-opacity-90 active:scale-95 inline-block'>Request Private Access</a>
                 </div>
             </nav>
 
@@ -71,7 +71,7 @@ function NavBar() {
                         </ul>
 
                         <div className='h-12'>
-                            <a href="#cta" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium block mx-auto hover:bg-opacity-90 active:scale-95 transition-all' onClick={closeAside}>Join the Waitlist</a>
+                            <a href="#cta" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium block mx-auto hover:bg-opacity-90 active:scale-95 transition-all' onClick={closeAside}>Request Private Access</a>
                         </div>
                     </div>
                 </aside>}

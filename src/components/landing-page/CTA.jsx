@@ -51,7 +51,7 @@ function CTA() {
         <div className="flex flex-col gap-5 w-full p-3 ">
           <h3 className="CTA-heading text-white font-display text-xl sm:text-2xl p-2 leading-relaxed text-center">
             Studying that keeps you in your zone, not lost in tabs. <br />
-            Join the waitlist and be first to reach your <span className='inline-flex items-center'>
+            Request Private Access and be first to reach your <span className='inline-flex items-center'>
               <span className='  italic px-2 inline-block h-[1.3em] py-0 bg-accent-primary/50 '> Apex</span>
               <span className='inline-block sm:w-1 w-[0.1em] h-[1em] sm:h-[1.2em] bg-accent-primary ml-1 animate-blink'></span>
             </span>

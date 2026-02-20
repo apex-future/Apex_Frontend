@@ -1,4 +1,4 @@
-import { Sparkle } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useState } from "react"
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -41,22 +41,18 @@ function FAQ() {
             </h2>
             <div className="FAQ-wrapper w-[80%] mx-auto mt-5 grid grid-cols-1 gap-3">
                 {accordionItems.map((item) => (
-                    <article className='flex flex-col  p-3 rounded-lg  divide-y divide-black gap-3 bg-gray-200 shadow-inner shadow-white border-2' key={item.id}>
-                        <div className='flex justify-between '>
-                            <h5 className="FAQ-question font-medium">{item.question}</h5>
-                            <button onClick={() => { toggleAccordion(item.id) }} >
-                                <Sparkle className={` transition-all duration-200 ${activeId === item.id ? "text-purple-500" : ""}`} />
+                    <article className='flex flex-col p-3 rounded-2xl divide-y divide-black/5 gap-3 bg-white/50 backdrop-blur-md shadow-xl border border-border-default/50 hover:bg-white/80 transition-all duration-300' key={item.id}>
+                        <div className='flex justify-between items-center cursor-pointer' onClick={() => { toggleAccordion(item.id) }}>
+                            <h5 className="FAQ-question font-display font-bold text-lg sm:text-xl text-text-primary">{item.question}</h5>
+                            <button className="p-2 rounded-full hover:bg-neutral-100 transition-colors">
+                                <Plus className={`transition-all duration-500 transform ${activeId === item.id ? "rotate-45 text-accent-primary" : "text-text-tertiary"}`} size={24} />
                             </button>
-
                         </div>
-                        <div className={`FAQ-answer p-2 transition-all ease-in duration-200 leading-relaxed ${activeId === item.id ? "block" : "hidden"}`}>
-                            <p>{item.answer}</p>
+                        <div className={`FAQ-answer overflow-hidden transition-all duration-500 ease-in-out ${activeId === item.id ? "max-h-96 py-4 opacity-100" : "max-h-0 py-0 opacity-0"}`}>
+                            <p className="text-base text-text-secondary leading-relaxed font-medium">{item.answer}</p>
                         </div>
                     </article>
-
                 ))}
-
-
             </div>
         </section>
     )

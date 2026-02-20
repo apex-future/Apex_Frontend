@@ -139,9 +139,9 @@ function WaitlistForm() {
               Joining...
             </span>
           ) : status === 'success' ? (
-            '✓ Joined!'
+            '✓ Request Sent!'
           ) : (
-            'Join Waitlist'
+            'Request Private Access'
           )}
         </button>
       </form>
