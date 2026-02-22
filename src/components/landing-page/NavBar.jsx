@@ -1,37 +1,33 @@
-import React from 'react'
+import React, { useState, useRef } from 'react'
 import logoLight from "../../assets/logo/logo-light.jpg"
 import { Menu, X } from 'lucide-react';
-import { useState, useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
+
 function NavBar() {
     let asideRef = useRef();
     useGSAP(() => {
-        gsap.fromTo(asideRef.current, {
-            x: 200,
-            opacity: 0,
-            duration: 2,
-            ease: "bounce"
-        }, {
-            x: 0,
-            opacity: 1,
-            duration: 2,
-            ease: "bounce"
-        })
+        if (asideRef.current) {
+            gsap.fromTo(asideRef.current, {
+                x: 200,
+                opacity: 0,
+            }, {
+                x: 0,
+                opacity: 1,
+                duration: 0.8,
+                ease: "power3.out"
+            })
+        }
+    }, [asideRef.current])
 
-
-    }, [])
     let [asideIsOpen, setAsideIsOpen] = useState(false);
 
-    const openAside = () => {
-        setAsideIsOpen(true)
-    }
-    const closeAside = () => {
-        setAsideIsOpen(false)
-    }
+    const openAside = () => setAsideIsOpen(true)
+    const closeAside = () => setAsideIsOpen(false)
+
     return (
         <div className='w-full nav-div p-3 py-4 fixed z-[100]'>
             <nav className='sm:w-[80%] w-[90%] justify-between p-3 mx-auto flex items-center backdrop-blur-md shadow-sm h-full bg-white/50 rounded-full border-2 border-default'>
@@ -39,11 +35,12 @@ function NavBar() {
                     <a href="#hero">
                         <img className="size-8 rounded-full" alt="apex-logo" src={logoLight} />
                     </a>
+                </div>
 
-                </div>
                 <div className="nav-icon md:hidden">
-                    <Menu onClick={openAside} />
+                    <Menu onClick={openAside} className="cursor-pointer" />
                 </div>
+
                 <ul className='md:flex hidden items-center gap-8 px-5 '>
                     <li className='font-medium relative group cursor-pointer'>
                         <a href="#features" className='group-hover:text-accent-primary transition-colors duration-300'>Features</a>
@@ -59,7 +56,7 @@ function NavBar() {
                     </li>
                 </ul>
                 <div className="nav-bar-cta hidden md:block">
-                    <a href="#cta" className='p-3 rounded-full px-6 text-center text-white bg-accent-primary font-medium transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--accent-primary-rgb),0.5)] hover:bg-opacity-90 active:scale-95 inline-block'>Join the Waitlist</a>
+                    <a href="#cta" className='p-3 rounded-full px-6 text-center text-white bg-accent-primary font-medium transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--accent-primary-rgb),0.5)] hover:bg-opacity-90 active:scale-95 inline-block'>Request Private Access</a>
                 </div>
             </nav>
 
@@ -74,7 +71,7 @@ function NavBar() {
                         </ul>
 
                         <div className='h-12'>
-                            <a href="#cta" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium block mx-auto hover:bg-opacity-90 active:scale-95 transition-all' onClick={closeAside}>Join the Waitlist</a>
+                            <a href="#cta" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium block mx-auto hover:bg-opacity-90 active:scale-95 transition-all' onClick={closeAside}>Request Private Access</a>
                         </div>
                     </div>
                 </aside>}

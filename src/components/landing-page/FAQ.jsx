@@ -1,4 +1,4 @@
-import { Sparkle } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useState } from "react"
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -13,12 +13,10 @@ function FAQ() {
         { id: 3, question: "What file formats can I upload?", answer: "You can upload PDFs and paste text directly into Apex. We're working on adding support for more formats like ePub and Word documents soon." },
         { id: 4, question: "Does the AI explanation feature require internet?", answer: "Yes, AI explanations need an internet connection. However, you can read your uploaded documents and access saved highlights offline." },
         { id: 5, question: "Can I use Apex for exam preparation?", answer: "Absolutely! Apex is designed for students preparing for JAMB, WAEC, university exams, and more. You can read materials, get AI help, and (coming soon) practice with real exam questions." }]
+
     let [activeId, setActiveId] = useState(null);
     let toggleAccordion = (id) => {
-        setActiveId((currentId) => {
-            //this creates a toggle effect; if the currently clicked id is active , make it not active
-            return currentId === id ? null : id
-        })
+        setActiveId((currentId) => currentId === id ? null : id)
     }
 
     useGSAP(() => {
@@ -39,26 +37,22 @@ function FAQ() {
     return (
         <section className='faq pt-14 md:pt-20 ' id="faq">
             <h2 className="FAQ-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold font-display p-2 px-4  text-center">
-                Frequently Asked Question
+                Frequently Asked Questions
             </h2>
             <div className="FAQ-wrapper w-[80%] mx-auto mt-5 grid grid-cols-1 gap-3">
                 {accordionItems.map((item) => (
-                    <article className='flex flex-col  p-3 rounded-lg  divide-y divide-black gap-3 bg-gray-200 shadow-inner shadow-white border-2' key={item.id}>
-                        <div className='flex justify-between '>
-                            <h5 className="FAQ-question font-medium">{item.question}</h5>
-                            <button onClick={() => { toggleAccordion(item.id) }} >
-                                <Sparkle className={` transition-all duration-200 ${activeId === item.id ? "text-purple-500" : ""}`} />
+                    <article className='flex flex-col p-3 rounded-2xl divide-y divide-black/5 gap-3 bg-white/50 backdrop-blur-md shadow-xl border border-border-default/50 hover:bg-white/80 transition-all duration-300' key={item.id}>
+                        <div className='flex justify-between items-center cursor-pointer' onClick={() => { toggleAccordion(item.id) }}>
+                            <h5 className="FAQ-question font-display font-bold text-lg sm:text-xl text-text-primary">{item.question}</h5>
+                            <button className="p-2 rounded-full hover:bg-neutral-100 transition-colors">
+                                <Plus className={`transition-all duration-500 transform ${activeId === item.id ? "rotate-45 text-accent-primary" : "text-text-tertiary"}`} size={24} />
                             </button>
-
                         </div>
-                        <div className={`FAQ-answer p-2 transition-all ease-in duration-200 leading-relaxed ${activeId === item.id ? "block" : "hidden"}`}>
-                            <p>{item.answer}</p>
+                        <div className={`FAQ-answer overflow-hidden transition-all duration-500 ease-in-out ${activeId === item.id ? "max-h-96 py-4 opacity-100" : "max-h-0 py-0 opacity-0"}`}>
+                            <p className="text-base text-text-secondary leading-relaxed font-medium">{item.answer}</p>
                         </div>
                     </article>
-
                 ))}
-
-
             </div>
         </section>
     )
