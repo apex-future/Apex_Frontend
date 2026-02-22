@@ -4,6 +4,9 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Lock, Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import student1 from '../../assets/students/student1.jpg';
+import student2 from '../../assets/students/student2.jpg';
+import student3 from '../../assets/students/student3.jpg';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -82,27 +85,53 @@ function WaitlistForm() {
   };
 
   return (
-    <>
+    <div className='flex flex-col gap-4'>
+     {/*Social Proof*/}
+        <div className="flex flex-row gap-4 justify-center items-center ">
+          <div className="flex -space-x-3 overflow-hidden">
+            <img
+              className="inline-block h-8 w-8 rounded-full ring-2 ring-black/50 object-cover"
+              src={student1}
+              alt="Founding Scholar 1"
+            />
+            <img
+              className="inline-block h-8 w-8 rounded-full ring-2 ring-black/50 object-cover"
+              src={student2}
+              alt="Founding Scholar 2"
+            />
+            <img
+              className="inline-block h-8 w-8 rounded-full ring-2 ring-black/50 object-cover"
+              src={student3}
+              alt="Founding Scholar 3"
+            />
+          </div>
+          <p className="text-white/80 text-sm font-medium">
+            50+ Founding Scholars and growing
+          </p>
+        </div>
       <form
         ref={formRef}
         onSubmit={handleSubmit}
-        className='bg-black/30 relative backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-2xl p-6 z-[20] sm:p-8 w-full mx-auto'
+        className='bg-black/30 relative backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-2xl p-4  z-[20] sm:p-8 w-full mx-auto'
         aria-labelledby="waitlist-heading"
       >
         {/* Subtle Inner Glow */}
         <div className="absolute top-0 left-1/4 w-1/2 h-1 bg-gradient-to-r from-transparent via-accent-primary/20 to-transparent" />
 
+
+       
+
         {/* Heading */}
-        
+
         <h3
           id="waitlist-heading"
-          className='font-display text-2xl md:text-3xl font-bold text-white mb-4 text-center leading-tight'
+          className='font-display text-2xl sm:text-3xl font-bold text-white mb-4 text-center leading-tight'
         >
-          Your seat is waiting.
+          Your seat is waiting
         </h3>
 
         {/* Subtext */}
-        <p className='font-sans text-white/80 text-sm mb-6 text-center leading-relaxed'>
+        <p className='font-sans text-white/80 text-sm mb-6 sm:text-base text-center leading-relaxed'>
           Be first to experience focused studying with Apex
         </p>
 
@@ -180,7 +209,7 @@ function WaitlistForm() {
         </div>,
         document.body
       )}
-    </>
+    </div>
   );
 }
 

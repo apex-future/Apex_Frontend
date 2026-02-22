@@ -49,13 +49,14 @@ function CTA() {
     <section className="mt-16 relative min-h-[512px] p-6 bg-black " id="cta">
       <div className="wrapper py-8 md:pt-12 relative z-[10] gap-8 grid grid-cols-1 md:grid-cols-2 justify-center items-center">
         <div className="flex flex-col gap-6 w-full p-4 ">
-          <h3 className="CTA-heading text-white font-display text-xl sm:text-2xl p-4 leading-relaxed text-center">
+          <h3 className="CTA-heading text-white font-display text-2xl sm:text-3xl p-4 leading-loose text-center">
           The best students don't juggle tabs.  <br />
-            They use <span className='inline-flex items-center'>
-              <span className='  italic px-2 inline-block h-[1.3em] py-0 bg-accent-primary/50 '> Apex</span>
-              <span className='inline-block sm:w-1 w-[0.1em] h-[1em] sm:h-[1.2em] bg-accent-primary ml-1 animate-blink'></span>
-            </span>
+            They use <span className='italic px-2 inline-block  py-0 bg-accent-primary/50'>Apex</span>
           </h3>
+          {/* <span className='inline-flex items-start'>
+              <span className='  italic px-2 inline-block  py-0 bg-accent-primary/50 '> Apex</span>
+              <span className='inline-block sm:w-1 w-[0.1em] h-[1em] sm:h-[1.2em] bg-accent-primary ml-1 animate-blink'></span>
+            </span> */}
         </div>
         <WaitlistForm />
       </div>
