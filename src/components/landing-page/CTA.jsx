@@ -9,30 +9,39 @@ gsap.registerPlugin(ScrollTrigger);
 
 function CTA() {
   useGSAP(() => {
-    gsap.from(".CTA-heading", {
-      scrollTrigger: {
-        trigger: "#cta",
-        start: "top 75%",
-      },
-      y: 50,
-      opacity: 0,
-      duration: 1,
-      ease: "power2.out"
-    });
+    gsap.fromTo(".CTA-heading", 
+      { x: -100, opacity: 0 },
+      {
+        scrollTrigger: {
+          trigger: "#cta",
+          start: "top 85%",
+        },
+        x: 0,
+        opacity: 1,
+        duration: 1,
+        ease: "back.out(1.4)",
+        immediateRender: false
+      }
+    );
 
-    gsap.from(".wrapper > div:nth-child(2)", { // WaitlistForm container
-      scrollTrigger: {
-        trigger: "#cta",
-        start: "top 75%",
-      },
-      y: 50,
-      duration: 1,
-      delay: 0.3,
-      ease: "power2.out"
-    });
+    gsap.fromTo("#waitlist", 
+      { x: 100, opacity: 0 },
+      {
+        scrollTrigger: {
+          trigger: "#cta",
+          start: "top 85%",
+        },
+        x: 0,
+        opacity: 1,
+        duration: 1,
+        delay: 0.2,
+        ease: "back.out(1.4)",
+        immediateRender: false
+      }
+    );
 
-    //apply animation when only on desktop view
-    gsap.from(".sparkle-animation", { // Sparkle image
+    // Sparkle animation
+    gsap.from(".lg\\:sparkle-animation", {
       scrollTrigger: {
         trigger: "#cta",
         start: "top center",

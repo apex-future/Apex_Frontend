@@ -13,11 +13,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="src/assets/logo/logo-light.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>apex</title>
-    <!-- Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <title>Apex | Deep Learning Platform</title>
+    <!-- Preload Critical Assets -->
+    <link rel="preload" as="image" href="/src/assets/e-book-dashboard.jpg">
+    <!-- Google Fonts Optimization -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+      /* Prevent CLS by ensuring fonts load with swap */
+      body { font-family: 'Inter', sans-serif; }
+      .font-display { font-family: 'Space Grotesk', sans-serif; }
+    </style>
   </head>
   <body>
     <div id="root"  class="font-sans" ></div>

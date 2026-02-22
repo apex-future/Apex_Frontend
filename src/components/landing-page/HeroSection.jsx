@@ -16,16 +16,26 @@ function HeroSection() {
         })
     }, [])
     useGSAP(() => {
+        // Text and buttons slide from left
+        gsap.from(".hero-header, .CTA-buttons", {
+            x: -100,
+            opacity: 0,
+            duration: 1.2,
+            ease: "back.out(1.2)",
+            stagger: 0.2
+        });
+
+        // Image slides from right
         gsap.fromTo(".hero-img-wrapper",
             {
-                x: 300,
-                opacity: 0  // Add fade in
+                x: 100,
+                opacity: 0
             },
             {
                 x: 0,
                 opacity: 1,
-                duration: 2,
-                ease: "power2.out"  // Smooth deceleration
+                duration: 1.2,
+                ease: "back.out(1.2)"
             }
         )
     }, [])

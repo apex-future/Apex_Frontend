@@ -10,20 +10,21 @@ function Features() {
     useGSAP(() => {
         gsap.fromTo(".feature-card-wrapper", 
             {
-                y: 50,
-                opacity: 0
+                x: (i) => i % 2 === 0 ? -50 : 50,
+                opacity: 0,
             },
             {
                 scrollTrigger: {
                     trigger: ".feature-list",
-                    start: "top 80%",
+                    start: "top 85%",
                     toggleActions: "play none none reverse"
                 },
-                y: 0,
+                x: 0,
                 opacity: 1,
                 duration: 0.8,
-                stagger: 0.2,
-                ease: "power2.out"
+                stagger: 0.1,
+                ease: "back.out(1.4)",
+                clearProps: "all" // Clean up after animation to avoid conflicts with hover effects
             }
         );
     }, []);

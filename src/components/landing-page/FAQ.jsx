@@ -23,20 +23,21 @@ function FAQ() {
     useGSAP(() => {
         gsap.fromTo(".FAQ-wrapper article", 
             {
-                y: 30,
-                opacity: 0
+                x: (i) => i % 2 === 0 ? -50 : 50,
+                opacity: 0,
             },
             {
                 scrollTrigger: {
                     trigger: ".FAQ-wrapper",
-                    start: "top 85%",
-                    toggleActions: "play none none reverse"
+                    start: "top 90%",
+                    toggleActions: "play none none reverse",
                 },
-                y: 0,
+                x: 0,
                 opacity: 1,
-                duration: 0.6,
+                duration: 0.8,
                 stagger: 0.1,
-                ease: "power2.out"
+                ease: "back.out(1.4)",
+                immediateRender: false
             }
         );
     }, []);

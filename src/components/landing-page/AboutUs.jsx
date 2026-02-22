@@ -18,17 +18,38 @@ function AboutUs() {
     }
 
     useGSAP(() => {
-        gsap.from(".info-wrapper > div", {
-            scrollTrigger: {
-                trigger: "#about",
-                start: "top 75%",
-            },
-            y: 50,
-            opacity: 0,
-            duration: 0.8,
-            stagger: 0.2,
-            ease: "power2.out"
-        });
+        // About Us box from left
+        gsap.fromTo(".about-us", 
+            { x: -50, opacity: 0 },
+            {
+                scrollTrigger: {
+                    trigger: "#about",
+                    start: "top 85%",
+                },
+                x: 0,
+                opacity: 1,
+                duration: 0.8,
+                ease: "back.out(1.4)",
+                immediateRender: false
+            }
+        );
+
+        // Mission and Vision from right
+        gsap.fromTo(".mission-box, .vision-box", 
+            { x: 50, opacity: 0 },
+            {
+                scrollTrigger: {
+                    trigger: "#about",
+                    start: "top 85%",
+                },
+                x: 0,
+                opacity: 1,
+                duration: 0.8,
+                stagger: 0.2,
+                ease: "back.out(1.4)",
+                immediateRender: false
+            }
+        );
     }, []);
 
     return (
