@@ -29,8 +29,8 @@ function NavBar() {
     const closeAside = () => setAsideIsOpen(false)
 
     return (
-        <div className='w-full nav-div p-3 py-4 fixed z-[100]'>
-            <nav className='sm:w-[80%] w-[90%] justify-between p-3 mx-auto flex items-center backdrop-blur-md shadow-sm h-full bg-white/50 rounded-full border-2 border-default'>
+        <div className='w-full nav-div p-4 py-4 fixed z-[100]'>
+            <nav className='sm:w-[80%] w-[90%] justify-between p-4 mx-auto flex items-center backdrop-blur-md shadow-sm h-full bg-white/50 rounded-full border-2 border-default'>
                 <div>
                     <a href="#hero">
                         <img className="size-8 rounded-full" alt="apex-logo" src={logoLight} />
@@ -56,12 +56,12 @@ function NavBar() {
                     </li>
                 </ul>
                 <div className="nav-bar-cta hidden md:block">
-                    <a href="#cta" className='p-3 rounded-full px-6 text-center text-white bg-accent-primary font-medium transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--accent-primary-rgb),0.5)] hover:bg-opacity-90 active:scale-95 inline-block'>Request Private Access</a>
+                    <a href="#cta" className='p-4 rounded-full px-6 text-center text-white bg-accent-primary font-medium transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--accent-primary-rgb),0.5)] hover:bg-opacity-90 active:scale-95 inline-block'>Request Private Access</a>
                 </div>
             </nav>
 
             {asideIsOpen &&
-                <aside className='aside-bar fixed max-h-screen w-screen p-3 flex bg-[rgb(8,9,12)] flex-col gap-10 top-0 bottom-0 left-0 mx-auto right-0' ref={asideRef}>
+                <aside className='aside-bar fixed max-h-screen w-screen p-4 flex bg-[rgb(8,9,12)] flex-col gap-8 top-0 bottom-0 left-0 mx-auto right-0' ref={asideRef}>
                     <X onClick={closeAside} className='md:hidden text-white cursor-pointer hover:text-accent-primary transition-colors' />
                     <div className='flex flex-col justify-between h-full pb-5'>
                         <ul className='flex flex-col gap-4 px-5'>
@@ -71,7 +71,7 @@ function NavBar() {
                         </ul>
 
                         <div className='h-12'>
-                            <a href="#cta" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium block mx-auto hover:bg-opacity-90 active:scale-95 transition-all' onClick={closeAside}>Request Private Access</a>
+                            <a href="#cta" className='p-4 rounded-full w-[272px] px-8 text-center text-white bg-accent-primary font-medium block mx-auto hover:bg-opacity-90 active:scale-95 transition-all' onClick={closeAside}>Request Private Access</a>
                         </div>
                     </div>
                 </aside>}

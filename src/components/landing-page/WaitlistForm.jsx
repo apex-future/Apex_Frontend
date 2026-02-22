@@ -86,27 +86,28 @@ function WaitlistForm() {
       <form
         ref={formRef}
         onSubmit={handleSubmit}
-        className='bg-black/30 relative backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-lg p-6 z-[20] sm:p-8 w-full mx-auto'
+        className='bg-black/30 relative backdrop-blur-md shadow-lg border border-[rgba(94,94,94,0.5)] rounded-2xl p-6 z-[20] sm:p-8 w-full mx-auto'
         aria-labelledby="waitlist-heading"
       >
         {/* Subtle Inner Glow */}
         <div className="absolute top-0 left-1/4 w-1/2 h-1 bg-gradient-to-r from-transparent via-accent-primary/20 to-transparent" />
 
         {/* Heading */}
+        
         <h3
           id="waitlist-heading"
-          className='font-display text-2xl md:text-3xl font-bold text-white mb-2 text-center'
+          className='font-display text-2xl md:text-3xl font-bold text-white mb-4 text-center leading-tight'
         >
-          Grab A Spot
+          Your seat is waiting.
         </h3>
 
         {/* Subtext */}
-        <p className='font-sans text-white/80 text-sm mb-6 text-center'>
+        <p className='font-sans text-white/80 text-sm mb-6 text-center leading-relaxed'>
           Be first to experience focused studying with Apex
         </p>
 
         {/* Email Input */}
-        <div className='mb-4'>
+        <div className='mb-6'>
           <label htmlFor="waitlist-email" className='sr-only'>
             Email address
           </label>
@@ -116,10 +117,10 @@ function WaitlistForm() {
             name="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="institution@email.com"
+            placeholder="foundingscholars@gmail.com"
             required
             disabled={status === 'loading'}
-            className='w-full px-4 py-3  bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-primary rounded-full focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed'
+            className='w-full px-4 py-4  bg-white/10 border border-white/20 text-white placeholder:text-sm placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-primary rounded-full focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed'
             autoComplete="email"
           />
         </div>
@@ -128,7 +129,7 @@ function WaitlistForm() {
         <button
           type="submit"
           disabled={status === 'loading' || !email}
-          className="w-full py-3   rounded-full bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
+          className="w-full py-4   rounded-full bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
         >
           {status === 'loading' ? (
             <span className='flex items-center justify-center gap-2'>

@@ -22,11 +22,11 @@ function Footer() {
   }, []);
 
   return (
-    <footer className='bg-black pt-10 p-3 overflow-hidden relative'>
+    <footer className='bg-black pt-8 p-4 overflow-hidden relative'>
 
 
 
-      <div className=" pointer-event-none absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+      <div className=" pointer-event-none absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:16px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
       <div className="main-footer relative  z-[10]">
         <h2 className="brand-name pointer-events-none  absolute top-0 text-[12rem] sm:text-[17rem] text-transparent italic [-webkit-text-stroke:1px_rgba(192,192,192,0.4)]
   [mask-image:linear-gradient(to_bottom,black_50%,transparent_100%)]
@@ -34,15 +34,15 @@ function Footer() {
           
         </h2>
         <div className="max-w-6xl mx-auto px-4">
-          <div className="grid sm:grid-cols-4 gap-8">
+          <div className="grid sm:grid-cols-4 gap-10">
       
       {/* Column 1: Brand */}
       <div>
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-6">
           {/* Logo */}
           <h3 className="font-display text-2xl font-bold">Apex</h3>
         </div>
-        <p className="text-text-dark-secondary text-sm md:text-base mb-4">
+        <p className="text-text-dark-secondary text-sm md:text-base mb-6">
           Study smarter. <span className="text-purple-500">  Reach your apex. </span>
         </p>
         {/* Social Links */}
@@ -85,7 +85,7 @@ function Footer() {
 
             {/* Column 4: Support & Legal */}
             <div>
-              <h4 className="font-display font-semibold mb-4">Support</h4>
+              <h4 className="font-display font-semibold mb-6">Support</h4>
               <ul className="space-y-2 text-sm md:text-base text-text-dark-secondary">
                 <li><a href="#faq" className="hover:text-accent-primary">FAQ</a></li>
                 <li><a href="#help" className="hover:text-accent-primary">Help Center</a></li>
@@ -98,7 +98,7 @@ function Footer() {
           </div>
 
           {/* Bottom Bar */}
-          <div className="border-t border-border-default/20 mt-12 pt-8 text-center text-sm text-text-dark-tertiary">
+          <div className="border-t border-border-default/20 mt-16 pt-8 text-center text-sm text-text-dark-tertiary">
             <p>&copy; 2026 Apex. All rights reserved.</p>
           </div>
         </div>

@@ -8,6 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 function FAQ() {
     let accordionItems = [
+        { id: 0, question: "Why isn’t Apex just another AI app?", answer: "Because Apex isn’t about more tools. It’s about fewer distractions." },
         { id: 1, question: "What Is Apex?", answer: " Apex is an AI-powered reading platform that keeps everything you need in one place—instant explanations, dictionary lookups, and curated videos. No more tab switching, just focused studying." },
         { id: 2, question: "Is Apex free to use?", answer: "Yes! Apex offers a free plan with core features. We also have premium plans with advanced tools like extra credits etc." },
         { id: 3, question: "What file formats can I upload?", answer: "You can upload PDFs and paste text directly into Apex. We're working on adding support for more formats like ePub and Word documents soon." },
@@ -41,13 +42,13 @@ function FAQ() {
     }, []);
 
     return (
-        <section className='faq pt-14 md:pt-20 ' id="faq">
+        <section className='faq pt-16 md:pt-24 ' id="faq">
             <h2 className="FAQ-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold font-display p-2 px-4  text-center">
                 Frequently Asked Questions
             </h2>
-            <div className="FAQ-wrapper w-[80%] mx-auto mt-5 grid grid-cols-1 gap-3">
+            <div className="FAQ-wrapper w-[80%] mx-auto mt-8 grid grid-cols-1 gap-4">
                 {accordionItems.map((item) => (
-                    <article className='flex flex-col p-3 rounded-2xl divide-y divide-black/5 gap-3 bg-white/50 backdrop-blur-md shadow-sm border border-border-default/50 hover:bg-white/80 transition-all duration-300' key={item.id}>
+                    <article className='flex flex-col p-4 rounded-2xl divide-y divide-black/5 gap-4 bg-white/50 backdrop-blur-md shadow-sm border border-border-default/50 hover:bg-white/80 transition-all duration-300' key={item.id}>
                         <div className='flex justify-between items-center cursor-pointer' onClick={() => { toggleAccordion(item.id) }}>
                             <h5 className="FAQ-question font-display font-bold text-lg sm:text-xl text-text-primary">{item.question}</h5>
                             <button className="p-2 rounded-full hover:bg-neutral-100 transition-colors">
@@ -55,7 +56,9 @@ function FAQ() {
                             </button>
                         </div>
                         <div className={`FAQ-answer overflow-hidden transition-all duration-500 ease-in-out ${activeId === item.id ? "max-h-96 py-4 opacity-100" : "max-h-0 py-0 opacity-0"}`}>
-                            <p className="text-base text-text-secondary leading-relaxed font-medium">{item.answer}</p>
+                            <p className="text-base text-text-secondary leading-relaxed font-medium">
+                                {item.answer}
+                            </p>
                         </div>
                     </article>
                 ))}
