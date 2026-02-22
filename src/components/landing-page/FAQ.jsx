@@ -20,18 +20,24 @@ function FAQ() {
     }
 
     useGSAP(() => {
-        gsap.from(".FAQ-wrapper article", {
-            scrollTrigger: {
-                trigger: ".FAQ-wrapper",
-                start: "top 85%",
-                toggleActions: "play none none reverse"
+        gsap.fromTo(".FAQ-wrapper article", 
+            {
+                y: 30,
+                opacity: 0
             },
-            y: 30,
-            opacity: 0,
-            duration: 0.6,
-            stagger: 0.1,
-            ease: "power2.out"
-        });
+            {
+                scrollTrigger: {
+                    trigger: ".FAQ-wrapper",
+                    start: "top 85%",
+                    toggleActions: "play none none reverse"
+                },
+                y: 0,
+                opacity: 1,
+                duration: 0.6,
+                stagger: 0.1,
+                ease: "power2.out"
+            }
+        );
     }, []);
 
     return (
@@ -41,7 +47,7 @@ function FAQ() {
             </h2>
             <div className="FAQ-wrapper w-[80%] mx-auto mt-5 grid grid-cols-1 gap-3">
                 {accordionItems.map((item) => (
-                    <article className='flex flex-col p-3 rounded-2xl divide-y divide-black/5 gap-3 bg-white/50 backdrop-blur-md shadow-xl border border-border-default/50 hover:bg-white/80 transition-all duration-300' key={item.id}>
+                    <article className='flex flex-col p-3 rounded-2xl divide-y divide-black/5 gap-3 bg-white/50 backdrop-blur-md shadow-sm border border-border-default/50 hover:bg-white/80 transition-all duration-300' key={item.id}>
                         <div className='flex justify-between items-center cursor-pointer' onClick={() => { toggleAccordion(item.id) }}>
                             <h5 className="FAQ-question font-display font-bold text-lg sm:text-xl text-text-primary">{item.question}</h5>
                             <button className="p-2 rounded-full hover:bg-neutral-100 transition-colors">
