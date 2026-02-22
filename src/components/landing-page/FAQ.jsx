@@ -42,20 +42,38 @@ function FAQ() {
     }, []);
 
     return (
-        <section className='faq pt-16 md:pt-24 ' id="faq">
-            <h2 className="FAQ-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold font-display p-2 px-4  text-center">
+        <section className='faq pt-16 md:pt-24 ' id="faq" aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className="FAQ-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold font-display p-2 px-4  text-center">
                 Frequently Asked Questions
             </h2>
             <div className="FAQ-wrapper w-[80%] mx-auto mt-8 grid grid-cols-1 gap-4">
                 {accordionItems.map((item) => (
                     <article className='flex flex-col p-4 rounded-2xl divide-y divide-black/5 gap-4 bg-white/50 backdrop-blur-md shadow-sm border border-border-default/50 hover:bg-white/80 transition-all duration-300' key={item.id}>
-                        <div className='flex justify-between items-center cursor-pointer' onClick={() => { toggleAccordion(item.id) }}>
-                            <h5 className="FAQ-question font-display font-bold text-lg sm:text-xl text-text-primary">{item.question}</h5>
-                            <button className="p-2 rounded-full hover:bg-neutral-100 transition-colors">
+                        <div 
+                            className='flex justify-between items-center cursor-pointer group' 
+                            onClick={() => { toggleAccordion(item.id) }}
+                            role="button"
+                            aria-expanded={activeId === item.id}
+                            aria-controls={`faq-answer-${item.id}`}
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    toggleAccordion(item.id);
+                                }
+                            }}
+                        >
+                            <h3 className="FAQ-question font-display font-bold text-lg sm:text-xl text-text-primary">{item.question}</h3>
+                            <div className="p-2 rounded-full hover:bg-neutral-100 transition-colors" aria-hidden="true">
                                 <Plus className={`transition-all duration-500 transform ${activeId === item.id ? "rotate-45 text-accent-primary" : "text-text-tertiary"}`} size={24} />
-                            </button>
+                            </div>
                         </div>
-                        <div className={`FAQ-answer overflow-hidden transition-all duration-500 ease-in-out ${activeId === item.id ? "max-h-96 py-4 opacity-100" : "max-h-0 py-0 opacity-0"}`}>
+                        <div 
+                            id={`faq-answer-${item.id}`}
+                            className={`FAQ-answer overflow-hidden transition-all duration-500 ease-in-out ${activeId === item.id ? "max-h-96 py-4 opacity-100" : "max-h-0 py-0 opacity-0"}`}
+                            role="region"
+                            aria-labelledby={`faq-question-${item.id}`}
+                        >
                             <p className="text-base text-text-secondary leading-relaxed font-medium">
                                 {item.answer}
                             </p>

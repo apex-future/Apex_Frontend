@@ -85,24 +85,28 @@ function WaitlistForm() {
   };
 
   return (
-    <div className='flex flex-col gap-4'>
+    <div className='flex flex-col gap-4' id="waitlist" role="region" aria-labelledby="waitlist-social-heading">
+      <h2 id="waitlist-social-heading" className="sr-only">Waitlist and Social Proof</h2>
      {/*Social Proof*/}
         <div className="flex flex-row gap-4 justify-center items-center ">
-          <div className="flex -space-x-3 overflow-hidden">
+          <div className="flex -space-x-3 overflow-hidden" aria-label="Profiles of Founding Scholars">
             <img
               className="inline-block h-8 w-8 rounded-full ring-2 ring-black/50 object-cover"
               src={student1}
-              alt="Founding Scholar 1"
+              alt="Founding Scholar Profile 1"
+              loading="lazy"
             />
             <img
               className="inline-block h-8 w-8 rounded-full ring-2 ring-black/50 object-cover"
               src={student2}
-              alt="Founding Scholar 2"
+              alt="Founding Scholar Profile 2"
+              loading="lazy"
             />
             <img
               className="inline-block h-8 w-8 rounded-full ring-2 ring-black/50 object-cover"
               src={student3}
-              alt="Founding Scholar 3"
+              alt="Founding Scholar Profile 3"
+              loading="lazy"
             />
           </div>
           <p className="text-white/80 text-sm font-medium">
@@ -116,7 +120,7 @@ function WaitlistForm() {
         aria-labelledby="waitlist-heading"
       >
         {/* Subtle Inner Glow */}
-        <div className="absolute top-0 left-1/4 w-1/2 h-1 bg-gradient-to-r from-transparent via-accent-primary/20 to-transparent" />
+        <div className="absolute top-0 left-1/4 w-1/2 h-1 bg-gradient-to-r from-transparent via-accent-primary/20 to-transparent" aria-hidden="true" />
 
 
        
@@ -148,9 +152,11 @@ function WaitlistForm() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="foundingscholars@gmail.com"
             required
+            aria-required="true"
             disabled={status === 'loading'}
             className='w-full px-4 py-4  bg-white/10 border border-white/20 text-white placeholder:text-sm placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-primary rounded-full focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed'
             autoComplete="email"
+            aria-describedby={status === 'error' ? 'waitlist-error' : undefined}
           />
         </div>
 
@@ -158,11 +164,12 @@ function WaitlistForm() {
         <button
           type="submit"
           disabled={status === 'loading' || !email}
+          aria-busy={status === 'loading'}
           className="w-full py-4   rounded-full bg-accent-primary hover:bg-accent-hover text-white font-display font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-black/30"
         >
           {status === 'loading' ? (
             <span className='flex items-center justify-center gap-2'>
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -180,14 +187,15 @@ function WaitlistForm() {
       {showToast && createPortal(
         <div
           role="alert"
-          aria-live="polite"
+          aria-live="assertive"
+          id={status === 'error' ? 'waitlist-error' : 'waitlist-success'}
           className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up ${status === 'success'
             ? 'bg-success text-white'
             : 'bg-error text-white'
             } px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-lg w-[80%]`}
         >
           {/* Icon */}
-          <span className='text-2xl'>
+          <span className='text-2xl' aria-hidden="true">
             {status === 'success' ? '✓' : '⚠'}
           </span>
 
@@ -199,10 +207,10 @@ function WaitlistForm() {
           {/* Close Button */}
           <button
             onClick={() => setShowToast(false)}
-            className='hover:opacity-70 transition-opacity'
+            className='hover:opacity-70 transition-opacity p-2'
             aria-label="Close notification"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
