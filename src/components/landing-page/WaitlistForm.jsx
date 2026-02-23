@@ -43,8 +43,9 @@ function WaitlistForm() {
     setMessage('');
 
     try {
-      // Using the specific Render API provided by the user
-      const response = await fetch(`https://apex-waitlist-api.onrender.com/api/waitlist`, {
+      // Using environment variable for the API URL
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/waitlist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

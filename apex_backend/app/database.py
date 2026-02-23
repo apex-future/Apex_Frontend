@@ -14,7 +14,7 @@ load_dotenv()
 # SUPABASE CLIENT
 # ==============================
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_KEY")
 
 # Debug logs (visible in hosting logs)
 print("SUPABASE_URL:", SUPABASE_URL)
