@@ -136,12 +136,12 @@ def send_welcome_email(email_address: str):
         </div>
         """
         
-        resend.Emails.send({{
+        resend.Emails.send({
             "from": FROM_EMAIL,
             "to": email_address,
             "subject": subject,
             "html": html_content
-        }})
+        })
         logging.info(f"Welcome email sent to {email_address}")
     except Exception as e:
         logging.error(f"Failed to send welcome email to {email_address}: {e}")
