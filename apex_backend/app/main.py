@@ -28,10 +28,13 @@ app = FastAPI(
 )
 
 # CORS Configuration
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+# Check for multiple possible env var names (CORS_ORIGINS or FRONTEND_URL)
+cors_origins_raw = os.getenv("CORS_ORIGINS") or os.getenv("FRONTEND_URL") or "http://localhost:5173,http://193.181.214.73,https://apexapp.click,http://apexapp.click,https://contact.apexapp.click,http://localhost:3000"
+allowed_origins = [origin.strip() for origin in cors_origins_raw.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url, "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,7 +62,7 @@ def health_check():
 # ============================
 
 @app.post("/api/waitlist", response_model=schemas.WaitlistResponse, status_code=status.HTTP_201_CREATED)
-def join_waitlist(waitlist_entry: schemas.WaitlistCreate):
+def join_waitlist(waitlist_entry: schemas.WaitlistCreate, background_tasks: BackgroundTasks):
     """
     Add an email to the waitlist using Supabase.
 
@@ -97,14 +100,21 @@ def join_waitlist(waitlist_entry: schemas.WaitlistCreate):
         )
 
     # TASK 3 — NEW USER SIGNUP EMAIL:
-    # After successful signup, send a welcome email.
+    # After successful signup, send a welcome email in the background.
+    background_tasks.add_task(send_welcome_email, waitlist_entry.email)
+
+    # Force no caching for this POST
+    headers = {"Cache-Control": "no-store"}
+    return JSONResponse(content=supa_entry, status_code=201, headers=headers)
+
+def send_welcome_email(email_address: str):
+    """Logic to send the branded welcome email"""
     try:
         # EDIT WELCOME EMAIL CONTENT HERE
         subject = "You're on the list."
         
         # Extraction logic: take part before @, split by delimiters, strip numbers
-        raw_name = waitlist_entry.email.split('@')[0]
-        # Remove anything after . _ or - and strip trailing digits
+        raw_name = email_address.split('@')[0]
         name_part = raw_name.replace('.', ' ').replace('_', ' ').replace('-', ' ').split()[0].rstrip('0123456789')
         first_name = name_part.capitalize()
 
@@ -132,14 +142,13 @@ def join_waitlist(waitlist_entry: schemas.WaitlistCreate):
         
         resend.Emails.send({{
             "from": FROM_EMAIL,
-            "to": waitlist_entry.email,
+            "to": email_address,
             "subject": subject,
             "html": html_content
         }})
-        logging.info(f"Welcome email sent to {waitlist_entry.email}")
+        logging.info(f"Welcome email sent to {email_address}")
     except Exception as e:
-        # TASK 4 — ERROR HANDLING: Log but don't crash
-        logging.error(f"Failed to send welcome email to {waitlist_entry.email}: {e}")
+        logging.error(f"Failed to send welcome email to {email_address}: {e}")
 
     # Force no caching for this POST
     headers = {"Cache-Control": "no-store"}
