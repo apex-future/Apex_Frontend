@@ -88,6 +88,10 @@ def join_waitlist(waitlist_entry: schemas.WaitlistCreate, background_tasks: Back
                 detail="Failed to add email to waitlist. Please check Supabase logs."
             )
 
+        # TASK 3 — NEW USER SIGNUP EMAIL:
+        # After successful signup, send a welcome email in the background.
+        background_tasks.add_task(send_welcome_email, waitlist_entry.email)
+
         # Force no caching for this POST
         headers = {"Cache-Control": "no-store"}
         return JSONResponse(content=supa_entry, status_code=201, headers=headers)
@@ -98,14 +102,6 @@ def join_waitlist(waitlist_entry: schemas.WaitlistCreate, background_tasks: Back
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unexpected server error: {e}"
         )
-
-    # TASK 3 — NEW USER SIGNUP EMAIL:
-    # After successful signup, send a welcome email in the background.
-    background_tasks.add_task(send_welcome_email, waitlist_entry.email)
-
-    # Force no caching for this POST
-    headers = {"Cache-Control": "no-store"}
-    return JSONResponse(content=supa_entry, status_code=201, headers=headers)
 
 def send_welcome_email(email_address: str):
     """Logic to send the branded welcome email"""
@@ -149,10 +145,6 @@ def send_welcome_email(email_address: str):
         logging.info(f"Welcome email sent to {email_address}")
     except Exception as e:
         logging.error(f"Failed to send welcome email to {email_address}: {e}")
-
-    # Force no caching for this POST
-    headers = {"Cache-Control": "no-store"}
-    return JSONResponse(content=supa_entry, status_code=201, headers=headers)
 
 @app.get("/api/waitlist/count")
 def get_count():
