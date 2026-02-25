@@ -1,7 +1,7 @@
 import React, { useContext } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { BookContext } from "../../../context/BookContext"
+import { BookContext } from "../../../context/BookContextInstance"
 import Shelf from './Shelf'
 
 /**

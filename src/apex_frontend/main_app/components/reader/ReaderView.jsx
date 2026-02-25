@@ -1,18 +1,34 @@
 import React, { useEffect, useState, useRef, useMemo, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BookContext } from '../../context/BookContext';
+import { BookContext } from '../../context/BookContextInstance';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 function ReaderView() {
     const { books, updateBookProgress, toggleBookmark } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
+
     const [fileUrl, setFileUrl] = useState(null);
     const [textContent, setTextContent] = useState("");
+
+    // Responsive window size hook
+    const [windowSize, setWindowSize] = useState({
+        width: window.innerWidth,
+        height: window.innerHeight
+    });
+
+    useEffect(() => {
+        const handleResize = () => setWindowSize({
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Find the book and determine type
     const book = useMemo(() => books.find(b => b.id.toString() === bookId), [books, bookId]);
@@ -130,15 +146,15 @@ function ReaderView() {
     useEffect(() => { updateProgressRef.current = updateBookProgress; }, [updateBookProgress]);
     useEffect(() => { currentBookRef.current = book; }, [book]);
 
-    // 1. Loading & Redirect logic
+    // Loading & Redirect logic - Only recreate URL if file changes
     useEffect(() => {
         if (!book && bookId) {
             navigate('/');
             return;
         }
 
-        if (book?.file) {
-            const { file } = book;
+        const file = book?.file;
+        if (file) {
             const isTypePdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
             const isTypeImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(file.name);
             const isTypeText = file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt');
@@ -150,22 +166,23 @@ function ReaderView() {
                 return () => URL.revokeObjectURL(url);
             } else if (isTypeText) {
                 const reader = new FileReader();
-                reader.onload = (e) => { setTextContent(e.target.result); setFileUrl(null); };
+                reader.onload = (e) => {
+                    setTextContent(e.target.result);
+                    setFileUrl(null);
+                };
                 reader.readAsText(file);
             }
         }
-    }, [bookId, book?.file]);
+    }, [bookId, book?.file, navigate]); // Remove 'book' from dependency, only use 'book.file'
 
-    // 2. Initial Reset effect
+    // 2. Initial Reset effect - Only run when bookId changes to avoid resetting during progress updates
     useEffect(() => {
-        if (!bookId) return;
+        if (!bookId || !book) return;
         window.scrollTo(0, 0);
-        if (book) {
-            setLocalProgress(book.progress || 0);
-            setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
-            setPageNumber(book.currentPage || 1);
-        }
-    }, [bookId]);
+        setLocalProgress(book.progress || 0);
+        setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
+        setPageNumber(book.currentPage || 1);
+    }, [bookId]); // Only bookId as dependency to avoid resetting on progress updates
 
     // 3. Scroll logic for text content
     const lastUpdateRef = useRef(0);
@@ -249,6 +266,7 @@ function ReaderView() {
                                 onNextPage={nextPage}
                                 onPrevPage={previousPage}
                                 locked={locked}
+                                windowSize={windowSize}
                             />
 
                             {/* ── Desktop persistent prev/next buttons (md and up) ──
@@ -301,7 +319,7 @@ function ReaderView() {
                     {/* ── Image content ── */}
                     {fileUrl && !isPdf && (
                         <div className="flex-1 flex justify-center overflow-auto p-4">
-                            <img src={fileUrl} alt="content" className="max-w-full rounded-3xl shadow-2xl border-4 border-white/50" />
+                            <img src={fileUrl} alt="content" className="max-w-full max-h-[90vh] object-contain rounded-3xl shadow-2xl border-4 border-white/50" />
                         </div>
                     )}
 
@@ -311,10 +329,19 @@ function ReaderView() {
                             <div className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased">
                                 {textContent ? (
                                     <div className="whitespace-pre-wrap animate-in fade-in duration-1000">{textContent}</div>
-                                ) : (
+                                ) : book?.file ? (
                                     <div className="text-center py-40 flex flex-col items-center">
                                         <div className="w-12 h-12 rounded-full border-t-2 border-accent-primary animate-spin mb-4" />
                                         <p className="opacity-50 text-sm font-sans tracking-wide">Initializing view...</p>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-40 flex flex-col items-center gap-4">
+                                        <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center">
+                                            <Plus className="rotate-45" size={32} />
+                                        </div>
+                                        <h3 className="text-2xl font-bold">No File Content</h3>
+                                        <p className="text-base opacity-60 font-sans max-w-sm">This book entry was found, but the actual file data is missing or couldn't be loaded.</p>
+                                        <button onClick={() => navigate('/')} className="mt-4 px-6 py-2 bg-accent-primary text-white rounded-full font-sans text-sm font-semibold">Return Home</button>
                                     </div>
                                 )}
                             </div>

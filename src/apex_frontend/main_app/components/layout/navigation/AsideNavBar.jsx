@@ -28,9 +28,8 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Book, label: 'Book Shelf', path: '/bookshelf' },
-    { icon: Star, label: 'Favourite', path: '#favourite' },
     { icon: WholeWord, label: 'Dictionary', path: '/dictionary' },
-    { icon: Sparkle, label: 'ApexAi', path: '#apexai' },
+    { icon: Sparkle, label: 'ApexAi', path: '/ai' },
     { icon: Pen, label: 'Notes', path: '#notes' },
   ];
 
@@ -105,37 +104,45 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                   ? location.pathname === '/' && location.hash === ''
                   : location.pathname === item.path);
 
+              const itemContent = (
+                <>
+                  <Icon
+                    size={20}
+                    className={`flex-shrink-0 transition-colors z-10`}
+                  />
+                  <span
+                    className={`
+                      whitespace-nowrap transition-all duration-300 text-sm z-10
+                      ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
+                    `}
+                  >
+                    {item.label}
+                  </span>
+                </>
+              );
+
+              const baseClasses = `
+                flex items-center px-3 py-2.5 rounded-full
+                transition-all duration-300
+                font-medium relative group w-full
+                ${!isExpanded ? 'justify-center' : 'gap-3'}
+                ${isActive
+                  ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm'
+                  : 'text-neutral-600 hover:bg-neutral-300/50 hover:text-neutral-900'
+                }
+              `;
+
+
+
               return (
                 <li key={item.label}>
                   <NavLink
                     to={item.path}
-                    className={`
-                      flex items-center px-3 py-2.5 rounded-full
-                      transition-all duration-300
-                      font-medium relative group
-                      ${!isExpanded ? 'justify-center' : 'gap-3'}
-                      ${isActive
-                        ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm'
-                        : 'text-neutral-600 hover:bg-neutral-300/50 hover:text-neutral-900'
-                      }
-                    `}
+                    className={baseClasses}
                     title={!isExpanded ? item.label : ''}
                     onClick={() => isMobileOpen && closeMobileNav()}
                   >
-                    <Icon
-                      size={20}
-                      className={`flex-shrink-0 transition-colors z-10`}
-                    />
-                    <span
-                      className={`
-                        whitespace-nowrap transition-all duration-300 text-sm z-10
-                        ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
-                      `}
-                    >
-                      {item.label}
-                    </span>
-
-                    {/* Glowing effect overlay - optional extra layer for more depth if needed, but the gradient bg handles most of it */}
+                    {itemContent}
                   </NavLink>
                 </li>
               );

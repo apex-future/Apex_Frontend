@@ -38,8 +38,8 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
 
         {/* Upload & Logo Group */}
         <div className="flex items-center gap-3 ">
-          {/* Desktop Upload Button */}
-          <div className="hidden md:flex items-center h-full">
+          {/* Upload Button - Responsive */}
+          <div className="flex items-center h-full">
             <input
               type="file"
               id="top-nav-upload"
@@ -49,10 +49,10 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
             />
             <label
               htmlFor="top-nav-upload"
-              className="flex items-center gap-2 px-4 py-2.5 bg-accent-primary hover:bg-accent-hover text-white rounded-full transition-all cursor-pointer shadow-sm "
+              className="flex items-center justify-center gap-2 px-2.5 md:px-4 py-2.5 bg-accent-primary hover:bg-accent-hover text-white rounded-full transition-all cursor-pointer shadow-sm md:w-auto"
             >
               <Plus size={18} />
-              <span className="text-sm font-medium">Upload</span>
+              <span className="hidden md:inline text-sm font-medium">Upload</span>
             </label>
           </div>
 

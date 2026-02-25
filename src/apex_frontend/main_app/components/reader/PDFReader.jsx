@@ -19,22 +19,31 @@ const PDFReader = ({
   onDocumentLoad,
   onNextPage,
   onPrevPage,
+  windowSize,
   locked = false,
 }) => {
+  const currentWidth = windowSize?.width || window.innerWidth;
+  const isDesktop = currentWidth > 1024;
+
+  // Edge-to-edge on mobile (0 padding), small margin on desktop
+  const pdfWidth = isDesktop
+    ? Math.min(currentWidth - 120, 1100)
+    : currentWidth;
+
   // Swipe handlers — only meaningful on touch devices (mobile/tablet < md)
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => !locked && onNextPage?.(),
     onSwipedRight: () => !locked && onPrevPage?.(),
-    trackMouse: false,       // desktop mouse drags should NOT trigger page turns
+    trackMouse: false,
     preventScrollOnSwipe: true,
-    delta: 50,               // minimum swipe distance in px
+    delta: 50,
     swipeDuration: 500,
   });
 
   return (
     <div
       {...swipeHandlers}
-      className={`flex-1 flex justify-center items-start p-4 relative select-none ${locked ? 'overflow-hidden' : 'overflow-auto touch-pan-y'}`}
+      className={`flex-1 flex justify-center items-start ${isDesktop ? 'p-4' : 'p-0'} relative select-none ${locked ? 'overflow-hidden' : 'overflow-auto touch-pan-y'}`}
       id="pdf-container"
     >
       <Document
@@ -63,7 +72,7 @@ const PDFReader = ({
             renderTextLayer={true}
             renderAnnotationLayer={true}
             className="bg-white"
-            width={window.innerWidth > 800 ? 800 : window.innerWidth - 32}
+            width={pdfWidth}
           />
         </div>
       </Document>

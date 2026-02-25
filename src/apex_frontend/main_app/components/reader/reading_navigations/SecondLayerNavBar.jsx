@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react'
 import { Menu, RotateCcw, Sparkles, ZoomIn, ZoomOut } from 'lucide-react'
 import { gsap } from 'gsap'
 
-function SecondLayerNavBar({ visible, aiModal, setAiModal, leftPanel, setLeftPanel, pdfControls }) {
+function SecondLayerNavBar({ visible, setAiModal, setLeftPanel, pdfControls }) {
   const navRef = useRef(null);
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import React from 'react'
 import FirstLayerNavBar from './reading_navigations/FirstLayerNavBar';
 import SecondLayerNavBar from './reading_navigations/SecondLayerNavBar';
 
-function ReaderNavBar({ book, navigate, navState, setNavState, aiModal, setAiModal, leftPanel, setLeftPanel, pdfControls, readerControls }) {
+function ReaderNavBar({ navigate, navState, setNavState, aiModal, setAiModal, leftPanel, setLeftPanel, pdfControls, readerControls }) {
   const handleDotsClick = (e) => {
     e.stopPropagation();
     setNavState('second');
