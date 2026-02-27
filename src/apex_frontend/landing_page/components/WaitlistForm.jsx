@@ -80,7 +80,7 @@ function WaitlistForm() {
         setShowToast(true);
         setTimeout(() => setShowToast(false), 5000);
       }
-    } catch (error) {
+    } catch {
       setStatus('error');
       setMessage(
         'A network issue prevented your request. Please check your connection and try again.'
@@ -163,8 +163,8 @@ function WaitlistForm() {
           role="alert"
           aria-live="polite"
           className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up ${status === 'success'
-              ? 'bg-success text-white'
-              : 'bg-error text-white'
+            ? 'bg-success text-white'
+            : 'bg-error text-white'
             } px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-lg w-[80%]`}
         >
           {/* Icon */}

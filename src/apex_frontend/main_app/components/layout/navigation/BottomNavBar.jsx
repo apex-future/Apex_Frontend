@@ -1,7 +1,7 @@
 import { Home, Plus, User } from 'lucide-react'
 import React, { useContext, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
-import { BookContext } from '../../../context/BookContext';
+import { BookContext } from '../../../context/BookContextInstance';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -38,13 +38,13 @@ function BottomNavBar() {
     e.target.value = '';
   };
   return (
-    <div 
+    <div
       ref={navRef}
-      className='fixed bottom-8 md:hidden left-0 right-0 flex justify-between w-[64%] mx-auto z-[100] min-h-12 border-2 border-border-default bg-white/70 backdrop-blur-xl rounded-full items-center p-2 px-4 shadow-2xl shadow-neutral-400/20'
+      className='fixed bottom-8 md:hidden left-1/2 -translate-x-1/2 flex justify-between w-[92%] sm:w-[64%] max-w-[400px] z-[100] min-h-12 border-2 border-border-default bg-white/70 backdrop-blur-xl rounded-full items-center p-2 px-4 shadow-2xl shadow-neutral-400/20'
     >
       <NavLink
         to="/"
-        className={({ isActive }) => `p-2 hover:bg-neutral-100/50 rounded-full transition-all relative flex flex-col items-center group`}
+        className={() => `p-2 hover:bg-neutral-100/50 rounded-full transition-all relative flex flex-col items-center group`}
       >
         {({ isActive }) => (
           <>
@@ -76,7 +76,7 @@ function BottomNavBar() {
 
       <NavLink
         to="/profile"
-        className={({ isActive }) => `p-2 hover:bg-neutral-100/50 rounded-full transition-all relative flex flex-col items-center group`}
+        className={() => `p-2 hover:bg-neutral-100/50 rounded-full transition-all relative flex flex-col items-center group`}
       >
         {({ isActive }) => (
           <>

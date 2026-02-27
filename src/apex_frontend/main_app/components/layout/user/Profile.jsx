@@ -160,7 +160,7 @@ function Profile() {
 // Stat Card Component with THICK BORDER SYSTEM
 const StatCard = ({ icon, label, value, iconBg }) => (
   <div className="relative overflow-hidden bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md border-2 border-border-default rounded-2xl p-4 hover:scale-[1.02] hover:border-text-tertiary transition-all">
-    <div className={`w-9 h-9 ${iconBg} rounded-xl flex items-center justify-center text-white bg-neutral-800 mb-3`}>
+    <div className={`w-9 h-9 ${iconBg} rounded-xl flex items-center justify-center text-white mb-3`}>
       {icon}
     </div>
     <div className="text-2xl font-bold text-text-primary mb-0.5">{value}</div>

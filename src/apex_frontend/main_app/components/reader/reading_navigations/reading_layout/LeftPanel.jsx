@@ -3,7 +3,7 @@ import { BookOpen, List, Bookmark, X, ChevronLeft } from 'lucide-react'
 import BookmarksView from './BookmarksView'
 
 const NAV_ITEMS = [
-  { id: 'toc',       icon: List,     label: 'Table of Contents' },
+  { id: 'toc', icon: List, label: 'Table of Contents' },
   { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
   { id: 'annotations', icon: BookOpen, label: 'Annotations' },
 ];
@@ -13,7 +13,6 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
 
   const {
     bookmarks = [],
-    onJumpToBookmark,
     onRemoveBookmark,
   } = readerControls || {};
 

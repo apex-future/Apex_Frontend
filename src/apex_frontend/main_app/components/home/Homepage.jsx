@@ -1,9 +1,9 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "./Header";
 import Allbooks from "./Allbooks";
 import TopNavBar from "../layout/navigation/TopNavBar";
-import { BookContext } from "../../context/BookContext";
+import { BookContext } from "../../context/BookContextInstance";
 
 function HomePage({ setIsMobileOpen }) {
   const { books, addBookToShelf, handleBookClick } = useContext(BookContext);

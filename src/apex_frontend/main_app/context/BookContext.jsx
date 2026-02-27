@@ -2,32 +2,35 @@ import React, { createContext, useState, useCallback, useEffect, useMemo } from 
 import { shelves as initialShelves } from '../data/shelves';
 import { getAllBooks, saveBook, updateBook } from '../utils/db';
 
-export const BookContext = createContext();
+import { BookContext } from './BookContextInstance.jsx';
 
 export const BookProvider = ({ children }) => {
   const [shelves, setShelves] = useState(initialShelves);
 
-  // Directly calculate books instead of complex memo to ensure zero delay in reactivity
-  const books = (shelves || []).flatMap((shelf) => shelf.books || []);
+  // Memoize books array to avoid recreating it on every shelf update
+  const books = useMemo(() => (shelves || []).flatMap((shelf) => shelf.books || []), [shelves]);
 
   useEffect(() => {
     const loadBooks = async () => {
       try {
         const storedBooks = await getAllBooks();
-        console.log("Loaded books from DB:", storedBooks?.length);
 
         if (storedBooks && Array.isArray(storedBooks) && storedBooks.length > 0) {
-          setShelves(prevShelves =>
-            prevShelves.map(shelf => {
+          setShelves(prevShelves => {
+            const currentShelfNames = prevShelves.map(s => s.shelfName);
+            return prevShelves.map(shelf => {
               const shelfBooks = storedBooks.filter(b => {
+                // If it's the Active Reading shelf, include its own books, 
+                // books with no shelf, and books with a shelf that no longer exists
                 if (shelf.shelfName === 'Active Reading') {
-                  return b.shelfName === shelf.shelfName || !b.shelfName;
+                  const isOrphaned = b.shelfName && !currentShelfNames.includes(b.shelfName);
+                  return b.shelfName === 'Active Reading' || !b.shelfName || isOrphaned;
                 }
                 return b.shelfName === shelf.shelfName;
               });
               return { ...shelf, books: shelfBooks };
-            })
-          );
+            });
+          });
         }
       } catch (error) {
         console.error("Failed to load books from IndexedDB:", error);
@@ -61,7 +64,6 @@ export const BookProvider = ({ children }) => {
 
     try {
       await saveBook(newBook);
-      console.log("Saved new book:", newBook.title);
 
       setShelves((prevShelves) =>
         prevShelves.map((shelf) =>
@@ -109,9 +111,9 @@ export const BookProvider = ({ children }) => {
           const nextBookmarks = isBookmarked
             ? existingBookmarks.filter(b => b.page !== page)
             : [
-                ...existingBookmarks,
-                { page, label: `Page ${page}`, addedAt: new Date().toISOString() },
-              ].sort((a, b) => a.page - b.page);
+              ...existingBookmarks,
+              { page, label: `Page ${page}`, addedAt: new Date().toISOString() },
+            ].sort((a, b) => a.page - b.page);
 
           updatedBook = {
             ...book,

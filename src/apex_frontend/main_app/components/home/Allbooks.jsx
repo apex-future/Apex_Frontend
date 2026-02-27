@@ -1,10 +1,8 @@
-import React, { useMemo } from 'react';
-import { Bookmark, Plus } from 'lucide-react';
+import React from 'react';
+import { Bookmark } from 'lucide-react';
 import BookCard from '../books/BookCard';
 
 export default function Allbooks({ books = [], onBookClick }) {
-    // Debug: Log books count (will show in user's browser console)
-    console.log("Rendering Allbooks with:", books?.length, "books");
 
     return (
         <section className='all-book-section py-4 px-4'>
