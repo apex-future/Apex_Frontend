@@ -82,6 +82,7 @@ async def explain_text(request: ExplainRequest):
     logging.info(f"AI /explain request #{_request_count}")
 
     def stream_explanation():
+        print("DEBUG: [VERSION 2.0] /explain endpoint triggered")
         try:
             book_title = request.book_title or "their book"
             system_prompt = (
@@ -150,6 +151,7 @@ async def ask_ai(request: AskRequest):
     logging.info(f"AI /ask request #{_request_count}")
 
     def stream_response():
+        print("DEBUG: [VERSION 2.0] /ask endpoint triggered")
         try:
             book_context = ""
             if request.book_title:
