@@ -177,15 +177,16 @@ function ApexAI() {
 
                                 <div className='grid grid-cols-1 md:grid-cols-2 gap-3 mt-12 w-full max-w-2xl'>
                                     {[
-                                        { text: "Explain photosynthesis simply", icon: "🌱" },
-                                        { text: "Help me with quadratic equations", icon: "🔢" },
-                                        { text: "Summarize Nigerian History (Jamb)", icon: "🇳🇬" },
-                                        { text: "What are Newton's laws?", icon: "⚛️" }
+                                        { text: "Explain photosynthesis simply", icon: "" },
+                                        { text: "Help me with quadratic equations", icon: "" },
+                                        { text: "Summarize Nigerian History (Jamb)", icon: "" },
+                                        { text: "What are Newton's laws?", icon: "" }
                                     ].map((suggestion, i) => (
                                         <button
                                             key={i}
                                             onClick={() => handleSend(suggestion.text)}
-                                            className='flex items-center gap-3 px-5 py-4 rounded-2xl bg-white border border-slate-200 text-sm text-slate-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-lg hover:shadow-blue-50 transition-all duration-300 text-left group'
+                                            className='flex items-center gap-3 px-5 py-4 rounded-2xl bg-white borde
+                                            r border-slate-200 text-sm text-slate-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-lg hover:shadow-blue-50 transition-all duration-300 text-left group'
                                         >
                                             <span className='text-xl grayscale group-hover:grayscale-0 transition-all'>{suggestion.icon}</span>
                                             <span className='font-medium'>{suggestion.text}</span>

@@ -136,6 +136,8 @@ function ReaderView() {
 
     // Screen handlers
     const toggleNav = useCallback(() => {
+        // If text is selected, don't toggle nav — let the highlight menu handle it
+        if (window.getSelection().toString().trim()) return;
         setNavState(prev => prev === 'none' ? 'first' : 'none');
     }, []);
 
@@ -251,7 +253,7 @@ function ReaderView() {
     return (
         <div
             className="min-h-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-blue-200/50 relative overflow-hidden"
-            onDoubleClick={toggleNav}
+            onClick={toggleNav}
         >
             {/* Subtle Menu Trigger - Persistent at top */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
