@@ -8,12 +8,12 @@ from dotenv import load_dotenv
 #  Debug print to verify container start
 print(" APEX BACKEND VERSION 1.1 - CONTAINER STARTED ")
 
+# Load environment variables
+load_dotenv()
+
 from app import schemas, crud
 from app.database import DATABASE_KIND
 from app.routers.ai import router as ai_router
-
-# Load environment variables
-load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI(

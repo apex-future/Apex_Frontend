@@ -11,14 +11,19 @@ from google import genai
 from google.genai import types
 import json
 import logging
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ==============================
 # INITIALIZE GEMINI CLIENT
 # ==============================
-# The SDK auto-reads GEMINI_API_KEY from environment
-client = genai.Client()
+# Get API key explicitly to avoid initialization race conditions
+api_key = os.getenv("GEMINI_API_KEY")
+client = genai.Client(api_key=api_key)
 
-MODEL = "gemini-2.0-flash"
+MODEL = "gemini-3-flash-preview"
 
 # Simple request counter for rate-limit awareness
 _request_count = 0
