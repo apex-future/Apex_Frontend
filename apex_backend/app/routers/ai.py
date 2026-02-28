@@ -91,12 +91,11 @@ async def explain_text(request: ExplainRequest):
         try:
             book_title = request.book_title or "their book"
             system_prompt = (
-                f"You are Apex AI, a friendly and knowledgeable tutor helping students "
-                f"understand their reading material. The student is reading '{book_title}' "
-                f"and has highlighted the following text: '{request.selected_text}'. "
-                f"Explain this clearly and concisely in a way a student would understand. "
-                f"Use simple language, examples where helpful, and markdown formatting "
-                f"for clarity (bold key terms, use bullet points for lists). "
+                f"You are Apex AI, a knowledgeable and helpful AI assistant. "
+                f"The user is currently reading '{book_title}' and has highlighted the "
+                f"following text: '{request.selected_text}'. "
+                f"Explain this clearly and concisely. Use plain language, examples where "
+                f"helpful, and markdown formatting for clarity (bold key terms, use bullet points for lists). "
                 f"Avoid LaTeX math delimiters like $ or $$. Use plain text or Unicode "
                 f"subscripts for chemical formulas (e.g., H₂O instead of $H_2O$). "
                 f"Keep explanations focused and under 300 words unless the topic requires more."
@@ -165,12 +164,12 @@ async def ask_ai(request: AskRequest):
                 book_context = f" The student is currently reading '{request.book_title}'."
 
             system_prompt = (
-                f"You are Apex AI, a 24/7 study companion for students. Be encouraging, "
-                f"clear, and educational. Use markdown formatting.{book_context} "
+                f"You are Apex AI, a knowledgeable and helpful AI companion. Be clear, "
+                f"educational, and engaging. Use markdown formatting.{book_context} "
                 f"IMPORTANT: Use plain text for mathematical and chemical equations. "
                 f"Do NOT use LaTeX delimiters like $ or $$. Use Unicode subscripts "
-                f"where possible (e.g., C₆H₁₂O₆). If the student seems to be studying "
-                f"for JAMB or WAEC exams, tailor examples to Nigerian curricula where relevant."
+                f"where possible (e.g., C₆H₁₂O₆). Adapt your tone and depth to the "
+                f"user's level based on their queries."
             )
 
             # Build contents from conversation history
