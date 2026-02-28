@@ -1,34 +1,96 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { streamExplain, streamAsk } from '../services/aiService';
+import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
 
 /**
- * useAIChat — Custom hook for streaming AI chat interactions.
- *
- * Manages message history, SSE streaming, and loading/error states.
- * Works with both /explain (highlight-based) and /ask (open-ended) endpoints.
+ * useAIChat — Custom hook for streaming AI chat interactions with persistence.
  */
-export default function useAIChat() {
+export default function useAIChat(options = {}) {
+  const { autoLoad = true, persist = true } = options;
+  
   const [messages, setMessages] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
+  const [chatHistory, setChatHistory] = useState([]);
+  
   const abortControllerRef = useRef(null);
+
+  // Load history on mount
+  const loadHistory = useCallback(async () => {
+    try {
+      const history = await getAllChats();
+      // Sort by last updated (id is timestamp)
+      const sortedHistory = history.sort((a, b) => b.updatedAt - a.updatedAt);
+      setChatHistory(sortedHistory);
+      return sortedHistory;
+    } catch (err) {
+      console.error("Failed to load chat history:", err);
+      return [];
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!autoLoad) return;
+    
+    loadHistory().then(history => {
+      if (history.length > 0 && !sessionId) {
+        // Load the most recent session
+        const mostRecent = history[0];
+        setSessionId(mostRecent.id);
+        setMessages(mostRecent.messages || []);
+      } else if (history.length === 0 && !sessionId) {
+        // Start a fresh session if none exists
+        createNewChat();
+      }
+    });
+  }, [loadHistory, sessionId, autoLoad]);
+
+  /**
+   * Helper to persist current state to DB
+   */
+  const persistChat = useCallback(async (currentSessionId, currentMessages) => {
+    if (!currentSessionId || !persist) return;
+
+    
+    // Determine a title based on the first user message
+    const firstUserMsg = currentMessages.find(m => m.role === 'user');
+    const title = firstUserMsg 
+      ? (firstUserMsg.content.slice(0, 40) + (firstUserMsg.content.length > 40 ? '...' : ''))
+      : 'New Chat';
+
+    const chatDoc = {
+      id: currentSessionId,
+      title,
+      messages: currentMessages,
+      updatedAt: Date.now()
+    };
+
+    try {
+      await saveChat(chatDoc);
+      loadHistory(); // Refresh sidebar history
+    } catch (err) {
+      console.error("Failed to persist chat:", err);
+    }
+  }, [loadHistory]);
 
   /**
    * Parse an SSE stream and update the current AI message in real-time.
    */
-  const consumeStream = useCallback(async (response) => {
+  const consumeStream = useCallback(async (response, activeSessionId) => {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 
     try {
+      let finalMessages = [];
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        // Keep the last incomplete line in the buffer
         buffer = lines.pop() || '';
 
         for (const line of lines) {
@@ -39,14 +101,12 @@ export default function useAIChat() {
             const data = JSON.parse(trimmed.slice(6));
 
             if (data.error) {
-              console.error("AI Stream Error:", data.error);
               setError(data.error);
               setIsStreaming(false);
               return;
             }
 
             if (data.chunk) {
-              // Append chunk to the last (AI) message
               setMessages(prev => {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
@@ -56,50 +116,45 @@ export default function useAIChat() {
                     content: last.content + data.chunk,
                   };
                 }
+                finalMessages = updated;
                 return updated;
               });
             }
 
             if (data.done) {
               setIsStreaming(false);
+              persistChat(activeSessionId, finalMessages);
               return;
             }
-          } catch {
-            // Skip malformed JSON lines
-          }
+          } catch { }
         }
       }
-
-      // Stream ended without a done signal — finalize anyway
       setIsStreaming(false);
+      persistChat(activeSessionId, finalMessages);
     } catch (err) {
       if (err.name !== 'AbortError') {
-        console.error("Stream reader error:", err);
         setError('Connection lost. Please try again.');
       }
       setIsStreaming(false);
     }
-  }, []);
+  }, [persistChat]);
 
-  /**
-   * Send an open-ended question via /ask.
-   */
   const sendMessage = useCallback(async (text, bookTitle) => {
     if (!text.trim() || isStreaming) return;
     setError(null);
 
+    const activeSessionId = sessionId || Date.now();
+    if (!sessionId) setSessionId(activeSessionId);
+
     const userMsg = { id: Date.now(), role: 'user', content: text.trim() };
     const aiPlaceholder = { id: Date.now() + 1, role: 'ai', content: '' };
 
-    setMessages(prev => [...prev, userMsg, aiPlaceholder]);
+    const newMessages = [...messages, userMsg, aiPlaceholder];
+    setMessages(newMessages);
     setIsStreaming(true);
 
     try {
-      // Build conversation history (exclude the placeholder and current msg)
-      const history = messages.map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
+      const history = messages.map(m => ({ role: m.role, content: m.content }));
 
       const response = await streamAsk({
         message: text.trim(),
@@ -107,32 +162,28 @@ export default function useAIChat() {
         conversationHistory: history,
       });
 
-      await consumeStream(response);
+      await consumeStream(response, activeSessionId);
     } catch (err) {
-      console.error("sendMessage error:", err);
       setError(err.message || 'Something went wrong. Please try again.');
       setIsStreaming(false);
     }
-  }, [isStreaming, messages, consumeStream]);
+  }, [isStreaming, messages, consumeStream, sessionId]);
 
-  /**
-   * Send an explain request via /explain (triggered by text highlight).
-   */
   const sendExplain = useCallback(async (selectedText, context, bookTitle) => {
     if (!selectedText.trim() || isStreaming) return;
     setError(null);
 
-    const aiPlaceholder = { id: Date.now(), role: 'ai', content: '' };
+    const activeSessionId = sessionId || Date.now();
+    if (!sessionId) setSessionId(activeSessionId);
 
-    setMessages(prev => [...prev, aiPlaceholder]);
+    const aiPlaceholder = { id: Date.now(), role: 'ai', content: '' };
+    const newMessages = [...messages, aiPlaceholder];
+    
+    setMessages(newMessages);
     setIsStreaming(true);
 
     try {
-      const history = messages.map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
-
+      const history = messages.map(m => ({ role: m.role, content: m.content }));
       const response = await streamExplain({
         selectedText: selectedText.trim(),
         context,
@@ -140,48 +191,58 @@ export default function useAIChat() {
         conversationHistory: history,
       });
 
-      await consumeStream(response);
+      await consumeStream(response, activeSessionId);
     } catch (err) {
-      console.error("sendExplain error:", err);
       setError(err.message || 'Something went wrong. Please try again.');
       setIsStreaming(false);
     }
-  }, [isStreaming, messages, consumeStream]);
+  }, [isStreaming, messages, consumeStream, sessionId]);
 
-  /**
-   * Clear conversation and start fresh.
-   */
-  const clearConversation = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+  const createNewChat = useCallback(() => {
     setMessages([]);
+    setSessionId(Date.now());
     setError(null);
     setIsStreaming(false);
   }, []);
 
-  /**
-   * Retry the last failed message.
-   */
-  const retry = useCallback(() => {
+  const switchChat = useCallback((session) => {
+    if (isStreaming) return;
+    setSessionId(session.id);
+    setMessages(session.messages || []);
     setError(null);
-    // Find the last user message
-    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
-    if (lastUserMsg) {
-      // Remove the failed AI placeholder and the user message
-      setMessages(prev => prev.filter(m => m.id !== lastUserMsg.id && !(m.role === 'ai' && m.content === '')));
-      // Resend
-      sendMessage(lastUserMsg.content);
+  }, [isStreaming]);
+
+  const deleteSession = useCallback(async (id) => {
+    try {
+      await dbDeleteChat(id);
+      if (sessionId === id) {
+        createNewChat();
+      }
+      loadHistory();
+    } catch (err) {
+      console.error("Failed to delete chat:", err);
     }
-  }, [messages, sendMessage]);
+  }, [sessionId, createNewChat, loadHistory]);
 
   return {
     messages,
     isStreaming,
     error,
+    sessionId,
+    chatHistory,
     sendMessage,
     sendExplain,
-    clearConversation,
-    retry,
+    createNewChat,
+    switchChat,
+    deleteSession,
+    retry: () => {
+      setError(null);
+      const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+      if (lastUserMsg) {
+        setMessages(prev => prev.filter(m => m.id !== lastUserMsg.id && !(m.role === 'ai' && m.content === '')));
+        sendMessage(lastUserMsg.content);
+      }
+    },
   };
 }
+

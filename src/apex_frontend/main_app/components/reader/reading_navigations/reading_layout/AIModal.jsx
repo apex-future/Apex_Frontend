@@ -11,9 +11,11 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
     error,
     sendMessage,
     sendExplain,
-    clearConversation,
+    createNewChat,
+    deleteSession,
     retry,
-  } = useAIChat();
+  } = useAIChat({ autoLoad: false, persist: false });
+
 
   const [inputValue, setInputValue] = useState('');
   const chatContainerRef = useRef(null);
@@ -84,7 +86,8 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
         <div className='flex items-center gap-1'>
           {messages.length > 0 && (
             <button
-              onClick={clearConversation}
+              onClick={createNewChat}
+
               className='p-2 rounded-xl hover:bg-gray-100 transition-all text-gray-400 hover:text-gray-600'
               title='New conversation'
             >

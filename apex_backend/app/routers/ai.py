@@ -97,6 +97,8 @@ async def explain_text(request: ExplainRequest):
                 f"Explain this clearly and concisely in a way a student would understand. "
                 f"Use simple language, examples where helpful, and markdown formatting "
                 f"for clarity (bold key terms, use bullet points for lists). "
+                f"Avoid LaTeX math delimiters like $ or $$. Use plain text or Unicode "
+                f"subscripts for chemical formulas (e.g., H₂O instead of $H_2O$). "
                 f"Keep explanations focused and under 300 words unless the topic requires more."
             )
 
@@ -165,8 +167,10 @@ async def ask_ai(request: AskRequest):
             system_prompt = (
                 f"You are Apex AI, a 24/7 study companion for students. Be encouraging, "
                 f"clear, and educational. Use markdown formatting.{book_context} "
-                f"If the student seems to be studying for JAMB or WAEC exams, tailor "
-                f"examples to Nigerian curricula where relevant."
+                f"IMPORTANT: Use plain text for mathematical and chemical equations. "
+                f"Do NOT use LaTeX delimiters like $ or $$. Use Unicode subscripts "
+                f"where possible (e.g., C₆H₁₂O₆). If the student seems to be studying "
+                f"for JAMB or WAEC exams, tailor examples to Nigerian curricula where relevant."
             )
 
             # Build contents from conversation history
