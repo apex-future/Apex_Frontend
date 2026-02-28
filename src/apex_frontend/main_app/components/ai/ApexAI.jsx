@@ -1,33 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, ArrowLeft, Bot, User, Sparkle } from 'lucide-react'
+import { Send, ArrowLeft, User, Sparkle, RotateCcw, Trash2, AlertCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import Markdown from 'react-markdown'
+import useAIChat from '../../hooks/useAIChat'
+import TypingIndicator from './TypingIndicator'
 
 function ApexAI() {
     const navigate = useNavigate();
-    const [messages, setMessages] = useState([]);
+    const {
+        messages,
+        isStreaming,
+        error,
+        sendMessage,
+        clearConversation,
+        retry,
+    } = useAIChat();
+
     const [inputValue, setInputValue] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
     const chatEndRef = useRef(null);
     const inputRef = useRef(null);
 
     const handleSend = (text) => {
         const content = text || inputValue.trim();
-        if (!content) return;
-
-        const userMsg = { id: Date.now(), role: 'user', content };
-        setMessages(prev => [...prev, userMsg]);
+        if (!content || isStreaming) return;
+        sendMessage(content);
         setInputValue('');
-        setIsTyping(true);
-
-        // Simulate AI response
-        setTimeout(() => {
-            setIsTyping(false);
-            setMessages(prev => [...prev, {
-                id: Date.now() + 1,
-                role: 'ai',
-                content: "I'm here to help. This is a simplified interface designed for clarity and focus. What can I assist you with today?",
-            }]);
-        }, 1000);
     };
 
     const handleSubmit = (e) => {
@@ -37,25 +34,47 @@ function ApexAI() {
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isTyping]);
+    }, [messages, isStreaming]);
+
+    // Format time for message timestamps
+    const formatTime = (id) => {
+        const date = new Date(id);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
 
     return (
         <div className='flex flex-col h-screen bg-white text-slate-900 font-sans'>
 
             {/* ── Header ── */}
-            <header className='flex items-center px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-10'>
-                <button
-                    onClick={() => navigate(-1)}
-                    className='mr-4 p-2 hover:bg-slate-50 rounded-lg transition-colors text-slate-500'
-                >
-                    <ArrowLeft size={20} />
-                </button>
-                <div className='flex items-center gap-2'>
-                    <div className='p-1.5 bg-blue-600 rounded-lg'>
-                        <Sparkle size={18} className='text-white' fill="currentColor" />
+            <header className='flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-10'>
+                <div className='flex items-center'>
+                    <button
+                        onClick={() => navigate(-1)}
+                        className='mr-4 p-2 hover:bg-slate-50 rounded-lg transition-colors text-slate-500'
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div className='flex items-center gap-2'>
+                        <div className='p-1.5 bg-blue-600 rounded-lg'>
+                            <Sparkle size={18} className='text-white' fill="currentColor" />
+                        </div>
+                        <div>
+                            <h1 className='text-lg font-semibold tracking-tight'>Apex AI</h1>
+                            <span className='text-[10px] text-slate-400'>
+                                {isStreaming ? 'Thinking...' : 'Your study companion'}
+                            </span>
+                        </div>
                     </div>
-                    <h1 className='text-lg font-semibold tracking-tight'>Apex AI</h1>
                 </div>
+                {messages.length > 0 && (
+                    <button
+                        onClick={clearConversation}
+                        className='p-2 hover:bg-slate-50 rounded-lg transition-colors text-slate-400 hover:text-slate-600'
+                        title='New conversation'
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                )}
             </header>
 
             {/* ── Chat Canvas ── */}
@@ -68,6 +87,24 @@ function ApexAI() {
                             </div>
                             <h2 className='text-2xl font-bold mb-2'>How can I help you?</h2>
                             <p className='text-slate-500 max-w-sm'>Ask anything about your books, notes, or any topic you're exploring.</p>
+
+                            {/* Quick suggestions */}
+                            <div className='flex flex-wrap justify-center gap-2 mt-8'>
+                                {[
+                                    "Explain photosynthesis simply",
+                                    "Help me with quadratic equations",
+                                    "Summarize the causes of World War I",
+                                    "What are Newton's laws?"
+                                ].map((suggestion, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => handleSend(suggestion)}
+                                        className='px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300'
+                                    >
+                                        {suggestion}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     ) : (
                         messages.map((msg) => (
@@ -83,27 +120,58 @@ function ApexAI() {
                                             ? 'bg-white border-slate-200 text-slate-800'
                                             : 'bg-blue-50 border-blue-100 text-slate-800'
                                         }`}>
-                                        {msg.content}
+                                        {msg.role === 'ai' ? (
+                                            <div className='prose prose-sm max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-slate-900'>
+                                                {msg.content ? (
+                                                    <Markdown>{msg.content}</Markdown>
+                                                ) : (
+                                                    isStreaming && <span className='text-slate-400 text-sm'>Thinking...</span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            msg.content
+                                        )}
                                     </div>
+                                    <span className='text-[10px] text-slate-400 mt-1.5 px-1'>
+                                        {formatTime(msg.id)}
+                                    </span>
                                 </div>
                             </div>
                         ))
                     )}
 
-                    {isTyping && (
+                    {/* Typing indicator */}
+                    {isStreaming && messages.length > 0 && messages[messages.length - 1]?.role === 'ai' && messages[messages.length - 1]?.content === '' && (
                         <div className='flex gap-4 animate-in fade-in duration-300'>
                             <div className='w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center animate-pulse'>
                                 <Sparkle size={18} fill="currentColor" />
                             </div>
                             <div className='px-5 py-3.5 rounded-2xl bg-slate-50 border border-slate-100'>
-                                <div className='flex gap-1'>
-                                    <span className='w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce'></span>
-                                    <span className='w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce delay-75'></span>
-                                    <span className='w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce delay-150'></span>
+                                <div className='flex gap-1.5'>
+                                    <span className='w-2 h-2 bg-blue-400 rounded-full animate-bounce' style={{ animationDelay: '0ms' }}></span>
+                                    <span className='w-2 h-2 bg-blue-400 rounded-full animate-bounce' style={{ animationDelay: '150ms' }}></span>
+                                    <span className='w-2 h-2 bg-blue-400 rounded-full animate-bounce' style={{ animationDelay: '300ms' }}></span>
                                 </div>
                             </div>
                         </div>
                     )}
+
+                    {/* Error state */}
+                    {error && (
+                        <div className='flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl animate-in fade-in max-w-md'>
+                            <AlertCircle size={18} className='text-red-500 mt-0.5 flex-shrink-0' />
+                            <div className='flex-1'>
+                                <p className='text-sm text-red-700'>Hmm, something went wrong. Please try again.</p>
+                                <button
+                                    onClick={retry}
+                                    className='mt-2 text-sm text-red-600 hover:text-red-800 font-medium flex items-center gap-1.5'
+                                >
+                                    <RotateCcw size={14} /> Retry
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div ref={chatEndRef} />
                 </div>
             </div>
@@ -124,15 +192,16 @@ function ApexAI() {
                                 handleSend();
                             }
                         }}
-                        placeholder='Message Apex AI...'
+                        placeholder={isStreaming ? 'AI is responding...' : 'Message Apex AI...'}
+                        disabled={isStreaming}
                         rows={1}
-                        className='flex-1 bg-transparent px-3 py-2.5 focus:outline-none text-[15px] text-slate-800 resize-none max-h-48 scrollbar-hide'
+                        className='flex-1 bg-transparent px-3 py-2.5 focus:outline-none text-[15px] text-slate-800 resize-none max-h-48 scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed'
                         style={{ minHeight: '44px' }}
                     />
                     <button
                         type='submit'
-                        disabled={!inputValue.trim()}
-                        className={`p-2.5 rounded-xl transition-all ${inputValue.trim()
+                        disabled={!inputValue.trim() || isStreaming}
+                        className={`p-2.5 rounded-xl transition-all ${inputValue.trim() && !isStreaming
                                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
                                 : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                             }`}

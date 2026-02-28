@@ -350,7 +350,7 @@ function ReaderView() {
                 </div>
 
                 {/* AI panel — shown when Sparkles is clicked */}
-                {aiModal && <AIModal setAiModal={setAiModal} />}
+                {aiModal && <AIModal setAiModal={setAiModal} bookTitle={book?.title || book?.file?.name} />}
             </div>
         </div>
     );

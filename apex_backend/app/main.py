@@ -10,6 +10,7 @@ print(" APEX BACKEND VERSION 1.1 - CONTAINER STARTED ")
 
 from app import schemas, crud
 from app.database import DATABASE_KIND
+from app.routers.ai import router as ai_router
 
 # Load environment variables
 load_dotenv()
@@ -25,11 +26,14 @@ app = FastAPI(
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url, "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register AI router
+app.include_router(ai_router)
 
 # ============================
 # Root & Health endpoints
