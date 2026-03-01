@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Heart, Eye, Bookmark } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
+import { BookContext } from '../../context/BookContextInstance';
 
 const statusStyles = {
     literature: 'bg-blue-100 text-blue-600',
@@ -14,10 +15,21 @@ const statusStyles = {
 
 export default function BookCard({ book, onClick }) {
     const navigate = useNavigate();
+    const { toggleFavorite, toggleBookmarkedBook } = useContext(BookContext) || {};
 
     const handleDetailsClick = (e) => {
         e.stopPropagation();
         navigate(`/book/${book.id}`);
+    };
+
+    const handleFavoriteClick = (e) => {
+        e.stopPropagation();
+        if (toggleFavorite) toggleFavorite(book.id);
+    };
+
+    const handleBookmarkClick = (e) => {
+        e.stopPropagation();
+        if (toggleBookmarkedBook) toggleBookmarkedBook(book.id);
     };
 
     return (
@@ -67,17 +79,23 @@ export default function BookCard({ book, onClick }) {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2 mt-auto text-gray-400">
-                        <button className="text-gray-400 hover:text-red-500 transition-colors">
-                            <Heart size={20} />
+                        <button
+                            onClick={handleFavoriteClick}
+                            className={`transition-colors ${book.isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                        >
+                            <Heart size={20} fill={book.isFavorite ? 'currentColor' : 'none'} />
                         </button>
-                        <button 
+                        <button
                             className="text-gray-400 hover:text-indigo-600 transition-colors"
                             onClick={handleDetailsClick}
                         >
                             <Eye size={20} />
                         </button>
-                        <button className="text-gray-400 hover:text-indigo-600 transition-colors" onClick={(e) => e.stopPropagation()}>
-                            <Bookmark size={20} />
+                        <button
+                            onClick={handleBookmarkClick}
+                            className={`transition-colors ${book.isBookmarked ? 'text-accent-primary' : 'text-gray-400 hover:text-accent-primary'}`}
+                        >
+                            <Bookmark size={20} fill={book.isBookmarked ? 'currentColor' : 'none'} />
                         </button>
                     </div>
                 </div>
