@@ -51,7 +51,7 @@ function ApexAI() {
                     <ArrowLeft size={20} />
                 </button>
                 <div className='flex items-center gap-2'>
-                    <div className='p-1.5 bg-blue-600 rounded-lg'>
+                    <div className='p-1.5 bg-accent-primary rounded-lg'>
                         <Sparkle size={18} className='text-white' fill="currentColor" />
                     </div>
                     <h1 className='text-lg font-semibold tracking-tight'>Apex AI</h1>
@@ -63,7 +63,7 @@ function ApexAI() {
                 <div className='max-w-3xl mx-auto flex flex-col gap-8'>
                     {messages.length === 0 ? (
                         <div className='flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500'>
-                            <div className='w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6'>
+                            <div className='w-16 h-16 bg-accent-subtle text-accent-primary rounded-2xl flex items-center justify-center mb-6'>
                                 <Sparkle size={32} fill="currentColor" />
                             </div>
                             <h2 className='text-2xl font-bold mb-2'>How can I help you?</h2>
@@ -75,13 +75,13 @@ function ApexAI() {
                                 key={msg.id}
                                 className={`flex gap-4 animate-in fade-in duration-300 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                             >
-                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-slate-100 text-slate-600' : 'bg-blue-600 text-white'}`}>
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-slate-100 text-slate-600' : 'bg-accent-primary text-white'}`}>
                                     {msg.role === 'user' ? <User size={18} /> : <Sparkle size={18} fill="currentColor" />}
                                 </div>
                                 <div className={`flex flex-col max-w-[85%] ${msg.role === 'user' ? 'items-end' : ''}`}>
                                     <div className={`px-5 py-3.5 rounded-2xl text-[15px] leading-relaxed shadow-sm border ${msg.role === 'user'
-                                            ? 'bg-white border-slate-200 text-slate-800'
-                                            : 'bg-blue-50 border-blue-100 text-slate-800'
+                                        ? 'bg-white border-slate-200 text-slate-800'
+                                        : 'bg-accent-subtle border-accent-subtle/50 text-slate-800'
                                         }`}>
                                         {msg.content}
                                     </div>
@@ -92,14 +92,14 @@ function ApexAI() {
 
                     {isTyping && (
                         <div className='flex gap-4 animate-in fade-in duration-300'>
-                            <div className='w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center animate-pulse'>
+                            <div className='w-9 h-9 rounded-xl bg-accent-primary text-white flex items-center justify-center animate-pulse'>
                                 <Sparkle size={18} fill="currentColor" />
                             </div>
                             <div className='px-5 py-3.5 rounded-2xl bg-slate-50 border border-slate-100'>
                                 <div className='flex gap-1'>
-                                    <span className='w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce'></span>
-                                    <span className='w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce delay-75'></span>
-                                    <span className='w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce delay-150'></span>
+                                    <span className='w-1.5 h-1.5 bg-accent-primary/40 rounded-full animate-bounce'></span>
+                                    <span className='w-1.5 h-1.5 bg-accent-primary/40 rounded-full animate-bounce delay-75'></span>
+                                    <span className='w-1.5 h-1.5 bg-accent-primary/40 rounded-full animate-bounce delay-150'></span>
                                 </div>
                             </div>
                         </div>
@@ -112,7 +112,7 @@ function ApexAI() {
             <div className='p-4 border-t border-slate-100 bg-white'>
                 <form
                     onSubmit={handleSubmit}
-                    className='max-w-3xl mx-auto flex items-end gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-2 focus-within:border-blue-500 transition-all'
+                    className='max-w-3xl mx-auto flex items-end gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-2 focus-within:border-accent-primary transition-all'
                 >
                     <textarea
                         ref={inputRef}
@@ -133,8 +133,8 @@ function ApexAI() {
                         type='submit'
                         disabled={!inputValue.trim()}
                         className={`p-2.5 rounded-xl transition-all ${inputValue.trim()
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
-                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            ? 'bg-accent-primary text-white shadow-lg shadow-accent-primary/20'
+                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                             }`}
                     >
                         <Send size={18} />
