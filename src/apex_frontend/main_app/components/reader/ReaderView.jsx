@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useRef, useMemo, useContext } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
+import HighlightMenu from './HighlightMenu';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Menu } from 'lucide-react';
 
 function ReaderView() {
     const { books, updateBookProgress, toggleBookmark } = useContext(BookContext);
@@ -48,11 +49,14 @@ function ReaderView() {
     });
 
     // Navigation Visibility State
-    // States: 'none' | 'first' | 'second'
     const [navState, setNavState] = useState('none');
     const [locked, setLocked] = useState(false);
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
+
+    // Selection State
+    const [selection, setSelection] = useState({ text: '', x: 0, y: 0 });
+    const [showHighlightMenu, setShowHighlightMenu] = useState(false);
 
     // --- PDF Control Handlers ---
     function nextPage() {
@@ -130,15 +134,34 @@ function ReaderView() {
         onRemoveBookmark: (page) => toggleBookmark(book.id, page),
     };
 
-    // Screen click handler — standard toggle cycle
-    const handleScreenClick = () => {
-        setNavState(prev => {
-            if (prev === 'none') return 'first';
-            if (prev === 'first') return 'none';
-            if (prev === 'second') return 'none';
-            return 'none';
-        });
-    };
+    // Screen handlers
+    const toggleNav = useCallback(() => {
+        setNavState(prev => prev === 'none' ? 'first' : 'none');
+    }, []);
+
+    // Selection monitoring logic
+    useEffect(() => {
+        const handleSelectionChange = () => {
+            const activeSel = window.getSelection();
+            const text = activeSel.toString().trim();
+
+            if (text && text.length > 0) {
+                const range = activeSel.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                setSelection({
+                    text,
+                    x: rect.left + rect.width / 2,
+                    y: rect.top
+                });
+                setShowHighlightMenu(true);
+            } else {
+                setShowHighlightMenu(false);
+            }
+        };
+
+        document.addEventListener('mouseup', handleSelectionChange);
+        return () => document.removeEventListener('mouseup', handleSelectionChange);
+    }, []);
 
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
@@ -146,7 +169,6 @@ function ReaderView() {
     useEffect(() => { updateProgressRef.current = updateBookProgress; }, [updateBookProgress]);
     useEffect(() => { currentBookRef.current = book; }, [book]);
 
-    // Loading & Redirect logic - Only recreate URL if file changes
     useEffect(() => {
         if (!book && bookId) {
             navigate('/');
@@ -173,18 +195,16 @@ function ReaderView() {
                 reader.readAsText(file);
             }
         }
-    }, [bookId, book?.file, navigate]); // Remove 'book' from dependency, only use 'book.file'
+    }, [bookId, book?.file, navigate]);
 
-    // 2. Initial Reset effect - Only run when bookId changes to avoid resetting during progress updates
     useEffect(() => {
         if (!bookId || !book) return;
         window.scrollTo(0, 0);
         setLocalProgress(book.progress || 0);
         setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
         setPageNumber(book.currentPage || 1);
-    }, [bookId]); // Only bookId as dependency to avoid resetting on progress updates
+    }, [bookId]);
 
-    // 3. Scroll logic for text content
     const lastUpdateRef = useRef(0);
     useEffect(() => {
         if (isPdf) return;
@@ -230,17 +250,41 @@ function ReaderView() {
 
     return (
         <div
-            className="min-h-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-accent-primary/20 relative overflow-hidden"
-            onClick={handleScreenClick}
+            className="min-h-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-blue-200/50 relative overflow-hidden"
+            onDoubleClick={toggleNav}
         >
+            {/* Subtle Menu Trigger - Persistent at top */}
+            <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
+                <button 
+                    onClick={(e) => { e.stopPropagation(); toggleNav(); }}
+                    className="group bg-white/40 hover:bg-white/90 backdrop-blur-md border border-slate-200/30 px-4 py-1.5 rounded-b-2xl transition-all hover:translate-y-0 -translate-y-[80%] flex items-center gap-2 shadow-sm"
+                >
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-500 transition-colors" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">Menu</span>
+                    <Menu size={12} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
+                </button>
+            </div>
+
             <div className="flex h-screen overflow-hidden relative">
-                {/* Far-left panel — shown when Menu is clicked */}
+                {/* Far-left panel */}
                 {leftPanel && <LeftPanel setLeftPanel={setLeftPanel} readerControls={readerControls} pdfControls={pdfControls} />}
+
+                {/* Highlight Menu */}
+                {showHighlightMenu && (
+                    <HighlightMenu 
+                        selection={selection.text}
+                        position={{ x: selection.x, y: selection.y }}
+                        onAskAI={() => {
+                            setAiModal(true);
+                            setShowHighlightMenu(false);
+                        }}
+                        onClose={() => setShowHighlightMenu(false)}
+                    />
+                )}
 
                 {/* Main reading area */}
                 <div className="flex-1 relative min-w-0 flex flex-col overflow-hidden">
 
-                    {/* ── Nav overlay (click/tap to reveal) ── */}
                     <ReaderNavBar
                         book={book}
                         navigate={navigate}
@@ -254,7 +298,7 @@ function ReaderView() {
                         readerControls={readerControls}
                     />
 
-                    {/* ── PDF Content ── */}
+                    {/* PDF Content */}
                     {fileUrl && isPdf && (
                         <div className="flex-1 flex overflow-hidden relative">
                             <PDFReader
@@ -269,26 +313,11 @@ function ReaderView() {
                                 windowSize={windowSize}
                             />
 
-                            {/* ── Desktop persistent prev/next buttons (md and up) ──
-                                Always visible, not gated by navState.
-                                Fixed to the left/right edges, vertically centred. */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); previousPage(); }}
                                 disabled={pageNumber <= 1}
-                                className="
-                                    hidden md:flex
-                                    absolute left-3 top-1/2 -translate-y-1/2
-                                    z-40 items-center justify-center
-                                    w-10 h-10 rounded-full
-                                    bg-black/10 hover:bg-black/20
-                                    backdrop-blur-sm border border-white/20
-                                    text-gray-700 hover:text-gray-900
-                                    transition-all duration-200 active:scale-95
-                                    disabled:opacity-20 disabled:cursor-not-allowed
-                                    shadow-md
-                                "
+                                className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 z-40 items-center justify-center w-10 h-10 rounded-full bg-black/5 hover:bg-black/10 backdrop-blur-sm border border-white/20 text-gray-700 hover:text-gray-900 transition-all duration-200 active:scale-95 disabled:opacity-20 shadow-sm"
                                 title="Previous page"
-                                aria-label="Previous page"
                             >
                                 <ChevronLeft size={22} strokeWidth={2} />
                             </button>
@@ -296,34 +325,22 @@ function ReaderView() {
                             <button
                                 onClick={(e) => { e.stopPropagation(); nextPage(); }}
                                 disabled={pageNumber >= (numPages || 1)}
-                                className="
-                                    hidden md:flex
-                                    absolute right-3 top-1/2 -translate-y-1/2
-                                    z-40 items-center justify-center
-                                    w-10 h-10 rounded-full
-                                    bg-black/10 hover:bg-black/20
-                                    backdrop-blur-sm border border-white/20
-                                    text-gray-700 hover:text-gray-900
-                                    transition-all duration-200 active:scale-95
-                                    disabled:opacity-20 disabled:cursor-not-allowed
-                                    shadow-md
-                                "
+                                className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-40 items-center justify-center w-10 h-10 rounded-full bg-black/5 hover:bg-black/10 backdrop-blur-sm border border-white/20 text-gray-700 hover:text-gray-900 transition-all duration-200 active:scale-95 disabled:opacity-20 shadow-sm"
                                 title="Next page"
-                                aria-label="Next page"
                             >
                                 <ChevronRight size={22} strokeWidth={2} />
                             </button>
                         </div>
                     )}
 
-                    {/* ── Image content ── */}
+                    {/* Image content */}
                     {fileUrl && !isPdf && (
                         <div className="flex-1 flex justify-center overflow-auto p-4">
                             <img src={fileUrl} alt="content" className="max-w-full max-h-[90vh] object-contain rounded-3xl shadow-2xl border-4 border-white/50" />
                         </div>
                     )}
 
-                    {/* ── Text content ── */}
+                    {/* Text content */}
                     {!fileUrl && (
                         <div className="flex-1 overflow-auto">
                             <div className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased">
@@ -349,8 +366,14 @@ function ReaderView() {
                     )}
                 </div>
 
-                {/* AI panel — shown when Sparkles is clicked */}
-                {aiModal && <AIModal setAiModal={setAiModal} />}
+                {/* AI panel */}
+                {aiModal && (
+                    <AIModal 
+                        setAiModal={setAiModal} 
+                        bookTitle={book?.title || book?.file?.name} 
+                        selectedText={selection.text}
+                    />
+                )}
             </div>
         </div>
     );

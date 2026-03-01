@@ -5,7 +5,8 @@
 
 const DB_NAME = 'ApexBooksDB';
 const STORE_NAME = 'books';
-const DB_VERSION = 1;
+const CHAT_STORE = 'chats'; // New store for AI chats
+const DB_VERSION = 2; // Bump version for new store
 
 export const openDB = () => {
   return new Promise((resolve, reject) => {
@@ -15,6 +16,9 @@ export const openDB = () => {
       const db = event.target.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(CHAT_STORE)) {
+        db.createObjectStore(CHAT_STORE, { keyPath: 'id' });
       }
     };
 
@@ -66,4 +70,42 @@ export const deleteBook = async (id) => {
 
 export const updateBook = async (book) => {
   return saveBook(book);
+};
+
+// --- Chat History Functions ---
+
+export const saveChat = async (chat) => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([CHAT_STORE], 'readwrite');
+    const store = transaction.objectStore(CHAT_STORE);
+    const request = store.put(chat); // chat object needs an 'id'
+
+    request.onsuccess = () => resolve(true);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+export const getAllChats = async () => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([CHAT_STORE], 'readonly');
+    const store = transaction.objectStore(CHAT_STORE);
+    const request = store.getAll();
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+export const deleteChat = async (id) => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([CHAT_STORE], 'readwrite');
+    const store = transaction.objectStore(CHAT_STORE);
+    const request = store.delete(id);
+
+    request.onsuccess = () => resolve(true);
+    request.onerror = () => reject(request.error);
+  });
 };
