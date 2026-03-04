@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "./Header";
-import Allbooks from "./Allbooks";
+import AllBooks from "./AllBooks";
 import TopNavBar from "../layout/navigation/TopNavBar";
 import { BookContext } from "../../context/BookContextInstance";
 
@@ -33,7 +33,7 @@ function HomePage({ setIsMobileOpen }) {
 
       <Header lastReadBook={lastReadBook} />
 
-      <Allbooks books={books} onBookClick={handleBookNavigate} />
+      <AllBooks books={books} onBookClick={handleBookNavigate} />
     </div>
   )
 }
