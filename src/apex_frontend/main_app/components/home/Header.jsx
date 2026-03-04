@@ -28,10 +28,10 @@ export default function Header({ lastReadBook }) {
                 <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
                 <div
                     onClick={() => lastReadBook && navigate(`/reader/${lastReadBook.id}`)}
-                    className={`bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md rounded-2xl p-4 md:p-6 border-2 border-border-default hover:border-text-tertiary hover:shadow-xl hover:shadow-neutral-200/50 transition-all duration-300 group ${lastReadBook ? 'cursor-pointer' : ''}`}
+                    className={`bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md rounded-2xl p-4 md:p-6 border-2 border-border-default hover:border-text-tertiary hover:shadow-xl hover:shadow-neutral-200/50 transition-all duration-300 group overflow-hidden ${lastReadBook ? 'cursor-pointer' : ''}`}
                 >
-                    <div className="flex gap-4 md:gap-8">
-                        <div className="w-28 h-40 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-lg flex-shrink-0 bg-neutral-100 border border-border-subtle group-hover:scale-[1.02] transition-transform duration-300">
+                    <div className="flex gap-4 md:gap-8 w-full overflow-hidden">
+                        <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-lg flex-shrink-0 bg-neutral-100 border border-border-subtle group-hover:scale-[1.02] transition-transform duration-300">
                             {currentBook.cover ? (
                                 <img src={currentBook.cover} alt="Book cover" className="w-full h-full object-cover" />
                             ) : (
@@ -39,20 +39,20 @@ export default function Header({ lastReadBook }) {
                             )}
                         </div>
 
-                        <div className="flex-1 flex flex-col justify-between py-1">
-                            <div className="mb-4">
-                                <h2 className="font-display text-xl xs:text-2xl sm:text-3xl font-bold text-text-primary mb-2 line-clamp-2 tracking-tighter leading-premium-tight">
+                        <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
+                            <div className="mb-4 min-w-0">
+                                <h2 className="font-display text-lg xs:text-2xl sm:text-3xl font-bold text-text-primary mb-2 line-clamp-2 tracking-tighter leading-premium-tight break-words">
                                     {currentBook.title}
                                 </h2>
-                                <p className="text-sm sm:text-base text-text-tertiary font-medium line-clamp-1 italic tracking-tight">by {currentBook.author}</p>
+                                <p className="text-xs sm:text-base text-text-tertiary font-medium line-clamp-1 italic tracking-tight truncate">by {currentBook.author}</p>
                             </div>
 
-                            <div className="mb-2">
-                                <div className="flex justify-between items-end mb-3">
-                                    <span className="text-xs sm:text-sm font-medium text-text-tertiary tracking-wide uppercase">
+                            <div className="mb-2 w-full">
+                                <div className="flex justify-between items-end mb-3 gap-2">
+                                    <span className="text-[10px] sm:text-sm font-medium text-text-tertiary tracking-wide uppercase truncate">
                                         {currentBook.progress > 0 ? `Page ${currentBook.currentPage || '?'} of ${currentBook.totalPages || '?'}` : 'Not started'}
                                     </span>
-                                    <span className="text-sm sm:text-base font-bold text-accent-primary tabular-nums">
+                                    <span className="text-xs sm:text-base font-bold text-accent-primary tabular-nums shrink-0">
                                         {currentBook.progress}%
                                     </span>
                                 </div>
