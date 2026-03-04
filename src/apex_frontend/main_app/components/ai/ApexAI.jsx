@@ -22,7 +22,7 @@ function ApexAI() {
     } = useAIChat();
 
     const [inputValue, setInputValue] = useState('');
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
     const chatEndRef = useRef(null);
     const inputRef = useRef(null);
 
