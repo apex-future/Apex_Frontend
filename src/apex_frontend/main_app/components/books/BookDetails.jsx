@@ -100,7 +100,7 @@ function BookDetails() {
                             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-display text-text-primary mb-3 tracking-tightest break-words leading-premium-tight">
                                 {book.title}
                             </h1>
-                            <p className="text-base sm:text-lg text-text-tertiary font-medium tracking-tight italic">by {book.author}</p>
+                            <p className="text-base sm:text-lg text-text-tertiary font-medium tracking-tight italic">by {book.author || "N/A"}</p>
                         </div>
 
                         <div className="max-w-2xl">

@@ -66,7 +66,7 @@ export default function BookCard({ book, onClick }) {
                         <h3 className="font-semibold text-xl font-display text-text-primary line-clamp-2 mb-1 group-hover:text-accent-primary transition-colors">
                             {book.title}
                         </h3>
-                        <p className="text-sm text-black/50 mb-3 text-left">by {book.author || "Unknown"}</p>
+                        <p className="text-sm text-black/50 mb-3 text-left">by {book.author || "N/A"}</p>
 
                         {/* Progress Bar */}
                         <div className="w-full bg-gray-200 rounded-full h-1">

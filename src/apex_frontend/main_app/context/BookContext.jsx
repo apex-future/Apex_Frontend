@@ -59,10 +59,19 @@ export const BookProvider = ({ children }) => {
   const addBookToShelf = useCallback(async (fileObject, shelfName = 'Active Reading') => {
     if (!fileObject) return;
 
+    // Duplicate Check: Check if a book with the same title already exists
+    const title = fileObject.name || "New Document";
+    const isDuplicate = books.some(b => b.title.toLowerCase() === title.toLowerCase());
+    
+    if (isDuplicate) {
+      alert("book already there");
+      return;
+    }
+
     const newBook = {
       id: Date.now(),
-      title: fileObject.name || "New Document",
-      author: "Uploaded User",
+      title: title,
+      author: "N/A",
       progress: 0,
       currentPage: 0,
       totalPages: 1,
@@ -92,7 +101,7 @@ export const BookProvider = ({ children }) => {
     } catch (error) {
       console.error("Failed to save book to IndexedDB:", error);
     }
-  }, []);
+  }, [books]);
 
   const updateBookProgress = useCallback(async (id, progress, currentPage, totalPages) => {
     setShelves((prevShelves) => {
