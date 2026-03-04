@@ -153,13 +153,13 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
           <ul className="border-t border-neutral-300/80 pt-4 mt-4">
             <li>
               <NavLink
-                to="#settings"
+                to="/settings"
                 className={`
                   flex items-center px-3 py-2.5 rounded-full
                   transition-all duration-300
                   font-medium relative overflow-hidden
                   ${!isExpanded ? 'justify-center' : 'gap-3'}
-                  ${location.hash === '#settings'
+                  ${location.pathname === '/settings'
                     ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm'
                     : 'text-neutral-600 hover:bg-white/50 hover:text-neutral-900'
                   }

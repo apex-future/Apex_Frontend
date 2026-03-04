@@ -14,7 +14,7 @@ import DocumentsAdvanced from './book_details_related/DocumentsAdvanced';
 function BookDetails() {
     const { bookId } = useParams();
     const navigate = useNavigate();
-    const { books } = useContext(BookContext);
+    const { books, toggleFavorite, toggleBookmarkedBook, deleteBookFromShelves } = useContext(BookContext);
 
     const [activeTab, setActiveTab] = useState('chat');
 
@@ -45,6 +45,13 @@ function BookDetails() {
             </div>
         );
     }
+
+    const handleDelete = () => {
+        if (window.confirm("Are you sure you want to delete this book from your library?")) {
+            deleteBookFromShelves(book.id);
+            navigate(-1);
+        }
+    };
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -106,19 +113,25 @@ function BookDetails() {
                         <div className="book-actions flex flex-col items-center md:items-start gap-4">
 
                             <div className="book-icons flex flex-wrap justify-center md:justify-start">
-                                <button className="p-3 text-gray-400 rounded-xl hover:text-red-500 hover:bg-neutral-100 transition-all">
-                                    <Heart size={20} />
+                                <button
+                                    onClick={() => toggleFavorite(book.id)}
+                                    className={`p-3 rounded-xl transition-all ${book.isFavorite ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-gray-400 hover:text-red-500 hover:bg-neutral-100'}`}
+                                >
+                                    <Heart size={20} fill={book.isFavorite ? 'currentColor' : 'none'} />
                                 </button>
                                 <button className="p-3 text-gray-400 rounded-xl hover:text-success hover:bg-neutral-100 transition-all">
                                     <CheckCircle2 size={20} />
                                 </button>
-                                <button className="p-3 text-gray-400 rounded-xl hover:text-accent-primary hover:bg-neutral-100 transition-all">
-                                    <Bookmark size={20} />
+                                <button
+                                    onClick={() => toggleBookmarkedBook(book.id)}
+                                    className={`p-3 rounded-xl transition-all ${book.isBookmarked ? 'text-accent-primary bg-accent-subtle hover:bg-accent-primary/20' : 'text-gray-400 hover:text-accent-primary hover:bg-neutral-100'}`}
+                                >
+                                    <Bookmark size={20} fill={book.isBookmarked ? 'currentColor' : 'none'} />
                                 </button>
                                 <button className="p-3 text-gray-400 rounded-xl hover:text-blue-500 hover:bg-neutral-100 transition-all">
                                     <Share2 size={20} />
                                 </button>
-                                <button className="p-3 text-gray-400 rounded-xl hover:text-error hover:bg-neutral-100 transition-all">
+                                <button onClick={handleDelete} className="p-3 text-gray-400 rounded-xl hover:text-error hover:bg-neutral-100 transition-all">
                                     <Trash2 size={20} />
                                 </button>
                             </div>

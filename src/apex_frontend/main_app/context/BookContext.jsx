@@ -1,6 +1,6 @@
 import React, { createContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { shelves as initialShelves } from '../data/shelves';
-import { getAllBooks, saveBook, updateBook } from '../utils/db';
+import { getAllBooks, saveBook, updateBook, deleteBook } from '../utils/db';
 
 import { BookContext } from './BookContextInstance.jsx';
 
@@ -8,7 +8,18 @@ export const BookProvider = ({ children }) => {
   const [shelves, setShelves] = useState(initialShelves);
 
   // Memoize books array to avoid recreating it on every shelf update
-  const books = useMemo(() => (shelves || []).flatMap((shelf) => shelf.books || []), [shelves]);
+  const books = useMemo(() => {
+    const allBooks = (shelves || []).flatMap((shelf) => shelf.books || []);
+    const uniqueBooks = [];
+    const seen = new Set();
+    for (const book of allBooks) {
+      if (!seen.has(book.id)) {
+        seen.add(book.id);
+        uniqueBooks.push(book);
+      }
+    }
+    return uniqueBooks;
+  }, [shelves]);
 
   useEffect(() => {
     const loadBooks = async () => {
@@ -20,6 +31,12 @@ export const BookProvider = ({ children }) => {
             const currentShelfNames = prevShelves.map(s => s.shelfName);
             return prevShelves.map(shelf => {
               const shelfBooks = storedBooks.filter(b => {
+                if (shelf.shelfName === 'Favorites') {
+                  return b.isFavorite;
+                }
+                if (shelf.shelfName === 'Bookmarks') {
+                  return b.isBookmarked;
+                }
                 // If it's the Active Reading shelf, include its own books, 
                 // books with no shelf, and books with a shelf that no longer exists
                 if (shelf.shelfName === 'Active Reading') {
@@ -154,6 +171,62 @@ export const BookProvider = ({ children }) => {
     });
   }, []);
 
+  const toggleFavorite = useCallback(async (bookId) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id === targetId) {
+            updatedBook = { ...book, isFavorite: !book.isFavorite };
+            return updatedBook;
+          }
+          return book;
+        }),
+      }));
+
+      if (updatedBook) {
+        updateBook(updatedBook).catch(err => console.error("Failed to update favorite status:", err));
+      }
+      return newShelves;
+    });
+  }, []);
+
+  const toggleBookmarkedBook = useCallback(async (bookId) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id === targetId) {
+            updatedBook = { ...book, isBookmarked: !book.isBookmarked };
+            return updatedBook;
+          }
+          return book;
+        }),
+      }));
+
+      if (updatedBook) {
+        updateBook(updatedBook).catch(err => console.error("Failed to update bookmark status:", err));
+      }
+      return newShelves;
+    });
+  }, []);
+
+  const deleteBookFromShelves = useCallback(async (id) => {
+    const targetId = typeof id === 'string' ? parseInt(id) : id;
+    setShelves((prevShelves) => {
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.filter((book) => book.id !== targetId),
+      }));
+      deleteBook(targetId).catch(err => console.error("Failed to delete book:", err));
+      return newShelves;
+    });
+  }, []);
+
   return (
     <BookContext.Provider value={{
       shelves,
@@ -162,6 +235,9 @@ export const BookProvider = ({ children }) => {
       updateBookProgress,
       handleBookClick,
       toggleBookmark,
+      toggleFavorite,
+      toggleBookmarkedBook,
+      deleteBookFromShelves,
     }}>
       {children}
     </BookContext.Provider>

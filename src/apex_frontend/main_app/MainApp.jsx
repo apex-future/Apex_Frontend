@@ -13,6 +13,7 @@ import BookShelf from './components/layout/book_shelf/BookShelf';
 import BookDetails from './components/books/BookDetails';
 import Dictionary from './components/dictionary/Dictionary';
 import ApexAI from './components/ai/ApexAI';
+import Settings from './components/layout/user/Settings';
 
 function MainApp() {
   // asideIsOpen: State variable that determines if the desktop-style sidebar should be rendered.
@@ -42,6 +43,7 @@ function MainApp() {
                   />
                 } />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
                 <Route path="/reader/:bookId" element={<ReaderView />} />
                 <Route path="/bookshelf" element={<BookShelf />} />
                 <Route path="/book/:bookId" element={<BookDetails />} />

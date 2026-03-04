@@ -41,7 +41,7 @@ function Profile() {
             <ArrowLeft className='text-white' size={20} />
           </button>
           <h3 className='text-white text-lg font-semibold'>Profile</h3>
-          <button className="p-2 hover:bg-white/10 rounded-lg transition-all">
+          <button onClick={() => navigate('/settings')} className="p-2 hover:bg-white/10 rounded-lg transition-all">
             <Settings className='text-white' size={20} />
           </button>
         </div>

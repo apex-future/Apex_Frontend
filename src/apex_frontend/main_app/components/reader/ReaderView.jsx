@@ -144,25 +144,33 @@ function ReaderView() {
     // Selection monitoring logic
     useEffect(() => {
         const handleSelectionChange = () => {
-            const activeSel = window.getSelection();
-            const text = activeSel.toString().trim();
+            // Add a tiny delay to ensure selection is fully registered on mobile touch end
+            setTimeout(() => {
+                const activeSel = window.getSelection();
+                const text = activeSel.toString().trim();
 
-            if (text && text.length > 0) {
-                const range = activeSel.getRangeAt(0);
-                const rect = range.getBoundingClientRect();
-                setSelection({
-                    text,
-                    x: rect.left + rect.width / 2,
-                    y: rect.top
-                });
-                setShowHighlightMenu(true);
-            } else {
-                setShowHighlightMenu(false);
-            }
+                if (text && text.length > 0) {
+                    const range = activeSel.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
+                    setSelection({
+                        text,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top
+                    });
+                    setShowHighlightMenu(true);
+                } else {
+                    setShowHighlightMenu(false);
+                }
+            }, 50);
         };
 
         document.addEventListener('mouseup', handleSelectionChange);
-        return () => document.removeEventListener('mouseup', handleSelectionChange);
+        document.addEventListener('touchend', handleSelectionChange);
+
+        return () => {
+            document.removeEventListener('mouseup', handleSelectionChange);
+            document.removeEventListener('touchend', handleSelectionChange);
+        };
     }, []);
 
     // Refs for stability
@@ -257,7 +265,7 @@ function ReaderView() {
         >
             {/* Subtle Menu Trigger - Persistent at top */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
-                <button 
+                <button
                     onClick={(e) => { e.stopPropagation(); toggleNav(); }}
                     className="group bg-white/40 hover:bg-white/90 backdrop-blur-md border border-slate-200/30 px-4 py-1.5 rounded-b-2xl transition-all hover:translate-y-0 -translate-y-[80%] flex items-center gap-2 shadow-sm"
                 >
@@ -273,7 +281,7 @@ function ReaderView() {
 
                 {/* Highlight Menu */}
                 {showHighlightMenu && (
-                    <HighlightMenu 
+                    <HighlightMenu
                         selection={selection.text}
                         position={{ x: selection.x, y: selection.y }}
                         onAskAI={() => {
@@ -318,19 +326,19 @@ function ReaderView() {
                             <button
                                 onClick={(e) => { e.stopPropagation(); previousPage(); }}
                                 disabled={pageNumber <= 1}
-                                className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 z-40 items-center justify-center w-10 h-10 rounded-full bg-black/5 hover:bg-black/10 backdrop-blur-sm border border-white/20 text-gray-700 hover:text-gray-900 transition-all duration-200 active:scale-95 disabled:opacity-20 shadow-sm"
+                                className="flex absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/95 hover:bg-white backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                 title="Previous page"
                             >
-                                <ChevronLeft size={22} strokeWidth={2} />
+                                <ChevronLeft size={28} strokeWidth={2.5} className="-ml-1" />
                             </button>
 
                             <button
                                 onClick={(e) => { e.stopPropagation(); nextPage(); }}
                                 disabled={pageNumber >= (numPages || 1)}
-                                className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-40 items-center justify-center w-10 h-10 rounded-full bg-black/5 hover:bg-black/10 backdrop-blur-sm border border-white/20 text-gray-700 hover:text-gray-900 transition-all duration-200 active:scale-95 disabled:opacity-20 shadow-sm"
+                                className="flex absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/95 hover:bg-white backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                 title="Next page"
                             >
-                                <ChevronRight size={22} strokeWidth={2} />
+                                <ChevronRight size={28} strokeWidth={2.5} className="ml-1" />
                             </button>
                         </div>
                     )}
@@ -370,9 +378,9 @@ function ReaderView() {
 
                 {/* AI panel */}
                 {aiModal && (
-                    <AIModal 
-                        setAiModal={setAiModal} 
-                        bookTitle={book?.title || book?.file?.name} 
+                    <AIModal
+                        setAiModal={setAiModal}
+                        bookTitle={book?.title || book?.file?.name}
                         selectedText={selection.text}
                     />
                 )}

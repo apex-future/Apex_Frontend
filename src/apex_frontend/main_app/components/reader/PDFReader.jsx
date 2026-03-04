@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useSwipeable } from 'react-swipeable';
 import { Loader2 } from 'lucide-react';
@@ -22,28 +22,43 @@ const PDFReader = ({
   windowSize,
   locked = false,
 }) => {
-  const currentWidth = windowSize?.width || window.innerWidth;
-  const isDesktop = currentWidth > 1024;
+  const containerRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(windowSize?.width || window.innerWidth);
 
-  // Edge-to-edge on mobile (0 padding), small margin on desktop
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const isDesktop = containerWidth > 1024;
+
+  // Edge-to-edge on mobile, margin on desktop
   const pdfWidth = isDesktop
-    ? Math.min(currentWidth - 120, 1100)
-    : currentWidth;
+    ? Math.min(containerWidth - 120, 1100)
+    : containerWidth;
 
   // Swipe handlers — only meaningful on touch devices (mobile/tablet < md)
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => !locked && onNextPage?.(),
     onSwipedRight: () => !locked && onPrevPage?.(),
     trackMouse: false,
-    preventScrollOnSwipe: true,
+    preventScrollOnSwipe: false,
     delta: 50,
     swipeDuration: 500,
   });
 
   return (
     <div
+      ref={containerRef}
       {...swipeHandlers}
-      className={`flex-1 flex justify-center items-start ${isDesktop ? 'p-4' : 'p-0'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-pan-y'}`}
+      className={`flex-1 flex justify-center items-start ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-pan-y'}`}
       id="pdf-container"
     >
       <Document
