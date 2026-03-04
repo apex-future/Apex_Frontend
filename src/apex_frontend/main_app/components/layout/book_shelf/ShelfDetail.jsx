@@ -55,7 +55,7 @@ function ShelfDetail() {
       {/* Books List Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {selectedShelf.books?.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-6 lg:gap-8 transition-all duration-300">
             {selectedShelf.books.map((book) => (
               <BookCard key={book.id} book={book} />
             ))}
