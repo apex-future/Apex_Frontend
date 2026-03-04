@@ -77,7 +77,7 @@ function WaitlistForm() {
         setShowToast(true);
         setTimeout(() => setShowToast(false), 5000);
       }
-    } catch (error) {
+    } catch {
       setStatus('error');
       setMessage('A network issue prevented your request. Please check your connection.');
       setShowToast(true);

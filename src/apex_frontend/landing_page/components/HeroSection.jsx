@@ -1,11 +1,13 @@
 import React from 'react'
 import { TextCursor } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { TextPlugin } from 'gsap/TextPlugin';
-import heroImg from "../../assets/e-book-dashboard.jpg"
-// Register the plugin
-gsap.registerPlugin(TextPlugin);
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import heroImg from "../../../assets/e-book-dashboard.jpg"
+
+gsap.registerPlugin(TextPlugin, ScrollTrigger);
 
 
 function HeroSection() {

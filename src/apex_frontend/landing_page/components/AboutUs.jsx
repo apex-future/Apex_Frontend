@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react'
-import studySetup from "../../assets/study-setup.jpg"
+import studySetup from "../../../assets/study-setup.jpg"
 import { SquareArrowOutUpRight } from 'lucide-react'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';

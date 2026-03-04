@@ -1,0 +1,23 @@
+import React from 'react'
+import NavBar from "./components/NavBar.jsx"
+import HeroSection from "./components/HeroSection.jsx"
+import Features from "./components/Features.jsx"
+import AboutUs from './components/AboutUs'
+import FAQ from "./components/FAQ.jsx"
+import CTA from "./components/CTA.jsx"
+import Footer from "./components/Footer.jsx"
+function LandingPage() {
+  return (
+    <div className='bg-bg-subtle'>
+    <NavBar />    
+    <HeroSection />
+    <Features />
+    <AboutUs />
+    <FAQ />
+    <CTA />
+    <Footer />
+</div>
+  )
+}
+
+export default LandingPage

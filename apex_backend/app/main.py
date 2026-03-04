@@ -9,9 +9,6 @@ import resend
 #  Debug print to verify container start
 print(" APEX BACKEND VERSION 1.1 - CONTAINER STARTED ")
 
-from app import schemas, crud
-from app.database import DATABASE_KIND
-
 # Load environment variables
 load_dotenv()
 
@@ -19,6 +16,10 @@ load_dotenv()
 resend.api_key = os.getenv("RESEND_API_KEY")
 # In app/main.py
 FROM_EMAIL = os.getenv("FROM_EMAIL", "Apex <Apex@contact.apexapp.click>")
+
+from app import schemas, crud
+from app.database import DATABASE_KIND
+from app.routers.ai import router as ai_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -39,6 +40,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register AI router
+app.include_router(ai_router)
 
 # ============================
 # Root & Health endpoints
