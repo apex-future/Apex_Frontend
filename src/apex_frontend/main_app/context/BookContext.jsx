@@ -227,6 +227,62 @@ export const BookProvider = ({ children }) => {
     });
   }, []);
 
+  const addSavedWord = useCallback(async (bookId, wordObj) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existingWords = book.metadata?.words || [];
+          // Deduplicate by word string (case-insensitive)
+          if (existingWords.some(w => w.word.toLowerCase() === wordObj.word.toLowerCase())) {
+            return book;
+          }
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              words: [...existingWords, { ...wordObj, addedAt: new Date().toISOString() }],
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        updateBook(updatedBook).catch(err => console.error('Failed to save word:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
+  const removeSavedWord = useCallback(async (bookId, word) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existingWords = book.metadata?.words || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              words: existingWords.filter(w => w.word.toLowerCase() !== word.toLowerCase()),
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        updateBook(updatedBook).catch(err => console.error('Failed to remove word:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
   return (
     <BookContext.Provider value={{
       shelves,
@@ -238,6 +294,8 @@ export const BookProvider = ({ children }) => {
       toggleFavorite,
       toggleBookmarkedBook,
       deleteBookFromShelves,
+      addSavedWord,
+      removeSavedWord,
     }}>
       {children}
     </BookContext.Provider>

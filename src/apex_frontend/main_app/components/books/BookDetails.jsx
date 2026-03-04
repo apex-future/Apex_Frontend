@@ -169,7 +169,7 @@ function BookDetails() {
 
 
                     <div className="selected-section mt-2 min-h-[400px]">
-                        <ActiveComponent />
+                        <ActiveComponent book={book} />
                     </div>
                 </div>
             </div>

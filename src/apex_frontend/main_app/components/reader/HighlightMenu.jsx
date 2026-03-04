@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Book, Highlighter, X, Loader2, Volume2 } from 'lucide-react';
+import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check } from 'lucide-react';
 
-function HighlightMenu({ selection, position, onAskAI, onClose }) {
+function HighlightMenu({ selection, position, onAskAI, onClose, bookId, onSaveWord }) {
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showDict, setShowDict] = useState(false);
+    const [wordSaved, setWordSaved] = useState(false);
 
     const fetchDefinition = async (searchWord) => {
         if (!searchWord.trim()) return;
         setLoading(true);
         setError(null);
         setShowDict(true);
+        setWordSaved(false);
         try {
             const cleanWord = searchWord.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
             const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`);
@@ -24,6 +26,19 @@ function HighlightMenu({ selection, position, onAskAI, onClose }) {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSaveWord = () => {
+        if (!definition || !onSaveWord || !bookId) return;
+        const firstMeaning = definition.meanings?.[0];
+        const wordObj = {
+            word: definition.word,
+            definition: firstMeaning?.definitions?.[0]?.definition || '',
+            partOfSpeech: firstMeaning?.partOfSpeech || '',
+            phonetic: definition.phonetic || '',
+        };
+        onSaveWord(bookId, wordObj);
+        setWordSaved(true);
     };
 
     const playAudio = (url) => {
@@ -113,6 +128,20 @@ function HighlightMenu({ selection, position, onAskAI, onClose }) {
                                         </p>
                                     </div>
                                 ))}
+                                {onSaveWord && bookId && (
+                                    <button
+                                        onClick={handleSaveWord}
+                                        disabled={wordSaved}
+                                        className={`w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                                            wordSaved
+                                                ? 'bg-green-50 text-green-600 border border-green-200'
+                                                : 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100'
+                                        }`}
+                                    >
+                                        {wordSaved ? <Check size={14} /> : <BookmarkPlus size={14} />}
+                                        {wordSaved ? 'Word Saved' : 'Save Word'}
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>

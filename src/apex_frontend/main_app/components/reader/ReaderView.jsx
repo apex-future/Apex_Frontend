@@ -9,7 +9,7 @@ import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 import { ChevronLeft, ChevronRight, Plus, Menu } from 'lucide-react';
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -289,6 +289,8 @@ function ReaderView() {
                             setShowHighlightMenu(false);
                         }}
                         onClose={() => setShowHighlightMenu(false)}
+                        bookId={book?.id}
+                        onSaveWord={addSavedWord}
                     />
                 )}
 
