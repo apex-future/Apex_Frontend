@@ -6,6 +6,7 @@ import { BookContext } from './BookContextInstance.jsx';
 
 export const BookProvider = ({ children }) => {
   const [shelves, setShelves] = useState(initialShelves);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   // Memoize books array to avoid recreating it on every shelf update
   const books = useMemo(() => {
@@ -64,7 +65,7 @@ export const BookProvider = ({ children }) => {
     const isDuplicate = books.some(b => b.title.toLowerCase() === title.toLowerCase());
     
     if (isDuplicate) {
-      alert("book already there");
+      setShowDuplicateModal(true);
       return;
     }
 
@@ -305,6 +306,8 @@ export const BookProvider = ({ children }) => {
       deleteBookFromShelves,
       addSavedWord,
       removeSavedWord,
+      showDuplicateModal,
+      setShowDuplicateModal,
     }}>
       {children}
     </BookContext.Provider>

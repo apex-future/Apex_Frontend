@@ -15,6 +15,9 @@ import BookDetails from './components/books/BookDetails';
 import Dictionary from './components/dictionary/Dictionary';
 import ApexAI from './components/ai/ApexAI';
 import Settings from './components/layout/user/Settings';
+import DuplicateBookModal from './components/modals/DuplicateBookModal';
+import { BookContext } from './context/BookContextInstance';
+import { useContext } from 'react';
 
 function MainApp() {
   // asideIsOpen: State variable that determines if the desktop-style sidebar should be rendered.
@@ -27,6 +30,7 @@ function MainApp() {
   };
 
   const location = useLocation();
+  const { showDuplicateModal, setShowDuplicateModal } = useContext(BookContext) || {};
 
   return (
     <div className='flex relative min-h-screen bg-bg-elevated'>
@@ -58,7 +62,10 @@ function MainApp() {
             {!location.pathname.startsWith('/reader') && location.pathname !== '/ai' && <BottomNavBar />}
           </div>
 
-
+          <DuplicateBookModal 
+            isOpen={showDuplicateModal} 
+            onClose={() => setShowDuplicateModal(false)} 
+          />
         </NavBarProvider>
       </BookProvider>
     </div>

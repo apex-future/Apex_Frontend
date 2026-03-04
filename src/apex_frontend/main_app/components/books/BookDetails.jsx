@@ -97,7 +97,7 @@ function BookDetails() {
 
                     <div className="book-main-info flex flex-col gap-6 md:gap-8 md:w-full">
                         <div className="book-title text-center md:text-left">
-                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-display text-text-primary mb-3 tracking-tightest break-words leading-premium-tight">
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-display text-text-primary mb-3 tracking-tightest break-all md:break-words leading-premium-tight">
                                 {book.title}
                             </h1>
                             <p className="text-base sm:text-lg text-text-tertiary font-medium tracking-tight italic">by {book.author || "N/A"}</p>
