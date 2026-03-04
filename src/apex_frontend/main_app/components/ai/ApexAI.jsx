@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { Send, ArrowLeft, User, Sparkle, RotateCcw, Trash2, AlertCircle, Plus, MessageSquare, PanelRightOpen, PanelRightClose, MoreVertical, X, SquarePen } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import useAIChat from '../../hooks/useAIChat'
 import TypingIndicator from './TypingIndicator'
 
@@ -173,9 +174,9 @@ function ApexAI() {
                                                 : 'bg-white text-slate-800 ring-slate-200 rounded-2xl'
                                             }`}>
                                             {msg.role === 'ai' ? (
-                                                <div className='prose prose-base max-w-none prose-p:my-4 prose-headings:mb-6 prose-li:my-2 prose-strong:text-inherit prose-code:text-blue-600 prose-pre:bg-slate-50 prose-pre:border prose-pre:border-slate-100 prose-table:my-6 prose-th:bg-slate-50 prose-th:p-3 prose-td:p-3 prose-td:border-t'>
+                                                <div className='prose prose-base max-w-none prose-p:my-6 prose-headings:mt-8 prose-headings:mb-4 prose-li:my-3 prose-strong:text-inherit prose-code:text-blue-600 prose-pre:bg-slate-50 prose-pre:border prose-pre:border-slate-100 prose-table:my-8 prose-table:border prose-table:border-slate-200 prose-th:bg-slate-50 prose-th:p-4 prose-th:border prose-th:border-slate-200 prose-td:p-4 prose-td:border prose-td:border-slate-200'>
                                                     {msg.content ? (
-                                                        <Markdown>{msg.content}</Markdown>
+                                                        <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
                                                     ) : (
                                                         isStreaming && <TypingIndicator />
                                                     )}

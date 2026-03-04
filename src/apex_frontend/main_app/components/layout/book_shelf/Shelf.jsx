@@ -1,7 +1,6 @@
-import React, { useState } from 'react'
-import { X, BookOpen } from 'lucide-react'
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import BookCover from '../../books/BookCover'
-import BookCard from '../../books/BookCard'
 
 /**
  * Shelf Component:
@@ -9,7 +8,7 @@ import BookCard from '../../books/BookCard'
  * Applies a signature tilted layout for the book covers and shows shelf metadata.
  */
 function Shelf({ shelves }) {
-  const [selectedShelf, setSelectedShelf] = useState(null);
+  const navigate = useNavigate();
 
   // If no shelves data is provided or the array is empty, render nothing to avoid layout shifts.
   if (!shelves || shelves.length === 0) return null;
@@ -22,7 +21,11 @@ function Shelf({ shelves }) {
         const fillersCount = Math.max(0, 3 - actualBooksCount);
 
         return (
-          <div onClick={() => setSelectedShelf(shelf)} key={index} className='group flex flex-col border-2 border-border-default rounded-3xl bg-neutral-100/40 relative h-64 transition-all duration-500 overflow-hidden cursor-pointer hover:border-accent-primary/30 hover:shadow-xl hover:shadow-accent-primary/5'>
+          <div 
+            onClick={() => navigate(`/shelf/${shelf.shelfName}`)} 
+            key={index} 
+            className='group flex flex-col border-2 border-border-default rounded-3xl bg-neutral-100/40 relative h-64 transition-all duration-500 overflow-hidden cursor-pointer hover:border-accent-primary/30 hover:shadow-xl hover:shadow-accent-primary/5'
+          >
 
             {/* Book Stack Container: Positioned behind the info panel with a more subtle pop-up */}
             <div className="shelf-img-container flex gap-2 items-center justify-center absolute inset-x-0 bottom-20 z-0 transition-transform duration-500 ease-out group-hover:-translate-y-8">
@@ -88,41 +91,6 @@ function Shelf({ shelves }) {
           </div>
         );
       })}
-
-      {/* Modal Popup for Selected Shelf */}
-      {selectedShelf && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-300" onClick={() => setSelectedShelf(null)}>
-          <div className="bg-white rounded-3xl w-full max-w-5xl h-[85vh] overflow-hidden flex flex-col shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-neutral-50/50">
-              <div>
-                <h2 className="text-2xl font-bold font-display text-text-primary">{selectedShelf.shelfName}</h2>
-                <p className="text-sm text-text-tertiary mt-1">{selectedShelf.books?.length || 0} {selectedShelf.books?.length === 1 ? 'book' : 'books'} in this shelf</p>
-              </div>
-              <button onClick={() => setSelectedShelf(null)} className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-sm cursor-pointer border border-gray-100">
-                <X size={24} className="text-gray-500" />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-white">
-              {selectedShelf.books?.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-                  {selectedShelf.books.map((book) => (
-                    <BookCard key={book.id} book={book} />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-center h-full">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-100">
-                    <BookOpen className="text-gray-400" size={32} />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-700">Empty Shelf</h3>
-                  <p className="text-gray-400 mt-2 max-w-xs text-sm">Books will appear here when you add them to this shelf.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

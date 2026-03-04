@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { X, Send, Sparkle, Info, RotateCcw, Trash2, AlertCircle, Highlighter, User, SquarePen, MessageSquare, History, ArrowLeft } from 'lucide-react'
 import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
 import TypingIndicator from '../../../ai/TypingIndicator'
 
@@ -206,9 +207,9 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
                       : 'bg-white text-slate-800 ring-slate-200 rounded-2xl'
                     }`}>
                       {msg.role === 'ai' ? (
-                        <div className='prose prose-sm max-w-none prose-p:my-2 prose-headings:my-4 prose-li:my-1.5 prose-strong:text-inherit prose-code:text-blue-600 prose-pre:bg-slate-50 prose-pre:border prose-pre:border-slate-100 prose-table:my-6 prose-table:w-full prose-table:border-collapse prose-th:bg-slate-50 prose-th:p-3 prose-th:border prose-th:border-slate-200 prose-td:p-3 prose-td:border prose-td:border-slate-100'>
+                        <div className='prose prose-sm max-w-none prose-p:my-4 prose-headings:mt-6 prose-headings:mb-3 prose-li:my-2 prose-strong:text-inherit prose-code:text-blue-600 prose-pre:bg-slate-50 prose-pre:border prose-pre:border-slate-100 prose-table:my-6 prose-table:w-full prose-table:border-collapse prose-table:border prose-table:border-slate-200 prose-th:bg-slate-50 prose-th:p-3 prose-th:border prose-th:border-slate-200 prose-td:p-3 prose-td:border prose-td:border-slate-100'>
                           {msg.content ? (
-                            <Markdown>{msg.content}</Markdown>
+                            <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
                           ) : (
                             isStreaming && <TypingIndicator />
                           )}

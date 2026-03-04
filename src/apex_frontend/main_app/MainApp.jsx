@@ -10,6 +10,7 @@ import Profile from './components/layout/user/Profile';
 import ReaderView from './components/reader/ReaderView';
 
 import BookShelf from './components/layout/book_shelf/BookShelf';
+import ShelfDetail from './components/layout/book_shelf/ShelfDetail';
 import BookDetails from './components/books/BookDetails';
 import Dictionary from './components/dictionary/Dictionary';
 import ApexAI from './components/ai/ApexAI';
@@ -46,6 +47,7 @@ function MainApp() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/reader/:bookId" element={<ReaderView />} />
                 <Route path="/bookshelf" element={<BookShelf />} />
+                <Route path="/shelf/:shelfName" element={<ShelfDetail />} />
                 <Route path="/book/:bookId" element={<BookDetails />} />
                 <Route path="/dictionary" element={<Dictionary />} />
                 <Route path="/ai" element={<ApexAI />} />
