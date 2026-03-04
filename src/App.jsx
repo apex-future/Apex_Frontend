@@ -1,19 +1,31 @@
-import React from 'react'
+import { useState } from "react"
+import { Routes, Route, Navigate } from 'react-router-dom'
 import MainApp from './apex_frontend/main_app/MainApp'
 import LandingPage from './apex_frontend/landing_page/LandingPage'
-import { useState } from "react"
+import SignupPage from './apex_frontend/landing_page/SignupPage'
+
 function App() {
-  //form a placeholder backend signing functionality
-  let [isLoggedIn] = useState(true)
+  // form a placeholder backend signing functionality
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
   return (
-    <div className={`min-h-screen `}>
-      {/* when the user see if not logged in */}
-      {!isLoggedIn && <LandingPage />}
-
-      {/* when the user see if logged in */}
-      {isLoggedIn && <MainApp />}
+    <div className="min-h-screen">
+      <Routes>
+        {!isLoggedIn ? (
+          <>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/signup" element={<SignupPage onLogin={() => setIsLoggedIn(true)} />} />
+            {/* Redirect any other logged-out route to landing */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </>
+        ) : (
+          <>
+            {/* When logged in, MainApp takes over root and handles all sub-routes */}
+            <Route path="/*" element={<MainApp />} />
+          </>
+        )}
+      </Routes>
     </div>
-
   )
 }
 
