@@ -256,7 +256,7 @@ function ApexAI() {
                         </div>
                         <div className='flex items-center justify-between px-4'>
                             <p className='text-[10px] text-slate-400 font-medium tracking-tight'>
-                                Powered by <span className='text-blue-500'>Google Gemini 3</span> • Research Mode Enabled
+                                This is AI and can make mistake double-check your answers • Research Mode Enabled
                             </p>
                             <span className='text-[10px] text-slate-300 font-bold uppercase tracking-widest'>Apex 2.0</span>
                         </div>

@@ -297,8 +297,8 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
             </div>
             <div className='flex items-center justify-center gap-2'>
                 <span className='w-1 h-1 rounded-full bg-slate-300'></span>
-                <p className='text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase'>
-                    Apex Intelligence Core
+                <p className='text-[9px] text-slate-400 font-bold tracking-tight uppercase text-center'>
+                    This is AI and can make mistake double-check your answers
                 </p>
                 <span className='w-1 h-1 rounded-full bg-slate-300'></span>
             </div>

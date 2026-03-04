@@ -63,7 +63,7 @@ export default function BookCard({ book, onClick }) {
                 {/* Info - Right Side */}
                 <div className="flex-1 flex flex-col justify-between min-w-0">
                     <div className="flex flex-col">
-                        <h3 className="font-semibold text-xl font-display text-text-primary line-clamp-2 mb-1 group-hover:text-accent-primary transition-colors">
+                        <h3 className="font-semibold text-base sm:text-lg md:text-xl font-display text-text-primary truncate mb-1 group-hover:text-accent-primary transition-colors">
                             {book.title}
                         </h3>
                         <p className="text-sm text-black/50 mb-3 text-left">by {book.author || "N/A"}</p>
