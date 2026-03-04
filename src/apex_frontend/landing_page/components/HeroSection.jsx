@@ -71,7 +71,7 @@ function HeroSection() {
                 
                 <div className="flex flex-col items-center gap-2">
                     <div className="CTA-buttons flex flex-col mx-auto w-full sm:flex-row justify-center items-center gap-4">
-                        <a href="#waitlist" className='p-4 rounded-full w-full sm:w-1/2 max-w-[272px] border-2 px-6 text-center hover:bg-black hover:text-white text-white border-subtle bg-accent-primary font-medium md:text-lg cursor-pointer transition-all duration-200 '>Request Private Access</a>
+                        <Link to="/signup" className='p-4 rounded-full w-full sm:w-1/2 max-w-[272px] border-2 px-6 text-center hover:bg-black hover:text-white text-white border-subtle bg-accent-primary font-medium md:text-lg cursor-pointer transition-all duration-200 '>Get Started</Link>
                         <a className=" p-4 px-6  w-full text-center rounded-full max-w-[272px] shadow-md md:text-lg sm:w-1/2 font-medium border-2   border-subtle bg-bg-elevated  hover:bg-black hover:text-white cursor-pointer transition-all duration-200 " href="#features" onClick={(e) => {
                             e.preventDefault();
                             document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });

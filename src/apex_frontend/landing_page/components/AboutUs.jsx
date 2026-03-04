@@ -4,8 +4,8 @@ import { SquareArrowOutUpRight } from 'lucide-react'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import eye from "../../assets/eye.png"
-import dart from "../../assets/dart.png"
+import eye from "../../../assets/eye.png"
+import dart from "../../../assets/dart.png"
 gsap.registerPlugin(ScrollTrigger);
 
 function AboutUs() {
