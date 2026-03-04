@@ -6,7 +6,7 @@ import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
  * useAIChat — Custom hook for streaming AI chat interactions with persistence.
  */
 export default function useAIChat(options = {}) {
-  const { autoLoad = true, persist = true } = options;
+  const { autoLoad = true, persist = true, scope = 'general' } = options;
   
   const [messages, setMessages] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -20,15 +20,17 @@ export default function useAIChat(options = {}) {
   const loadHistory = useCallback(async () => {
     try {
       const history = await getAllChats();
+      // Filter by scope
+      const scopedHistory = history.filter(chat => chat.scope === scope || (!chat.scope && scope === 'general'));
       // Sort by last updated (id is timestamp)
-      const sortedHistory = history.sort((a, b) => b.updatedAt - a.updatedAt);
+      const sortedHistory = scopedHistory.sort((a, b) => b.updatedAt - a.updatedAt);
       setChatHistory(sortedHistory);
       return sortedHistory;
     } catch (err) {
       console.error("Failed to load chat history:", err);
       return [];
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     if (!autoLoad) return;
@@ -52,7 +54,6 @@ export default function useAIChat(options = {}) {
   const persistChat = useCallback(async (currentSessionId, currentMessages) => {
     if (!currentSessionId || !persist) return;
 
-    
     // Determine a title based on the first user message
     const firstUserMsg = currentMessages.find(m => m.role === 'user');
     const title = firstUserMsg 
@@ -63,7 +64,8 @@ export default function useAIChat(options = {}) {
       id: currentSessionId,
       title,
       messages: currentMessages,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      scope: scope // Store the scope
     };
 
     try {
@@ -72,7 +74,7 @@ export default function useAIChat(options = {}) {
     } catch (err) {
       console.error("Failed to persist chat:", err);
     }
-  }, [loadHistory]);
+  }, [loadHistory, persist, scope]);
 
   /**
    * Parse an SSE stream and update the current AI message in real-time.
@@ -139,14 +141,14 @@ export default function useAIChat(options = {}) {
     }
   }, [persistChat]);
 
-  const sendMessage = useCallback(async (text, bookTitle) => {
+  const sendMessage = useCallback(async (text, bookTitle, displayContent) => {
     if (!text.trim() || isStreaming) return;
     setError(null);
 
     const activeSessionId = sessionId || Date.now();
     if (!sessionId) setSessionId(activeSessionId);
 
-    const userMsg = { id: Date.now(), role: 'user', content: text.trim() };
+    const userMsg = { id: Date.now(), role: 'user', content: (displayContent || text).trim() };
     const aiPlaceholder = { id: Date.now() + 1, role: 'ai', content: '' };
 
     const newMessages = [...messages, userMsg, aiPlaceholder];
@@ -169,7 +171,7 @@ export default function useAIChat(options = {}) {
     }
   }, [isStreaming, messages, consumeStream, sessionId]);
 
-  const sendExplain = useCallback(async (selectedText, context, bookTitle) => {
+  const sendExplain = useCallback(async (selectedText, context, bookTitle, displayContent) => {
     if (!selectedText.trim() || isStreaming) return;
     setError(null);
 
@@ -177,7 +179,9 @@ export default function useAIChat(options = {}) {
     if (!sessionId) setSessionId(activeSessionId);
 
     const aiPlaceholder = { id: Date.now(), role: 'ai', content: '' };
-    const newMessages = [...messages, aiPlaceholder];
+    const userMsg = displayContent ? { id: Date.now() - 1, role: 'user', content: displayContent.trim() } : null;
+    
+    const newMessages = userMsg ? [...messages, userMsg, aiPlaceholder] : [...messages, aiPlaceholder];
     
     setMessages(newMessages);
     setIsStreaming(true);
