@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check } from 'lucide-react';
 
-function HighlightMenu({ selection, position, onAskAI, onClose, bookId, onSaveWord }) {
+function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -15,7 +15,7 @@ function HighlightMenu({ selection, position, onAskAI, onClose, bookId, onSaveWo
         setShowDict(true);
         setWordSaved(false);
         try {
-            const cleanWord = searchWord.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            const cleanWord = searchWord.trim().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
             const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`);
             if (!response.ok) throw new Error('Word not found');
             const data = await response.json();

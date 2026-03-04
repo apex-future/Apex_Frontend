@@ -193,8 +193,10 @@ function ReaderView() {
 
             if (isTypePdf || isTypeImage) {
                 const url = URL.createObjectURL(file);
-                setFileUrl(url);
-                setTextContent("");
+                Promise.resolve().then(() => {
+                    setFileUrl(url);
+                    setTextContent("");
+                });
                 return () => URL.revokeObjectURL(url);
             } else if (isTypeText) {
                 const reader = new FileReader();
@@ -205,15 +207,21 @@ function ReaderView() {
                 reader.readAsText(file);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bookId, book?.file, navigate]);
 
+
+    const lastBookIdRef = useRef(null);
     useEffect(() => {
-        if (!bookId || !book) return;
+        if (!bookId || !book || lastBookIdRef.current === bookId) return;
+        lastBookIdRef.current = bookId;
         window.scrollTo(0, 0);
-        setLocalProgress(book.progress || 0);
-        setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
-        setPageNumber(book.currentPage || 1);
-    }, [bookId]);
+        Promise.resolve().then(() => {
+            setLocalProgress(book.progress || 0);
+            setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
+            setPageNumber(book.currentPage || 1);
+        });
+    }, [bookId, book]);
 
     const lastUpdateRef = useRef(0);
     useEffect(() => {

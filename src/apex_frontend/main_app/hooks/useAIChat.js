@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { streamExplain, streamAsk } from '../services/aiService';
 import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
 
@@ -14,7 +14,12 @@ export default function useAIChat(options = {}) {
   const [sessionId, setSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   
-  const abortControllerRef = useRef(null);
+  const createNewChat = useCallback(() => {
+    setMessages([]);
+    setSessionId(Date.now());
+    setError(null);
+    setIsStreaming(false);
+  }, []);
 
   // Load history on mount
   const loadHistory = useCallback(async () => {
@@ -35,7 +40,7 @@ export default function useAIChat(options = {}) {
   useEffect(() => {
     if (!autoLoad) return;
     
-    loadHistory().then(history => {
+    Promise.resolve().then(() => loadHistory()).then(history => {
       if (history.length > 0 && !sessionId) {
         // Load the most recent session
         const mostRecent = history[0];
@@ -46,7 +51,7 @@ export default function useAIChat(options = {}) {
         createNewChat();
       }
     });
-  }, [loadHistory, sessionId, autoLoad]);
+  }, [loadHistory, sessionId, autoLoad, createNewChat]);
 
   /**
    * Helper to persist current state to DB
@@ -128,7 +133,9 @@ export default function useAIChat(options = {}) {
               persistChat(activeSessionId, finalMessages);
               return;
             }
-          } catch { }
+          } catch (e) {
+            console.error("Failed to parse SSE line:", e);
+          }
         }
       }
       setIsStreaming(false);
@@ -202,13 +209,6 @@ export default function useAIChat(options = {}) {
     }
   }, [isStreaming, messages, consumeStream, sessionId]);
 
-  const createNewChat = useCallback(() => {
-    setMessages([]);
-    setSessionId(Date.now());
-    setError(null);
-    setIsStreaming(false);
-  }, []);
-
   const switchChat = useCallback((session) => {
     if (isStreaming) return;
     setSessionId(session.id);
@@ -249,4 +249,5 @@ export default function useAIChat(options = {}) {
     },
   };
 }
+
 

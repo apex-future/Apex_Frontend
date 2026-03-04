@@ -57,7 +57,8 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
         {!activeSection && (
           /* Main nav list */
           <div className='p-3 flex flex-col gap-1'>
-            {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
+            {NAV_ITEMS.map((item) => {
+              const { id, label, icon: ItemIcon } = item;
               const isBookmarksItem = id === 'bookmarks';
               const count = isBookmarksItem ? bookmarks.length : 0;
 
@@ -67,7 +68,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
                   onClick={() => handleNavClick(id)}
                   className='flex items-center gap-3 p-2.5 rounded-xl text-sm text-gray-600 hover:bg-accent-primary/10 hover:text-accent-primary transition-all text-left w-full'
                 >
-                  <Icon size={16} strokeWidth={1.5} />
+                  <ItemIcon size={16} strokeWidth={1.5} />
                   <span className='flex-1'>{label}</span>
                   {/* Show bookmark count badge */}
                   {isBookmarksItem && count > 0 && (

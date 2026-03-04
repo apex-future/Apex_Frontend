@@ -7,6 +7,7 @@ import SignupPage from './apex_frontend/landing_page/SignupPage'
 function App() {
   // form a placeholder backend signing functionality
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const handleLogin = () => setIsLoggedIn(true);
 
   return (
     <div className="min-h-screen">
@@ -14,7 +15,7 @@ function App() {
         {!isLoggedIn ? (
           <>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/signup" element={<SignupPage onLogin={() => setIsLoggedIn(true)} />} />
+            <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
             {/* Redirect any other logged-out route to landing */}
             <Route path="*" element={<Navigate to="/" />} />
           </>

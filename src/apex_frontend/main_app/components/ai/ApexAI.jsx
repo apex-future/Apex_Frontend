@@ -186,7 +186,7 @@ function ApexAI() {
                                             )}
                                         </div>
                                         <span className={`text-[10px] text-slate-400 mt-2 font-medium tracking-wide px-2 ${msg.role === 'ai' ? 'text-center' : ''}`}>
-                                            {formatTime(msg.id || Date.now())}
+                                            {msg.id ? formatTime(msg.id) : '--:--'}
                                         </span>
                                     </div>
                                 </div>

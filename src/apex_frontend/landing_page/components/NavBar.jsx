@@ -23,7 +23,7 @@ function NavBar() {
                 ease: "power3.out"
             })
         }
-    }, [asideRef.current])
+    }, [asideIsOpen])
 
     let [asideIsOpen, setAsideIsOpen] = useState(false);
 

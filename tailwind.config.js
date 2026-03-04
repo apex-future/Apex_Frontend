@@ -1,3 +1,5 @@
+import typography from '@tailwindcss/typography';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -45,49 +47,12 @@ export default {
         'premium-snug': '1.3',
         'premium-normal': '1.5',
         'premium-relaxed': '1.7',
-      },
-      spacing: {
-        'px': '1px',
-        '0': '0',
-        '0.5': '2px', // 2pt
-        '1': '4px',   // 4pt
-        '1.5': '6px', // 6pt
-        '2': '8px',   // 8pt (Standard)
-        '3': '12px',
-        '4': '16px',  // 16pt (Standard)
-        '5': '20px',
-        '6': '24px',  // 24pt (Standard)
-        '7': '28px',
-        '8': '32px',  // 32pt (Standard)
-        '9': '36px',
-        '10': '40px', // 40pt (Standard)
-        '12': '48px', // 48pt (Standard)
-        '14': '56px',
-        '16': '64px', // 64pt (Standard)
-        '20': '80px',
-        '24': '96px',
-        '28': '112px',
-        '32': '128px',
-      },
-      borderRadius: {
-        'none': '0',
-        'sm': '4px',
-        'DEFAULT': '8px',
-        'md': '12px',
-        'lg': '16px',
-        'xl': '24px',
-        '2xl': '32px',
-        '3xl': '48px',
-        'full': '9999px',
-      },
-      spacing: {
-        'px': '1px',
-        '0': '0',
-        '0.5': '2px',
-        '1': '4px',
-        '1.5': '6px',
-        '2': '8px',
-        '2.5': '10px',
+        'tight': '1.2',    // 24px for 20px font
+        'snug': '1.375',  // 22px for 16px font
+        'normal': '1.5',  // 24px for 16px font
+        'relaxed': '1.625', // 26px for 16px font
+        'loose': '2',      // 32px for 16px font
+        'none': '1',
         '3': '12px',
         '4': '16px',
         '5': '20px',
@@ -96,10 +61,27 @@ export default {
         '8': '32px',
         '9': '36px',
         '10': '40px',
+      },
+      spacing: {
+        'px': '1px',
+        '0': '0',
+        '0.5': '2px', // 2pt
+        '1': '4px',   // 4pt
+        '1.5': '6px', // 6pt
+        '2': '8px',   // 8pt (Standard)
+        '2.5': '10px',
+        '3': '12px',
+        '4': '16px',  // 16pt (Standard)
+        '5': '20px',
+        '6': '24px',  // 24pt (Standard)
+        '7': '28px',
+        '8': '32px',  // 32pt (Standard)
+        '9': '36px',
+        '10': '40px', // 40pt (Standard)
         '11': '44px',
-        '12': '48px',
+        '12': '48px', // 48pt (Standard)
         '14': '56px',
-        '16': '64px',
+        '16': '64px', // 64pt (Standard)
         '20': '80px',
         '24': '96px',
         '28': '112px',
@@ -116,21 +98,16 @@ export default {
         '80': '320px',
         '96': '384px',
       },
-      lineHeight: {
-        'tight': '1.2',    // 24px for 20px font
-        'snug': '1.375',  // 22px for 16px font
-        'normal': '1.5',  // 24px for 16px font
-        'relaxed': '1.625', // 26px for 16px font
-        'loose': '2',      // 32px for 16px font
-        'none': '1',
-        '3': '12px',
-        '4': '16px',
-        '5': '20px',
-        '6': '24px',
-        '7': '28px',
-        '8': '32px',
-        '9': '36px',
-        '10': '40px',
+      borderRadius: {
+        'none': '0',
+        'sm': '4px',
+        'DEFAULT': '8px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '24px',
+        '2xl': '32px',
+        '3xl': '48px',
+        'full': '9999px',
       },
       colors: {
         // Backgrounds (Light & Dark)
@@ -187,6 +164,6 @@ export default {
   },
   darkMode: 'class',
   plugins: [
-    require('@tailwindcss/typography'),
+    typography,
   ],
 }
