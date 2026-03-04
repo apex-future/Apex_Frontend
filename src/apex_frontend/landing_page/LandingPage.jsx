@@ -8,7 +8,7 @@ import CTA from "./components/CTA.jsx"
 import Footer from "./components/Footer.jsx"
 function LandingPage() {
   return (
-    <div className='bg-bg-subtle'>
+    <div className='bg-bg-subtle overflow-x-hidden'>
     <NavBar />    
     <HeroSection />
     <Features />

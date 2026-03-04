@@ -10,7 +10,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 function NavBar() {
+    let [asideIsOpen, setAsideIsOpen] = useState(false);
     let asideRef = useRef();
+
     useGSAP(() => {
         if (asideRef.current) {
             gsap.fromTo(asideRef.current, {
@@ -24,8 +26,6 @@ function NavBar() {
             })
         }
     }, [asideIsOpen])
-
-    let [asideIsOpen, setAsideIsOpen] = useState(false);
 
     const openAside = () => setAsideIsOpen(true)
     const closeAside = () => setAsideIsOpen(false)
@@ -73,7 +73,7 @@ function NavBar() {
             {asideIsOpen &&
                 <aside 
                     id="mobile-menu"
-                    className='aside-bar fixed max-h-screen w-screen p-4 flex bg-[rgb(8,9,12)] flex-col gap-8 top-0 bottom-0 left-0 mx-auto right-0' 
+                    className='aside-bar fixed inset-0 z-[150] max-h-screen w-full p-4 flex bg-[rgb(8,9,12)] flex-col gap-8' 
                     ref={asideRef}
                     role="dialog"
                     aria-modal="true"

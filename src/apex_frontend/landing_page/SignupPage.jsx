@@ -39,7 +39,7 @@ function SignupPage({ onLogin }) {
 
           <button
             onClick={handleStart}
-            className="group w-full px-4 py-4.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-3 active:scale-95"
+            className="group w-full px-4 !py-4.5 h-12 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-3 active:scale-95"
           >
             Start as Guest
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />

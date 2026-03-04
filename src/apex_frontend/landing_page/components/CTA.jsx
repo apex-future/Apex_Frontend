@@ -55,7 +55,7 @@ function CTA() {
   }, []);
 
   return (
-    <section className="mt-16 relative min-h-[512px] p-6 bg-black " id="cta" aria-labelledby="cta-heading">
+    <section className="mt-16 relative min-h-[512px] p-6 bg-black overflow-hidden" id="cta" aria-labelledby="cta-heading">
       <div className="wrapper py-8 md:pt-12 relative z-[10] gap-8 grid grid-cols-1 md:grid-cols-2 justify-center items-center">
         <div className="flex flex-col gap-6 w-full p-4 ">
           <h2 id="cta-heading" className="CTA-heading text-white font-display text-2xl sm:text-3xl p-4 leading-loose text-center">

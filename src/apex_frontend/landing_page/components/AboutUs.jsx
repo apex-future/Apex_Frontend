@@ -53,7 +53,7 @@ function AboutUs() {
     }, []);
 
     return (
-        <section className="info-section pt-16 md:pt-24 " id='about' aria-labelledby="about-heading">
+        <section className="info-section pt-16 md:pt-24 overflow-hidden" id='about' aria-labelledby="about-heading">
             <h2 id="about-heading" className="about-us-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold font-display p-2 px-4  text-center ">
                 About Us
             </h2>
