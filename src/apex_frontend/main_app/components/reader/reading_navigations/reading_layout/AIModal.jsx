@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { X, Send, Sparkles, Info, RotateCcw, Trash2, AlertCircle } from 'lucide-react'
+import { X, Send, Sparkles, Info, RotateCcw, Trash2, AlertCircle, Highlighter } from 'lucide-react'
 import Markdown from 'react-markdown'
 import useAIChat from '../../../../hooks/useAIChat'
 import TypingIndicator from '../../../ai/TypingIndicator'
@@ -29,13 +29,8 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
     "Define technical terms"
   ];
 
-  // Auto-trigger explain when component mounts with selectedText
-  useEffect(() => {
-    if (selectedText && !hasTriggeredExplain.current) {
-      hasTriggeredExplain.current = true;
-      sendExplain(selectedText, null, bookTitle);
-    }
-  }, [selectedText, bookTitle, sendExplain]);
+  // State for active context
+  const [activeContext, setActiveContext] = useState(selectedText);
 
   // Auto-scroll to bottom as new content streams in
   useEffect(() => {
@@ -47,13 +42,25 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
   const handleSend = (e) => {
     e?.preventDefault();
     if (!inputValue.trim() || isStreaming) return;
-    sendMessage(inputValue.trim(), bookTitle);
+
+    let finalPrompt = inputValue.trim();
+    if (activeContext) {
+      finalPrompt = `I'm asking about this text: "${activeContext}"\n\nMy question: ${finalPrompt}`;
+    }
+
+    sendMessage(finalPrompt, bookTitle);
     setInputValue('');
   };
 
   const handleSuggestionClick = (text) => {
     if (isStreaming) return;
-    sendMessage(text, bookTitle);
+    
+    let finalPrompt = text;
+    if (activeContext) {
+      finalPrompt = `I'm asking about this text: "${activeContext}"\n\nPrompt: ${finalPrompt}`;
+    }
+    
+    sendMessage(finalPrompt, bookTitle);
   };
 
   // Format time for message timestamps
@@ -108,56 +115,53 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
         ref={chatContainerRef}
         className='flex-1 overflow-y-auto p-5 flex flex-col gap-4 bg-neutral-50/30'
       >
-        {/* Highlighted text quote block */}
-        {selectedText && (
-          <div className='bg-accent-subtle/20 border border-accent-primary/20 rounded-xl p-4 mb-2 animate-in fade-in duration-500'>
-            <p className='text-[11px] font-semibold text-accent-primary uppercase tracking-wider mb-2 flex items-center gap-1.5'>
-              💬 You highlighted:
-            </p>
-            <p className='text-[13px] text-gray-700 leading-relaxed italic'>
-              "{selectedText}"
-            </p>
-          </div>
-        )}
-
         {/* Messages */}
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex items-end gap-2.5 animate-in fade-in duration-300 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-          >
-            {/* Avatar for AI messages */}
-            {msg.role === 'ai' && (
-              <div className='w-7 h-7 rounded-lg bg-accent-primary flex items-center justify-center flex-shrink-0 shadow-sm'>
-                <span className='text-white text-[10px] font-bold'>A</span>
+        {messages.length === 0 && !activeContext ? (
+          <div className='flex flex-col items-center justify-center py-10 text-center opacity-40'>
+              <div className='w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-4'>
+                <Sparkles size={24} className='text-slate-400' />
               </div>
-            )}
-
-            <div className='flex flex-col max-w-[85%]'>
-              <div className={`
-                px-4 py-3 rounded-2xl text-[13px] leading-relaxed shadow-sm
-                ${msg.role === 'user'
-                  ? 'bg-accent-primary text-white rounded-br-none font-medium'
-                  : 'bg-white text-gray-800 border border-border-default rounded-bl-none'}
-              `}>
-                {msg.role === 'ai' ? (
-                  <div className='prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-gray-900'>
-                    {msg.content ? (
-                      <Markdown>{msg.content}</Markdown>
-                    ) : (
-                      isStreaming && <span className='text-gray-400 text-xs'>Thinking...</span>
-                    )}
-                  </div>
-                ) : (
-                  msg.content
-                )}
-              </div>
-              <span className='text-[10px] text-text-tertiary mt-1 px-1'>
-                {formatTime(msg.id)}
-              </span>
-            </div>
+              <p className='text-xs font-medium text-slate-500'>Ask anything about this book</p>
           </div>
-        ))}
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex items-end gap-2.5 animate-in fade-in duration-300 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+            >
+              {/* Avatar for AI messages */}
+              {msg.role === 'ai' && (
+                <div className='w-7 h-7 rounded-lg bg-accent-primary flex items-center justify-center flex-shrink-0 shadow-sm'>
+                  <span className='text-white text-[10px] font-bold'>A</span>
+                </div>
+              )}
+
+              <div className='flex flex-col max-w-[85%]'>
+                <div className={`
+                  px-4 py-3 rounded-2xl text-[13px] leading-relaxed shadow-sm
+                  ${msg.role === 'user'
+                    ? 'bg-accent-primary text-white rounded-br-none font-medium'
+                    : 'bg-white text-gray-800 border border-border-default rounded-bl-none'}
+                `}>
+                  {msg.role === 'ai' ? (
+                    <div className='prose prose-base max-w-none prose-p:my-3 prose-ul:my-3 prose-li:my-1.5 prose-headings:my-4 prose-strong:text-gray-900 prose-table:my-4 prose-th:bg-gray-50 prose-th:p-2 prose-td:p-2 prose-td:border-t'>
+                      {msg.content ? (
+                        <Markdown>{msg.content}</Markdown>
+                      ) : (
+                        isStreaming && <span className='text-gray-400 text-xs'>Thinking...</span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className='whitespace-pre-wrap'>{msg.content}</p>
+                  )}
+                </div>
+                <span className='text-[10px] text-text-tertiary mt-1 px-1'>
+                  {formatTime(msg.id)}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
 
         {/* Typing indicator when streaming starts but no content yet */}
         {isStreaming && messages.length > 0 && messages[messages.length - 1]?.role === 'ai' && messages[messages.length - 1]?.content === '' && (
@@ -182,7 +186,7 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
       </div>
 
       {/* ── Suggested Actions ── */}
-      {messages.length === 0 && !selectedText && (
+      {messages.length === 0 && !activeContext && (
         <div className='px-5 py-3 flex flex-wrap gap-2 animate-in fade-in slide-in-from-bottom-2 duration-700'>
           {suggestions.map((text, i) => (
             <button
@@ -193,6 +197,28 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
               {text}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* ── Selection Context Pin ── */}
+      {activeContext && (
+        <div className='px-4 pt-4'>
+           <div className='bg-blue-50/50 border border-blue-100 rounded-2xl p-3 relative group animate-in slide-in-from-bottom-4 duration-500'>
+              <div className='flex items-center justify-between mb-2'>
+                <span className='text-[10px] font-bold text-blue-500 uppercase tracking-widest flex items-center gap-1.5'>
+                  <Highlighter size={12} /> Selection Context
+                </span>
+                <button 
+                  onClick={() => setActiveContext(null)}
+                  className='p-1 hover:bg-blue-100 rounded-md text-blue-400 hover:text-blue-600 transition-all'
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <p className='text-[12px] text-blue-900 leading-relaxed italic line-clamp-3'>
+                "{activeContext}"
+              </p>
+           </div>
         </div>
       )}
 
@@ -207,7 +233,7 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
               type='text'
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={isStreaming ? 'AI is responding...' : 'Ask a follow-up...'}
+              placeholder={activeContext ? 'Ask about this section...' : 'Ask a follow-up...'}
               disabled={isStreaming}
               className='w-full pl-4 pr-12 py-3.5 text-sm rounded-2xl border border-border-default bg-neutral-50/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-accent-primary/10 focus:border-accent-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed'
             />
@@ -231,6 +257,7 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
         </p>
       </div>
     </aside>
+
   )
 }
 

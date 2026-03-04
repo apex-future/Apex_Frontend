@@ -39,7 +39,7 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
         {/* Upload & Logo Group */}
         <div className="flex items-center gap-3 ">
           {/* Upload Button - Responsive */}
-          <div className="flex items-center h-full">
+          <div className="md:flex hidden items-center h-full">
             <input
               type="file"
               id="top-nav-upload"

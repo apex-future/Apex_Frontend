@@ -95,10 +95,10 @@ async def explain_text(request: ExplainRequest):
                 f"The user is currently reading '{book_title}' and has highlighted the "
                 f"following text: '{request.selected_text}'. "
                 f"Explain this clearly and concisely. Use plain language, examples where "
-                f"helpful, and markdown formatting for clarity (bold key terms, use bullet points for lists). "
+                f"helpful, and markdown formatting for clarity (bold key terms, use bullet points for lists, and tables for comparisons). "
                 f"Avoid LaTeX math delimiters like $ or $$. Use plain text or Unicode "
                 f"subscripts for chemical formulas (e.g., H₂O instead of $H_2O$). "
-                f"Keep explanations focused and under 300 words unless the topic requires more."
+                f"Keep explanations high-quality and comprehensive."
             )
 
             # Build contents from conversation history
@@ -121,7 +121,7 @@ async def explain_text(request: ExplainRequest):
                 contents=contents,
                 config=types.GenerateContentConfig(
                     system_instruction=system_prompt,
-                    max_output_tokens=600,
+                    max_output_tokens=2048,
                     temperature=0.7,
                 )
             ):
@@ -165,11 +165,11 @@ async def ask_ai(request: AskRequest):
 
             system_prompt = (
                 f"You are Apex AI, a knowledgeable and helpful AI companion. Be clear, "
-                f"educational, and engaging. Use markdown formatting.{book_context} "
+                f"educational, and engaging. Use rich markdown formatting (bolding, lists, and tables where appropriate).{book_context} "
                 f"IMPORTANT: Use plain text for mathematical and chemical equations. "
                 f"Do NOT use LaTeX delimiters like $ or $$. Use Unicode subscripts "
                 f"where possible (e.g., C₆H₁₂O₆). Adapt your tone and depth to the "
-                f"user's level based on their queries."
+                f"user's level based on their queries. Ensure responses are thorough and complete."
             )
 
             # Build contents from conversation history
@@ -188,7 +188,7 @@ async def ask_ai(request: AskRequest):
                 contents=contents,
                 config=types.GenerateContentConfig(
                     system_instruction=system_prompt,
-                    max_output_tokens=800,
+                    max_output_tokens=2048,
                     temperature=0.7,
                 )
             ):

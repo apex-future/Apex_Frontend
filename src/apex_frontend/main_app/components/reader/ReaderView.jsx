@@ -326,7 +326,7 @@ function ReaderView() {
                             <button
                                 onClick={(e) => { e.stopPropagation(); previousPage(); }}
                                 disabled={pageNumber <= 1}
-                                className="flex absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/95 hover:bg-white backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                                className="md:flex hidden absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/95 hover:bg-white backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                 title="Previous page"
                             >
                                 <ChevronLeft size={28} strokeWidth={2.5} className="-ml-1" />
@@ -335,7 +335,7 @@ function ReaderView() {
                             <button
                                 onClick={(e) => { e.stopPropagation(); nextPage(); }}
                                 disabled={pageNumber >= (numPages || 1)}
-                                className="flex absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/95 hover:bg-white backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                                className="md:flex hidden absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/95 hover:bg-white backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                 title="Next page"
                             >
                                 <ChevronRight size={28} strokeWidth={2.5} className="ml-1" />
