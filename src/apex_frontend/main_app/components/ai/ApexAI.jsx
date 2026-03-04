@@ -240,7 +240,7 @@ function ApexAI() {
                                 placeholder={isStreaming ? 'AI is processing...' : 'Ask Apex Intelligence?'}
                                 disabled={isStreaming}
                                 rows={1}
-                                className='flex-1 bg-transparent px-4 py-3 focus:outline-none text-[16px] text-slate-800 resize-none max-h-52 custom-scrollbar disabled:cursor-not-allowed leading-relaxed self-center'
+                                className='flex-1 bg-transparent px-4 py-3 focus:outline-none text-[16px] text-slate-800 resize-none max-h-52 custom-scrollbar placeholder:text-sm disabled:cursor-not-allowed leading-relaxed self-center'
                                 style={{ height: '48px' }}
                             />
                             <button
