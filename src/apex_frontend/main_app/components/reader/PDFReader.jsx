@@ -58,7 +58,7 @@ const PDFReader = ({
     <div
       ref={containerRef}
       {...swipeHandlers}
-      className={`flex-1 flex justify-center items-start min-h-screen ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-pan-y'}`}
+      className={`flex-1 flex justify-center items-start h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-pan-y'}`}
       id="pdf-container"
     >
       <Document

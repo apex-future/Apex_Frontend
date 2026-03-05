@@ -141,6 +141,10 @@ function ReaderView() {
         setNavState(prev => prev === 'none' ? 'first' : 'none');
     }, []);
 
+    const closeNav = useCallback(() => {
+        setNavState('none');
+    }, []);
+
     // Override native context menu on mobile so our HighlightMenu is used instead
     useEffect(() => {
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -285,7 +289,8 @@ function ReaderView() {
 
     return (
         <div
-            className="h-screen max-h-screen w-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-blue-200/50 relative overflow-hidden"
+            className="h-[100dvh] max-h-[100dvh] w-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-blue-200/50 relative overflow-hidden"
+            onClick={closeNav}
         >
             {/* Subtle Menu Trigger - Persistent at top */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
@@ -319,7 +324,7 @@ function ReaderView() {
                 )}
 
                 {/* Main reading area */}
-                <div className="flex-1 relative min-w-0 flex flex-col overflow-hidden">
+                <div className="flex-1 relative min-w-0 flex flex-col h-full max-h-full overflow-hidden">
 
                     <ReaderNavBar
                         book={book}
@@ -378,7 +383,7 @@ function ReaderView() {
 
                     {/* Text content */}
                     {!fileUrl && (
-                        <div className="flex-1 overflow-auto min-h-screen">
+                        <div className="flex-1 overflow-auto h-full">
                             <div className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased">
                                 {textContent ? (
                                     <div className="whitespace-pre-wrap animate-in fade-in duration-1000">{textContent}</div>

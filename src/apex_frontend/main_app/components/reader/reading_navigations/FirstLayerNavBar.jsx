@@ -36,7 +36,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
   }, []);
 
   return (
-    <div className='absolute top-0 left-0 right-0 z-50 flex flex-col justify-between p-2 w-full max-h-screen h-full pointer-events-none'>
+    <div className='absolute top-0 left-0 right-0 z-50 flex flex-col justify-between p-2 w-full max-h-[100dvh] h-[100dvh] pointer-events-none'>
       <div
         ref={topBarRef}
         className='flex top-bar pb-4 items-center justify-between w-full pointer-events-auto'
