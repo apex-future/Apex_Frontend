@@ -45,9 +45,35 @@ const PDFReader = ({
     : containerWidth;
 
   // Swipe handlers — only meaningful on touch devices (mobile/tablet < md)
+  const handleSwipedLeft = () => {
+    if (locked) return;
+    if (scale > 1) {
+      const el = containerRef.current;
+      if (el) {
+        // Check if we are at the right edge (within a small buffer)
+        const isAtRightEdge = el.scrollLeft + el.clientWidth >= el.scrollWidth - 20;
+        if (!isAtRightEdge) return;
+      }
+    }
+    onNextPage?.();
+  };
+
+  const handleSwipedRight = () => {
+    if (locked) return;
+    if (scale > 1) {
+      const el = containerRef.current;
+      if (el) {
+        // Check if we are at the left edge (within a small buffer)
+        const isAtLeftEdge = el.scrollLeft <= 20;
+        if (!isAtLeftEdge) return;
+      }
+    }
+    onPrevPage?.();
+  };
+
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => !locked && onNextPage?.(),
-    onSwipedRight: () => !locked && onPrevPage?.(),
+    onSwipedLeft: handleSwipedLeft,
+    onSwipedRight: handleSwipedRight,
     trackMouse: false,
     preventScrollOnSwipe: false,
     delta: 50,
@@ -58,7 +84,7 @@ const PDFReader = ({
     <div
       ref={containerRef}
       {...swipeHandlers}
-      className={`flex-1 flex justify-center items-start h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-pan-y'}`}
+      className={`flex-1 flex flex-col items-center h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-pan-y'}`}
       id="pdf-container"
     >
       <Document
@@ -70,20 +96,18 @@ const PDFReader = ({
             <Loader2 className="w-8 h-8 animate-spin text-accent-primary opacity-60" />
           </div>
         }
-        className="flex flex-col items-center"
+        className="flex flex-col items-center min-h-full"
       >
         <div
-          className="shadow-2xl rounded-sm overflow-hidden"
+          className="shadow-2xl rounded-sm overflow-hidden bg-white min-h-[100dvh]"
           style={{
-            transform: `scale(${scale})`,
-            transformOrigin: 'top center',
             transition: 'transform 0.25s ease-out',
           }}
         >
           <Page
             pageNumber={pageNumber}
             rotate={rotation}
-            scale={1}
+            scale={scale}
             renderTextLayer={true}
             renderAnnotationLayer={true}
             className="bg-white"
