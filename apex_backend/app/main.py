@@ -30,7 +30,7 @@ app = FastAPI(
 
 # CORS Configuration
 # Check for multiple possible env var names (CORS_ORIGINS or FRONTEND_URL)
-cors_origins_raw = os.getenv("CORS_ORIGINS") or os.getenv("FRONTEND_URL") or "http://localhost:5173,http://193.181.214.73,https://apexapp.click,http://apexapp.click,https://contact.apexapp.click,http://localhost:3000"
+cors_origins_raw = os.getenv("CORS_ORIGINS") or os.getenv("FRONTEND_URL") or "http://localhost:5173,http://localhost:5175,http://193.181.214.73,https://apexapp.click,http://apexapp.click,https://www.apexapp.click,http://www.apexapp.click,https://contact.apexapp.click,http://localhost:3000"
 allowed_origins = [origin.strip() for origin in cors_origins_raw.split(",")]
 
 app.add_middleware(
