@@ -47,15 +47,19 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
         audio.play();
     };
 
-    // Calculate position to keep it on screen
-    const menuStyle = {
-        top: `${Math.max(10, position.y - 120)}px`,
-        left: `${Math.min(window.innerWidth - 300, Math.max(10, position.x - 100))}px`,
-    };
+    // On mobile (<640px) use a fixed bottom sheet; on desktop float near selection
+    const isMobile = window.innerWidth < 640;
+
+    const menuStyle = isMobile
+        ? { left: 0, right: 0, bottom: 0 }
+        : {
+            top: `${Math.max(10, position.y - 120)}px`,
+            left: `${Math.min(window.innerWidth - 300, Math.max(10, position.x - 100))}px`,
+        };
 
     return (
         <div 
-            className="fixed z-[300] animate-in fade-in zoom-in duration-200 pointer-events-auto"
+            className={`fixed z-[300] animate-in fade-in duration-200 pointer-events-auto ${isMobile ? 'zoom-in-95 slide-in-from-bottom-4 px-2 pb-[env(safe-area-inset-bottom,8px)]' : 'zoom-in'}`}
             style={menuStyle}
             onClick={(e) => e.stopPropagation()}
         >
@@ -148,8 +152,10 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
                 )}
             </div>
             
-            {/* Arrow */}
-            <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white/90 mx-auto" />
+            {/* Arrow — only show on desktop where the menu floats near selection */}
+            {!isMobile && (
+                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white/90 mx-auto" />
+            )}
 
             <style dangerouslySetInnerHTML={{ __html: `
                 .custom-scrollbar::-webkit-scrollbar {

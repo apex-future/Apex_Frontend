@@ -141,6 +141,23 @@ function ReaderView() {
         setNavState(prev => prev === 'none' ? 'first' : 'none');
     }, []);
 
+    // Override native context menu on mobile so our HighlightMenu is used instead
+    useEffect(() => {
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (!isTouchDevice) return;
+
+        const handleContextMenu = (e) => {
+            // Only suppress when inside the reader and there's a text selection
+            const sel = window.getSelection();
+            if (sel && sel.toString().trim().length > 0) {
+                e.preventDefault();
+            }
+        };
+
+        document.addEventListener('contextmenu', handleContextMenu, { passive: false });
+        return () => document.removeEventListener('contextmenu', handleContextMenu);
+    }, []);
+
     // Selection monitoring logic
     useEffect(() => {
         const handleSelectionChange = () => {
@@ -268,8 +285,7 @@ function ReaderView() {
 
     return (
         <div
-            className="min-h-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-blue-200/50 relative overflow-hidden"
-            onClick={toggleNav}
+            className="h-screen max-h-screen w-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-blue-200/50 relative overflow-hidden"
         >
             {/* Subtle Menu Trigger - Persistent at top */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
@@ -283,7 +299,7 @@ function ReaderView() {
                 </button>
             </div>
 
-            <div className="flex h-screen overflow-hidden relative">
+            <div className="flex h-full max-h-full overflow-hidden relative">
                 {/* Far-left panel */}
                 {leftPanel && <LeftPanel setLeftPanel={setLeftPanel} readerControls={readerControls} pdfControls={pdfControls} />}
 
@@ -362,7 +378,7 @@ function ReaderView() {
 
                     {/* Text content */}
                     {!fileUrl && (
-                        <div className="flex-1 overflow-auto">
+                        <div className="flex-1 overflow-auto min-h-screen">
                             <div className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased">
                                 {textContent ? (
                                     <div className="whitespace-pre-wrap animate-in fade-in duration-1000">{textContent}</div>

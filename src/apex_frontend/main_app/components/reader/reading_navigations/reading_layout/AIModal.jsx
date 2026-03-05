@@ -90,7 +90,7 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
-      <div className='flex items-center justify-between px-4 py-4 border-b border-slate-200 bg-white sticky top-0 z-10'>
+      <div className='flex items-center justify-between px-4 py-4 border-b border-slate-200 bg-white z-10 flex-shrink-0'>
         <div className='flex items-center gap-2'>
           <button
             onClick={() => showHistory ? setShowHistory(false) : setAiModal(false)}
@@ -247,7 +247,7 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
 
       {/* ── Selection Context Pin ── */}
       {!showHistory && activeContext && (
-        <div className='px-4 pb-3'>
+        <div className='px-4 pb-3 flex-shrink-0'>
            <div className='bg-white border-2 border-blue-50 rounded-2xl p-4 relative group shadow-xl shadow-blue-50/20 animate-in slide-in-from-bottom-2 duration-300'>
               <div className='flex items-center justify-between mb-3'>
                 <span className='text-[10px] font-bold text-blue-500 uppercase tracking-[0.15em] flex items-center gap-2'>
@@ -270,7 +270,7 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
 
       {/* ── Input ── */}
       {!showHistory && (
-        <div className='p-4 bg-white border-t border-slate-100 shadow-[0_-10px_20px_-15px_rgba(0,0,0,0.05)]'>
+        <div className='p-4 bg-white border-t border-slate-100 shadow-[0_-10px_20px_-15px_rgba(0,0,0,0.05)] flex-shrink-0'>
           <form
             onSubmit={handleSend}
             className={`flex flex-col gap-3 transition-all duration-300 ${isStreaming ? 'opacity-60' : 'opacity-100'}`}

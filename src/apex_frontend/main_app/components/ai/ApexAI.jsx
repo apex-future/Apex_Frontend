@@ -84,12 +84,12 @@ function ApexAI() {
     };
 
     return (
-        <div className='flex max-h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden'>
+        <div className='flex h-screen max-h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden'>
             
             {/* ── Main Chat Area ── */}
             <main className='flex-1 flex flex-col relative min-w-0 bg-white'>
                 {/* Header */}
-                <header className='flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-10'>
+                <header className='flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white/80 backdrop-blur-md z-10 flex-shrink-0'>
                     <div className='flex items-center gap-4 flex-1 min-w-0'>
                         <button 
                             onClick={() => navigate(-1)}
@@ -212,12 +212,12 @@ function ApexAI() {
                             </div>
                         )}
 
-                        <div ref={chatEndRef} className='h-32' />
+                        <div ref={chatEndRef} className='h-4' />
                     </div>
                 </div>
 
                 {/* Input Area */}
-                <div className='p-6 bg-white border-t border-slate-100 relative z-10'>
+                <div className='p-6 bg-white border-t border-slate-100 relative z-10 flex-shrink-0'>
                     <form
                         onSubmit={handleSubmit}
                         className={`max-w-4xl mx-auto flex flex-col gap-2 transition-all duration-300 ${isStreaming ? 'opacity-60' : 'opacity-100'}`}
