@@ -2,8 +2,9 @@
  * AI Service — Fetch wrappers for Apex AI backend endpoints.
  * All streaming endpoints return a ReadableStream reader for SSE consumption.
  */
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-const API_BASE = '/api/ai';
+const API_BASE = `${apiUrl}/api/ai`;
 
 /**
  * Stream an explanation of highlighted text.

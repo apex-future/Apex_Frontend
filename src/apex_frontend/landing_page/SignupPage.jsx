@@ -22,8 +22,8 @@ function SignupPage({ onLogin }) {
         {/* Logo/Brand Header */}
         <div className="flex flex-col items-center mb-10">
           <img src={logoLight} alt="Apex Logo" className="w-14 h-14 rounded-2xl mb-4 shadow-xl shadow-accent-primary/10" />
-          <h2 className="text-white text-3xl font-bold font-display tracking-tight">Apex <span className="text-accent-primary">AI</span></h2>
-          <p className="text-neutral-400 mt-2 text-sm">Your academic breakthrough companion</p>
+          <h2 className="text-white text-3xl font-bold font-display tracking-tight">Apex</h2>
+          <p className="text-neutral-400 mt-2 text-sm">Switching from 12 tabs to 1</p>
         </div>
 
         {/* Signup Form Card */}

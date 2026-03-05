@@ -84,7 +84,7 @@ function ApexAI() {
     };
 
     return (
-        <div className='flex h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden'>
+        <div className='flex max-h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden'>
             
             {/* ── Main Chat Area ── */}
             <main className='flex-1 flex flex-col relative min-w-0 bg-white'>
@@ -268,7 +268,7 @@ function ApexAI() {
             <aside className={`
                 ${sidebarOpen ? 'w-72 translate-x-0' : 'w-0 translate-x-full md:w-0'} 
                 flex-shrink-0 bg-white border-l border-slate-200 flex flex-col transition-all duration-300 
-                fixed md:relative right-0 top-0 h-full md:h-auto z-50 md:z-20 overflow-hidden shadow-2xl md:shadow-none
+                fixed lg:relative right-0 top-0 h-full lg:h-auto z-50 lg:z-20 overflow-hidden shadow-2xl lg:shadow-none
             `}>
                 <div className='p-4 border-b border-slate-100 flex items-center justify-between relative'>
                     <button 
@@ -336,7 +336,7 @@ function ApexAI() {
             {/* Backdrop for mobile */}
             {sidebarOpen && (
                 <div 
-                    className='md:hidden fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40'
+                    className='lg:hidden fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40'
                     onClick={() => setSidebarOpen(false)}
                 />
             )}

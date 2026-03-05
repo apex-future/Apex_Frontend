@@ -50,7 +50,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
           bg-neutral-200/90 backdrop-blur-xl border-r border-neutral-300/80
           shadow-sm z-50
           transition-all duration-300 ease-in-out
-          flex flex-col h-screen
+          flex flex-col max-h-screen
           rounded-r-xl
           /* Layout Switching: Fixed on small screens, Sticky within flow on md+ screens */
           fixed md:sticky top-0 left-0 bottom-0 md:bottom-auto md:left-auto md:translate-x-0
