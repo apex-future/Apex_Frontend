@@ -167,39 +167,83 @@ function ReaderView() {
         return () => document.removeEventListener('contextmenu', handleContextMenu);
     }, []);
 
+    // Touch Gesture State
+    const touchState = useRef({
+        initialDist: 0,
+        initialScale: 1.0,
+        isPinching: false
+    });
+
     // Selection monitoring logic
     useEffect(() => {
-    const handleSelectionChange = () => {
-        const activeSel = window.getSelection();
-        const text = activeSel.toString().trim();
+        const handleSelectionChange = () => {
+            const activeSel = window.getSelection();
+            const text = activeSel.toString().trim();
 
-        if (text && text.length > 0) {
-            try {
-                const range = activeSel.getRangeAt(0);
-                const rect = range.getBoundingClientRect();
-                setSelection({
-                    text,
-                    x: rect.left + rect.width / 2,
-                    y: rect.top
-                });
-                setShowHighlightMenu(true);
-            } catch (e) {
-                // If selection range is lost or invalid
+            if (text && text.length > 0) {
+                try {
+                    const range = activeSel.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
+                    setSelection({
+                        text,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top
+                    });
+                    setShowHighlightMenu(true);
+                } catch (e) {
+                    // If selection range is lost or invalid
+                    setShowHighlightMenu(false);
+                }
+            } else {
                 setShowHighlightMenu(false);
             }
-        } else {
-            setShowHighlightMenu(false);
-        }
-    };
+        };
+
+        const getDistance = (touches) => {
+            return Math.hypot(
+                touches[0].pageX - touches[1].pageX,
+                touches[0].pageY - touches[1].pageY
+            );
+        };
+
+        const handleTouchStart = (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                touchState.current.isPinching = true;
+                touchState.current.initialDist = getDistance(e.touches);
+                touchState.current.initialScale = scale;
+            }
+        };
+
+        const handleTouchMove = (e) => {
+            if (e.touches.length === 2 && touchState.current.isPinching) {
+                e.preventDefault();
+                const currentDist = getDistance(e.touches);
+                const ratio = currentDist / touchState.current.initialDist;
+                const newScale = Math.min(Math.max(touchState.current.initialScale * ratio, 0.5), 2.5);
+                setScale(newScale);
+            }
+        };
+
+        const handleTouchEnd = (e) => {
+            if (e.touches.length < 2) {
+                touchState.current.isPinching = false;
+                handleSelectionChange();
+            }
+        };
 
         document.addEventListener('mouseup', handleSelectionChange);
-        document.addEventListener('touchend', handleSelectionChange);
+        document.addEventListener('touchstart', handleTouchStart, { passive: false });
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleTouchEnd);
 
         return () => {
             document.removeEventListener('mouseup', handleSelectionChange);
-            document.removeEventListener('touchend', handleSelectionChange);
+            document.removeEventListener('touchstart', handleTouchStart);
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleTouchEnd);
         };
-    }, []);
+    }, [scale]);
 
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
