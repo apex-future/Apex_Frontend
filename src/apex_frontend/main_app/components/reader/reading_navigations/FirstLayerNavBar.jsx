@@ -46,81 +46,81 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         <div>
           <button
             onClick={() => navigate('/')}
-            className="p-2.5 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700"
+            className="w-10 h-10 flex items-center justify-center bg-white shadow-md rounded-full transition-all active:scale-90 text-slate-800 hover:bg-slate-50"
           >
-            <ArrowLeft size={20} strokeWidth={1.5} />
+            <ArrowLeft size={18} strokeWidth={2} />
           </button>
         </div>
 
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-3'>
           {/* Bookmark button — purple fill when bookmarked */}
           <button
-            className={`p-2 rounded-xl transition-all active:scale-95 ${
+            className={`w-10 h-10 flex items-center justify-center bg-white shadow-md rounded-full transition-all active:scale-90 ${
               isBookmarked
                 ? 'text-accent-primary'
-                : 'hover:bg-white/60 text-gray-700'
+                : 'text-slate-800 hover:bg-slate-50'
             }`}
             onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
             title={isBookmarked ? 'Remove bookmark' : 'Bookmark this page'}
           >
             <Bookmark
-              strokeWidth={1.5}
-              size={20}
+              strokeWidth={2}
+              size={18}
               className={`transition-all duration-200 ${isBookmarked ? 'fill-accent-primary' : 'fill-none'}`}
             />
           </button>
 
           {/* Dots — open second layer */}
           <button
-            className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'
+            className="w-10 h-10 flex items-center justify-center bg-white shadow-md rounded-full transition-all active:scale-90 text-slate-800 hover:bg-slate-50"
             onClick={onDotsClick}
           >
-            <EllipsisVertical strokeWidth={1.5} size={20} />
+            <EllipsisVertical strokeWidth={2} size={18} />
           </button>
         </div>
       </div>
 
       <div
         ref={bottomBarRef}
-        className="bottom-bar flex flex-col gap-2 items-center pointer-events-auto"
+        className="bottom-bar flex flex-col gap-4 items-center pointer-events-auto w-full px-2 pb-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className='flex items-center justify-between w-full'>
           {/* Lock — toggles pan/scroll lock */}
           <button
-            className={`p-2 rounded-xl transition-all active:scale-95 ${
+            className={`w-10 h-10 flex items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${
               locked
-                ? 'bg-accent-primary/20 text-accent-primary hover:bg-accent-primary/30'
-                : 'hover:bg-white/60 text-gray-700'
+                ? 'bg-accent-primary text-white'
+                : 'bg-white text-slate-800 hover:bg-slate-50'
             }`}
             onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
             title={locked ? 'Unlock scroll' : 'Lock scroll'}
           >
             {locked
-              ? <Lock strokeWidth={1.5} size={20} />
-              : <LockOpen strokeWidth={1.5} size={20} />
+              ? <Lock strokeWidth={2} size={18} />
+              : <LockOpen strokeWidth={2} size={18} />
             }
           </button>
 
           {/* Fit-to-screen — resets zoom to 100% */}
           <button
-            className='p-2 hover:bg-white/60 rounded-xl transition-all active:scale-95 text-gray-700'
+            className="w-10 h-10 flex items-center justify-center bg-white shadow-md rounded-full transition-all active:scale-90 text-slate-800 hover:bg-slate-50"
             onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
             title="Fit to screen (reset zoom)"
           >
-            <Fullscreen strokeWidth={1.5} size={20} />
+            <Fullscreen strokeWidth={2} size={18} />
           </button>
         </div>
 
         {/* Real progress bar */}
-        <div className="progress w-[90%]">
-          <div className="text-progress mb-2 flex items-center justify-between">
-            <span className="percent text-sm">{progress}%</span>
-            <span className="chapter text-sm">page {pages.current} of {pages.total}</span>
+        <div className="progress w-full max-w-md bg-white/90 backdrop-blur-md p-4 rounded-3xl shadow-lg border border-slate-100">
+          <div className="text-progress mb-2.5 flex items-center justify-between font-sans">
+            <span className="percent text-[11px] font-black uppercase tracking-widest text-slate-400">{progress}% Read</span>
+            <span className="chapter text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">page {pages.current} of {pages.total}</span>
           </div>
-          <div className="progress-bar h-1.5 rounded-full w-full bg-accent-subtle">
+          <div className="progress-bar h-2 rounded-full w-full bg-slate-100 overflow-hidden">
             <div
-              className="progress-fill h-1.5 rounded-full bg-accent-primary transition-all duration-500 ease-out"
+              className="progress-fill h-full rounded-full bg-accent-primary transition-all duration-700 ease-out shadow-[0_0_12px_rgba(139,92,246,0.3)]"
               style={{ width: `${progress}%` }}
             />
           </div>

@@ -47,11 +47,16 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
         audio.play();
     };
 
-    // On mobile (<640px) use a fixed bottom sheet; on desktop float near selection
+    // On mobile (<640px) float near or use a more centered bottom sheet
+    // User wants "pop up close to the area of highlight"
     const isMobile = window.innerWidth < 640;
 
     const menuStyle = isMobile
-        ? { left: 0, right: 0, bottom: 0 }
+        ? { 
+            top: `${Math.max(80, position.y - 100)}px`, 
+            left: `${Math.min(window.innerWidth - 310, Math.max(10, position.x - 150))}px`,
+            width: '300px'
+          }
         : {
             top: `${Math.max(10, position.y - 120)}px`,
             left: `${Math.min(window.innerWidth - 300, Math.max(10, position.x - 100))}px`,
@@ -59,11 +64,11 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
 
     return (
         <div 
-            className={`fixed z-[300] animate-in fade-in duration-200 pointer-events-auto ${isMobile ? 'zoom-in-95 slide-in-from-bottom-4 px-2 pb-[env(safe-area-inset-bottom,8px)]' : 'zoom-in'}`}
+            className={`fixed z-[300] animate-in fade-in duration-200 pointer-events-auto ${isMobile ? 'zoom-in-95' : 'zoom-in'}`}
             style={menuStyle}
             onClick={(e) => e.stopPropagation()}
         >
-            <div className="bg-white/90 backdrop-blur-xl border border-slate-200 shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] max-w-[320px]">
+            <div className="bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
                 {!showDict ? (
                     <div className="flex items-center p-1.5 gap-1">
                         <button 
@@ -71,7 +76,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
                             className="flex flex-col items-center justify-center p-3 hover:bg-slate-50 rounded-xl transition-all group flex-1"
                         >
                             <Book size={20} className="text-slate-600 group-hover:text-blue-600 transition-colors" />
-                            <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">Define</span>
+                            <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter font-sans">Define</span>
                         </button>
                         
                         <div className="w-[1px] h-8 bg-slate-100" />
@@ -81,7 +86,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
                             className="flex flex-col items-center justify-center p-3 hover:bg-slate-50 rounded-xl transition-all group flex-1"
                         >
                             <Sparkles size={20} className="text-slate-600 group-hover:text-purple-600 transition-colors" />
-                            <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">Ask AI</span>
+                            <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter font-sans">Ask AI</span>
                         </button>
 
                         <div className="w-[1px] h-8 bg-slate-100" />
@@ -98,52 +103,63 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
                         </div>
                     </div>
                 ) : (
-                    <div className="p-4 animate-in slide-in-from-bottom-2 duration-300">
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Dictionary</h3>
-                            <button onClick={() => setShowDict(false)} className="p-1 hover:bg-slate-100 rounded-md">
-                                <X size={14} className="text-slate-400" />
+                    <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] font-sans">Dictionary</h3>
+                            <button onClick={() => setShowDict(false)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                                <X size={16} className="text-slate-400" />
                             </button>
                         </div>
 
                         {loading ? (
-                            <div className="flex items-center justify-center py-6">
-                                <Loader2 size={24} className="animate-spin text-blue-500 opacity-50" />
+                            <div className="flex items-center justify-center py-8">
+                                <Loader2 size={28} className="animate-spin text-blue-500 opacity-60" />
                             </div>
                         ) : error ? (
-                            <p className="text-xs text-red-500 py-4 font-medium">"{selection}" not found in dictionary.</p>
+                            <p className="text-sm text-red-500 py-6 font-medium font-sans italic">"{selection}" not found.</p>
                         ) : definition && (
-                            <div className="max-h-48 overflow-y-auto custom-scrollbar">
-                                <div className="flex items-center justify-between gap-2 mb-2">
-                                    <h2 className="text-lg font-bold text-slate-900 capitalize">{definition.word}</h2>
+                            <div className="max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                                <div className="flex items-center justify-between gap-3 mb-3">
+                                    <h2 className="text-2xl font-black text-slate-900 capitalize font-sans tracking-tight">{definition.word}</h2>
                                     {definition.phonetics?.find(p => p.audio) && (
-                                        <button onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)} className="text-blue-500 hover:scale-110 transition-transform">
-                                            <Volume2 size={16} />
+                                        <button 
+                                            onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)} 
+                                            className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 hover:bg-blue-100 transition-all hover:scale-110"
+                                        >
+                                            <Volume2 size={18} />
                                         </button>
                                     )}
                                 </div>
-                                <p className="text-xs text-blue-600 italic mb-3">{definition.phonetic}</p>
+                                <p className="text-sm text-blue-600 font-bold mb-5 font-sans bg-blue-50/50 px-2 py-1 rounded-md inline-block">{definition.phonetic}</p>
                                 
-                                {definition.meanings.slice(0, 2).map((m, i) => (
-                                    <div key={i} className="mb-3">
-                                        <span className="text-[9px] font-black uppercase text-slate-300 tracking-tighter block mb-1">{m.partOfSpeech}</span>
-                                        <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                                {definition.meanings.slice(0, 3).map((m, i) => (
+                                    <div key={i} className="mb-5 last:mb-2">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-[10px] font-black uppercase text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded tracking-wider">{m.partOfSpeech}</span>
+                                            <div className="h-px flex-1 bg-slate-100" />
+                                        </div>
+                                        <p className="text-[15px] text-slate-700 leading-relaxed font-medium font-sans">
                                             {m.definitions[0].definition}
                                         </p>
+                                        {m.definitions[0].example && (
+                                            <p className="text-[13px] text-slate-400 mt-2 font-sans italic border-l-2 border-slate-100 pl-3">
+                                                "{m.definitions[0].example}"
+                                            </p>
+                                        )}
                                     </div>
                                 ))}
                                 {onSaveWord && bookId && (
                                     <button
                                         onClick={handleSaveWord}
                                         disabled={wordSaved}
-                                        className={`w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                                        className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
                                             wordSaved
                                                 ? 'bg-green-50 text-green-600 border border-green-200'
-                                                : 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100'
+                                                : 'bg-slate-900 text-white hover:bg-black active:scale-[0.98]'
                                         }`}
                                     >
-                                        {wordSaved ? <Check size={14} /> : <BookmarkPlus size={14} />}
-                                        {wordSaved ? 'Word Saved' : 'Save Word'}
+                                        {wordSaved ? <Check size={18} /> : <BookmarkPlus size={18} />}
+                                        {wordSaved ? 'Word Saved' : 'Save to Vocabulary'}
                                     </button>
                                 )}
                             </div>
@@ -152,9 +168,9 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
                 )}
             </div>
             
-            {/* Arrow — only show on desktop where the menu floats near selection */}
+            {/* Arrow — hide on mobile as it might not align well with dynamic float */}
             {!isMobile && (
-                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white/90 mx-auto" />
+                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white mx-auto" />
             )}
 
             <style dangerouslySetInnerHTML={{ __html: `

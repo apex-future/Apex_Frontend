@@ -164,26 +164,28 @@ function ReaderView() {
 
     // Selection monitoring logic
     useEffect(() => {
-        const handleSelectionChange = () => {
-            // Add a tiny delay to ensure selection is fully registered on mobile touch end
-            setTimeout(() => {
-                const activeSel = window.getSelection();
-                const text = activeSel.toString().trim();
+    const handleSelectionChange = () => {
+        const activeSel = window.getSelection();
+        const text = activeSel.toString().trim();
 
-                if (text && text.length > 0) {
-                    const range = activeSel.getRangeAt(0);
-                    const rect = range.getBoundingClientRect();
-                    setSelection({
-                        text,
-                        x: rect.left + rect.width / 2,
-                        y: rect.top
-                    });
-                    setShowHighlightMenu(true);
-                } else {
-                    setShowHighlightMenu(false);
-                }
-            }, 50);
-        };
+        if (text && text.length > 0) {
+            try {
+                const range = activeSel.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                setSelection({
+                    text,
+                    x: rect.left + rect.width / 2,
+                    y: rect.top
+                });
+                setShowHighlightMenu(true);
+            } catch (e) {
+                // If selection range is lost or invalid
+                setShowHighlightMenu(false);
+            }
+        } else {
+            setShowHighlightMenu(false);
+        }
+    };
 
         document.addEventListener('mouseup', handleSelectionChange);
         document.addEventListener('touchend', handleSelectionChange);
