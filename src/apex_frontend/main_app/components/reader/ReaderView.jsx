@@ -6,6 +6,7 @@ import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
 import HighlightMenu from './HighlightMenu';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
+import BookSkeleton from './BookSkeleton';
 import { ChevronLeft, ChevronRight, Plus, Menu } from 'lucide-react';
 
 function ReaderView() {
@@ -53,6 +54,10 @@ function ReaderView() {
     const [locked, setLocked] = useState(false);
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
+
+    // Deep loading state
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadingMessage, setLoadingMessage] = useState("Setting up file");
 
     // Selection State
     const [selection, setSelection] = useState({ text: '', x: 0, y: 0 });
@@ -233,6 +238,33 @@ function ReaderView() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bookId, book?.file, navigate]);
 
+    // Loading Sequence Animation
+    useEffect(() => {
+        if (!isLoading) return;
+
+        const messages = ["Setting up file", "Loading all pages", "Finalizing load", "Rendering"];
+        let currentIndex = 0;
+
+        const interval = setInterval(() => {
+            if (currentIndex < messages.length - 1) {
+                currentIndex++;
+                setLoadingMessage(messages[currentIndex]);
+            }
+        }, 800);
+
+        // Completion logic - wait for bit after "Rendering"
+        const finalTimer = setTimeout(() => {
+            if (book?.file) {
+                 setIsLoading(false);
+            }
+        }, messages.length * 800 + 400);
+
+        return () => {
+            clearInterval(interval);
+            clearTimeout(finalTimer);
+        };
+    }, [isLoading, book?.file]);
+
 
     const lastBookIdRef = useRef(null);
     useEffect(() => {
@@ -288,6 +320,10 @@ function ReaderView() {
     }, [bookId, textContent, fileUrl, isPdf]);
 
     if (!book) return null;
+
+    if (isLoading) {
+        return <BookSkeleton message={loadingMessage} />;
+    }
 
     return (
         <div
@@ -352,6 +388,8 @@ function ReaderView() {
                                 onDocumentLoad={handleDocumentLoad}
                                 onNextPage={nextPage}
                                 onPrevPage={previousPage}
+                                numPages={numPages}
+                                goToPage={goToPage}
                                 locked={locked}
                                 windowSize={windowSize}
                             />

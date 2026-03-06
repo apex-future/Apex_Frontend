@@ -130,7 +130,7 @@ function ApexAI() {
                                 <div className='w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-blue-50 ring-4 ring-white'>
                                     <Sparkle size={40} fill="currentColor" />
                                 </div>
-                                <h2 className='text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-slate-900 font-serif'>Welcome to Apex AI</h2>
+                                <h2 className='text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-slate-900 font-serif ita;ic'>Welcome to Apex AI</h2>
                                 <p className='text-slate-500 max-w-sm mx-auto text-base leading-relaxed'>Your personal academic breakthrough engine. What are we mastering today?</p>
 
                                 <div className='grid grid-cols-1 md:grid-cols-2 gap-3 mt-12 w-full max-w-2xl'>

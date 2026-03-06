@@ -56,7 +56,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {!activeSection && (
           /* Main nav list */
-          <div className="p-4 flex flex-col gap-2">
+          <div className="p-4 flex flex-col gap-4">
             {NAV_ITEMS.map((item) => {
               const { id, label, icon: ItemIcon } = item;
               const isBookmarksItem = id === 'bookmarks';
@@ -66,7 +66,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
                 <button
                   key={id}
                   onClick={() => handleNavClick(id)}
-                  className="flex items-center gap-4 p-4 rounded-2xl text-[15px] font-bold text-slate-700 bg-slate-50/50 hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full border border-transparent hover:border-accent-primary/10 group"
+                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-slate-700 bg-slate-50/50 hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full border border-transparent hover:border-accent-primary/10 group"
                 >
                   <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-accent-primary transition-colors">
                     <ItemIcon size={20} strokeWidth={2} />

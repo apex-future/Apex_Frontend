@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useSwipeable } from 'react-swipeable';
 import { Loader2 } from 'lucide-react';
+import BookSkeleton from './BookSkeleton';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -19,6 +20,8 @@ const PDFReader = ({
   onDocumentLoad,
   onNextPage,
   onPrevPage,
+  numPages,
+  goToPage,
   windowSize,
   locked = false,
 }) => {
@@ -91,11 +94,7 @@ const PDFReader = ({
         file={fileUrl}
         onLoadSuccess={onDocumentLoad}
         onLoadError={(err) => console.error('PDF load error:', err)}
-        loading={
-          <div className="flex items-center justify-center h-full w-full min-h-screen">
-            <Loader2 className="w-8 h-8 animate-spin text-accent-primary opacity-60" />
-          </div>
-        }
+        loading={<BookSkeleton message="Rendering document..." />}
         className="flex flex-col items-center min-h-full"
       >
         <div
@@ -112,6 +111,18 @@ const PDFReader = ({
             renderAnnotationLayer={true}
             className="bg-white"
             width={pdfWidth}
+            loading={
+                <div className="flex flex-col items-center justify-center bg-white" style={{ width: pdfWidth, height: pdfWidth * 1.41 }}>
+                     <div className="w-full h-full p-8 space-y-4 animate-pulse">
+                        <div className="h-4 w-1/3 bg-slate-100 rounded-full" />
+                        <div className="space-y-4">
+                            <div className="h-2 w-full bg-slate-50 rounded-full" />
+                            <div className="h-2 w-full bg-slate-50 rounded-full" />
+                            <div className="h-2 w-2/3 bg-slate-50 rounded-full" />
+                        </div>
+                     </div>
+                </div>
+            }
           />
         </div>
       </Document>
