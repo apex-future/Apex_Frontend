@@ -31,6 +31,9 @@ function ApexAI() {
         if (!content || isStreaming) return;
         sendMessage(content);
         setInputValue('');
+        if (inputRef.current) {
+            inputRef.current.style.height = '48px';
+        }
     };
 
     const handleSubmit = (e) => {
@@ -107,7 +110,7 @@ function ApexAI() {
                     <div className='flex items-center gap-2'>
                         <button 
                             onClick={handleCreateNewChat}
-                            className='p-2 hover:bg-slate-100 rounded-lg transition-colors text-blue-600'
+                            className='p-2 hover:bg-slate-100 rounded-lg transition-colors text-accent-primary'
                             title="New Chat"
                         >
                             <SquarePen size={20} />
@@ -127,10 +130,10 @@ function ApexAI() {
                     <div className='max-w-4xl mx-auto flex flex-col gap-8'>
                         {messages.length === 0 ? (
                             <div className='flex flex-col items-center justify-center py-24 text-center animate-in fade-in zoom-in duration-700'>
-                                <div className='w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-blue-50 ring-4 ring-white'>
+                                <div className='w-20 h-20 bg-gradient-to-br from-purple-50 to-purple-100 text-accent-primary rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-purple-50 ring-4 ring-white'>
                                     <Sparkle size={40} fill="currentColor" />
                                 </div>
-                                <h2 className='text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-slate-900 font-serif ita;ic'>Welcome to Apex AI</h2>
+                                <h2 className='text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-slate-900 font-serif italic'>Welcome to Apex AI</h2>
                                 <p className='text-slate-500 max-w-sm mx-auto text-base leading-relaxed'>Your personal academic breakthrough engine. What are we mastering today?</p>
 
                                 <div className='grid grid-cols-1 md:grid-cols-2 gap-3 mt-12 w-full max-w-2xl'>
@@ -143,7 +146,7 @@ function ApexAI() {
                                         <button
                                             key={i}
                                             onClick={() => handleSend(suggestion.text)}
-                                            className='flex items-center gap-3 px-5 py-4 rounded-2xl bg-white border border-slate-200 text-sm text-slate-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-lg hover:shadow-blue-50 transition-all duration-300 text-left group'
+                                            className='flex items-center gap-3 px-5 py-4 rounded-2xl bg-white border border-slate-200 text-sm text-slate-700 hover:border-accent-primary hover:text-accent-primary hover:bg-purple-50/50 hover:shadow-lg hover:shadow-purple-50 transition-all duration-300 text-left group'
                                         >
                                             <span className='text-xl grayscale group-hover:grayscale-0 transition-all'>{suggestion.icon}</span>
                                             <span className='font-medium'>{suggestion.text}</span>
@@ -159,7 +162,7 @@ function ApexAI() {
                                 >
                                     {/* Header Info (Avatar + Name) - Aligned to side */}
                                     <div className={`flex items-center gap-2 mb-1 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-sm border ${msg.role === 'user' ? 'bg-white border-slate-200 text-slate-600' : 'bg-blue-600 border-blue-500 text-white'}`}>
+                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-sm border ${msg.role === 'user' ? 'bg-white border-slate-200 text-slate-600' : 'bg-accent-primary border-purple-500 text-white'}`}>
                                             {msg.role === 'user' ? <User size={16} /> : <Sparkle size={16} fill="currentColor" />}
                                         </div>
                                         <span className='text-[11px] font-bold text-slate-400 uppercase tracking-widest'>
@@ -169,12 +172,12 @@ function ApexAI() {
 
                                     {/* Message Bubble - Centered for AI, right-aligned for User */}
                                     <div className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}>
-                                        <div className={`max-w-[95%] md:max-w-[85%] px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-sm ring-1 ${msg.role === 'user'
-                                                ? 'bg-slate-900 text-white ring-slate-800 rounded-tr-none'
-                                                : 'bg-white text-slate-800 ring-slate-200 rounded-2xl'
+                                        <div className={`max-w-[95%] md:max-w-[85%] px-6 py-4 text-[15px] leading-relaxed ${msg.role === 'user'
+                                                ? 'bg-slate-900 text-white rounded-3xl rounded-tr-none shadow-sm ring-1 ring-slate-800'
+                                                : 'bg-white text-slate-800'
                                             }`}>
                                             {msg.role === 'ai' ? (
-                                                <div className='prose prose-base max-w-none prose-p:my-6 prose-headings:mt-8 prose-headings:mb-4 prose-li:my-3 prose-strong:text-inherit prose-code:text-blue-600 prose-pre:bg-slate-50 prose-pre:border prose-pre:border-slate-100 prose-table:my-8 prose-table:border prose-table:border-slate-200 prose-th:bg-slate-50 prose-th:p-4 prose-th:border prose-th:border-slate-200 prose-td:p-4 prose-td:border prose-td:border-slate-200'>
+                                                <div className='prose prose-base max-w-none prose-p:my-6 prose-headings:mt-8 prose-headings:mb-4 prose-li:my-3 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-slate-50 prose-pre:border prose-pre:border-slate-100 prose-table:my-8 prose-table:border prose-table:border-slate-200 prose-th:bg-slate-50 prose-th:p-4 prose-th:border prose-th:border-slate-200 prose-td:p-4 prose-td:border prose-td:border-slate-200'>
                                                     {msg.content ? (
                                                         <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
                                                     ) : (
@@ -185,6 +188,11 @@ function ApexAI() {
                                                 <p className='whitespace-pre-wrap'>{msg.content}</p>
                                             )}
                                         </div>
+                                        {msg.role === 'ai' && (
+                                            <p className='text-[10px] text-slate-400 font-medium tracking-tight mt-3 text-center opacity-60'>
+                                                This is AI and can make mistake double-check your answers
+                                            </p>
+                                        )}
                                         <span className={`text-[10px] text-slate-400 mt-2 font-medium tracking-wide px-2 ${msg.role === 'ai' ? 'text-center' : ''}`}>
                                             {msg.id ? formatTime(msg.id) : '--:--'}
                                         </span>
@@ -217,12 +225,12 @@ function ApexAI() {
                 </div>
 
                 {/* Input Area */}
-                <div className='p-6 bg-white border-t border-slate-100 relative z-10 flex-shrink-0'>
+                <div className='p-6 relative z-10 flex-shrink-0'>
                     <form
                         onSubmit={handleSubmit}
                         className={`max-w-4xl mx-auto flex flex-col gap-2 transition-all duration-300 ${isStreaming ? 'opacity-60' : 'opacity-100'}`}
                     >
-                        <div className='relative flex items-center gap-3 bg-white border-2 border-slate-100 rounded-full p-2 pr-3 shadow-xl shadow-slate-200/50 focus-within:border-blue-500 focus-within:shadow-blue-100 transition-all'>
+                        <div className={`relative flex items-end gap-3 bg-white border-2 border-slate-100 p-2 pr-3 shadow-xl shadow-slate-200/50 focus-within:border-accent-primary focus-within:shadow-purple-100 transition-all duration-300 ${inputValue.split('\n').length > 1 || (inputRef.current && inputRef.current.scrollHeight > 60) ? 'rounded-[28px]' : 'rounded-full'}`}>
                             <textarea
                                 ref={inputRef}
                                 value={inputValue}
@@ -240,25 +248,19 @@ function ApexAI() {
                                 placeholder={isStreaming ? 'AI is processing...' : 'Ask Apex Intelligence?'}
                                 disabled={isStreaming}
                                 rows={1}
-                                className='flex-1 bg-transparent px-4 py-3 focus:outline-none text-[16px] text-slate-800 resize-none max-h-52 custom-scrollbar placeholder:text-sm disabled:cursor-not-allowed leading-relaxed self-center'
+                                className='flex-1 bg-transparent px-4 py-3 focus:outline-none text-[16px] text-slate-800 resize-none max-h-52 custom-scrollbar placeholder:text-sm disabled:cursor-not-allowed leading-relaxed'
                                 style={{ height: '48px' }}
                             />
                             <button
                                 type='submit'
                                 disabled={!inputValue.trim() || isStreaming}
-                                className={`p-3 rounded-full transition-all flex items-center justify-center ${inputValue.trim() && !isStreaming
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-300 hover:bg-blue-700 hover:-translate-y-0.5 active:translate-y-0'
+                                className={`p-3 rounded-full transition-all flex items-center justify-center flex-shrink-0 self-end mb-0.5 ${inputValue.trim() && !isStreaming
+                                        ? 'bg-accent-primary text-white shadow-lg shadow-purple-300 hover:bg-purple-700 hover:-translate-y-0.5 active:translate-y-0'
                                         : 'bg-slate-100 text-slate-300 cursor-not-allowed'
                                     }`}
                             >
                                 <Send size={22} />
                             </button>
-                        </div>
-                        <div className='flex items-center justify-between px-4'>
-                            <p className='text-[10px] text-slate-400 font-medium tracking-tight'>
-                                This is AI and can make mistake double-check your answers • Research Mode Enabled
-                            </p>
-                            <span className='text-[10px] text-slate-300 font-bold uppercase tracking-widest'>Apex 2.0</span>
                         </div>
                     </form>
                 </div>
@@ -284,7 +286,7 @@ function ApexAI() {
 
                     <button 
                         onClick={handleCreateNewChat}
-                        className='p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-all ml-auto'
+                        className='p-2 hover:bg-purple-50 text-accent-primary rounded-lg transition-all ml-auto'
                         title="New Chat"
                     >
                         <SquarePen size={18} className='md:hidden' />
@@ -304,7 +306,7 @@ function ApexAI() {
                                         onClick={() => handleSwitchChat(item)}
                                         className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-slate-50 text-slate-600'}`}
                                     >
-                                        <MessageSquare size={16} className={sessionId === item.id ? 'text-blue-600' : 'text-slate-400'} />
+                                        <MessageSquare size={16} className={sessionId === item.id ? 'text-accent-primary' : 'text-slate-400'} />
                                         <span className='flex-1 truncate text-sm'>{item.title || 'New Chat'}</span>
                                         <button 
                                             onClick={(e) => {
@@ -325,7 +327,7 @@ function ApexAI() {
 
                 <div className='p-4 border-t border-slate-100'>
                     <div className='flex items-center gap-3 p-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 shadow-inner'>
-                        <div className='w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600'>
+                        <div className='w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-accent-primary'>
                             <User size={16} />
                         </div>
                         <span className='text-xs font-medium'>Study Account</span>
