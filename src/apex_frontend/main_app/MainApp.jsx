@@ -16,6 +16,7 @@ import Dictionary from './components/dictionary/Dictionary';
 import ApexAI from './components/ai/ApexAI';
 import Settings from './components/layout/user/Settings';
 import DuplicateBookModal from './components/modals/DuplicateBookModal';
+import ImportPage from '../../pages/ImportPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 
@@ -55,6 +56,7 @@ function MainApp() {
                 <Route path="/book/:bookId" element={<BookDetails />} />
                 <Route path="/dictionary" element={<Dictionary />} />
                 <Route path="/ai" element={<ApexAI />} />
+                <Route path="/import" element={<ImportPage />} />
               </Routes>
             </main>
 

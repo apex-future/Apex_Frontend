@@ -1,6 +1,7 @@
 import { ArrowLeft, Settings, Flame, Book, BookOpen, Calendar, TrendingUp } from 'lucide-react'
 import dummyProfileImg from "../../../../../assets/user_imgs/user_img_1.jpg"
 import { useNavigate } from 'react-router-dom'
+import OnlineStatusBadge from '../../../../../components/OnlineStatusBadge'
 
 function Profile() {
   const navigate = useNavigate();
@@ -49,13 +50,14 @@ function Profile() {
         {/* Profile Info */}
         <div className="relative flex items-center gap-4 px-4 mt-4">
           {/* Avatar with glassmorphic ring */}
-          <div className="relative">
+          <div className="relative flex flex-col items-center gap-1.5">
             <div className="absolute inset-0 bg-white/20 rounded-full blur-md"></div>
             <img
               src={dummyProfileImg}
               alt="Profile"
               className='relative size-20 object-cover rounded-full ring-4 ring-white/30'
             />
+            <OnlineStatusBadge />
           </div>
 
           {/* User Details */}

@@ -76,6 +76,11 @@ export default function BookCard({ book, onClick }) {
                             />
                         </div>
                         <p className="text-xs text-black/50 mt-1 text-left">Page {book.currentPage || 0} of {book.totalPages || 0} completed</p>
+                        {book.lastAccessed && (
+                          <p className="text-[10px] text-black/30 mt-0.5 text-left">
+                            Last read: {new Date(book.lastAccessed).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          </p>
+                        )}
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2 mt-auto text-gray-400">

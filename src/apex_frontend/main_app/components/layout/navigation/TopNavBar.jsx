@@ -45,7 +45,7 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
               id="top-nav-upload"
               className="hidden"
               onChange={handleFileChange}
-              accept=".pdf"
+              accept=".pdf,.epub"
             />
             <label
               htmlFor="top-nav-upload"

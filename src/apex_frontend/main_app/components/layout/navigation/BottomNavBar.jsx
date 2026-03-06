@@ -63,6 +63,7 @@ function BottomNavBar() {
           id="nav-upload"
           className="hidden"
           onChange={handleFileChange}
+          accept=".pdf,.epub"
         />
 
         {/* Connect Button to Input */}

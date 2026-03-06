@@ -20,7 +20,7 @@ export default function AllBooks({ books = [], onBookClick }) {
                     </div>
                     <h3 className="text-2xl font-display font-bold text-text-primary mb-2">Your library is empty</h3>
                     <p className="text-gray-500 max-w-xs mx-auto mb-8">
-                        Upload some PDFs to start building your collection.
+                        Ready to start reading? Upload your first book.
                     </p>
                 </div>
             ) : (
