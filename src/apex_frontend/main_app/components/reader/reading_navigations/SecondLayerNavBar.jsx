@@ -25,7 +25,7 @@ function SecondLayerNavBar({ visible, setAiModal, setLeftPanel, pdfControls }) {
     <div
       ref={navRef}
       onClick={(e) => e.stopPropagation()}
-      className='absolute top-0 left-0 right-0 z-50 p-2 w-full pointer-events-auto'
+      className='fixed top-0 left-0 right-0 z-50 p-2 w-full pointer-events-auto'
     >
       <div className='flex top-bar pb-4 items-center justify-between w-full'>
         {/* Left: Menu — opens LeftPanel */}

@@ -472,7 +472,7 @@ function ReaderView() {
                                 className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased"
                                 style={{ 
                                     transform: `scale(${scale})`, 
-                                    transformOrigin: 'top center',
+                                    transformOrigin: 'top left',
                                     transition: 'transform 0.2s ease-out'
                                 }}
                             >
