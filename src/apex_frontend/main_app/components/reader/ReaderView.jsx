@@ -467,8 +467,15 @@ function ReaderView() {
 
                     {/* Text content */}
                     {!fileUrl && (
-                        <div className="flex-1 overflow-auto h-full">
-                            <div className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased">
+                        <div className="flex-1 overflow-auto h-full touch-auto">
+                            <div 
+                                className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased"
+                                style={{ 
+                                    transform: `scale(${scale})`, 
+                                    transformOrigin: 'top center',
+                                    transition: 'transform 0.2s ease-out'
+                                }}
+                            >
                                 {textContent ? (
                                     <div className="whitespace-pre-wrap animate-in fade-in duration-1000">{textContent}</div>
                                 ) : book?.file ? (

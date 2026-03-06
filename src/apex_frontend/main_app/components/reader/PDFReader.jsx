@@ -87,7 +87,7 @@ const PDFReader = ({
     <div
       ref={containerRef}
       {...swipeHandlers}
-      className={`flex-1 flex flex-col items-center h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-pan-y'}`}
+      className={`flex-1 flex flex-col items-center h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-auto'}`}
       id="pdf-container"
     >
       <Document
@@ -98,7 +98,7 @@ const PDFReader = ({
         className="flex flex-col items-center min-h-full"
       >
         <div
-          className="shadow-2xl rounded-sm overflow-hidden bg-white min-h-[100dvh]"
+          className="shadow-2xl rounded-sm bg-white min-h-[100dvh]"
           style={{
             transition: 'transform 0.25s ease-out',
           }}
