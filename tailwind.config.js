@@ -15,6 +15,7 @@ export default {
       animation: {
         blink: 'blink 1s step-end infinite',
         'slide-up': 'slideUp 0.3s ease-out',
+        'pulse-purple': 'pulse-purple 0.6s ease-in-out infinite',
       },
       screens: {
         'xs': '425px',
@@ -23,6 +24,10 @@ export default {
         blink: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0' },
+        },
+        'pulse-purple': {
+          '0%, 100%': { backgroundColor: '#8B5CF6', color: 'white' },
+          '50%': { backgroundColor: 'rgba(255, 255, 255, 0.4)', color: 'inherit' },
         },
         slideUp: {
           '0%': { transform: 'translateX(-50%) translateY(100%)', opacity: '0' },
