@@ -16,7 +16,7 @@ function mapSnakeToCamel(record) {
 
 const syncService = {
   // --- Push Sync (Local -> Supabase) ---
-  async pushSync() {
+  pushSync: async function() {
     try {
       // 1. Read all records from Dexie sync_queue where status = 'pending'
       const queueItems = await db.sync_queue
@@ -94,7 +94,7 @@ const syncService = {
   },
 
   // --- Pull Sync (Supabase -> Local) ---
-  async pullSync() {
+  pullSync: async function() {
     try {
       // 1. Read last_synced_at from Dexie app_settings table
       const lastSyncedAtSetting = await db.app_settings.get({ key: 'last_synced_at' });
@@ -170,7 +170,7 @@ const syncService = {
   },
 
   // --- On app load sequence ---
-  async onAppLoad() {
+  onAppLoad: async function() {
     const authStore = useAuthStore.getState();
     
     // 1. Check if user is authenticated (valid JWT in localStorage)
@@ -194,12 +194,12 @@ const syncService = {
     } else {
       authStore.setLoading(false);
     }
-  }
+  },
   // --- Migrate pre-account local data to Supabase ---
   // Called after a user signs up or logs in for the first time.
   // Scans Dexie for records that were created locally (no recordId)
   // and queues them all for sync to the new user's Supabase account.
-  async migrateLocalData() {
+  migrateLocalData: async function() {
     try {
       const allBooks = await db.books.toArray();
       const unsyncedBooks = allBooks.filter(b => !b.recordId);
