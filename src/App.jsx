@@ -52,7 +52,7 @@ function App() {
       <Routes>
         {!isLoggedIn ? (
           <>
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<LandingPage onLogin={handleLogin} />} />
             <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             {/* Redirect any other logged-out route to landing */}

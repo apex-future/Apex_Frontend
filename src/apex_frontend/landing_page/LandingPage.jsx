@@ -6,7 +6,7 @@ import AboutUs from './components/AboutUs'
 import FAQ from "./components/FAQ.jsx"
 import CTA from "./components/CTA.jsx"
 import Footer from "./components/Footer.jsx"
-function LandingPage() {
+function LandingPage({ onLogin }) {
   return (
     <div className='bg-bg-subtle overflow-x-hidden'>
     <NavBar />    
@@ -14,7 +14,7 @@ function LandingPage() {
     <Features />
     <AboutUs />
     <FAQ />
-    <CTA />
+    <CTA onLogin={onLogin} />
     <Footer />
 </div>
   )

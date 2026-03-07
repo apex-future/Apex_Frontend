@@ -7,7 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-function CTA() {
+function CTA({ onLogin }) {
   useGSAP(() => {
     gsap.fromTo(".CTA-heading", 
       { x: -100, opacity: 0 },
@@ -63,7 +63,7 @@ function CTA() {
             They use <span className='italic px-2 inline-block  py-0 bg-accent-primary/50' aria-label="Apex">Apex</span>
           </h2>
         </div>
-        <WaitlistForm />
+        <WaitlistForm onLogin={onLogin} />
       </div>
 
       <img src={sparkle} alt="" className='absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none lg:sparkle-animation' aria-hidden="true" />
