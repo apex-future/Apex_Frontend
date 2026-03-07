@@ -1,4 +1,6 @@
 import useAuthStore from '../../../../store/authStore';
+import { useNavigate } from 'react-router-dom';
+import BookCover from '../books/BookCover';
 
 export default function Header({ lastReadBook }) {
     const { user } = useAuthStore();
