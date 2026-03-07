@@ -20,7 +20,7 @@ import ImportPage from '../../pages/ImportPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 
-function MainApp() {
+function MainApp({ onLogout }) {
   // asideIsOpen: State variable that determines if the desktop-style sidebar should be rendered.
   const [asideIsOpen, setAsideIsOpen] = useState(true);
   // isMobileOpen: State variable specifically for the mobile slide-over sidebar visibility.
@@ -38,7 +38,7 @@ function MainApp() {
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>
-          {asideIsOpen && !location.pathname.startsWith('/reader') && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />}
+          {asideIsOpen && !location.pathname.startsWith('/reader') && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} onLogout={onLogout} />}
 
           <div className='flex-1 min-w-0 relative z-[10]'>
             <main className="">

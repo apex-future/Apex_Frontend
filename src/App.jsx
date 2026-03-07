@@ -1,19 +1,51 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Routes, Route, Navigate } from 'react-router-dom'
 import MainApp from './apex_frontend/main_app/MainApp'
 import LandingPage from './apex_frontend/landing_page/LandingPage'
 import SignupPage from './apex_frontend/landing_page/SignupPage'
+import LoginPage from './apex_frontend/landing_page/LoginPage'
+import authService from './services/authService'
 
 function App() {
-  // Use localStorage to persist login state across refreshes
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem("isLoggedIn") === "true";
-  });
+  // Use authService to check initial authentication status
+  const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (authService.isAuthenticated()) {
+        try {
+          // Verify token is still valid by fetching current user
+          await authService.me();
+          setIsLoggedIn(true);
+        } catch (error) {
+          console.error("Auth verification failed:", error);
+          authService.logout();
+          setIsLoggedIn(false);
+        }
+      }
+      setLoading(false);
+    };
+
+    checkAuth();
+  }, []);
 
   const handleLogin = () => {
     setIsLoggedIn(true);
-    localStorage.setItem("isLoggedIn", "true");
   };
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsLoggedIn(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#08090C] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-accent-primary/20 border-t-accent-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -22,13 +54,14 @@ function App() {
           <>
             <Route path="/" element={<LandingPage />} />
             <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
+            <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             {/* Redirect any other logged-out route to landing */}
             <Route path="*" element={<Navigate to="/" />} />
           </>
         ) : (
           <>
             {/* When logged in, MainApp takes over root and handles all sub-routes */}
-            <Route path="/*" element={<MainApp />} />
+            <Route path="/*" element={<MainApp onLogout={handleLogout} />} />
           </>
         )}
       </Routes>

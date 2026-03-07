@@ -65,7 +65,8 @@ function NavBar() {
                         <span className="absolute bottom-[-4px] left-0 w-0 h-0.5 bg-accent-primary transition-all duration-300 group-hover:w-full" aria-hidden="true"></span>
                     </li>
                 </ul>
-                <div className="nav-bar-cta hidden md:block">
+                <div className="nav-bar-cta hidden md:flex items-center gap-4">
+                    <Link to="/login" className='text-neutral-700 font-semibold hover:text-accent-primary transition-colors'>Sign In</Link>
                     <Link to="/signup" className='p-3 rounded-full px-6 text-center text-white bg-accent-primary font-medium transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--accent-primary-rgb),0.5)] hover:bg-opacity-90 active:scale-95 inline-block'>Get Started</Link>
                 </div>
             </nav>
