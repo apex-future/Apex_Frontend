@@ -5,9 +5,15 @@ import LandingPage from './apex_frontend/landing_page/LandingPage'
 import SignupPage from './apex_frontend/landing_page/SignupPage'
 
 function App() {
-  // form a placeholder backend signing functionality
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const handleLogin = () => setIsLoggedIn(true);
+  // Use localStorage to persist login state across refreshes
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem("isLoggedIn") === "true";
+  });
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    localStorage.setItem("isLoggedIn", "true");
+  };
 
   return (
     <div className="min-h-screen">
