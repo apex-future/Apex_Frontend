@@ -165,6 +165,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                   }
                 `}
                 title={!isExpanded ? 'Settings' : ''}
+                onClick={() => isMobileOpen && closeMobileNav()}
               >
                 <Cog
                   size={20}
@@ -182,7 +183,10 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
             </li>
             <li>
               <button
-                onClick={onLogout}
+                onClick={() => {
+                  onLogout();
+                  isMobileOpen && closeMobileNav();
+                }}
                 className={`
                   flex items-center px-3 py-2.5 rounded-full
                   transition-all duration-300
