@@ -12,26 +12,11 @@ import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight } from 'lu
 const ScrollOrientationOverlay = ({ visible }) => {
     if (!visible) return null;
     return (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex flex-col items-center justify-center text-white p-6 animate-in fade-in zoom-in duration-500 lg:hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/10 to-transparent pointer-events-none" />
-            <div className="flex items-center gap-16 mb-12 relative">
-                <div className="flex flex-col items-center gap-6 animate-bounce">
-                    <div className="w-20 h-20 rounded-full border-2 border-white/30 bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-                        <ArrowLeft size={40} className="text-white shadow-sm" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/80">Previous</span>
-                </div>
-                <div className="flex flex-col items-center gap-6 animate-bounce [animation-delay:0.2s]">
-                    <div className="w-20 h-20 rounded-full border-2 border-white/30 bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-                        <ArrowRight size={40} className="text-white shadow-sm" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/80">Next</span>
-                </div>
-            </div>
-            <div className="text-center space-y-4 relative">
-                <h2 className="text-3xl font-display font-bold tracking-tighter">Swipe to Read</h2>
-                <div className="h-0.5 w-12 bg-white/30 mx-auto rounded-full" />
-                <p className="text-white/60 text-sm font-sans max-w-[240px] mx-auto leading-relaxed">Tap the edges or swipe horizontally to navigate pages</p>
+        <div className="fixed inset-x-0 bottom-32 z-[100] flex items-center justify-center pointer-events-none lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-white/80 backdrop-blur-sm border border-white/20 text-black shadow-2xl">
+                <ArrowLeft size={18} className="opacity-70" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">Swipe left or right</span>
+                <ArrowRight size={18} className="opacity-70" />
             </div>
         </div>
     );
@@ -311,7 +296,7 @@ function ReaderView() {
     }, [bookId, book?.file, navigate]);
 
     // Loading Sequence Animation
-    const [isBlinking, setIsBlinking] = useState(false);
+    const [showMenuBriefly, setShowMenuBriefly] = useState(false);
     const [showScrollOverlay, setShowScrollOverlay] = useState(false);
 
     useEffect(() => {
@@ -331,13 +316,13 @@ function ReaderView() {
         const finalTimer = setTimeout(() => {
             if (book?.file) {
                  setIsLoading(false);
-                 // Trigger UX effects
-                 setIsBlinking(true);
+                 // Trigger UX effects - Slide menu out and show overlay
+                 setShowMenuBriefly(true);
                  setShowScrollOverlay(true);
                  
-                 // Stop blinking after 3 seconds
-                 setTimeout(() => setIsBlinking(false), 3000);
-                 // Hide overlay after 3 seconds (aligned with blinking)
+                 // Retract menu after 3 seconds
+                 setTimeout(() => setShowMenuBriefly(false), 3000);
+                 // Hide overlay after 3 seconds
                  setTimeout(() => setShowScrollOverlay(false), 3000);
             }
         }, messages.length * 800 + 400);
@@ -418,11 +403,11 @@ function ReaderView() {
             <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
                 <button
                     onClick={(e) => { e.stopPropagation(); toggleNav(); }}
-                    className={`group hover:bg-white/90 backdrop-blur-md border px-4 py-1.5 rounded-b-2xl transition-all duration-500 hover:translate-y-0 flex items-center gap-2 shadow-sm ${isBlinking ? 'animate-pulse-purple translate-y-0 border-transparent' : 'bg-white/40 border-slate-200/30 -translate-y-[80%]'}`}
+                    className={`group hover:bg-white/90 backdrop-blur-md border border-slate-200/50 px-4 py-1.5 rounded-b-2xl transition-all duration-700 hover:translate-y-0 flex items-center gap-2 shadow-sm ${showMenuBriefly ? 'translate-y-0 bg-white shadow-md' : 'bg-white/40 border-slate-200/30 -translate-y-[80%]'}`}
                 >
-                    <div className={`w-1.5 h-1.5 rounded-full transition-colors ${isBlinking ? 'bg-current' : 'bg-slate-300 group-hover:bg-blue-500'}`} />
-                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${isBlinking ? '' : 'text-slate-400 group-hover:text-slate-600'}`}>Menu</span>
-                    <Menu size={12} className={`transition-colors ${isBlinking ? '' : 'text-slate-300 group-hover:text-slate-600'}`} />
+                    <div className={`w-1.5 h-1.5 rounded-full transition-colors ${showMenuBriefly ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-blue-500'}`} />
+                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${showMenuBriefly ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>Menu</span>
+                    <Menu size={12} className={`transition-colors ${showMenuBriefly ? 'text-slate-500' : 'text-slate-300 group-hover:text-slate-600'}`} />
                 </button>
             </div>
 
@@ -446,7 +431,7 @@ function ReaderView() {
                 )}
 
                 {/* Main reading area */}
-                <div className="flex-1 relative min-w-0 flex flex-col h-full max-h-full overflow-hidden text-center">
+                <div className="flex-1 relative min-w-0 flex flex-col h-full max-h-full overflow-hidden">
 
                     <ReaderNavBar
                         book={book}
@@ -500,19 +485,19 @@ function ReaderView() {
 
                     {/* Image content */}
                     {fileUrl && !isPdf && (
-                        <div className="flex-1 flex items-center justify-center overflow-auto p-4">
-                            <img src={fileUrl} alt="content" className="max-w-full max-h-[90vh] object-contain rounded-3xl shadow-2xl border-4 border-white/50" />
+                        <div className="flex-1 flex flex-col items-center justify-center lg:justify-start overflow-auto p-4 sm:p-8">
+                            <img src={fileUrl} alt="content" className="max-w-full max-h-[90vh] object-contain rounded-sm bg-white" />
                         </div>
                     )}
 
                     {/* Text content */}
                     {!fileUrl && (
-                        <div className="flex-1 overflow-auto h-full touch-auto">
+                        <div className="flex-1 overflow-auto h-full touch-auto flex flex-col items-center justify-center lg:justify-start">
                             <div 
-                                className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased"
+                                className="max-w-3xl w-full mx-auto px-8 sm:px-12 py-12 lg:py-24 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased"
                                 style={{ 
                                     transform: `scale(${scale})`, 
-                                    transformOrigin: 'top left',
+                                    transformOrigin: 'top center',
                                     transition: 'transform 0.2s ease-out'
                                 }}
                             >

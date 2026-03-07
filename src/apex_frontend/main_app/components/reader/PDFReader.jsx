@@ -87,7 +87,7 @@ const PDFReader = ({
     <div
       ref={containerRef}
       {...swipeHandlers}
-      className={`flex-1 flex flex-col items-center justify-center h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-auto'}`}
+      className={`flex-1 flex flex-col items-center justify-center lg:justify-start h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-auto'}`}
       id="pdf-container"
     >
       <Document
@@ -95,10 +95,10 @@ const PDFReader = ({
         onLoadSuccess={onDocumentLoad}
         onLoadError={(err) => console.error('PDF load error:', err)}
         loading={<BookSkeleton message="Rendering document..." />}
-        className="flex flex-col items-center justify-center min-h-full w-full mx-auto"
+        className="flex flex-col items-start lg:items-center justify-center lg:justify-start min-h-full w-full mx-auto"
       >
         <div
-          className="shadow-2xl rounded-sm bg-white mx-auto"
+          className="rounded-sm bg-white mx-auto mb-8 lg:mb-0"
           style={{
             transition: 'transform 0.25s ease-out',
           }}
