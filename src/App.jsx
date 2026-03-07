@@ -4,6 +4,7 @@ import MainApp from './apex_frontend/main_app/MainApp'
 import LandingPage from './apex_frontend/landing_page/LandingPage'
 import SignupPage from './apex_frontend/landing_page/SignupPage'
 import LoginPage from './apex_frontend/landing_page/LoginPage'
+import authService from './services/authService'
 import syncService from './services/syncService'
 
 function App() {
