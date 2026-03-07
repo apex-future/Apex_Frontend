@@ -4,7 +4,7 @@ const authService = {
   async register(fullName, email, password) {
     const response = await apiClient.post('/api/auth/register', {
       full_name: fullName,
-      email,
+      email: email.toLowerCase(),
       password,
     });
     if (response.data.access_token) {
@@ -15,7 +15,7 @@ const authService = {
 
   async login(email, password) {
     const response = await apiClient.post('/api/auth/login', {
-      email,
+      email: email.toLowerCase(),
       password,
     });
     if (response.data.access_token) {
