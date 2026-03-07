@@ -58,3 +58,24 @@
         --card-glass-hover: 70 70 72;
     }
 }
+
+@layer components {
+    .prose {
+        color: rgb(var(--text-primary));
+    }
+
+    .prose h1,
+    .prose h2,
+    .prose h3,
+    .prose h4,
+    .prose h5,
+    .prose h6,
+    .prose p,
+    .prose li,
+    .prose strong,
+    .prose blockquote,
+    .prose th,
+    .prose td {
+        color: rgb(var(--text-primary));
+    }
+}

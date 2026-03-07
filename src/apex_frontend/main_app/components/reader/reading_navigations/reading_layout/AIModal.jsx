@@ -44,7 +44,7 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
 
   const handleSend = (input) => {
     if (input && typeof input !== 'string') input.preventDefault();
-    
+
     const displayContent = typeof input === 'string' ? input : inputValue.trim();
     if (!displayContent || isStreaming) return;
 
@@ -134,35 +134,35 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
         {showHistory ? (
           /* ── History View ── */
           <div className='flex flex-col gap-6 animate-in fade-in duration-300'>
-             {Object.entries(groupedHistory).map(([key, items]) => (
-                items.length > 0 && (
-                    <div key={key} className='flex flex-col gap-1'>
-                        <h3 className='px-3 text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-2'>
-                            {key === 'today' ? 'Today' : 'Previous'}
-                        </h3>
-                        {items.map(item => (
-                            <div 
-                                key={item.id}
-                                onClick={() => handleSwitchChat(item)}
-                                className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary font-medium' : 'hover:bg-bg-elevated border border-transparent hover:border-border-default text-text-secondary shadow-sm'}`}
-                            >
-                                <MessageSquare size={14} className={sessionId === item.id ? 'text-accent-primary' : 'text-text-tertiary'} />
-                                <span className='flex-1 truncate text-xs'>{item.title || 'New Chat'}</span>
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        deleteSession(item.id);
-                                    }}
-                                    className='p-1.5 hover:bg-red-50 rounded-lg transition-all text-text-placeholder hover:text-red-500 md:opacity-0 group-hover:opacity-100'
-                                    title="Delete chat"
-                                >
-                                    <Trash2 size={12} />
-                                </button>
-                            </div>
-                        ))}
+            {Object.entries(groupedHistory).map(([key, items]) => (
+              items.length > 0 && (
+                <div key={key} className='flex flex-col gap-1'>
+                  <h3 className='px-3 text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-2'>
+                    {key === 'today' ? 'Today' : 'Previous'}
+                  </h3>
+                  {items.map(item => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleSwitchChat(item)}
+                      className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary font-medium' : 'hover:bg-bg-elevated border border-transparent hover:border-border-default text-text-secondary shadow-sm'}`}
+                    >
+                      <MessageSquare size={14} className={sessionId === item.id ? 'text-accent-primary' : 'text-text-tertiary'} />
+                      <span className='flex-1 truncate text-xs'>{item.title || 'New Chat'}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSession(item.id);
+                        }}
+                        className='p-1.5 hover:bg-red-50 rounded-lg transition-all text-text-placeholder hover:text-red-500 md:opacity-0 group-hover:opacity-100'
+                        title="Delete chat"
+                      >
+                        <Trash2 size={12} />
+                      </button>
                     </div>
-                )
-             ))}
+                  ))}
+                </div>
+              )
+            ))}
           </div>
         ) : (
           /* ── Messages View ── */
@@ -170,24 +170,24 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
             {messages.length === 0 ? (
               <div className='flex flex-col items-center justify-center py-16 text-center animate-in fade-in zoom-in duration-700'>
                 <div className='w-20 h-20 bg-gradient-to-br from-purple-50 to-purple-100 text-accent-primary rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl shadow-accent-subtle/50 ring-4 ring-bg-elevated animate-pulse'>
-                    <Sparkle size={40} fill="currentColor" />
+                  <Sparkle size={40} fill="currentColor" />
                 </div>
                 <h2 className='text-3xl font-extrabold mb-4 tracking-tight text-text-primary font-serif italic'>Apex Intelligence</h2>
                 <p className='text-text-tertiary text-sm leading-relaxed max-w-[240px] mx-auto font-medium'>
-                    Deep context analysis session for <span className='text-accent-primary'>"{bookTitle || 'this book'}"</span>.
+                  Deep context analysis session for <span className='text-accent-primary'>"{bookTitle || 'this book'}"</span>.
                 </p>
 
                 <div className='grid grid-cols-1 gap-2.5 mt-12 w-full max-w-[280px]'>
-                    {suggestions.map((text, i) => (
-                        <button
-                            key={i}
-                            onClick={() => handleSend(text)}
-                            className='w-full px-5 py-4 rounded-2xl bg-bg-elevated border border-border-default text-xs text-text-secondary hover:border-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 transition-all duration-300 text-left font-bold shadow-sm hover:translate-x-1 group'
-                        >
-                            <span className='group-hover:mr-2 transition-all opacity-0 group-hover:opacity-100 text-accent-primary'>→</span>
-                            {text}
-                        </button>
-                    ))}
+                  {suggestions.map((text, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSend(text)}
+                      className='w-full px-5 py-4 rounded-2xl bg-bg-elevated border border-border-default text-xs text-text-secondary hover:border-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 transition-all duration-300 text-left font-bold shadow-sm hover:translate-x-1 group'
+                    >
+                      <span className='group-hover:mr-2 transition-all opacity-0 group-hover:opacity-100 text-accent-primary'>→</span>
+                      {text}
+                    </button>
+                  ))}
                 </div>
               </div>
             ) : (
@@ -209,9 +209,9 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
                     <div className={`max-w-[95%] px-6 py-5 text-[15px] leading-relaxed ${msg.role === 'user'
                       ? 'bg-text-primary text-bg-elevated rounded-3xl rounded-tr-none shadow-sm ring-1 ring-border-default'
                       : 'bg-bg-elevated text-text-primary'
-                    }`}>
+                      }`}>
                       {msg.role === 'ai' ? (
-                        <div className='prose prose-sm max-w-none prose-p:my-4 prose-headings:mt-6 prose-headings:mb-3 prose-li:my-2 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-6 prose-table:w-full prose-table:border-collapse prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-3 prose-th:border prose-th:border-border-default prose-td:p-3 prose-td:border prose-td:border-border-default'>
+                        <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-sm max-w-none prose-p:my-4 prose-headings:mt-6 prose-headings:mb-3 prose-li:my-2 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-6 prose-table:w-full prose-table:border-collapse prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-3 prose-th:border prose-th:border-border-default prose-td:p-3 prose-td:border prose-td:border-border-default'>
                           {msg.content ? (
                             <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
                           ) : (
@@ -223,9 +223,9 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
                       )}
                     </div>
                     {msg.role === 'ai' && (
-                        <p className='text-[9px] text-text-tertiary font-bold tracking-tight uppercase text-center mt-3 opacity-60'>
-                            This is AI and can make mistake double-check your answers
-                        </p>
+                      <p className='text-[9px] text-text-tertiary font-bold tracking-tight uppercase text-center mt-3 opacity-60'>
+                        This is AI and can make mistake double-check your answers
+                      </p>
                     )}
                     <span className={`text-[9px] text-text-tertiary mt-2 font-medium tracking-wide px-2 ${msg.role === 'ai' ? 'text-center' : ''}`}>
                       {msg.id ? formatTime(msg.id) : '--:--'}
@@ -257,27 +257,27 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
       {/* ── Selection Context Pin ── */}
       {!showHistory && activeContext && (
         <div className='px-4 pb-3 flex-shrink-0'>
-           <div className='bg-bg-elevated border-2 border-purple-50 rounded-2xl p-4 relative group shadow-xl shadow-accent-subtle/20 animate-in slide-in-from-bottom-2 duration-300'>
-              <div className='flex items-center justify-between mb-3'>
-                <span className='text-[10px] font-bold text-accent-primary uppercase tracking-[0.15em] flex items-center gap-2'>
-                  <span className='w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse'></span>
-                  Live Context
-                </span>
-                <button 
-                  onClick={() => setActiveContext(null)}
-                  className='p-1.5 hover:bg-bg-subtle rounded-lg text-text-placeholder hover:text-red-500 transition-all'
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              <p className='text-[12px] text-text-secondary leading-relaxed italic line-clamp-3 pl-3 border-l-2 border-blue-100'>
-                "{activeContext}"
-              </p>
-           </div>
+          <div className='bg-bg-elevated border-2 border-purple-50 rounded-2xl p-4 relative group shadow-xl shadow-accent-subtle/20 animate-in slide-in-from-bottom-2 duration-300'>
+            <div className='flex items-center justify-between mb-3'>
+              <span className='text-[10px] font-bold text-accent-primary uppercase tracking-[0.15em] flex items-center gap-2'>
+                <span className='w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse'></span>
+                Live Context
+              </span>
+              <button
+                onClick={() => setActiveContext(null)}
+                className='p-1.5 hover:bg-bg-subtle rounded-lg text-text-placeholder hover:text-red-500 transition-all'
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <p className='text-[12px] text-text-secondary leading-relaxed italic line-clamp-3 pl-3 border-l-2 border-blue-100'>
+              "{activeContext}"
+            </p>
+          </div>
         </div>
       )}
 
-        {/* ── Input ── */}
+      {/* ── Input ── */}
       {!showHistory && (
         <div className='p-4 relative flex-shrink-0'>
           <form
@@ -320,7 +320,8 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
           .custom-scrollbar::-webkit-scrollbar {
               width: 4px;
           }

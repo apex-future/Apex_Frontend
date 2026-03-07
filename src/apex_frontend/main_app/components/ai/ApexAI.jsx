@@ -88,34 +88,34 @@ function ApexAI() {
 
     return (
         <div className='flex h-screen max-h-screen bg-bg-subtle text-text-primary font-sans overflow-hidden'>
-            
+
             {/* ── Main Chat Area ── */}
             <main className='flex-1 flex flex-col relative min-w-0 bg-bg-elevated'>
                 {/* Header */}
                 <header className='flex items-center justify-between px-6 py-4 border-b border-border-default bg-bg-elevated/80 backdrop-blur-md z-10 flex-shrink-0'>
                     <div className='flex items-center gap-4 flex-1 min-w-0'>
-                        <button 
+                        <button
                             onClick={() => navigate(-1)}
                             className='p-2 hover:bg-bg-subtle rounded-lg transition-colors text-text-tertiary flex-shrink-0'
                             title="Back"
                         >
                             <ArrowLeft size={20} />
                         </button>
-                        
+
                         <h1 className='text-sm font-bold tracking-tight text-text-primary truncate max-w-[200px] md:max-w-md'>
                             {chatHistory.find(c => c.id === sessionId)?.title || "Apex AI Companion"}
                         </h1>
                     </div>
 
                     <div className='flex items-center gap-2'>
-                        <button 
+                        <button
                             onClick={handleCreateNewChat}
                             className='p-2 hover:bg-bg-subtle rounded-lg transition-colors text-accent-primary'
                             title="New Chat"
                         >
                             <SquarePen size={20} />
                         </button>
-                        <button 
+                        <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
                             className='p-2 hover:bg-bg-subtle rounded-lg transition-colors text-text-tertiary'
                             title={sidebarOpen ? "Close history" : "Open history"}
@@ -173,11 +173,11 @@ function ApexAI() {
                                     {/* Message Bubble - Centered for AI, right-aligned for User */}
                                     <div className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}>
                                         <div className={`max-w-[95%] md:max-w-[85%] px-6 py-4 text-[15px] leading-relaxed ${msg.role === 'user'
-                                                ? 'bg-text-primary text-bg-elevated rounded-3xl rounded-tr-none shadow-sm ring-1 ring-border-default'
-                                                : 'bg-bg-elevated text-text-primary'
+                                            ? 'bg-text-primary text-bg-elevated rounded-3xl rounded-tr-none shadow-sm ring-1 ring-border-default'
+                                            : 'bg-bg-elevated text-text-primary'
                                             }`}>
                                             {msg.role === 'ai' ? (
-                                                <div className='prose prose-base max-w-none prose-p:my-6 prose-headings:mt-8 prose-headings:mb-4 prose-li:my-3 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-8 prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-4 prose-th:border prose-th:border-border-default prose-td:p-4 prose-td:border prose-td:border-border-default'>
+                                                <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-base max-w-none prose-p:my-6 prose-headings:mt-8 prose-headings:mb-4 prose-li:my-3 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-8 prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-4 prose-th:border prose-th:border-border-default prose-td:p-4 prose-td:border prose-td:border-border-default'>
                                                     {msg.content ? (
                                                         <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
                                                     ) : (
@@ -200,7 +200,7 @@ function ApexAI() {
                                 </div>
                             ))
                         )}
-                        
+
                         {/* Error state */}
                         {error && (
                             <div className='flex items-start gap-4 p-5 bg-red-50 border border-red-100 rounded-2xl animate-in fade-in slide-in-from-top-2 max-w-2xl mx-auto w-full'>
@@ -255,8 +255,8 @@ function ApexAI() {
                                 type='submit'
                                 disabled={!inputValue.trim() || isStreaming}
                                 className={`p-3 rounded-full transition-all flex items-center justify-center flex-shrink-0 self-end mb-0.5 ${inputValue.trim() && !isStreaming
-                                        ? 'bg-accent-primary text-bg-elevated shadow-lg shadow-accent-primary/20 hover:bg-accent-hover hover:-translate-y-0.5 active:translate-y-0'
-                                        : 'bg-bg-subtle text-text-placeholder cursor-not-allowed'
+                                    ? 'bg-accent-primary text-bg-elevated shadow-lg shadow-accent-primary/20 hover:bg-accent-hover hover:-translate-y-0.5 active:translate-y-0'
+                                    : 'bg-bg-subtle text-text-placeholder cursor-not-allowed'
                                     }`}
                             >
                                 <Send size={22} />
@@ -273,18 +273,18 @@ function ApexAI() {
                 fixed lg:relative right-0 top-0 h-full lg:h-auto z-50 lg:z-20 overflow-hidden shadow-2xl lg:shadow-none
             `}>
                 <div className='p-4 border-b border-border-default flex items-center justify-between relative'>
-                    <button 
+                    <button
                         onClick={() => setSidebarOpen(false)}
                         className='md:hidden p-2 hover:bg-bg-subtle rounded-lg text-text-tertiary'
                     >
                         <X size={20} />
                     </button>
-                    
+
                     <h2 className='absolute left-1/2 -translate-x-1/2 text-sm font-bold text-text-primary pointer-events-none'>
                         Chat History
                     </h2>
 
-                    <button 
+                    <button
                         onClick={handleCreateNewChat}
                         className='p-2 hover:bg-accent-subtle text-accent-primary rounded-lg transition-all ml-auto'
                         title="New Chat"
@@ -301,14 +301,14 @@ function ApexAI() {
                                     {key === 'today' ? 'Today' : key === 'yesterday' ? 'Yesterday' : 'Previous Chat History'}
                                 </h3>
                                 {items.map(item => (
-                                    <div 
+                                    <div
                                         key={item.id}
                                         onClick={() => handleSwitchChat(item)}
                                         className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary font-medium' : 'hover:bg-bg-subtle text-text-secondary'}`}
                                     >
                                         <MessageSquare size={16} className={sessionId === item.id ? 'text-accent-primary' : 'text-text-tertiary'} />
                                         <span className='flex-1 truncate text-sm'>{item.title || 'New Chat'}</span>
-                                        <button 
+                                        <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 deleteSession(item.id);
@@ -337,13 +337,14 @@ function ApexAI() {
 
             {/* Backdrop for mobile */}
             {sidebarOpen && (
-                <div 
+                <div
                     className='lg:hidden fixed inset-0 bg-text-primary/20 backdrop-blur-sm z-40'
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 6px;
                 }
