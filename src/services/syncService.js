@@ -73,8 +73,10 @@ const syncService = {
       const lastSyncedAtSetting = await db.app_settings.get({ key: 'last_synced_at' });
       const lastSyncedAt = lastSyncedAtSetting ? lastSyncedAtSetting.value : '1970-01-01T00:00:00Z';
 
-      // 2. GET /api/sync/pull/{last_synced_at}
-      const response = await apiClient.get(`/api/sync/pull/${encodeURIComponent(lastSyncedAt)}`);
+      // 2. GET /api/sync/pull?last_synced_at={last_synced_at}
+      const response = await apiClient.get(`/api/sync/pull`, {
+        params: { last_synced_at: lastSyncedAt }
+      });
 
       // 3. For each returned record:
       if (response.data) {
