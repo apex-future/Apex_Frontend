@@ -27,7 +27,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[200] bg-white md:relative md:inset-auto md:w-80 md:h-full md:border-r md:border-slate-100 md:shrink-0 font-sans shadow-2xl md:shadow-none"
+      className="flex flex-col absolute inset-0 z-[200] bg-bg-elevated md:relative md:inset-auto md:w-80 md:h-full md:border-r md:border-border-default md:shrink-0 font-sans shadow-2xl md:shadow-none"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
@@ -36,17 +36,17 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
           /* Back to main nav when inside a section */
           <button
             onClick={() => setActiveSection(null)}
-            className="flex items-center gap-2 text-base font-bold text-slate-800 hover:text-accent-primary transition-colors"
+            className="flex items-center gap-2 text-base font-bold text-text-primary hover:text-accent-primary transition-colors"
           >
             <ChevronLeft size={18} strokeWidth={2.5} />
             {NAV_ITEMS.find(n => n.id === activeSection)?.label}
           </button>
         ) : (
-          <h2 className="text-xs font-black text-slate-400 tracking-[0.2em] uppercase">Contents</h2>
+          <h2 className="text-xs font-black text-text-tertiary tracking-[0.2em] uppercase">Contents</h2>
         )}
         <button
           onClick={() => setLeftPanel(false)}
-          className="p-2 rounded-full bg-slate-50 hover:bg-slate-100 transition-all text-slate-400 hover:text-slate-600"
+          className="p-2 rounded-full bg-bg-subtle hover:bg-bg-subtle transition-all text-text-tertiary hover:text-text-secondary"
         >
           <X size={18} strokeWidth={2} />
         </button>
@@ -66,15 +66,15 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
                 <button
                   key={id}
                   onClick={() => handleNavClick(id)}
-                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-slate-700 bg-slate-50/50 hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full border border-transparent hover:border-accent-primary/10 group"
+                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-text-secondary bg-bg-subtle/50 hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full border border-transparent hover:border-accent-primary/10 group"
                 >
-                  <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-accent-primary transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-bg-elevated shadow-sm flex items-center justify-center text-text-tertiary group-hover:text-accent-primary transition-colors">
                     <ItemIcon size={20} strokeWidth={2} />
                   </div>
                   <span className="flex-1 tracking-tight">{label}</span>
                   {/* Show bookmark count badge */}
                   {isBookmarksItem && count > 0 && (
-                    <span className="text-[11px] font-black bg-accent-primary text-white rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
+                    <span className="text-[11px] font-black bg-accent-primary text-bg-elevated rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
                       {count}
                     </span>
                   )}

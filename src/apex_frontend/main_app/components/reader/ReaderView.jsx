@@ -13,7 +13,7 @@ const ScrollOrientationOverlay = ({ visible }) => {
     if (!visible) return null;
     return (
         <div className="fixed inset-x-0 bottom-32 z-[100] flex items-center justify-center pointer-events-none lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-white/80 backdrop-blur-sm border border-white/20 text-black shadow-2xl">
+            <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-bg-elevated/80 backdrop-blur-sm border border-border-default/20 text-text-primary shadow-2xl">
                 <ArrowLeft size={18} className="opacity-70" />
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">Swipe left or right</span>
                 <ArrowRight size={18} className="opacity-70" />
@@ -331,15 +331,15 @@ function ReaderView() {
         // Completion logic - wait for bit after "Rendering"
         const finalTimer = setTimeout(() => {
             if (book?.file) {
-                 setIsLoading(false);
-                 // Trigger UX effects - Slide menu out and show overlay
-                 setShowMenuBriefly(true);
-                 setShowScrollOverlay(true);
-                 
-                 // Retract menu after 3 seconds
-                 setTimeout(() => setShowMenuBriefly(false), 3000);
-                 // Hide overlay after 3 seconds
-                 setTimeout(() => setShowScrollOverlay(false), 3000);
+                setIsLoading(false);
+                // Trigger UX effects - Slide menu out and show overlay
+                setShowMenuBriefly(true);
+                setShowScrollOverlay(true);
+
+                // Retract menu after 3 seconds
+                setTimeout(() => setShowMenuBriefly(false), 3000);
+                // Hide overlay after 3 seconds
+                setTimeout(() => setShowScrollOverlay(false), 3000);
             }
         }, messages.length * 800 + 400);
 
@@ -411,7 +411,7 @@ function ReaderView() {
 
     return (
         <div
-            className="h-[100dvh] max-h-[100dvh] w-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-blue-200/50 relative overflow-hidden"
+            className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden"
             onClick={closeNav}
         >
             <ScrollOrientationOverlay visible={showScrollOverlay} />
@@ -419,11 +419,11 @@ function ReaderView() {
             <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
                 <button
                     onClick={(e) => { e.stopPropagation(); toggleNav(); }}
-                    className={`group hover:bg-white/90 backdrop-blur-md border border-slate-200/50 px-4 py-1.5 rounded-b-2xl transition-all duration-700 hover:translate-y-0 flex items-center gap-2 shadow-sm ${showMenuBriefly ? 'translate-y-0 bg-white shadow-md' : 'bg-white/40 border-slate-200/30 -translate-y-[80%]'}`}
+                    className={`group hover:bg-bg-elevated/90 backdrop-blur-md border border-border-default/50 px-4 py-1.5 rounded-b-2xl transition-all duration-700 hover:translate-y-0 flex items-center gap-2 shadow-sm ${showMenuBriefly ? 'translate-y-0 bg-bg-elevated shadow-md' : 'bg-bg-elevated/40 border-border-default/30 -translate-y-[80%]'}`}
                 >
                     <div className={`w-1.5 h-1.5 rounded-full transition-colors ${showMenuBriefly ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-blue-500'}`} />
-                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${showMenuBriefly ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>Menu</span>
-                    <Menu size={12} className={`transition-colors ${showMenuBriefly ? 'text-slate-500' : 'text-slate-300 group-hover:text-slate-600'}`} />
+                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${showMenuBriefly ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-secondary'}`}>Menu</span>
+                    <Menu size={12} className={`transition-colors ${showMenuBriefly ? 'text-text-tertiary' : 'text-text-placeholder group-hover:text-text-secondary'}`} />
                 </button>
             </div>
 
@@ -485,7 +485,7 @@ function ReaderView() {
                             <button
                                 onClick={(e) => { e.stopPropagation(); previousPage(); }}
                                 disabled={pageNumber <= 1}
-                                className="md:flex hidden absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/95 hover:bg-white backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                                className="md:flex hidden absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                 title="Previous page"
                             >
                                 <ChevronLeft size={28} strokeWidth={2.5} className="-ml-1" />
@@ -494,7 +494,7 @@ function ReaderView() {
                             <button
                                 onClick={(e) => { e.stopPropagation(); nextPage(); }}
                                 disabled={pageNumber >= (numPages || 1)}
-                                className="md:flex hidden absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/95 hover:bg-white backdrop-blur-xl border border-slate-200/50 text-slate-700 hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                                className="md:flex hidden absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                 title="Next page"
                             >
                                 <ChevronRight size={28} strokeWidth={2.5} className="ml-1" />
@@ -505,17 +505,17 @@ function ReaderView() {
                     {/* Image content */}
                     {fileUrl && !isPdf && (
                         <div className="flex-1 flex flex-col items-center justify-center lg:justify-start overflow-auto p-4 sm:p-8">
-                            <img src={fileUrl} alt="content" className="max-w-full max-h-[90vh] object-contain rounded-sm bg-white" />
+                            <img src={fileUrl} alt="content" className="max-w-full max-h-[90vh] object-contain rounded-sm bg-bg-elevated" />
                         </div>
                     )}
 
                     {/* Text content */}
                     {!fileUrl && (
                         <div className="flex-1 overflow-auto h-full touch-auto flex flex-col items-center justify-center lg:justify-start">
-                            <div 
-                                className="max-w-3xl w-full mx-auto px-8 sm:px-12 py-12 lg:py-24 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased"
-                                style={{ 
-                                    transform: `scale(${scale})`, 
+                            <div
+                                className="max-w-3xl w-full mx-auto px-8 sm:px-12 py-12 lg:py-24 leading-[1.8] text-xl sm:text-2xl text-text-primary antialiased"
+                                style={{
+                                    transform: `scale(${scale})`,
                                     transformOrigin: 'top center',
                                     transition: 'transform 0.2s ease-out'
                                 }}
@@ -534,7 +534,7 @@ function ReaderView() {
                                         </div>
                                         <h3 className="text-2xl font-bold">No File Content</h3>
                                         <p className="text-base opacity-60 font-sans max-w-sm">This book entry was found, but the actual file data is missing or couldn't be loaded.</p>
-                                        <button onClick={() => navigate('/')} className="mt-4 px-6 py-2 bg-accent-primary text-white rounded-full font-sans text-sm font-semibold">Return Home</button>
+                                        <button onClick={() => navigate('/')} className="mt-4 px-6 py-2 bg-accent-primary text-bg-elevated rounded-full font-sans text-sm font-semibold">Return Home</button>
                                     </div>
                                 )}
                             </div>

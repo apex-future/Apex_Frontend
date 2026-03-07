@@ -31,7 +31,7 @@ function SecondLayerNavBar({ visible, setAiModal, setLeftPanel, pdfControls }) {
         {/* Left: Menu — opens LeftPanel */}
         <div className='left-side'>
           <button
-            className="w-10 h-10 flex items-center justify-center bg-white shadow-md rounded-full transition-all active:scale-90 text-slate-800 hover:bg-slate-50"
+            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setLeftPanel(prev => !prev); }}
           >
             <Menu size={18} strokeWidth={2} />
@@ -39,9 +39,9 @@ function SecondLayerNavBar({ visible, setAiModal, setLeftPanel, pdfControls }) {
         </div>
 
         {/* Center: Tool buttons */}
-        <div className="middle-tool-bar flex items-center justify-center gap-1 bg-white shadow-lg rounded-full border border-slate-100 p-1.5 px-3">
+        <div className="middle-tool-bar flex items-center justify-center gap-1 bg-bg-elevated shadow-lg rounded-full border border-border-default p-1.5 px-3">
           <button
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-slate-600 hover:bg-slate-50"
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); zoomOut?.(); }}
             title="Zoom Out"
           >
@@ -49,23 +49,23 @@ function SecondLayerNavBar({ visible, setAiModal, setLeftPanel, pdfControls }) {
           </button>
 
           {zoomLabel && (
-            <span className="text-[11px] font-black text-slate-500 w-12 text-center tabular-nums select-none font-sans">
+            <span className="text-[11px] font-black text-text-tertiary w-12 text-center tabular-nums select-none font-sans">
               {zoomLabel}
             </span>
           )}
 
           <button
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-slate-600 hover:bg-slate-50"
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); zoomIn?.(); }}
             title="Zoom In"
           >
             <ZoomIn strokeWidth={2} size={18} />
           </button>
 
-          <div className="w-px h-5 bg-slate-200 mx-1" />
+          <div className="w-px h-5 border-border-default mx-1" />
 
           <button
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-slate-600 hover:bg-slate-50"
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); rotate?.(); }}
             title="Rotate"
           >
@@ -76,7 +76,7 @@ function SecondLayerNavBar({ visible, setAiModal, setLeftPanel, pdfControls }) {
         {/* Right: Sparkles — opens AI panel */}
         <div className='right-side'>
           <button
-            className="w-10 h-10 flex items-center justify-center bg-white shadow-md rounded-full transition-all active:scale-90 text-slate-800 hover:bg-slate-50"
+            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setAiModal(prev => !prev); }}
           >
             <Sparkles strokeWidth={2} size={18} />

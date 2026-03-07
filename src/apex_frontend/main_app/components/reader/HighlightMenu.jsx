@@ -73,35 +73,35 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
             style={menuStyle}
             onClick={(e) => e.stopPropagation()}
         >
-            <div className="bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
+            <div className="bg-bg-elevated border border-border-default shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
                 {!showDict ? (
                     <div className="flex items-center p-1.5 gap-1">
                         <button 
                             onClick={() => fetchDefinition(selection)}
-                            className="flex flex-col items-center justify-center p-3 hover:bg-slate-50 rounded-xl transition-all group flex-1"
+                            className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                         >
-                            <Book size={20} className="text-slate-600 group-hover:text-blue-600 transition-colors" />
-                            <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter font-sans">Define</span>
+                            <Book size={20} className="text-text-secondary group-hover:text-blue-600 transition-colors" />
+                            <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Define</span>
                         </button>
                         
-                        <div className="w-[1px] h-8 bg-slate-100" />
+                        <div className="w-[1px] h-8 bg-bg-subtle" />
 
                         <button 
                             onClick={onAskAI}
-                            className="flex flex-col items-center justify-center p-3 hover:bg-slate-50 rounded-xl transition-all group flex-1"
+                            className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                         >
-                            <Sparkles size={20} className="text-slate-600 group-hover:text-purple-600 transition-colors" />
-                            <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter font-sans">Ask AI</span>
+                            <Sparkles size={20} className="text-text-secondary group-hover:text-purple-600 transition-colors" />
+                            <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask AI</span>
                         </button>
 
-                        <div className="w-[1px] h-8 bg-slate-100" />
+                        <div className="w-[1px] h-8 bg-bg-subtle" />
 
                         <div className="flex gap-1.5 px-3">
                             {['#fef08a', '#bbf7d0', '#bfdbfe'].map(color => (
                                 <button 
                                     key={color}
                                     onClick={() => onHighlight?.(color)}
-                                    className="w-5 h-5 rounded-full border border-slate-200 hover:scale-110 transition-transform"
+                                    className="w-5 h-5 rounded-full border border-border-default hover:scale-110 transition-transform"
                                     style={{ backgroundColor: color }}
                                     title="Highlight"
                                 />
@@ -111,9 +111,9 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                 ) : (
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] font-sans">Dictionary</h3>
-                            <button onClick={() => toggleDict(false)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-                                <X size={16} className="text-slate-400" />
+                            <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Dictionary</h3>
+                            <button onClick={() => toggleDict(false)} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
+                                <X size={16} className="text-text-tertiary" />
                             </button>
                         </div>
 
@@ -126,29 +126,29 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                         ) : definition && (
                             <div className="max-h-64 overflow-y-auto custom-scrollbar pr-1">
                                 <div className="flex items-center justify-between gap-3 mb-3">
-                                    <h2 className="text-2xl font-black text-slate-900 capitalize font-sans tracking-tight">{definition.word}</h2>
+                                    <h2 className="text-2xl font-black text-text-primary capitalize font-sans tracking-tight">{definition.word}</h2>
                                     {definition.phonetics?.find(p => p.audio) && (
                                         <button 
                                             onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)} 
-                                            className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 hover:bg-blue-100 transition-all hover:scale-110"
+                                            className="w-8 h-8 rounded-full bg-accent-subtle flex items-center justify-center text-blue-500 hover:bg-accent-subtle transition-all hover:scale-110"
                                         >
                                             <Volume2 size={18} />
                                         </button>
                                     )}
                                 </div>
-                                <p className="text-sm text-blue-600 font-bold mb-5 font-sans bg-blue-50/50 px-2 py-1 rounded-md inline-block">{definition.phonetic}</p>
+                                <p className="text-sm text-blue-600 font-bold mb-5 font-sans bg-accent-subtle/50 px-2 py-1 rounded-md inline-block">{definition.phonetic}</p>
                                 
                                 {definition.meanings.slice(0, 3).map((m, i) => (
                                     <div key={i} className="mb-5 last:mb-2">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-[10px] font-black uppercase text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded tracking-wider">{m.partOfSpeech}</span>
-                                            <div className="h-px flex-1 bg-slate-100" />
+                                            <span className="text-[10px] font-black uppercase text-text-tertiary bg-bg-subtle px-1.5 py-0.5 rounded tracking-wider">{m.partOfSpeech}</span>
+                                            <div className="h-px flex-1 bg-bg-subtle" />
                                         </div>
-                                        <p className="text-[15px] text-slate-700 leading-relaxed font-medium font-sans">
+                                        <p className="text-[15px] text-text-secondary leading-relaxed font-medium font-sans">
                                             {m.definitions[0].definition}
                                         </p>
                                         {m.definitions[0].example && (
-                                            <p className="text-[13px] text-slate-400 mt-2 font-sans italic border-l-2 border-slate-100 pl-3">
+                                            <p className="text-[13px] text-text-tertiary mt-2 font-sans italic border-l-2 border-border-default pl-3">
                                                 "{m.definitions[0].example}"
                                             </p>
                                         )}
@@ -161,7 +161,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                                         className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
                                             wordSaved
                                                 ? 'bg-green-50 text-green-600 border border-green-200'
-                                                : 'bg-slate-900 text-white hover:bg-black active:scale-[0.98]'
+                                                : 'bg-text-primary text-bg-elevated hover:bg-black active:scale-[0.98]'
                                         }`}
                                     >
                                         {wordSaved ? <Check size={18} /> : <BookmarkPlus size={18} />}
