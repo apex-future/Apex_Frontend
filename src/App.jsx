@@ -4,7 +4,7 @@ import MainApp from './apex_frontend/main_app/MainApp'
 import LandingPage from './apex_frontend/landing_page/LandingPage'
 import SignupPage from './apex_frontend/landing_page/SignupPage'
 import LoginPage from './apex_frontend/landing_page/LoginPage'
-import authService from './services/authService'
+import syncService from './services/syncService'
 
 function App() {
   // Use authService to check initial authentication status
@@ -13,11 +13,16 @@ function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Initialize sync service status listeners
+      syncService.init();
+
       if (authService.isAuthenticated()) {
         try {
-          // Verify token is still valid by fetching current user
+          // Verify token is still valid
           await authService.me();
           setIsLoggedIn(true);
+          // Run initial sync
+          syncService.onAppLoad();
         } catch (error) {
           console.error("Auth verification failed:", error);
           authService.logout();

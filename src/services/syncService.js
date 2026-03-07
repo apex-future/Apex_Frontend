@@ -22,7 +22,7 @@ const syncService = {
           table_name: item.tableName,
           local_id: item.local_id,
           record_id: item.recordId,
-          payload: item.payload
+          payload: { ...item.payload, local_queue_id: item.id }
         }))
       };
 
@@ -34,13 +34,14 @@ const syncService = {
 
         // Process synced items
         for (const item of synced) {
+          const tableName = item.tableName || 'books';
           // Update the matching Dexie record with the returned Supabase record_id
-          await db[item.local_id_table || 'books'].update(item.local_id, {
+          await db[tableName].update(parseInt(item.local_id), {
             recordId: item.record_id
           });
 
           // Mark sync_queue item as 'synced'
-          await db.sync_queue.update(item.local_id, {
+          await db.sync_queue.update(item.local_queue_id, {
             status: 'synced'
           });
         }
@@ -79,22 +80,22 @@ const syncService = {
       if (response.data) {
         for (const [tableName, records] of Object.entries(response.data)) {
           for (const record of records) {
-            // Check if local_id exists in Dexie
-            let existing = null;
-            if (record.local_id) {
-              existing = await db[tableName].where('local_id').equals(record.local_id).first();
-            }
+            // Check if record_id exists in Dexie (record_id is the primary key from Supabase)
+            const existing = await db[tableName].where('recordId').equals(record.id).first();
+
+            const dexieData = {
+              ...record,
+              recordId: record.id,
+              // Map other fields if necessary
+            };
+            delete dexieData.id; // Don't overwrite Dexie's auto-increment id
 
             if (existing) {
               // If yes: update the Dexie record
-              await db[tableName].update(existing.id, record);
+              await db[tableName].update(existing.id, dexieData);
             } else {
               // If no: insert as new record
-              await db[tableName].add({
-                ...record,
-                // Ensure we don't conflict with Dexie auto-increments if necessary
-                // recordId is for Supabase, id is for Dexie
-              });
+              await db[tableName].add(dexieData);
             }
           }
         }

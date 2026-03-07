@@ -132,17 +132,34 @@ export const BookProvider = ({ children }) => {
     };
 
     try {
-      const id = await db.books.add(newBookData);
+      // First add the book record to get the auto-generated ID
+      const newBookBase = { ...newBookData };
+      delete newBookBase.id; // Ensure no ID conflict
+      
+      const id = await db.books.add(newBookBase);
+      
+      // Update the record with its own ID as local_id for sync tracking
+      await db.books.update(id, { local_id: id.toString() });
 
-      // Add to sync_queue (placeholder — not processed)
+      // Add to sync_queue with local_id
       await db.sync_queue.add({
         action: 'upload',
         tableName: 'books',
-        recordId: id,
-        payload: { title, fileType, fileSize: fileObject.size },
+        local_id: id.toString(),
+        payload: { 
+          title, 
+          author: "Unknown",
+          fileType, 
+          fileSize: fileObject.size,
+          uploadedAt: newBookData.uploadedAt
+        },
         createdAt: new Date().toISOString(),
         attempts: 0,
+        status: 'pending'
       });
+
+      // Trigger immediate sync attempt
+      import('../../../services/syncService').then(m => m.default.triggerSync?.());
 
       // Create in-memory book object with the File for immediate use
       const newBook = {

@@ -30,15 +30,22 @@ export default function ImportPage() {
             lastReadAt: new Date().toISOString(),
           });
 
-          // Add to sync queue (placeholder — not processed)
+          // Update with local_id
+          await db.books.update(bookId, { local_id: bookId.toString() });
+
+          // Add to sync queue
           await db.sync_queue.add({
             action: 'upload',
             tableName: 'books',
-            recordId: bookId,
+            local_id: bookId.toString(),
             payload: { title, fileType, fileSize: file.size },
             createdAt: new Date().toISOString(),
             attempts: 0,
+            status: 'pending'
           });
+
+          // Trigger immediate sync attempt
+          import('../services/syncService').then(m => m.default.triggerSync?.());
 
           navigate(`/reader/${bookId}`);
           return;
