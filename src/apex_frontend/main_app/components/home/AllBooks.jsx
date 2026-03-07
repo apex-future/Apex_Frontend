@@ -14,7 +14,7 @@ export default function AllBooks({ books = [], onBookClick }) {
             </div>
 
             {(!books || books.length === 0) ? (
-                <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-white/50 rounded-3xl border-2 border-dashed border-border-default">
+                <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-3xl border-2 border-dashed border-border-default">
                     <div className="w-20 h-20 bg-accent-primary/10 rounded-full flex items-center justify-center mb-6 text-accent-primary">
                         <Bookmark size={32} />
                     </div>

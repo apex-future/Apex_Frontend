@@ -6,6 +6,7 @@ import SignupPage from './apex_frontend/landing_page/SignupPage'
 import LoginPage from './apex_frontend/landing_page/LoginPage'
 import authService from './services/authService'
 import syncService from './services/syncService'
+import useThemeStore from './store/themeStore'
 
 function App() {
   // Use authService to check initial authentication status
@@ -13,6 +14,9 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialize theme
+    useThemeStore.getState().initTheme();
+
     const checkAuth = async () => {
       // Initialize sync service status listeners
       syncService.init();
