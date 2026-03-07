@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { BookOpen, List, Bookmark, X, ChevronLeft } from 'lucide-react'
 import BookmarksView from './BookmarksView'
+import SidebarNotesView from './SidebarNotesView'
 
 const NAV_ITEMS = [
   { id: 'toc', icon: List, label: 'Table of Contents' },
   { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
-  { id: 'annotations', icon: BookOpen, label: 'Annotations' },
+  { id: 'notes', icon: BookOpen, label: 'Notes' },
 ];
 
 function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
@@ -14,6 +15,10 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
   const {
     bookmarks = [],
     onRemoveBookmark,
+    notes = [],
+    addNote,
+    updateNote,
+    deleteNote,
   } = readerControls || {};
 
   function handleNavClick(id) {
@@ -31,7 +36,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 py-5 border-b border-slate-50 shrink-0">
+      <div className="flex items-center justify-between px-5 py-5 border-b border-border-default shrink-0">
         {activeSection ? (
           /* Back to main nav when inside a section */
           <button
@@ -60,7 +65,8 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
             {NAV_ITEMS.map((item) => {
               const { id, label, icon: ItemIcon } = item;
               const isBookmarksItem = id === 'bookmarks';
-              const count = isBookmarksItem ? bookmarks.length : 0;
+              const isNotesItem = id === 'notes';
+              const count = isBookmarksItem ? bookmarks.length : isNotesItem ? notes.length : 0;
 
               return (
                 <button
@@ -96,23 +102,22 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
         {/* Table of contents — placeholder */}
         {activeSection === 'toc' && (
           <div className='flex flex-col items-center justify-center py-12 px-4 text-center'>
-            <div className='w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3'>
-              <List size={22} className='text-gray-400' strokeWidth={1.5} />
+            <div className='w-12 h-12 rounded-2xl bg-bg-subtle flex items-center justify-center mb-3'>
+              <List size={22} className='text-text-tertiary' strokeWidth={1.5} />
             </div>
-            <p className='text-sm font-semibold text-gray-500'>Table of Contents</p>
-            <p className='text-xs text-gray-400 mt-1'>Coming soon</p>
+            <p className='text-sm font-semibold text-text-secondary'>Table of Contents</p>
+            <p className='text-xs text-text-tertiary mt-1'>Coming soon</p>
           </div>
         )}
 
-        {/* Annotations — placeholder */}
-        {activeSection === 'annotations' && (
-          <div className='flex flex-col items-center justify-center py-12 px-4 text-center'>
-            <div className='w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3'>
-              <BookOpen size={22} className='text-gray-400' strokeWidth={1.5} />
-            </div>
-            <p className='text-sm font-semibold text-gray-500'>Annotations</p>
-            <p className='text-xs text-gray-400 mt-1'>Coming soon</p>
-          </div>
+        {/* Notes section */}
+        {activeSection === 'notes' && (
+          <SidebarNotesView
+            notes={notes}
+            addNote={addNote}
+            updateNote={updateNote}
+            deleteNote={deleteNote}
+          />
         )}
       </div>
     </aside>

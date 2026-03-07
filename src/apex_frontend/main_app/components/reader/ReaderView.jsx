@@ -23,7 +23,7 @@ const ScrollOrientationOverlay = ({ visible }) => {
 };
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, addNote, updateNote, deleteNote } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -163,6 +163,11 @@ function ReaderView() {
         bookmarks,
         onJumpToBookmark: goToPage,
         onRemoveBookmark: (page) => toggleBookmark(book.id, page),
+        // Notes
+        notes: book?.metadata?.notes || [],
+        addNote: (text) => addNote(book.id, text),
+        updateNote: (noteId, text) => updateNote(book.id, noteId, text),
+        deleteNote: (noteId) => deleteNote(book.id, noteId),
     };
 
     // Screen handlers

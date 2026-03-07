@@ -8,12 +8,13 @@ import HomePage from './components/home/HomePage';
 import BottomNavBar from './components/layout/navigation/BottomNavBar';
 import Profile from './components/layout/user/Profile';
 import ReaderView from './components/reader/ReaderView';
-               
+
 import BookShelf from './components/layout/book_shelf/BookShelf';
 import ShelfDetail from './components/layout/book_shelf/ShelfDetail';
 import BookDetails from './components/books/BookDetails';
 import Dictionary from './components/dictionary/Dictionary';
 import ApexAI from './components/ai/ApexAI';
+import NotesPage from './components/notes/NotesPage';
 import Settings from './components/layout/user/Settings';
 import DuplicateBookModal from './components/modals/DuplicateBookModal';
 import ImportPage from '../../pages/ImportPage';
@@ -56,6 +57,7 @@ function MainApp({ onLogout }) {
                 <Route path="/book/:bookId" element={<BookDetails />} />
                 <Route path="/dictionary" element={<Dictionary />} />
                 <Route path="/ai" element={<ApexAI />} />
+                <Route path="/notes" element={<NotesPage />} />
                 <Route path="/import" element={<ImportPage />} />
               </Routes>
             </main>
@@ -64,9 +66,9 @@ function MainApp({ onLogout }) {
             {!location.pathname.startsWith('/reader') && location.pathname !== '/ai' && <BottomNavBar />}
           </div>
 
-          <DuplicateBookModal 
-            isOpen={showDuplicateModal} 
-            onClose={() => setShowDuplicateModal(false)} 
+          <DuplicateBookModal
+            isOpen={showDuplicateModal}
+            onClose={() => setShowDuplicateModal(false)}
           />
         </NavBarProvider>
       </BookProvider>

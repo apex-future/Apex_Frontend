@@ -30,7 +30,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
     { icon: Book, label: 'Book Shelf', path: '/bookshelf' },
     { icon: WholeWord, label: 'Dictionary', path: '/dictionary' },
     { icon: Sparkle, label: 'ApexAi', path: '/ai' },
-    { icon: Pen, label: 'Notes', path: '#notes' },
+    { icon: Pen, label: 'Notes', path: '/notes' },
   ];
 
   return (
