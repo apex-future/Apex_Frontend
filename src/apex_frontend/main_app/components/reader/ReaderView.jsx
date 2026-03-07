@@ -23,7 +23,7 @@ const ScrollOrientationOverlay = ({ visible }) => {
 };
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark, addSavedWord } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -72,9 +72,22 @@ function ReaderView() {
     const [isLoading, setIsLoading] = useState(true);
     const [loadingMessage, setLoadingMessage] = useState("Setting up file");
 
-    // Selection State
     const [selection, setSelection] = useState({ text: '', x: 0, y: 0 });
     const [showHighlightMenu, setShowHighlightMenu] = useState(false);
+    const [isDictOpen, setIsDictOpen] = useState(false);
+
+    const handleHighlight = (color) => {
+        if (!book || !selection.text) return;
+        addHighlight(book.id, {
+            text: selection.text,
+            color,
+            page: pageNumber,
+            addedAt: new Date().toISOString()
+        });
+        setShowHighlightMenu(false);
+        // Clear browser selection
+        window.getSelection().removeAllRanges();
+    };
 
     // --- PDF Control Handlers ---
     function nextPage() {
@@ -208,7 +221,10 @@ function ReaderView() {
                     setShowHighlightMenu(false);
                 }
             } else {
-                setShowHighlightMenu(false);
+                // Only hide if dictionary isn't open
+                if (!isDictOpen) {
+                    setShowHighlightMenu(false);
+                }
             }
         };
 
@@ -256,7 +272,7 @@ function ReaderView() {
             document.removeEventListener('touchmove', handleTouchMove);
             document.removeEventListener('touchend', handleTouchEnd);
         };
-    }, [scale]);
+    }, [scale, isDictOpen]);
 
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
@@ -427,6 +443,8 @@ function ReaderView() {
                         onClose={() => setShowHighlightMenu(false)}
                         bookId={book?.id}
                         onSaveWord={addSavedWord}
+                        onHighlight={handleHighlight}
+                        onDictToggle={setIsDictOpen}
                     />
                 )}
 
@@ -459,6 +477,7 @@ function ReaderView() {
                                 onPrevPage={previousPage}
                                 numPages={numPages}
                                 goToPage={goToPage}
+                                highlights={book?.metadata?.highlights || []}
                                 locked={locked}
                                 windowSize={windowSize}
                             />

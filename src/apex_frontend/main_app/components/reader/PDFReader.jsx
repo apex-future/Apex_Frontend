@@ -23,10 +23,46 @@ const PDFReader = ({
   numPages,
   goToPage,
   windowSize,
+  highlights = [],
   locked = false,
 }) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(windowSize?.width || window.innerWidth);
+
+  const customTextRenderer = React.useCallback(
+    ({ str }) => {
+      if (!highlights || highlights.length === 0) return str;
+
+      const pageHighlights = highlights.filter((h) => h.page === pageNumber);
+      if (pageHighlights.length === 0) return str;
+
+      // Sort highlights by length (longest first) to avoid partial matches
+      const sortedHighlights = [...pageHighlights].sort((a, b) => b.text.length - a.text.length);
+
+      for (const h of sortedHighlights) {
+        const escapedText = h.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (str.includes(h.text)) {
+          const parts = str.split(new RegExp(`(${escapedText})`, 'gi'));
+          return (
+            <span>
+              {parts.map((part, i) => 
+                part.toLowerCase() === h.text.toLowerCase() ? (
+                  <mark key={i} style={{ backgroundColor: h.color, color: 'black', borderRadius: '2px', padding: '0 1px' }}>
+                    {part}
+                  </mark>
+                ) : (
+                  part
+                )
+              )}
+            </span>
+          );
+        }
+      }
+
+      return str;
+    },
+    [highlights, pageNumber]
+  );
 
   useEffect(() => {
     const el = containerRef.current;
@@ -109,6 +145,7 @@ const PDFReader = ({
             scale={scale}
             renderTextLayer={true}
             renderAnnotationLayer={true}
+            customTextRenderer={customTextRenderer}
             className="bg-white"
             width={pdfWidth}
             loading={

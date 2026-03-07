@@ -380,6 +380,60 @@ export const BookProvider = ({ children }) => {
     });
   }, []);
 
+  const addHighlight = useCallback(async (bookId, highlight) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existingHighlights = book.metadata?.highlights || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              highlights: [...existingHighlights, { ...highlight, id: Date.now() }],
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to save highlight:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
+  const removeHighlight = useCallback(async (bookId, highlightId) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existingHighlights = book.metadata?.highlights || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              highlights: existingHighlights.filter(h => h.id !== highlightId),
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to remove highlight:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
   return (
     <BookContext.Provider value={{
       shelves,
@@ -393,6 +447,8 @@ export const BookProvider = ({ children }) => {
       deleteBookFromShelves,
       addSavedWord,
       removeSavedWord,
+      addHighlight,
+      removeHighlight,
       showDuplicateModal,
       setShowDuplicateModal,
     }}>

@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
 import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check } from 'lucide-react';
 
-function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
+function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHighlight, onDictToggle }) {
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showDict, setShowDict] = useState(false);
     const [wordSaved, setWordSaved] = useState(false);
 
+    const toggleDict = (val) => {
+        setShowDict(val);
+        onDictToggle?.(val);
+    };
+
     const fetchDefinition = async (searchWord) => {
         if (!searchWord.trim()) return;
         setLoading(true);
         setError(null);
-        setShowDict(true);
+        toggleDict(true);
         setWordSaved(false);
         try {
             const cleanWord = searchWord.trim().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
@@ -95,6 +100,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
                             {['#fef08a', '#bbf7d0', '#bfdbfe'].map(color => (
                                 <button 
                                     key={color}
+                                    onClick={() => onHighlight?.(color)}
                                     className="w-5 h-5 rounded-full border border-slate-200 hover:scale-110 transition-transform"
                                     style={{ backgroundColor: color }}
                                     title="Highlight"
@@ -106,7 +112,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord }) {
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] font-sans">Dictionary</h3>
-                            <button onClick={() => setShowDict(false)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                            <button onClick={() => toggleDict(false)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
                                 <X size={16} className="text-slate-400" />
                             </button>
                         </div>
