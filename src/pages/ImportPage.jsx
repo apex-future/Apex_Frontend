@@ -38,7 +38,12 @@ export default function ImportPage() {
             action: 'upload',
             tableName: 'books',
             local_id: bookId.toString(),
-            payload: { title, fileType, fileSize: file.size },
+            payload: { 
+              title, 
+              file_type: fileType, 
+              file_size: file.size,
+              uploaded_at: new Date().toISOString()
+            },
             createdAt: new Date().toISOString(),
             attempts: 0,
             status: 'pending'

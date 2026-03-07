@@ -150,9 +150,9 @@ export const BookProvider = ({ children }) => {
         payload: { 
           title, 
           author: "Unknown",
-          fileType, 
-          fileSize: fileObject.size,
-          uploadedAt: newBookData.uploadedAt
+          file_type: fileType, 
+          file_size: fileObject.size,
+          uploaded_at: newBookData.uploadedAt
         },
         createdAt: new Date().toISOString(),
         attempts: 0,
