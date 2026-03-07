@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { shelves as initialShelves } from '../data/shelves';
 import db from '../../../db/apex.db';
+import syncService from '../../../services/syncService';
 
 import { BookContext } from './BookContextInstance.jsx';
 
@@ -195,24 +196,48 @@ export const BookProvider = ({ children }) => {
       }));
 
       if (updatedBook) {
+        const now = new Date().toISOString();
         // Update in Dexie books table
-        db.books.update(id, { progress, currentPage, totalPages, lastReadAt: new Date().toISOString() })
+        db.books.update(id, { progress, currentPage, totalPages, lastReadAt: now })
           .catch(err => console.error("Failed to update progress in Dexie:", err));
 
         // Also save to reading_progress table (upsert by bookId)
-        db.reading_progress.where('bookId').equals(id).first().then(existing => {
+        db.reading_progress.where('bookId').equals(id).first().then(async (existing) => {
           const progressData = {
             bookId: id,
             currentPage,
             scrollPosition: 0,
             progressPercentage: progress,
-            lastReadAt: new Date().toISOString(),
+            lastReadAt: now,
           };
+          let localId;
           if (existing) {
-            db.reading_progress.update(existing.id, progressData);
+            await db.reading_progress.update(existing.id, progressData);
+            localId = (existing.local_id || existing.id).toString();
           } else {
-            db.reading_progress.add(progressData);
+            const newId = await db.reading_progress.add(progressData);
+            localId = newId.toString();
+            await db.reading_progress.update(newId, { local_id: localId });
           }
+
+          // Queue for sync
+          await db.sync_queue.add({
+            action: existing ? 'update' : 'upload',
+            tableName: 'reading_progress',
+            local_id: localId,
+            recordId: existing?.recordId || null,
+            payload: {
+              book_id: id.toString(),
+              current_page: currentPage,
+              scroll_position: 0,
+              progress_percentage: progress,
+              last_read_at: now,
+            },
+            createdAt: now,
+            attempts: 0,
+            status: 'pending'
+          });
+          syncService.triggerSync?.();
         }).catch(err => console.error("Failed to save reading progress:", err));
       }
       return newShelves;
@@ -294,6 +319,22 @@ export const BookProvider = ({ children }) => {
 
       if (updatedBook) {
         db.books.update(targetId, { isFavorite: updatedBook.isFavorite })
+          .then(async () => {
+            const bookRecord = await db.books.get(targetId);
+            if (bookRecord?.recordId) {
+              await db.sync_queue.add({
+                action: 'update',
+                tableName: 'books',
+                local_id: (bookRecord.local_id || targetId).toString(),
+                recordId: bookRecord.recordId,
+                payload: { is_favorite: updatedBook.isFavorite },
+                createdAt: new Date().toISOString(),
+                attempts: 0,
+                status: 'pending'
+              });
+              syncService.triggerSync?.();
+            }
+          })
           .catch(err => console.error("Failed to update favorite status:", err));
       }
       return newShelves;
@@ -317,6 +358,22 @@ export const BookProvider = ({ children }) => {
 
       if (updatedBook) {
         db.books.update(targetId, { isBookmarked: updatedBook.isBookmarked })
+          .then(async () => {
+            const bookRecord = await db.books.get(targetId);
+            if (bookRecord?.recordId) {
+              await db.sync_queue.add({
+                action: 'update',
+                tableName: 'books',
+                local_id: (bookRecord.local_id || targetId).toString(),
+                recordId: bookRecord.recordId,
+                payload: { is_bookmarked: updatedBook.isBookmarked },
+                createdAt: new Date().toISOString(),
+                attempts: 0,
+                status: 'pending'
+              });
+              syncService.triggerSync?.();
+            }
+          })
           .catch(err => console.error("Failed to update bookmark status:", err));
       }
       return newShelves;
@@ -325,11 +382,31 @@ export const BookProvider = ({ children }) => {
 
   const deleteBookFromShelves = useCallback(async (id) => {
     const targetId = typeof id === 'string' ? parseInt(id) : id;
+    
+    // Get the book record before deleting to capture recordId for sync
+    const bookRecord = await db.books.get(targetId).catch(() => null);
+    
     setShelves((prevShelves) => {
       const newShelves = prevShelves.map((shelf) => ({
         ...shelf,
         books: shelf.books.filter((book) => book.id !== targetId),
       }));
+      
+      // Queue delete for sync if the book has been synced to Supabase
+      if (bookRecord?.recordId) {
+        db.sync_queue.add({
+          action: 'delete',
+          tableName: 'books',
+          local_id: (bookRecord.local_id || targetId).toString(),
+          recordId: bookRecord.recordId,
+          payload: {},
+          createdAt: new Date().toISOString(),
+          attempts: 0,
+          status: 'pending'
+        }).then(() => syncService.triggerSync?.())
+          .catch(err => console.error('Failed to queue book delete:', err));
+      }
+      
       // Delete from Dexie
       db.books.delete(targetId).catch(err => console.error("Failed to delete book:", err));
       // Also clean up related progress and highlights
@@ -401,6 +478,7 @@ export const BookProvider = ({ children }) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
     setShelves((prevShelves) => {
       let updatedBook = null;
+      const highlightId = Date.now();
       const newShelves = prevShelves.map((shelf) => ({
         ...shelf,
         books: shelf.books.map((book) => {
@@ -410,7 +488,7 @@ export const BookProvider = ({ children }) => {
             ...book,
             metadata: {
               ...(book.metadata || {}),
-              highlights: [...existingHighlights, { ...highlight, id: Date.now() }],
+              highlights: [...existingHighlights, { ...highlight, id: highlightId }],
             },
           };
           return updatedBook;
@@ -419,6 +497,41 @@ export const BookProvider = ({ children }) => {
       if (updatedBook) {
         db.books.update(targetId, { metadata: updatedBook.metadata })
           .catch(err => console.error('Failed to save highlight:', err));
+
+        // Also save to highlights table and queue for sync
+        const now = new Date().toISOString();
+        const highlightData = {
+          bookId: targetId,
+          local_id: highlightId.toString(),
+          highlightedText: highlight.text || highlight.highlightedText || '',
+          color: highlight.color || 'yellow',
+          pageNumber: highlight.page || highlight.pageNumber || 0,
+          textPosition: highlight.position || highlight.textPosition || '',
+          note: highlight.note || null,
+          createdAt: now,
+          updatedAt: now,
+        };
+        db.highlights.add(highlightData).then(async (newId) => {
+          await db.highlights.update(newId, { local_id: newId.toString() });
+          await db.sync_queue.add({
+            action: 'upload',
+            tableName: 'highlights',
+            local_id: newId.toString(),
+            payload: {
+              book_id: targetId.toString(),
+              highlighted_text: highlightData.highlightedText,
+              color: highlightData.color,
+              page_number: highlightData.pageNumber,
+              text_position: highlightData.textPosition,
+              note: highlightData.note,
+              updated_at: now,
+            },
+            createdAt: now,
+            attempts: 0,
+            status: 'pending'
+          });
+          syncService.triggerSync?.();
+        }).catch(err => console.error('Failed to save highlight to highlights table:', err));
       }
       return newShelves;
     });
@@ -426,6 +539,13 @@ export const BookProvider = ({ children }) => {
 
   const removeHighlight = useCallback(async (bookId, highlightId) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    
+    // Get highlight record before removing to capture recordId for sync
+    const highlightRecord = await db.highlights
+      .where('local_id').equals(highlightId.toString())
+      .first()
+      .catch(() => null);
+    
     setShelves((prevShelves) => {
       let updatedBook = null;
       const newShelves = prevShelves.map((shelf) => ({
@@ -446,6 +566,26 @@ export const BookProvider = ({ children }) => {
       if (updatedBook) {
         db.books.update(targetId, { metadata: updatedBook.metadata })
           .catch(err => console.error('Failed to remove highlight:', err));
+
+        // Queue delete for sync if the highlight has been synced
+        if (highlightRecord?.recordId) {
+          db.sync_queue.add({
+            action: 'delete',
+            tableName: 'highlights',
+            local_id: highlightId.toString(),
+            recordId: highlightRecord.recordId,
+            payload: {},
+            createdAt: new Date().toISOString(),
+            attempts: 0,
+            status: 'pending'
+          }).then(() => syncService.triggerSync?.())
+            .catch(err => console.error('Failed to queue highlight delete:', err));
+        }
+
+        // Delete from highlights table in Dexie
+        if (highlightRecord) {
+          db.highlights.delete(highlightRecord.id).catch(() => {});
+        }
       }
       return newShelves;
     });

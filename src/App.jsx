@@ -36,8 +36,10 @@ function App() {
     checkAuth();
   }, []);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setIsLoggedIn(true);
+    // After login/signup, migrate any existing local data to the new account
+    await syncService.migrateLocalData();
   };
 
   const handleLogout = () => {
