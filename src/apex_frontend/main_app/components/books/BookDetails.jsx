@@ -54,7 +54,7 @@ function BookDetails() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Page Header */}
             <div className="relative flex justify-between items-center py-4 px-2">
                 <button

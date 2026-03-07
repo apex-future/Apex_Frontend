@@ -16,10 +16,11 @@ import Dictionary from './components/dictionary/Dictionary';
 import ApexAI from './components/ai/ApexAI';
 import Settings from './components/layout/user/Settings';
 import DuplicateBookModal from './components/modals/DuplicateBookModal';
+import ImportPage from '../../pages/ImportPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 
-function MainApp() {
+function MainApp({ onLogout }) {
   // asideIsOpen: State variable that determines if the desktop-style sidebar should be rendered.
   const [asideIsOpen, setAsideIsOpen] = useState(true);
   // isMobileOpen: State variable specifically for the mobile slide-over sidebar visibility.
@@ -37,7 +38,7 @@ function MainApp() {
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>
-          {asideIsOpen && !location.pathname.startsWith('/reader') && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />}
+          {asideIsOpen && !location.pathname.startsWith('/reader') && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} onLogout={onLogout} />}
 
           <div className='flex-1 min-w-0 relative z-[10]'>
             <main className="">
@@ -55,6 +56,7 @@ function MainApp() {
                 <Route path="/book/:bookId" element={<BookDetails />} />
                 <Route path="/dictionary" element={<Dictionary />} />
                 <Route path="/ai" element={<ApexAI />} />
+                <Route path="/import" element={<ImportPage />} />
               </Routes>
             </main>
 

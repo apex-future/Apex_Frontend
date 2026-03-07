@@ -1,6 +1,5 @@
 //create a context API so other components can close and open nav bar
 import React from 'react'
-import { createContext } from 'react'
 import { NavBarContext } from './NavBarContextInstance'
 function NavBarProvider({ children, asideToggleFunctions }) {
   return (

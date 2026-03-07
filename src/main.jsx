@@ -11,3 +11,12 @@ createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </StrictMode>,
 )
+
+// Register launch queue consumer for file handling (deep links)
+if ('launchQueue' in window) {
+  window.launchQueue.setConsumer(async (launchParams) => {
+    if (launchParams.files && launchParams.files.length > 0) {
+      window.location.href = '/import';
+    }
+  });
+}

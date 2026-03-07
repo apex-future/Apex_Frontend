@@ -1,9 +1,27 @@
+import authService from '../../../services/authService';
+
 /**
  * AI Service — Fetch wrappers for Apex AI backend endpoints.
  * All streaming endpoints return a ReadableStream reader for SSE consumption.
  */
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-const API_BASE = '/api/ai';
+const API_BASE = `${apiUrl}/api/ai`;
+
+/**
+ * Helper to get default headers with auth token.
+ */
+const getHeaders = (contentType = 'application/json') => {
+  const headers = {};
+  if (contentType) {
+    headers['Content-Type'] = contentType;
+  }
+  const token = authService.getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
 
 /**
  * Stream an explanation of highlighted text.
@@ -12,7 +30,7 @@ const API_BASE = '/api/ai';
 export async function streamExplain({ selectedText, context, bookTitle, conversationHistory = [] }) {
   const response = await fetch(`${API_BASE}/explain`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify({
       selected_text: selectedText,
       context: context || null,
@@ -40,7 +58,7 @@ export async function streamExplain({ selectedText, context, bookTitle, conversa
 export async function streamAsk({ message, bookTitle, conversationHistory = [] }) {
   const response = await fetch(`${API_BASE}/ask`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify({
       message,
       book_title: bookTitle || null,
@@ -66,7 +84,7 @@ export async function streamAsk({ message, bookTitle, conversationHistory = [] }
 export async function summarizeHighlights({ highlights, bookTitle }) {
   const response = await fetch(`${API_BASE}/summarize`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify({
       highlights,
       book_title: bookTitle || null,

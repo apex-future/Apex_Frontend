@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "./Header";
-import Allbooks from "./Allbooks";
+import AllBooks from "./AllBooks";
 import TopNavBar from "../layout/navigation/TopNavBar";
 import { BookContext } from "../../context/BookContextInstance";
 
@@ -28,12 +28,12 @@ function HomePage({ setIsMobileOpen }) {
   const lastReadBook = sortedByDate.length > 0 ? sortedByDate[0] : null;
 
   return (
-    <div className="pt-4 flex flex-col gap-6 lg:gap-8">
+    <div className="min-h-screen pt-4 flex flex-col gap-6 lg:gap-8">
       <TopNavBar setIsMobileOpen={setIsMobileOpen} onUpload={onUpload} />
 
       <Header lastReadBook={lastReadBook} />
 
-      <Allbooks books={books} onBookClick={handleBookNavigate} />
+      <AllBooks books={books} onBookClick={handleBookNavigate} />
     </div>
   )
 }

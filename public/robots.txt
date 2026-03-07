@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://apex.pxxl.click/sitemap.xml
+
+Sitemap: https://apexapp.click/sitemap.xml

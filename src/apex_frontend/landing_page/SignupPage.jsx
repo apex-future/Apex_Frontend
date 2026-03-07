@@ -1,13 +1,32 @@
-import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight, UserCircle } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { User, Mail, Lock, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
 import logoLight from "../../assets/logo/logo-light.jpg";
+import authService from '../../services/authService';
 
 function SignupPage({ onLogin }) {
   const navigate = useNavigate();
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleStart = () => {
-    onLogin();
-    navigate('/');
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      await authService.register(fullName, email, password);
+      onLogin();
+      navigate('/');
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -20,50 +39,112 @@ function SignupPage({ onLogin }) {
 
       <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-700">
         {/* Logo/Brand Header */}
-        <div className="flex flex-col items-center mb-10">
-          <img src={logoLight} alt="Apex Logo" className="w-14 h-14 rounded-2xl mb-4 shadow-xl shadow-accent-primary/10" />
-          <h2 className="text-white text-3xl font-bold font-display tracking-tight">Apex <span className="text-accent-primary">AI</span></h2>
-          <p className="text-neutral-400 mt-2 text-sm">Your academic breakthrough companion</p>
+        <div className="flex flex-col items-center mb-8">
+          <Link to="/">
+            <img src={logoLight} alt="Apex Logo" className="w-14 h-14 rounded-2xl mb-4 shadow-xl shadow-accent-primary/10" />
+          </Link>
+          <h2 className="text-white text-3xl font-bold font-display tracking-tight">Create Account</h2>
+          <p className="text-neutral-400 mt-2 text-sm">Join the next generation of focused learners</p>
         </div>
 
         {/* Signup Form Card */}
-        <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/10 flex flex-col items-center">
-          <div className="w-20 h-20 bg-accent-subtle rounded-3xl flex items-center justify-center text-accent-primary mb-8 animate-bounce-slow">
-            <UserCircle size={44} strokeWidth={1.5} />
+        <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/10">
+          <form onSubmit={handleSignup} className="space-y-5">
+            {error && (
+              <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
+                <AlertCircle size={18} />
+                <p className="text-sm font-medium">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider ml-1">Full Name</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-accent-primary transition-colors">
+                  <User size={18} />
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all"
+                  placeholder="John Doe"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider ml-1">Email Address</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-accent-primary transition-colors">
+                  <Mail size={18} />
+                </div>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                  className="w-full pl-11 pr-4 py-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all"
+                  placeholder="name@example.com"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider ml-1">Password</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-accent-primary transition-colors">
+                  <Lock size={18} />
+                </div>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="group w-full h-14 bg-[#7C3AED] hover:bg-[#6D28D9] disabled:bg-neutral-300 text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-3 active:scale-95 mt-4"
+            >
+              {loading ? (
+                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-8 flex items-center justify-center gap-2 text-neutral-400">
+            <Sparkles size={14} className="text-accent-primary" />
+            <span className="text-xs uppercase tracking-widest font-semibold text-neutral-400/60">Instant Setup Enabled</span>
           </div>
 
-          <h3 className="text-2xl font-bold text-neutral-900 mb-2 font-display">Ready to Begin?</h3>
-          <p className="text-neutral-500 text-center text-sm mb-10 leading-relaxed">
-            Skip the registration and dive straight into your personalized library as a guest.
-          </p>
-
-          <button
-            onClick={handleStart}
-            className="group w-full px-4 py-4.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-3 active:scale-95"
-          >
-            Start as Guest
-            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-          </button>
-
-          <div className="mt-8 flex items-center gap-2 text-neutral-400">
-            <Sparkles size={14} className="text-accent-primary" />
-            <span className="text-xs uppercase tracking-widest font-semibold text-neutral-400/60">Fast Access Mode</span>
+          <div className="mt-6 pt-6 border-t border-neutral-100 text-center">
+            <p className="text-neutral-500 text-sm font-medium">
+              Already have an account? <Link to="/login" className="text-accent-primary hover:underline font-bold">Sign in</Link>
+            </p>
           </div>
         </div>
-
-        {/* Footer Link */}
-        <p className="mt-8 text-center text-neutral-500 text-sm">
-          Interested in a private account? <a href="/#cta" className="text-white hover:text-accent-primary transition-colors font-medium">Join the waitlist</a>
-        </p>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
         }
-        .animate-bounce-slow {
-          animation: bounce-slow 4s infinite ease-in-out;
+        .animate-shake {
+          animation: shake 0.4s ease-in-out;
         }
       `}} />
     </div>

@@ -1,9 +1,10 @@
-import React from 'react'
-import BookCover from '../books/BookCover';
+import useAuthStore from '../../../../store/authStore';
 import { useNavigate } from 'react-router-dom';
+import BookCover from '../books/BookCover';
 
 export default function Header({ lastReadBook }) {
-    const user = { name: "User" };
+    const { user } = useAuthStore();
+    const firstName = user?.full_name?.split(' ')[0] || "User";
     const navigate = useNavigate();
 
     const currentBook = lastReadBook || {
@@ -20,7 +21,7 @@ export default function Header({ lastReadBook }) {
             <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4">
                 <div className="welcome-message mb-8">
                     <h1 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-2 tracking-tightest leading-premium-tight">
-                        Hey, {user.name}
+                        Hey, {firstName}
                     </h1>
                     <p className="text-text-secondary font-medium tracking-tight">What's your pick today?</p>
                 </div>

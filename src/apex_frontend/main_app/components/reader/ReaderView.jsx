@@ -6,10 +6,24 @@ import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
 import HighlightMenu from './HighlightMenu';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
-import { ChevronLeft, ChevronRight, Plus, Menu } from 'lucide-react';
+import BookSkeleton from './BookSkeleton';
+import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight } from 'lucide-react';
+
+const ScrollOrientationOverlay = ({ visible }) => {
+    if (!visible) return null;
+    return (
+        <div className="fixed inset-x-0 bottom-32 z-[100] flex items-center justify-center pointer-events-none lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-white/80 backdrop-blur-sm border border-white/20 text-black shadow-2xl">
+                <ArrowLeft size={18} className="opacity-70" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">Swipe left or right</span>
+                <ArrowRight size={18} className="opacity-70" />
+            </div>
+        </div>
+    );
+};
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark, addSavedWord } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -54,9 +68,26 @@ function ReaderView() {
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
 
-    // Selection State
+    // Deep loading state
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadingMessage, setLoadingMessage] = useState("Setting up file");
+
     const [selection, setSelection] = useState({ text: '', x: 0, y: 0 });
     const [showHighlightMenu, setShowHighlightMenu] = useState(false);
+    const [isDictOpen, setIsDictOpen] = useState(false);
+
+    const handleHighlight = (color) => {
+        if (!book || !selection.text) return;
+        addHighlight(book.id, {
+            text: selection.text,
+            color,
+            page: pageNumber,
+            addedAt: new Date().toISOString()
+        });
+        setShowHighlightMenu(false);
+        // Clear browser selection
+        window.getSelection().removeAllRanges();
+    };
 
     // --- PDF Control Handlers ---
     function nextPage() {
@@ -141,15 +172,42 @@ function ReaderView() {
         setNavState(prev => prev === 'none' ? 'first' : 'none');
     }, []);
 
+    const closeNav = useCallback(() => {
+        setNavState('none');
+    }, []);
+
+    // Override native context menu on mobile so our HighlightMenu is used instead
+    useEffect(() => {
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (!isTouchDevice) return;
+
+        const handleContextMenu = (e) => {
+            // Only suppress when inside the reader and there's a text selection
+            const sel = window.getSelection();
+            if (sel && sel.toString().trim().length > 0) {
+                e.preventDefault();
+            }
+        };
+
+        document.addEventListener('contextmenu', handleContextMenu, { passive: false });
+        return () => document.removeEventListener('contextmenu', handleContextMenu);
+    }, []);
+
+    // Touch Gesture State
+    const touchState = useRef({
+        initialDist: 0,
+        initialScale: 1.0,
+        isPinching: false
+    });
+
     // Selection monitoring logic
     useEffect(() => {
         const handleSelectionChange = () => {
-            // Add a tiny delay to ensure selection is fully registered on mobile touch end
-            setTimeout(() => {
-                const activeSel = window.getSelection();
-                const text = activeSel.toString().trim();
+            const activeSel = window.getSelection();
+            const text = activeSel.toString().trim();
 
-                if (text && text.length > 0) {
+            if (text && text.length > 0) {
+                try {
                     const range = activeSel.getRangeAt(0);
                     const rect = range.getBoundingClientRect();
                     setSelection({
@@ -158,20 +216,63 @@ function ReaderView() {
                         y: rect.top
                     });
                     setShowHighlightMenu(true);
-                } else {
+                } catch (e) {
+                    // If selection range is lost or invalid
                     setShowHighlightMenu(false);
                 }
-            }, 50);
+            } else {
+                // Only hide if dictionary isn't open
+                if (!isDictOpen) {
+                    setShowHighlightMenu(false);
+                }
+            }
+        };
+
+        const getDistance = (touches) => {
+            return Math.hypot(
+                touches[0].pageX - touches[1].pageX,
+                touches[0].pageY - touches[1].pageY
+            );
+        };
+
+        const handleTouchStart = (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                touchState.current.isPinching = true;
+                touchState.current.initialDist = getDistance(e.touches);
+                touchState.current.initialScale = scale;
+            }
+        };
+
+        const handleTouchMove = (e) => {
+            if (e.touches.length === 2 && touchState.current.isPinching) {
+                e.preventDefault();
+                const currentDist = getDistance(e.touches);
+                const ratio = currentDist / touchState.current.initialDist;
+                const newScale = Math.min(Math.max(touchState.current.initialScale * ratio, 0.5), 2.5);
+                setScale(newScale);
+            }
+        };
+
+        const handleTouchEnd = (e) => {
+            if (e.touches.length < 2) {
+                touchState.current.isPinching = false;
+                handleSelectionChange();
+            }
         };
 
         document.addEventListener('mouseup', handleSelectionChange);
-        document.addEventListener('touchend', handleSelectionChange);
+        document.addEventListener('touchstart', handleTouchStart, { passive: false });
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleTouchEnd);
 
         return () => {
             document.removeEventListener('mouseup', handleSelectionChange);
-            document.removeEventListener('touchend', handleSelectionChange);
+            document.removeEventListener('touchstart', handleTouchStart);
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleTouchEnd);
         };
-    }, []);
+    }, [scale, isDictOpen]);
 
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
@@ -193,8 +294,10 @@ function ReaderView() {
 
             if (isTypePdf || isTypeImage) {
                 const url = URL.createObjectURL(file);
-                setFileUrl(url);
-                setTextContent("");
+                Promise.resolve().then(() => {
+                    setFileUrl(url);
+                    setTextContent("");
+                });
                 return () => URL.revokeObjectURL(url);
             } else if (isTypeText) {
                 const reader = new FileReader();
@@ -205,15 +308,59 @@ function ReaderView() {
                 reader.readAsText(file);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bookId, book?.file, navigate]);
 
+    // Loading Sequence Animation
+    const [showMenuBriefly, setShowMenuBriefly] = useState(false);
+    const [showScrollOverlay, setShowScrollOverlay] = useState(false);
+
     useEffect(() => {
-        if (!bookId || !book) return;
+        if (!isLoading) return;
+
+        const messages = ["Setting up file", "Loading all pages", "Finalizing load", "Rendering"];
+        let currentIndex = 0;
+
+        const interval = setInterval(() => {
+            if (currentIndex < messages.length - 1) {
+                currentIndex++;
+                setLoadingMessage(messages[currentIndex]);
+            }
+        }, 800);
+
+        // Completion logic - wait for bit after "Rendering"
+        const finalTimer = setTimeout(() => {
+            if (book?.file) {
+                 setIsLoading(false);
+                 // Trigger UX effects - Slide menu out and show overlay
+                 setShowMenuBriefly(true);
+                 setShowScrollOverlay(true);
+                 
+                 // Retract menu after 3 seconds
+                 setTimeout(() => setShowMenuBriefly(false), 3000);
+                 // Hide overlay after 3 seconds
+                 setTimeout(() => setShowScrollOverlay(false), 3000);
+            }
+        }, messages.length * 800 + 400);
+
+        return () => {
+            clearInterval(interval);
+            clearTimeout(finalTimer);
+        };
+    }, [isLoading, book?.file]);
+
+
+    const lastBookIdRef = useRef(null);
+    useEffect(() => {
+        if (!bookId || !book || lastBookIdRef.current === bookId) return;
+        lastBookIdRef.current = bookId;
         window.scrollTo(0, 0);
-        setLocalProgress(book.progress || 0);
-        setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
-        setPageNumber(book.currentPage || 1);
-    }, [bookId]);
+        Promise.resolve().then(() => {
+            setLocalProgress(book.progress || 0);
+            setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
+            setPageNumber(book.currentPage || 1);
+        });
+    }, [bookId, book]);
 
     const lastUpdateRef = useRef(0);
     useEffect(() => {
@@ -258,24 +405,29 @@ function ReaderView() {
 
     if (!book) return null;
 
+    if (isLoading) {
+        return <BookSkeleton message={loadingMessage} />;
+    }
+
     return (
         <div
-            className="min-h-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-blue-200/50 relative overflow-hidden"
-            onClick={toggleNav}
+            className="h-[100dvh] max-h-[100dvh] w-screen bg-[#faf9f6] text-[#1a1a1a] font-serif selection:bg-blue-200/50 relative overflow-hidden"
+            onClick={closeNav}
         >
+            <ScrollOrientationOverlay visible={showScrollOverlay} />
             {/* Subtle Menu Trigger - Persistent at top */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
                 <button
                     onClick={(e) => { e.stopPropagation(); toggleNav(); }}
-                    className="group bg-white/40 hover:bg-white/90 backdrop-blur-md border border-slate-200/30 px-4 py-1.5 rounded-b-2xl transition-all hover:translate-y-0 -translate-y-[80%] flex items-center gap-2 shadow-sm"
+                    className={`group hover:bg-white/90 backdrop-blur-md border border-slate-200/50 px-4 py-1.5 rounded-b-2xl transition-all duration-700 hover:translate-y-0 flex items-center gap-2 shadow-sm ${showMenuBriefly ? 'translate-y-0 bg-white shadow-md' : 'bg-white/40 border-slate-200/30 -translate-y-[80%]'}`}
                 >
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-500 transition-colors" />
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">Menu</span>
-                    <Menu size={12} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
+                    <div className={`w-1.5 h-1.5 rounded-full transition-colors ${showMenuBriefly ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-blue-500'}`} />
+                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${showMenuBriefly ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>Menu</span>
+                    <Menu size={12} className={`transition-colors ${showMenuBriefly ? 'text-slate-500' : 'text-slate-300 group-hover:text-slate-600'}`} />
                 </button>
             </div>
 
-            <div className="flex h-screen overflow-hidden relative">
+            <div className="flex h-full max-h-full overflow-hidden relative">
                 {/* Far-left panel */}
                 {leftPanel && <LeftPanel setLeftPanel={setLeftPanel} readerControls={readerControls} pdfControls={pdfControls} />}
 
@@ -291,11 +443,13 @@ function ReaderView() {
                         onClose={() => setShowHighlightMenu(false)}
                         bookId={book?.id}
                         onSaveWord={addSavedWord}
+                        onHighlight={handleHighlight}
+                        onDictToggle={setIsDictOpen}
                     />
                 )}
 
                 {/* Main reading area */}
-                <div className="flex-1 relative min-w-0 flex flex-col overflow-hidden">
+                <div className="flex-1 relative min-w-0 flex flex-col h-full max-h-full overflow-hidden">
 
                     <ReaderNavBar
                         book={book}
@@ -321,6 +475,9 @@ function ReaderView() {
                                 onDocumentLoad={handleDocumentLoad}
                                 onNextPage={nextPage}
                                 onPrevPage={previousPage}
+                                numPages={numPages}
+                                goToPage={goToPage}
+                                highlights={book?.metadata?.highlights || []}
                                 locked={locked}
                                 windowSize={windowSize}
                             />
@@ -347,15 +504,22 @@ function ReaderView() {
 
                     {/* Image content */}
                     {fileUrl && !isPdf && (
-                        <div className="flex-1 flex justify-center overflow-auto p-4">
-                            <img src={fileUrl} alt="content" className="max-w-full max-h-[90vh] object-contain rounded-3xl shadow-2xl border-4 border-white/50" />
+                        <div className="flex-1 flex flex-col items-center justify-center lg:justify-start overflow-auto p-4 sm:p-8">
+                            <img src={fileUrl} alt="content" className="max-w-full max-h-[90vh] object-contain rounded-sm bg-white" />
                         </div>
                     )}
 
                     {/* Text content */}
                     {!fileUrl && (
-                        <div className="flex-1 overflow-auto">
-                            <div className="max-w-3xl mx-auto px-8 sm:px-12 py-8 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased">
+                        <div className="flex-1 overflow-auto h-full touch-auto flex flex-col items-center justify-center lg:justify-start">
+                            <div 
+                                className="max-w-3xl w-full mx-auto px-8 sm:px-12 py-12 lg:py-24 leading-[1.8] text-xl sm:text-2xl text-gray-800 antialiased"
+                                style={{ 
+                                    transform: `scale(${scale})`, 
+                                    transformOrigin: 'top center',
+                                    transition: 'transform 0.2s ease-out'
+                                }}
+                            >
                                 {textContent ? (
                                     <div className="whitespace-pre-wrap animate-in fade-in duration-1000">{textContent}</div>
                                 ) : book?.file ? (

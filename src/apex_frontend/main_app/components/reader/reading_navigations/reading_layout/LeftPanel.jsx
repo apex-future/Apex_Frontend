@@ -27,37 +27,38 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
 
   return (
     <aside
-      className='flex flex-col absolute inset-0 z-[200] bg-white/97 backdrop-blur-md md:relative md:inset-auto md:w-72 md:h-full md:border-r md:border-border-default md:shrink-0'
+      className="flex flex-col absolute inset-0 z-[200] bg-white md:relative md:inset-auto md:w-80 md:h-full md:border-r md:border-slate-100 md:shrink-0 font-sans shadow-2xl md:shadow-none"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
-      <div className='flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0'>
+      <div className="flex items-center justify-between px-5 py-5 border-b border-slate-50 shrink-0">
         {activeSection ? (
           /* Back to main nav when inside a section */
           <button
             onClick={() => setActiveSection(null)}
-            className='flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors'
+            className="flex items-center gap-2 text-base font-bold text-slate-800 hover:text-accent-primary transition-colors"
           >
-            <ChevronLeft size={16} strokeWidth={2} />
+            <ChevronLeft size={18} strokeWidth={2.5} />
             {NAV_ITEMS.find(n => n.id === activeSection)?.label}
           </button>
         ) : (
-          <h2 className='text-sm font-semibold text-gray-700 tracking-wide uppercase'>Contents</h2>
+          <h2 className="text-xs font-black text-slate-400 tracking-[0.2em] uppercase">Contents</h2>
         )}
         <button
           onClick={() => setLeftPanel(false)}
-          className='p-1.5 rounded-lg hover:bg-gray-100 transition-all text-gray-500'
+          className="p-2 rounded-full bg-slate-50 hover:bg-slate-100 transition-all text-slate-400 hover:text-slate-600"
         >
-          <X size={16} strokeWidth={1.5} />
+          <X size={18} strokeWidth={2} />
         </button>
       </div>
 
       {/* ── Body ── */}
-      <div className='flex-1 overflow-y-auto'>
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         {!activeSection && (
           /* Main nav list */
-          <div className='p-3 flex flex-col gap-1'>
-            {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
+          <div className="p-4 flex flex-col gap-4">
+            {NAV_ITEMS.map((item) => {
+              const { id, label, icon: ItemIcon } = item;
               const isBookmarksItem = id === 'bookmarks';
               const count = isBookmarksItem ? bookmarks.length : 0;
 
@@ -65,13 +66,15 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
                 <button
                   key={id}
                   onClick={() => handleNavClick(id)}
-                  className='flex items-center gap-3 p-2.5 rounded-xl text-sm text-gray-600 hover:bg-accent-primary/10 hover:text-accent-primary transition-all text-left w-full'
+                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-slate-700 bg-slate-50/50 hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full border border-transparent hover:border-accent-primary/10 group"
                 >
-                  <Icon size={16} strokeWidth={1.5} />
-                  <span className='flex-1'>{label}</span>
+                  <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-accent-primary transition-colors">
+                    <ItemIcon size={20} strokeWidth={2} />
+                  </div>
+                  <span className="flex-1 tracking-tight">{label}</span>
                   {/* Show bookmark count badge */}
                   {isBookmarksItem && count > 0 && (
-                    <span className='text-[10px] font-bold bg-accent-primary/15 text-accent-primary rounded-full px-2 py-0.5 tabular-nums'>
+                    <span className="text-[11px] font-black bg-accent-primary text-white rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
                       {count}
                     </span>
                   )}

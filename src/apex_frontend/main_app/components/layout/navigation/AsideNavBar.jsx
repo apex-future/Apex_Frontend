@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // Import Lucide icons for visual representation in the navigation
-import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu } from 'lucide-react';
+import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu, LogOut } from 'lucide-react';
 // Import navigation hooks and components from react-router-dom
 import { NavLink, useLocation } from 'react-router-dom';
 
@@ -8,7 +8,7 @@ import { NavLink, useLocation } from 'react-router-dom';
  * AsideNavBar Component:
  * Provides side navigation with support for both desktop (collapsible/sticky) and mobile (slide-over) layouts.
  */
-function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
+function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
   // useLocation: Hook to track the current URL, used for custom active state logic (especially hash handling)
   const location = useLocation();
   // isExpanded: State to toggle between the full-width (expanded) and icon-only (collapsed) sidebar views
@@ -50,7 +50,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
           bg-neutral-200/90 backdrop-blur-xl border-r border-neutral-300/80
           shadow-sm z-50
           transition-all duration-300 ease-in-out
-          flex flex-col h-screen
+          flex flex-col max-h-screen
           rounded-r-xl
           /* Layout Switching: Fixed on small screens, Sticky within flow on md+ screens */
           fixed md:sticky top-0 left-0 bottom-0 md:bottom-auto md:left-auto md:translate-x-0
@@ -165,6 +165,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                   }
                 `}
                 title={!isExpanded ? 'Settings' : ''}
+                onClick={() => isMobileOpen && closeMobileNav()}
               >
                 <Cog
                   size={20}
@@ -179,6 +180,35 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen }) {
                   Settings
                 </span>
               </NavLink>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  onLogout();
+                  isMobileOpen && closeMobileNav();
+                }}
+                className={`
+                  flex items-center px-3 py-2.5 rounded-full
+                  transition-all duration-300
+                  font-medium relative overflow-hidden w-full
+                  ${!isExpanded ? 'justify-center' : 'gap-3'}
+                  text-red-500 hover:bg-red-50 hover:text-red-600
+                `}
+                title={!isExpanded ? 'Logout' : ''}
+              >
+                <LogOut
+                  size={20}
+                  className={`flex-shrink-0 transition-colors z-10`}
+                />
+                <span
+                  className={`
+                    whitespace-nowrap transition-all duration-300 text-sm z-10
+                    ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
+                  `}
+                >
+                  Logout
+                </span>
+              </button>
             </li>
           </ul>
         </nav>

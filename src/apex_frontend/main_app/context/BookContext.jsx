@@ -1,6 +1,6 @@
-import React, { createContext, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { shelves as initialShelves } from '../data/shelves';
-import { getAllBooks, saveBook, updateBook, deleteBook } from '../utils/db';
+import db from '../../../db/apex.db';
 
 import { BookContext } from './BookContextInstance.jsx';
 
@@ -25,13 +25,44 @@ export const BookProvider = ({ children }) => {
   useEffect(() => {
     const loadBooks = async () => {
       try {
-        const storedBooks = await getAllBooks();
+        const storedBooks = await db.books.toArray();
 
         if (storedBooks && Array.isArray(storedBooks) && storedBooks.length > 0) {
+          // Reconstruct File objects from stored ArrayBuffers
+          const hydratedBooks = storedBooks.map(b => {
+            if (b.fileBlob && !b.file) {
+              const blob = new Blob([b.fileBlob], { type: b.fileType || 'application/pdf' });
+              const file = new File([blob], b.title + (b.fileType === 'application/epub+zip' ? '.epub' : '.pdf'), { type: b.fileType || 'application/pdf' });
+              return { ...b, file };
+            }
+            return b;
+          });
+
+          // Also load reading progress for each book
+          const progressRecords = await db.reading_progress.toArray();
+          const progressMap = {};
+          for (const p of progressRecords) {
+            if (!progressMap[p.bookId] || new Date(p.lastReadAt) > new Date(progressMap[p.bookId].lastReadAt)) {
+              progressMap[p.bookId] = p;
+            }
+          }
+
+          const booksWithProgress = hydratedBooks.map(b => {
+            const progress = progressMap[b.id];
+            if (progress) {
+              return {
+                ...b,
+                progress: progress.progressPercentage || b.progress || 0,
+                currentPage: progress.currentPage || b.currentPage || 1,
+              };
+            }
+            return b;
+          });
+
           setShelves(prevShelves => {
             const currentShelfNames = prevShelves.map(s => s.shelfName);
             return prevShelves.map(shelf => {
-              const shelfBooks = storedBooks.filter(b => {
+              const shelfBooks = booksWithProgress.filter(b => {
                 if (shelf.shelfName === 'Favorites') {
                   return b.isFavorite;
                 }
@@ -51,7 +82,7 @@ export const BookProvider = ({ children }) => {
           });
         }
       } catch (error) {
-        console.error("Failed to load books from IndexedDB:", error);
+        console.error("Failed to load books from Dexie:", error);
       }
     };
     loadBooks();
@@ -69,28 +100,73 @@ export const BookProvider = ({ children }) => {
       return;
     }
 
-    const newBook = {
-      id: Date.now(),
+    // Read file as ArrayBuffer for IndexedDB storage
+    const arrayBuffer = await fileObject.arrayBuffer();
+    const fileType = fileObject.type || 'application/pdf';
+
+    const newBookData = {
       title: title,
       author: "N/A",
+      fileType: fileType,
+      fileSize: fileObject.size,
+      fileBlob: arrayBuffer,
+      coverImage: null,
+      totalPages: 1,
+      uploadedAt: new Date().toISOString(),
+      lastReadAt: new Date().toISOString(),
+      // App-level fields (not in Dexie index, but stored)
       progress: 0,
       currentPage: 0,
-      totalPages: 1,
       status: 'new',
       shelfName: shelfName,
       lastAccessed: new Date().toISOString(),
       cover: null,
-      file: fileObject,
       isLocal: true,
+      isFavorite: false,
+      isBookmarked: false,
       metadata: {
-        bookmarks: [],   // [{ page, label, addedAt }]
-        highlights: [],  // reserved
-        notes: [],       // reserved
+        bookmarks: [],
+        highlights: [],
+        notes: [],
       },
     };
 
     try {
-      await saveBook(newBook);
+      // First add the book record to get the auto-generated ID
+      const newBookBase = { ...newBookData };
+      delete newBookBase.id; // Ensure no ID conflict
+      
+      const id = await db.books.add(newBookBase);
+      
+      // Update the record with its own ID as local_id for sync tracking
+      await db.books.update(id, { local_id: id.toString() });
+
+      // Add to sync_queue with local_id
+      await db.sync_queue.add({
+        action: 'upload',
+        tableName: 'books',
+        local_id: id.toString(),
+        payload: { 
+          title, 
+          author: "Unknown",
+          fileType, 
+          fileSize: fileObject.size,
+          uploadedAt: newBookData.uploadedAt
+        },
+        createdAt: new Date().toISOString(),
+        attempts: 0,
+        status: 'pending'
+      });
+
+      // Trigger immediate sync attempt
+      import('../../../services/syncService').then(m => m.default.triggerSync?.());
+
+      // Create in-memory book object with the File for immediate use
+      const newBook = {
+        ...newBookData,
+        id,
+        file: fileObject,
+      };
 
       setShelves((prevShelves) =>
         prevShelves.map((shelf) =>
@@ -100,7 +176,7 @@ export const BookProvider = ({ children }) => {
         )
       );
     } catch (error) {
-      console.error("Failed to save book to IndexedDB:", error);
+      console.error("Failed to save book to Dexie:", error);
     }
   }, [books]);
 
@@ -119,7 +195,25 @@ export const BookProvider = ({ children }) => {
       }));
 
       if (updatedBook) {
-        updateBook(updatedBook).catch(err => console.error("Failed to update progress in IDB:", err));
+        // Update in Dexie books table
+        db.books.update(id, { progress, currentPage, totalPages, lastReadAt: new Date().toISOString() })
+          .catch(err => console.error("Failed to update progress in Dexie:", err));
+
+        // Also save to reading_progress table (upsert by bookId)
+        db.reading_progress.where('bookId').equals(id).first().then(existing => {
+          const progressData = {
+            bookId: id,
+            currentPage,
+            scrollPosition: 0,
+            progressPercentage: progress,
+            lastReadAt: new Date().toISOString(),
+          };
+          if (existing) {
+            db.reading_progress.update(existing.id, progressData);
+          } else {
+            db.reading_progress.add(progressData);
+          }
+        }).catch(err => console.error("Failed to save reading progress:", err));
       }
       return newShelves;
     });
@@ -151,7 +245,8 @@ export const BookProvider = ({ children }) => {
       }));
 
       if (updatedBook) {
-        updateBook(updatedBook).catch(err => console.error('Failed to save bookmark:', err));
+        db.books.update(bookId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to save bookmark:', err));
       }
       return newShelves;
     });
@@ -175,7 +270,8 @@ export const BookProvider = ({ children }) => {
       }));
 
       if (updatedBook) {
-        updateBook(updatedBook).catch(err => console.error("Failed to update lastAccessed in IDB:", err));
+        db.books.update(targetId, { lastAccessed: new Date().toISOString(), lastReadAt: new Date().toISOString() })
+          .catch(err => console.error("Failed to update lastAccessed in Dexie:", err));
       }
       return newShelves;
     });
@@ -197,7 +293,8 @@ export const BookProvider = ({ children }) => {
       }));
 
       if (updatedBook) {
-        updateBook(updatedBook).catch(err => console.error("Failed to update favorite status:", err));
+        db.books.update(targetId, { isFavorite: updatedBook.isFavorite })
+          .catch(err => console.error("Failed to update favorite status:", err));
       }
       return newShelves;
     });
@@ -219,7 +316,8 @@ export const BookProvider = ({ children }) => {
       }));
 
       if (updatedBook) {
-        updateBook(updatedBook).catch(err => console.error("Failed to update bookmark status:", err));
+        db.books.update(targetId, { isBookmarked: updatedBook.isBookmarked })
+          .catch(err => console.error("Failed to update bookmark status:", err));
       }
       return newShelves;
     });
@@ -232,7 +330,11 @@ export const BookProvider = ({ children }) => {
         ...shelf,
         books: shelf.books.filter((book) => book.id !== targetId),
       }));
-      deleteBook(targetId).catch(err => console.error("Failed to delete book:", err));
+      // Delete from Dexie
+      db.books.delete(targetId).catch(err => console.error("Failed to delete book:", err));
+      // Also clean up related progress and highlights
+      db.reading_progress.where('bookId').equals(targetId).delete().catch(() => {});
+      db.highlights.where('bookId').equals(targetId).delete().catch(() => {});
       return newShelves;
     });
   }, []);
@@ -261,7 +363,8 @@ export const BookProvider = ({ children }) => {
         }),
       }));
       if (updatedBook) {
-        updateBook(updatedBook).catch(err => console.error('Failed to save word:', err));
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to save word:', err));
       }
       return newShelves;
     });
@@ -287,7 +390,62 @@ export const BookProvider = ({ children }) => {
         }),
       }));
       if (updatedBook) {
-        updateBook(updatedBook).catch(err => console.error('Failed to remove word:', err));
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to remove word:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
+  const addHighlight = useCallback(async (bookId, highlight) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existingHighlights = book.metadata?.highlights || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              highlights: [...existingHighlights, { ...highlight, id: Date.now() }],
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to save highlight:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
+  const removeHighlight = useCallback(async (bookId, highlightId) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existingHighlights = book.metadata?.highlights || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              highlights: existingHighlights.filter(h => h.id !== highlightId),
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to remove highlight:', err));
       }
       return newShelves;
     });
@@ -306,6 +464,8 @@ export const BookProvider = ({ children }) => {
       deleteBookFromShelves,
       addSavedWord,
       removeSavedWord,
+      addHighlight,
+      removeHighlight,
       showDuplicateModal,
       setShowDuplicateModal,
     }}>

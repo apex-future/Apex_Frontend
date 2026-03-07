@@ -9,7 +9,7 @@ function ReaderNavBar({ navigate, navState, setNavState, aiModal, setAiModal, le
   };
 
   return (
-    <div className="reading-nav-bar absolute inset-0 z-50 pointer-events-none">
+    <div className="reading-nav-bar fixed inset-0 z-50 pointer-events-none h-[100dvh]">
       {navState === 'first' && (
         <FirstLayerNavBar navigate={navigate} onDotsClick={handleDotsClick} readerControls={readerControls} />
       )}
