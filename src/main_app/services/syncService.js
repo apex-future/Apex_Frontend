@@ -84,6 +84,38 @@ const syncService = {
   },
 
   // ============================================
+  // DOWNLOAD BOOK FILE (lazy load missing blob)
+  // ============================================
+  downloadBookFile: async function (supabaseBookId, dexieBookId) {
+    if (!navigator.onLine) return null;
+
+    try {
+      // 1. Get signed URL from backend
+      const response = await apiClient.get(`/api/books/${supabaseBookId}/file`);
+      if (response.data && response.data.url) {
+        // 2. Fetch the actual file blob
+        const fileResponse = await fetch(response.data.url);
+        if (!fileResponse.ok) throw new Error('Failed to fetch file from signed URL');
+        
+        const blob = await fileResponse.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+
+        // 3. Save to Dexie for offline use
+        await db.books.update(dexieBookId, {
+          fileBlob: arrayBuffer,
+          fileType: blob.type
+        });
+
+        console.log(`Downloaded and cached file for book ${supabaseBookId}`);
+        return blob;
+      }
+    } catch (error) {
+      console.error('Failed to download book file:', error);
+    }
+    return null;
+  },
+
+  // ============================================
   // PULL ALL USER DATA (login / app load)
   // ============================================
   pullAllUserData: async function () {
@@ -172,7 +204,12 @@ const syncService = {
       // Components fetch them directly from the API when needed
 
       // Update last_synced_at
-      await db.app_settings.put({ key: 'last_synced_at', value: new Date().toISOString() });
+      const setting = await db.app_settings.where('key').equals('last_synced_at').first();
+      if (setting) {
+        await db.app_settings.update(setting.id, { value: new Date().toISOString() });
+      } else {
+        await db.app_settings.add({ key: 'last_synced_at', value: new Date().toISOString() });
+      }
 
       console.log('Pull sync complete: all user data hydrated');
     } catch (error) {

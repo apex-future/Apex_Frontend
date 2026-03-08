@@ -262,6 +262,40 @@ export const BookProvider = ({ children }) => {
     }
   }, [books]);
 
+  const downloadMissingFile = useCallback(async (bookId) => {
+    try {
+      const book = books.find(b => b.id === bookId);
+      if (!book) return null;
+
+      const supabaseId = book.supabaseId || book.recordId;
+      if (!supabaseId) {
+        console.error("Cannot download book: no supabase ID found");
+        return null; // Not synced to cloud
+      }
+
+      // Download file blob and cache it in Dexie
+      const blob = await syncService.downloadBookFile(supabaseId, bookId);
+      if (!blob) return null;
+
+      // Reconstruct the File object for the UI
+      const fileExt = book.fileType === 'application/epub+zip' ? '.epub' : '.pdf';
+      const fileName = book.title + fileExt;
+      const fileType = blob.type || book.fileType || 'application/pdf';
+      const file = new File([blob], fileName, { type: fileType });
+
+      // Update shelves state so the reader gets the actual file
+      setShelves(prevShelves => prevShelves.map(shelf => ({
+        ...shelf,
+        books: shelf.books.map(b => b.id === bookId ? { ...b, file, fileBlob: blob } : b)
+      })));
+
+      return file;
+    } catch (error) {
+      console.error("Failed to download missing file:", error);
+      return null;
+    }
+  }, [books]);
+
   const updateBookProgress = useCallback(async (id, progress, currentPage, totalPages) => {
     setShelves((prevShelves) => {
       let updatedBook = null;
@@ -624,6 +658,7 @@ export const BookProvider = ({ children }) => {
       shelves,
       books,
       addBookToShelf,
+      downloadMissingFile,
       updateBookProgress,
       handleBookClick,
       toggleBookmark,

@@ -11,7 +11,7 @@ db.version(4).stores({
   user_dictionary_history: '++id, userId, word, localId, synced, lookedUpAt',
   dictionary_cache: 'word, cachedAt',
   sync_queue: '++id, action, tableName, local_id, recordId, payload, createdAt, attempts, status',
-  app_settings: 'key',
+  app_settings: '++id, key, value',
 });
 
 export default db;

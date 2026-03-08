@@ -23,7 +23,7 @@ const ScrollOrientationOverlay = ({ visible }) => {
 };
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, downloadMissingFile } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -283,6 +283,19 @@ function ReaderView() {
     useEffect(() => {
         if (!book && bookId) {
             navigate('/');
+            return;
+        }
+
+        // Handle cloud download if file is missing locally
+        if (book && !book.file && (book.supabaseId || book.recordId)) {
+            setLoadingMessage("Downloading from cloud...");
+            downloadMissingFile(book.id).then(downloadedFile => {
+                if (!downloadedFile) {
+                    setLoadingMessage(navigator.onLine 
+                        ? "Failed to download book." 
+                        : "Connect to internet to download this book.");
+                }
+            });
             return;
         }
 
