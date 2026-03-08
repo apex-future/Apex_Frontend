@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Book, Volume2, ArrowLeft, Loader2, Sparkles, History } from 'lucide-react';
+import { Search, Book, Volume2, ArrowLeft, Loader2, Sparkles, History, WifiOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import dictionaryService from '../../services/dictionaryService';
 
 function Dictionary() {
     const [word, setWord] = useState('');
@@ -8,21 +9,33 @@ function Dictionary() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [history, setHistory] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(true);
     const navigate = useNavigate();
 
-    // Load history from localStorage
+    // Load history from backend on mount (Category B — online only)
     useEffect(() => {
-        const savedHistory = localStorage.getItem('apex_dictionary_history');
-        if (savedHistory) {
-            setHistory(JSON.parse(savedHistory));
-        }
+        const loadHistory = async () => {
+            setHistoryLoading(true);
+            try {
+                const entries = await dictionaryService.getHistory('general', null);
+                // Extract unique words from history entries
+                const uniqueWords = [];
+                const seen = new Set();
+                for (const entry of entries) {
+                    if (!seen.has(entry.word)) {
+                        seen.add(entry.word);
+                        uniqueWords.push(entry.word);
+                    }
+                }
+                setHistory(uniqueWords.slice(0, 10));
+            } catch (err) {
+                console.warn('Failed to load dictionary history:', err);
+            } finally {
+                setHistoryLoading(false);
+            }
+        };
+        loadHistory();
     }, []);
-
-    const saveToHistory = (newWord) => {
-        const updatedHistory = [newWord, ...history.filter(w => w !== newWord)].slice(0, 10);
-        setHistory(updatedHistory);
-        localStorage.setItem('apex_dictionary_history', JSON.stringify(updatedHistory));
-    };
 
     const fetchDefinition = async (searchWord) => {
         if (!searchWord.trim()) return;
@@ -30,11 +43,12 @@ function Dictionary() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${searchWord}`);
-            if (!response.ok) throw new Error('Word not found');
-            const data = await response.json();
-            setDefinition(data[0]);
-            saveToHistory(searchWord);
+            const result = await dictionaryService.lookupWord(searchWord.trim(), 'general', null);
+            // dictionaryService returns the raw API response (array or object)
+            const defData = Array.isArray(result) ? result[0] : result;
+            setDefinition(defData);
+            // Update local history display
+            setHistory(prev => [searchWord.trim(), ...prev.filter(w => w !== searchWord.trim())].slice(0, 10));
         } catch (err) {
             setError(err.message);
             setDefinition(null);
@@ -67,9 +81,6 @@ function Dictionary() {
                     </button>
 
                     <div className="flex items-center gap-2">
-                        {/* <div className="p-2 bg-accent-primary/10 rounded-lg text-accent-primary">
-                            <Book size={20} />
-                        </div> */}
                         <h1 className="text-xl font-bold font-display text-text-primary">Dictionary</h1>
                     </div>
 
@@ -81,9 +92,6 @@ function Dictionary() {
                 {/* Search Bar - Premium Thick Border System */}
                 <form onSubmit={handleSearch} className="mb-10">
                     <div className="relative group">
-                        {/* <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-                            <Search className="text-text-tertiary group-focus-within:text-accent-primary transition-colors" size={20} />
-                        </div> */}
                         <input
                             type="text"
                             value={word}
@@ -111,10 +119,17 @@ function Dictionary() {
                 {error && !loading && (
                     <div className="bg-red-50/50 border-2 border-red-100 rounded-2xl p-8 text-center animate-in slide-in-from-top-4 duration-500">
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
-                            <Sparkles size={28} />
+                            {error.includes('internet') ? <WifiOff size={28} /> : <Sparkles size={28} />}
                         </div>
-                        <h3 className="text-lg font-bold text-red-900 mb-2">Word not found</h3>
-                        <p className="text-red-700 font-medium">Sorry, we couldn't find a definition for "{word}". Please try another word.</p>
+                        <h3 className="text-lg font-bold text-red-900 mb-2">
+                            {error.includes('internet') ? 'You\'re offline' : 'Word not found'}
+                        </h3>
+                        <p className="text-red-700 font-medium">
+                            {error.includes('internet')
+                                ? 'Connect to the internet to look up new words. Previously looked up words are available offline.'
+                                : `Sorry, we couldn't find a definition for "${word}". Please try another word.`
+                            }
+                        </p>
                     </div>
                 )}
 

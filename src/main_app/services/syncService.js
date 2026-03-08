@@ -44,9 +44,38 @@ const syncService = {
         authStore.setUser(user);
       }
 
-      // Hydrate Dexie tables — clear existing, insert pulled data
-      // We do NOT clear the books table fileBlob data since pull doesn't include that
-      // Instead we merge: update metadata from Supabase but keep local fileBlob
+      // ---- Category A data → clear Dexie tables → insert pulled records ----
+      // Books: merge — keep local fileBlob, update metadata from Supabase
+      if (books && books.length > 0) {
+        const existingBooks = await db.books.toArray();
+        const existingBlobMap = {};
+        for (const eb of existingBooks) {
+          if (eb.fileBlob) {
+            // Key by supabaseId or local_id
+            const key = eb.supabaseId || eb.local_id || eb.id?.toString();
+            if (key) existingBlobMap[key] = eb.fileBlob;
+          }
+        }
+
+        await db.books.clear();
+        const mappedBooks = books.map(b => {
+          const mapped = {
+            ...mapSnakeToCamel(b),
+            supabaseId: b.id,
+            synced: true,
+          };
+          delete mapped.id; // Remove Supabase UUID to avoid Dexie auto-increment clash
+
+          // Restore fileBlob if we had it locally
+          const blobKey = b.id || b.local_id;
+          if (blobKey && existingBlobMap[blobKey]) {
+            mapped.fileBlob = existingBlobMap[blobKey];
+          }
+
+          return mapped;
+        });
+        await db.books.bulkAdd(mappedBooks);
+      }
 
       // Reading Progress
       if (reading_progress && reading_progress.length > 0) {
@@ -56,7 +85,6 @@ const syncService = {
           supabaseId: r.id,
           synced: true,
         }));
-        // Remove supabase 'id' to avoid clashing with Dexie auto-increment
         for (const m of mapped) { delete m.id; }
         await db.reading_progress.bulkAdd(mapped);
       }
@@ -73,18 +101,6 @@ const syncService = {
         await db.highlights.bulkAdd(mapped);
       }
 
-      // AI Conversations
-      if (ai_conversations && ai_conversations.length > 0) {
-        await db.ai_conversations.clear();
-        const mapped = ai_conversations.map(c => ({
-          ...mapSnakeToCamel(c),
-          supabaseId: c.id,
-          synced: true,
-        }));
-        for (const m of mapped) { delete m.id; }
-        await db.ai_conversations.bulkAdd(mapped);
-      }
-
       // Bookmarks
       if (bookmarks && bookmarks.length > 0) {
         await db.bookmarks.clear();
@@ -97,16 +113,12 @@ const syncService = {
         await db.bookmarks.bulkAdd(mapped);
       }
 
-      // Dictionary History
-      if (user_dictionary_history && user_dictionary_history.length > 0) {
-        await db.user_dictionary_history.clear();
-        const mapped = user_dictionary_history.map(d => ({
-          ...mapSnakeToCamel(d),
-          synced: true,
-        }));
-        for (const m of mapped) { delete m.id; }
-        await db.user_dictionary_history.bulkAdd(mapped);
-      }
+      // ---- Category B data → Zustand only (no Dexie) ----
+      // AI Conversations — store in Zustand for components to read
+      // (Components that need these should read from Zustand or fetch from API directly)
+      // We don't store in Dexie as per Category B rules
+
+      // Dictionary History — same, Category B, no Dexie
 
       // Update last_synced_at
       await db.app_settings.put({ key: 'last_synced_at', value: new Date().toISOString() });
@@ -158,6 +170,7 @@ const syncService = {
           supabaseId: response.data.id,
           synced: true,
         });
+        this._triggerDebouncedFlush();
         return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
       } catch (error) {
         console.error('Failed to save highlight to Supabase:', error);
@@ -254,6 +267,7 @@ const syncService = {
             synced: true,
           });
         }
+        this._triggerDebouncedFlush();
       } catch (error) {
         console.error('Failed to save progress to Supabase:', error);
         await this._queueForSync('upload', 'reading_progress', existing?.localId || localId, {
@@ -308,6 +322,7 @@ const syncService = {
           supabaseId: response.data.id,
           synced: true,
         });
+        this._triggerDebouncedFlush();
         return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
       } catch (error) {
         console.error('Failed to save bookmark to Supabase:', error);
@@ -342,44 +357,31 @@ const syncService = {
   },
 
   // ============================================
-  // DIRECT SAVE — AI CONVERSATIONS (no debounce)
+  // DIRECT SAVE — AI CONVERSATIONS (Category B — no Dexie)
   // ============================================
   saveAIConversation: async function (conversationData) {
-    const localId = generateLocalId();
-    const now = new Date().toISOString();
-
-    const dexieRecord = {
-      localId,
-      bookId: conversationData.book_id || null,
-      chatType: conversationData.chat_type || 'general',
-      queryText: conversationData.query_text,
-      aiResponse: conversationData.ai_response,
-      pageNumber: conversationData.page_number || null,
-      createdAt: now,
-      synced: true, // Backend already saves during streaming
-      supabaseId: null,
-    };
-
-    await db.ai_conversations.add(dexieRecord);
-  },
-
-  // ============================================
-  // DIRECT SAVE — DICTIONARY HISTORY
-  // ============================================
-  saveDictionaryLookup: async function (word) {
-    const now = new Date().toISOString();
-    await db.user_dictionary_history.add({
-      word: word.toLowerCase(),
-      localId: generateLocalId(),
-      lookedUpAt: now,
-      synced: true, // Backend already saves via dictionary endpoint
-    });
+    // Category B: AI conversations are saved by the backend during streaming.
+    // This is kept as a no-op placeholder for consistency.
+    // The backend saves the conversation after streaming completes.
+    console.log('AI conversation saved by backend during streaming');
   },
 
   // ============================================
   // SYNC QUEUE HELPER
   // ============================================
   _queueForSync: async function (action, tableName, localId, payload) {
+    // Cap queue at 500 items — purge oldest synced if exceeded
+    const queueCount = await db.sync_queue.count();
+    if (queueCount >= 500) {
+      const oldSynced = await db.sync_queue
+        .where('status').equals('synced')
+        .sortBy('createdAt');
+      const toDelete = oldSynced.slice(0, Math.max(50, queueCount - 450));
+      for (const item of toDelete) {
+        await db.sync_queue.delete(item.id);
+      }
+    }
+
     await db.sync_queue.add({
       action,
       tableName,
@@ -407,59 +409,105 @@ const syncService = {
 
       console.log(`Sync: Pushing ${queueItems.length} pending items...`);
 
-      const payload = {
-        queue: queueItems.map(item => ({
-          action: item.action,
-          table_name: item.tableName,
-          local_id: item.local_id,
-          record_id: item.recordId,
-          payload: { ...item.payload, local_queue_id: item.id }
-        }))
-      };
+      // Process in batches of 50
+      const batchSize = 50;
+      for (let i = 0; i < queueItems.length; i += batchSize) {
+        const batch = queueItems.slice(i, i + batchSize);
 
-      const response = await apiClient.post('/api/sync', payload);
+        const payload = {
+          queue: batch.map(item => ({
+            action: item.action,
+            table_name: item.tableName,
+            local_id: item.local_id,
+            record_id: item.recordId,
+            payload: { ...item.payload, local_queue_id: item.id }
+          }))
+        };
 
-      if (response.data) {
-        const { synced, failed } = response.data;
+        try {
+          const response = await apiClient.post('/api/sync', payload);
 
-        for (const item of synced) {
-          const tableName = item.tableName || 'books';
-          try {
-            await db[tableName].update(parseInt(item.local_id), {
-              recordId: item.record_id
-            });
-          } catch (err) {
-            console.warn(`Sync: Could not update local record for ${tableName}:`, err);
+          if (response.data) {
+            const { synced, failed } = response.data;
+
+            for (const item of synced) {
+              const tableName = item.tableName || 'books';
+              try {
+                // Update the local Dexie record with supabaseId
+                const localRecord = await db[tableName]
+                  .where('local_id').equals(item.local_id)
+                  .first()
+                  .catch(() => null);
+
+                if (localRecord) {
+                  await db[tableName].update(localRecord.id, {
+                    supabaseId: item.record_id,
+                    synced: true,
+                  });
+                }
+              } catch (err) {
+                console.warn(`Sync: Could not update local record for ${tableName}:`, err);
+              }
+
+              // Mark queue item as synced
+              if (item.local_queue_id) {
+                await db.sync_queue.update(item.local_queue_id, {
+                  status: 'synced'
+                });
+              }
+            }
+
+            for (const item of failed) {
+              const queueItem = batch.find(q => q.local_id === item.local_id);
+              if (queueItem) {
+                const attempts = (queueItem.attempts || 0) + 1;
+                await db.sync_queue.update(queueItem.id, {
+                  attempts,
+                  status: attempts >= 3 ? 'failed' : 'pending'
+                });
+              }
+            }
+
+            if (synced.length > 0) {
+              console.log(`Sync: Successfully pushed ${synced.length} items (batch ${Math.floor(i / batchSize) + 1})`);
+            }
+            if (failed.length > 0) {
+              console.warn(`Sync: ${failed.length} items failed in batch`, failed);
+            }
           }
+        } catch (batchError) {
+          console.error(`Sync: Batch ${Math.floor(i / batchSize) + 1} failed:`, batchError);
+        }
+      }
 
-          if (item.local_queue_id) {
-            await db.sync_queue.update(item.local_queue_id, {
-              status: 'synced'
-            });
-          }
+      // Clean up: delete synced items older than 7 days
+      try {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const oldSynced = await db.sync_queue
+          .where('status').equals('synced')
+          .filter(item => item.createdAt < sevenDaysAgo)
+          .toArray();
+        for (const item of oldSynced) {
+          await db.sync_queue.delete(item.id);
         }
-
-        for (const item of failed) {
-          const queueItem = queueItems.find(q => q.local_id === item.local_id);
-          if (queueItem) {
-            const attempts = (queueItem.attempts || 0) + 1;
-            await db.sync_queue.update(queueItem.id, {
-              attempts,
-              status: attempts > 3 ? 'failed' : 'pending'
-            });
-          }
+        if (oldSynced.length > 0) {
+          console.log(`Sync: Cleaned up ${oldSynced.length} old synced queue items`);
         }
-
-        if (synced.length > 0) {
-          console.log(`Sync: Successfully pushed ${synced.length} items`);
-        }
-        if (failed.length > 0) {
-          console.warn(`Sync: ${failed.length} items failed to push`, failed);
-        }
+      } catch (cleanupErr) {
+        console.warn('Sync queue cleanup failed:', cleanupErr);
       }
     } catch (error) {
       console.error('Push sync failed:', error);
     }
+  },
+
+  // Debounced flush trigger — called after every successful Category A save
+  _flushTimeout: null,
+  _triggerDebouncedFlush: function () {
+    if (this._flushTimeout) clearTimeout(this._flushTimeout);
+    this._flushTimeout = setTimeout(() => {
+      if (navigator.onLine) this.pushSync();
+    }, 3000);
   },
 
   // ============================================
@@ -478,14 +526,8 @@ const syncService = {
       this.pushSync();
     });
 
-    // Debounced trigger helper for legacy sync_queue pattern
-    let timeoutId;
-    this.triggerSync = () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        if (navigator.onLine) this.pushSync();
-      }, 3000);
-    };
+    // Legacy triggerSync alias
+    this.triggerSync = () => this._triggerDebouncedFlush();
   },
 
   // ============================================
@@ -503,6 +545,8 @@ const syncService = {
           await this.pullAllUserData();
           await this.pushSync();
         }
+        // If offline, Dexie already has Category A data from last sync
+        // Category B data (AI convos, dict history) will be empty but that's expected
       } catch (error) {
         console.error('Auth verification failed:', error);
         authStore.clearUser();
@@ -518,7 +562,7 @@ const syncService = {
   migrateLocalData: async function () {
     try {
       const allBooks = await db.books.toArray();
-      const unsyncedBooks = allBooks.filter(b => !b.recordId);
+      const unsyncedBooks = allBooks.filter(b => !b.recordId && !b.supabaseId);
 
       if (unsyncedBooks.length === 0) {
         console.log('Migration: No local data to migrate');

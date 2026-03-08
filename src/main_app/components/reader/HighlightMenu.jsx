@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check } from 'lucide-react';
+import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff } from 'lucide-react';
+import dictionaryService from '../../services/dictionaryService';
 
 function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHighlight, onDictToggle }) {
     const [definition, setDefinition] = useState(null);
@@ -21,10 +22,11 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
         setWordSaved(false);
         try {
             const cleanWord = searchWord.trim().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
-            const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`);
-            if (!response.ok) throw new Error('Word not found');
-            const data = await response.json();
-            setDefinition(data[0]);
+            // Use dictionaryService with in_reader context
+            const result = await dictionaryService.lookupWord(cleanWord, 'in_reader', bookId);
+            // dictionaryService returns the raw API response (array or object)
+            const defData = Array.isArray(result) ? result[0] : result;
+            setDefinition(defData);
         } catch (err) {
             setError(err.message);
             setDefinition(null);
@@ -122,7 +124,18 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                                 <Loader2 size={28} className="animate-spin text-blue-500 opacity-60" />
                             </div>
                         ) : error ? (
-                            <p className="text-sm text-red-500 py-6 font-medium font-sans italic">"{selection}" not found.</p>
+                            <div className="py-6">
+                                {error.includes('internet') ? (
+                                    <div className="flex flex-col items-center gap-2 text-center">
+                                        <WifiOff size={24} className="text-amber-500" />
+                                        <p className="text-sm text-amber-700 font-medium font-sans">
+                                            Connect to internet to look up new words
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-red-500 font-medium font-sans italic">"{selection}" not found.</p>
+                                )}
+                            </div>
                         ) : definition && (
                             <div className="max-h-64 overflow-y-auto custom-scrollbar pr-1">
                                 <div className="flex items-center justify-between gap-3 mb-3">
