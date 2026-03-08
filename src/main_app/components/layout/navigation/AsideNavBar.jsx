@@ -30,7 +30,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
     { icon: Book, label: 'Book Shelf', path: '/bookshelf' },
     { icon: WholeWord, label: 'Dictionary', path: '/dictionary' },
     { icon: Sparkle, label: 'ApexAi', path: '/ai' },
-    { icon: Pen, label: 'Notes', path: '#notes' },
+    { icon: Pen, label: 'Notes', path: '/notes' },
   ];
 
   return (
@@ -47,7 +47,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
       {/* Sidebar: Main container for the navigation links */}
       <aside
         className={`
-          bg-neutral-200/90 backdrop-blur-xl border-r border-neutral-300/80
+          bg-bg-elevated/90 backdrop-blur-xl border-r border-border-default/80
           shadow-sm z-50
           transition-all duration-300 ease-in-out
           flex flex-col max-h-screen
@@ -64,25 +64,25 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
         `}
       >
         {/* Sidebar Header: Contains the close button (mobile) or the toggle button (desktop) */}
-        <div className={`flex items-center h-16 px-4 border-b border-neutral-300/80 flex-shrink-0 ${!isExpanded ? 'justify-center' : 'justify-between'}`}>
+        <div className={`flex items-center h-16 px-4 border-b border-border-default flex-shrink-0 ${!isExpanded ? 'justify-center' : 'justify-between'}`}>
           {/* X button for mobile dismissal */}
           {isExpanded && (
             <button
               onClick={closeMobileNav}
-              className="md:hidden p-2 hover:bg-white/50 rounded-lg transition-colors"
+              className="md:hidden p-2 hover:bg-bg-subtle rounded-lg transition-colors"
               aria-label="Close menu"
             >
-              <X size={20} className="text-neutral-700" />
+              <X size={20} className="text-text-primary" />
             </button>
           )}
 
           {/* Menu button for desktop expansion/collapse toggle */}
           <button
             onClick={toggleNavLink}
-            className="hidden md:flex items-center justify-center p-2 hover:bg-white/50 rounded-lg transition-colors"
+            className="hidden md:flex items-center justify-center p-2 hover:bg-bg-subtle rounded-lg transition-colors"
             aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
           >
-            <Menu size={20} className="text-neutral-700" />
+            <Menu size={20} className="text-text-primary" />
           </button>
         </div>
 
@@ -127,8 +127,8 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                 font-medium relative group w-full
                 ${!isExpanded ? 'justify-center' : 'gap-3'}
                 ${isActive
-                  ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm'
-                  : 'text-neutral-600 hover:bg-neutral-300/50 hover:text-neutral-900'
+                  ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default shadow-sm'
+                  : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
                 }
               `;
 
@@ -150,20 +150,16 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
           </ul>
 
           {/* Footer Navigation Section: Separated by a border, used for settings or low-priority links */}
-          <ul className="border-t border-neutral-300/80 pt-4 mt-4">
+          <ul className="border-t border-border-default pt-4 mt-4">
             <li>
               <NavLink
                 to="/settings"
-                className={`
-                  flex items-center px-3 py-2.5 rounded-full
-                  transition-all duration-300
-                  font-medium relative overflow-hidden
+                className={`flex items-center p-3 rounded-xl transition-all duration-300 
                   ${!isExpanded ? 'justify-center' : 'gap-3'}
                   ${location.pathname === '/settings'
-                    ? 'bg-gradient-to-r from-accent-primary/20 via-neutral-300/80 to-neutral-300 text-neutral-900 border border-neutral-300/60 shadow-sm'
-                    : 'text-neutral-600 hover:bg-white/50 hover:text-neutral-900'
-                  }
-                `}
+                    ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default shadow-sm'
+                    : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
+                  }`}
                 title={!isExpanded ? 'Settings' : ''}
                 onClick={() => isMobileOpen && closeMobileNav()}
               >

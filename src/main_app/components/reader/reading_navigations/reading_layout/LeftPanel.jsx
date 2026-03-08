@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
-import { BookOpen, List, Bookmark, X, ChevronLeft } from 'lucide-react'
+import { BookOpen, List, Bookmark, X, ChevronLeft, Heart } from 'lucide-react'
 import BookmarksView from './BookmarksView'
+import SidebarNotesView from './SidebarNotesView'
 
 const NAV_ITEMS = [
   { id: 'toc', icon: List, label: 'Table of Contents' },
   { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
-  { id: 'annotations', icon: BookOpen, label: 'Annotations' },
+  { id: 'notes', icon: BookOpen, label: 'Notes' },
 ];
 
 function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
@@ -14,6 +15,14 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
   const {
     bookmarks = [],
     onRemoveBookmark,
+    notes = [],
+    addNote,
+    updateNote,
+    deleteNote,
+    isFavorite,
+    onToggleFavorite,
+    isBookmarkedBook,
+    onToggleBookmarkedBook,
   } = readerControls || {};
 
   function handleNavClick(id) {
@@ -27,26 +36,26 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[200] bg-white md:relative md:inset-auto md:w-80 md:h-full md:border-r md:border-slate-100 md:shrink-0 font-sans shadow-2xl md:shadow-none"
+      className="flex flex-col absolute inset-0 z-[200] bg-bg-elevated md:relative md:inset-auto md:w-80 md:h-full md:border-r md:border-border-default md:shrink-0 font-sans shadow-2xl md:shadow-none"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 py-5 border-b border-slate-50 shrink-0">
+      <div className="flex items-center justify-between px-5 py-5 border-b border-border-default shrink-0">
         {activeSection ? (
           /* Back to main nav when inside a section */
           <button
             onClick={() => setActiveSection(null)}
-            className="flex items-center gap-2 text-base font-bold text-slate-800 hover:text-accent-primary transition-colors"
+            className="flex items-center gap-2 text-base font-bold text-text-primary hover:text-accent-primary transition-colors"
           >
             <ChevronLeft size={18} strokeWidth={2.5} />
             {NAV_ITEMS.find(n => n.id === activeSection)?.label}
           </button>
         ) : (
-          <h2 className="text-xs font-black text-slate-400 tracking-[0.2em] uppercase">Contents</h2>
+          <h2 className="text-xs font-black text-text-tertiary tracking-[0.2em] uppercase">Contents</h2>
         )}
         <button
           onClick={() => setLeftPanel(false)}
-          className="p-2 rounded-full bg-slate-50 hover:bg-slate-100 transition-all text-slate-400 hover:text-slate-600"
+          className="p-2 rounded-full bg-bg-subtle hover:bg-bg-subtle transition-all text-text-tertiary hover:text-text-secondary"
         >
           <X size={18} strokeWidth={2} />
         </button>
@@ -55,26 +64,58 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
       {/* ── Body ── */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {!activeSection && (
+          /* Book Status Summary */
+          <div className="px-5 py-5 flex items-center justify-between border-b border-border-default bg-bg-subtle/10">
+            <div className="flex flex-col gap-1.5 w-full">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary px-1">Book Status</span>
+              <div className="flex items-center gap-4 mt-1">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(); }}
+                  className={`flex items-center gap-2 p-2 rounded-xl border transition-all duration-300 flex-1 justify-center ${isFavorite
+                      ? 'border-red-100 bg-red-50/50 text-red-500 shadow-sm'
+                      : 'border-transparent bg-bg-subtle/50 text-text-tertiary hover:border-red-100 hover:text-red-400'
+                    }`}
+                >
+                  <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} strokeWidth={isFavorite ? 0 : 2} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider">{isFavorite ? 'Saved' : 'Save'}</span>
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleBookmarkedBook?.(); }}
+                  className={`flex items-center gap-2 p-2 rounded-xl border transition-all duration-300 flex-1 justify-center ${isBookmarkedBook
+                      ? 'border-accent-primary/20 bg-accent-primary/5 text-accent-primary shadow-sm'
+                      : 'border-transparent bg-bg-subtle/50 text-text-tertiary hover:border-accent-primary/20 hover:text-accent-primary'
+                    }`}
+                >
+                  <Bookmark size={15} fill={isBookmarkedBook ? 'currentColor' : 'none'} strokeWidth={isBookmarkedBook ? 0 : 2} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider">{isBookmarkedBook ? 'Marked' : 'Mark'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!activeSection && (
           /* Main nav list */
           <div className="p-4 flex flex-col gap-4">
             {NAV_ITEMS.map((item) => {
               const { id, label, icon: ItemIcon } = item;
               const isBookmarksItem = id === 'bookmarks';
-              const count = isBookmarksItem ? bookmarks.length : 0;
+              const isNotesItem = id === 'notes';
+              const count = isBookmarksItem ? bookmarks.length : isNotesItem ? notes.length : 0;
 
               return (
                 <button
                   key={id}
                   onClick={() => handleNavClick(id)}
-                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-slate-700 bg-slate-50/50 hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full border border-transparent hover:border-accent-primary/10 group"
+                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-text-secondary bg-bg-subtle/50 hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full border border-transparent hover:border-accent-primary/10 group"
                 >
-                  <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-accent-primary transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-bg-elevated shadow-sm flex items-center justify-center text-text-tertiary group-hover:text-accent-primary transition-colors">
                     <ItemIcon size={20} strokeWidth={2} />
                   </div>
                   <span className="flex-1 tracking-tight">{label}</span>
                   {/* Show bookmark count badge */}
                   {isBookmarksItem && count > 0 && (
-                    <span className="text-[11px] font-black bg-accent-primary text-white rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
+                    <span className="text-[11px] font-black bg-accent-primary text-bg-elevated rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
                       {count}
                     </span>
                   )}
@@ -96,23 +137,22 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
         {/* Table of contents — placeholder */}
         {activeSection === 'toc' && (
           <div className='flex flex-col items-center justify-center py-12 px-4 text-center'>
-            <div className='w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3'>
-              <List size={22} className='text-gray-400' strokeWidth={1.5} />
+            <div className='w-12 h-12 rounded-2xl bg-bg-subtle flex items-center justify-center mb-3'>
+              <List size={22} className='text-text-tertiary' strokeWidth={1.5} />
             </div>
-            <p className='text-sm font-semibold text-gray-500'>Table of Contents</p>
-            <p className='text-xs text-gray-400 mt-1'>Coming soon</p>
+            <p className='text-sm font-semibold text-text-secondary'>Table of Contents</p>
+            <p className='text-xs text-text-tertiary mt-1'>Coming soon</p>
           </div>
         )}
 
-        {/* Annotations — placeholder */}
-        {activeSection === 'annotations' && (
-          <div className='flex flex-col items-center justify-center py-12 px-4 text-center'>
-            <div className='w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3'>
-              <BookOpen size={22} className='text-gray-400' strokeWidth={1.5} />
-            </div>
-            <p className='text-sm font-semibold text-gray-500'>Annotations</p>
-            <p className='text-xs text-gray-400 mt-1'>Coming soon</p>
-          </div>
+        {/* Notes section */}
+        {activeSection === 'notes' && (
+          <SidebarNotesView
+            notes={notes}
+            addNote={addNote}
+            updateNote={updateNote}
+            deleteNote={deleteNote}
+          />
         )}
       </div>
     </aside>

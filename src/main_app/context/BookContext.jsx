@@ -154,7 +154,7 @@ export const BookProvider = ({ children }) => {
     // Duplicate Check: Check if a book with the same title already exists
     const title = fileObject.name || "New Document";
     const isDuplicate = books.some(b => b.title.toLowerCase() === title.toLowerCase());
-    
+
     if (isDuplicate) {
       setShowDuplicateModal(true);
       return;
@@ -195,9 +195,9 @@ export const BookProvider = ({ children }) => {
       // First add the book record to get the auto-generated ID
       const newBookBase = { ...newBookData };
       delete newBookBase.id; // Ensure no ID conflict
-      
+
       const id = await db.books.add(newBookBase);
-      
+
       // Update the record with its own ID as local_id for sync tracking
       await db.books.update(id, { local_id: id.toString() });
 
@@ -406,17 +406,38 @@ export const BookProvider = ({ children }) => {
   const toggleFavorite = useCallback(async (bookId) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
     setShelves((prevShelves) => {
+      // Find the updated book state first
       let updatedBook = null;
-      const newShelves = prevShelves.map((shelf) => ({
-        ...shelf,
-        books: shelf.books.map((book) => {
-          if (book.id === targetId) {
-            updatedBook = { ...book, isFavorite: !book.isFavorite };
-            return updatedBook;
+      prevShelves.forEach(shelf => {
+        const found = shelf.books.find(b => b.id === targetId);
+        if (found) updatedBook = { ...found, isFavorite: !found.isFavorite };
+      });
+
+      if (!updatedBook) return prevShelves;
+
+      // Map over all shelves to ensure the book is added to/removed from 'Favorites'
+      const newShelves = prevShelves.map((shelf) => {
+        if (shelf.shelfName === 'Favorites') {
+          if (updatedBook.isFavorite) {
+            const exists = shelf.books.some(b => b.id === targetId);
+            return {
+              ...shelf,
+              books: exists
+                ? shelf.books.map(b => b.id === targetId ? updatedBook : b)
+                : [...shelf.books, updatedBook]
+            };
+          } else {
+            return { ...shelf, books: shelf.books.filter(b => b.id !== targetId) };
           }
-          return book;
-        }),
-      }));
+        }
+        return {
+          ...shelf,
+          books: shelf.books.map(b => b.id === targetId ? updatedBook : b)
+        };
+      });
+
+      db.books.update(targetId, { isFavorite: updatedBook.isFavorite })
+        .catch(err => console.error("Failed to update favorite status:", err));
 
       if (updatedBook) {
         db.books.update(targetId, { isFavorite: updatedBook.isFavorite })
@@ -445,17 +466,38 @@ export const BookProvider = ({ children }) => {
   const toggleBookmarkedBook = useCallback(async (bookId) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
     setShelves((prevShelves) => {
+      // Find the updated book state first
       let updatedBook = null;
-      const newShelves = prevShelves.map((shelf) => ({
-        ...shelf,
-        books: shelf.books.map((book) => {
-          if (book.id === targetId) {
-            updatedBook = { ...book, isBookmarked: !book.isBookmarked };
-            return updatedBook;
+      prevShelves.forEach(shelf => {
+        const found = shelf.books.find(b => b.id === targetId);
+        if (found) updatedBook = { ...found, isBookmarked: !found.isBookmarked };
+      });
+
+      if (!updatedBook) return prevShelves;
+
+      // Map over all shelves to ensure the book is added to/removed from 'Bookmarks'
+      const newShelves = prevShelves.map((shelf) => {
+        if (shelf.shelfName === 'Bookmarks') {
+          if (updatedBook.isBookmarked) {
+            const exists = shelf.books.some(b => b.id === targetId);
+            return {
+              ...shelf,
+              books: exists
+                ? shelf.books.map(b => b.id === targetId ? updatedBook : b)
+                : [...shelf.books, updatedBook]
+            };
+          } else {
+            return { ...shelf, books: shelf.books.filter(b => b.id !== targetId) };
           }
-          return book;
-        }),
-      }));
+        }
+        return {
+          ...shelf,
+          books: shelf.books.map(b => b.id === targetId ? updatedBook : b)
+        };
+      });
+
+      db.books.update(targetId, { isBookmarked: updatedBook.isBookmarked })
+        .catch(err => console.error("Failed to update bookmark status:", err));
 
       if (updatedBook) {
         db.books.update(targetId, { isBookmarked: updatedBook.isBookmarked })
@@ -511,8 +553,8 @@ export const BookProvider = ({ children }) => {
       // Delete from Dexie
       db.books.delete(targetId).catch(err => console.error("Failed to delete book:", err));
       // Also clean up related progress and highlights
-      db.reading_progress.where('bookId').equals(targetId).delete().catch(() => {});
-      db.highlights.where('bookId').equals(targetId).delete().catch(() => {});
+      db.reading_progress.where('bookId').equals(targetId).delete().catch(() => { });
+      db.highlights.where('bookId').equals(targetId).delete().catch(() => { });
       return newShelves;
     });
   }, []);
@@ -655,6 +697,87 @@ export const BookProvider = ({ children }) => {
     });
   }, []);
 
+  const addNote = useCallback(async (bookId, text) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existingNotes = book.metadata?.notes || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              notes: [{ id: Date.now().toString(), text, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...existingNotes],
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to add note:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
+  const updateNote = useCallback(async (bookId, noteId, text) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existingNotes = book.metadata?.notes || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              notes: existingNotes.map(n => n.id === noteId ? { ...n, text, updatedAt: new Date().toISOString() } : n),
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to update note:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
+  const deleteNote = useCallback(async (bookId, noteId) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existingNotes = book.metadata?.notes || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              notes: existingNotes.filter(n => n.id !== noteId),
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to delete note:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
   return (
     <BookContext.Provider value={{
       shelves,
@@ -671,6 +794,9 @@ export const BookProvider = ({ children }) => {
       removeSavedWord,
       addHighlight,
       removeHighlight,
+      addNote,
+      updateNote,
+      deleteNote,
       showDuplicateModal,
       setShowDuplicateModal,
     }}>

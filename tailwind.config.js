@@ -115,33 +115,38 @@ export default {
         'full': '9999px',
       },
       colors: {
-        // Backgrounds (Light & Dark)
-        'bg-primary': '#FAFAFA',
-        'bg-elevated': '#FFFFFF',
-        'bg-subtle': '#F3F4F6',
-        'bg-dark-primary': '#0A0A0A',
-        'bg-dark-elevated': '#171717',
-        'bg-dark-subtle': '#262626',
+        // Backgrounds
+        'bg-primary': 'rgb(var(--bg-primary) / <alpha-value>)',
+        'bg-elevated': 'rgb(var(--bg-elevated) / <alpha-value>)',
+        'bg-subtle': 'rgb(var(--bg-subtle) / <alpha-value>)',
 
-        // Text (Light & Dark)
-        'text-primary': '#0A0A0A',
-        'text-secondary': '#404040',
-        'text-tertiary': '#737373',
-        'text-placeholder': '#A3A3A3',
+        // Keep explicit dark backgrounds for backward compatibility if hardcoded somewhere, 
+        // though not strictly needed anymore.
+        'bg-dark-primary': '#121212',
+        'bg-dark-elevated': '#1c1c1e',
+        'bg-dark-subtle': '#262628',
+
+        // Text
+        'text-primary': 'rgb(var(--text-primary) / <alpha-value>)',
+        'text-secondary': 'rgb(var(--text-secondary) / <alpha-value>)',
+        'text-tertiary': 'rgb(var(--text-tertiary) / <alpha-value>)',
+        'text-placeholder': 'rgb(var(--text-placeholder) / <alpha-value>)',
+
+        // Dark text fallback
         'text-dark-primary': '#FAFAFA',
         'text-dark-secondary': '#D4D4D4',
         'text-dark-tertiary': '#A3A3A3',
 
-        // Borders (same for both modes)
-        'border-default': '#E5E5E5',
-        'border-subtle': '#F3F4F6',
+        // Borders
+        'border-default': 'rgb(var(--border-default) / <alpha-value>)',
+        'border-subtle': 'rgb(var(--border-subtle) / <alpha-value>)',
 
         // Accent - Purple (same for both modes)
         'accent': {
           primary: '#8B5CF6',
           hover: '#A78BFA',
           pressed: '#7C3AED',
-          subtle: '#F3E8FF',
+          subtle: 'rgba(139, 92, 246, 0.15)', // Changed to use rgba for better dark mode visibility
         },
 
         // Semantic (same for both modes)
@@ -152,9 +157,9 @@ export default {
 
         // Card Backgrounds - Glassmorphic Neutrals
         'card': {
-          glass: 'rgba(255, 255, 255, 0.6)', // Use with backdrop-blur
-          'glass-border': 'rgba(229, 229, 229, 1)', // #E5E5E5
-          'glass-hover': 'rgba(212, 212, 212, 1)', // Slightly darker for hover
+          glass: 'rgba(var(--card-glass) / 0.6)', // Use with backdrop-blur
+          'glass-border': 'rgb(var(--card-glass-border) / <alpha-value>)',
+          'glass-hover': 'rgb(var(--card-glass-hover) / <alpha-value>)',
         },
 
         // Icon Backgrounds - Monochrome Gradient

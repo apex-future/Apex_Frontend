@@ -16,8 +16,8 @@ function BookmarksView({ bookmarks = [], onJumpTo, onRemove }) {
         <div className="w-12 h-12 rounded-2xl bg-accent-primary/10 flex items-center justify-center mb-3">
           <Bookmark size={22} className="text-accent-primary opacity-60" strokeWidth={1.5} />
         </div>
-        <p className="text-sm font-semibold text-gray-600">No bookmarks yet</p>
-        <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+        <p className="text-sm font-semibold text-text-secondary">No bookmarks yet</p>
+        <p className="text-xs text-text-tertiary mt-1 leading-relaxed uppercase tracking-wider">
           Tap the bookmark icon while reading to save a page.
         </p>
       </div>
@@ -43,8 +43,8 @@ function BookmarksView({ bookmarks = [], onJumpTo, onRemove }) {
 
           {/* Label + timestamp */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-700 truncate">{bm.label}</p>
-            <p className="text-[10px] text-gray-400 mt-0.5">
+            <p className="text-sm font-semibold text-text-primary truncate">{bm.label}</p>
+            <p className="text-[10px] text-text-tertiary mt-0.5 font-medium">
               {formatDate(bm.addedAt)}
             </p>
           </div>
@@ -53,12 +53,12 @@ function BookmarksView({ bookmarks = [], onJumpTo, onRemove }) {
           <div className="flex items-center gap-1">
             <button
               onClick={(e) => { e.stopPropagation(); onRemove?.(bm.page); }}
-              className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-500 transition-all"
+              className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-bg-subtle text-text-placeholder hover:text-red-500 transition-all"
               title="Remove bookmark"
             >
               <Trash2 size={13} strokeWidth={1.5} />
             </button>
-            <ChevronRight size={14} className="text-gray-300 shrink-0" strokeWidth={1.5} />
+            <ChevronRight size={14} className="text-text-placeholder shrink-0" strokeWidth={1.5} />
           </div>
         </div>
       ))}

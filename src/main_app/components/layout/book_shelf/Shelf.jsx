@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Heart, Bookmark } from 'lucide-react'
 import BookCover from '../../books/BookCover'
 
 /**
@@ -21,9 +22,9 @@ function Shelf({ shelves }) {
         const fillersCount = Math.max(0, 3 - actualBooksCount);
 
         return (
-          <div 
-            onClick={() => navigate(`/shelf/${shelf.shelfName}`)} 
-            key={index} 
+          <div
+            onClick={() => navigate(`/shelf/${shelf.shelfName}`)}
+            key={index}
             className='group flex flex-col border-2 border-border-default rounded-3xl bg-neutral-100/40 relative h-64 transition-all duration-500 overflow-hidden cursor-pointer hover:border-accent-primary/30 hover:shadow-xl hover:shadow-accent-primary/5'
           >
 
@@ -38,20 +39,36 @@ function Shelf({ shelves }) {
                     ? 'rotate-0 group-hover:scale-105'
                     : 'rotate-6 group-hover:rotate-9 group-hover:translate-x-2';
 
-                return book.cover ? (
-                  <img
-                    key={`book-${book.id}`}
-                    src={book.cover}
-                    alt={book.title}
-                    className={`object-cover w-24 h-32 rounded-sm shadow-md border border-white/20 transition-all duration-500 ${rotationClasses}`}
-                  />
-                ) : (
-                  <BookCover
-                    key={`book-${book.id}`}
-                    title={book.title}
-                    author={book.author}
-                    className={`w-24 h-32 rounded-sm shadow-md border border-white/20 transition-all duration-500 ${rotationClasses}`}
-                  />
+                return (
+                  <div key={`book-${book.id}`} className={`relative transition-all duration-500 ${rotationClasses}`}>
+                    {book.cover ? (
+                      <img
+                        src={book.cover}
+                        alt={book.title}
+                        className="object-cover w-24 h-32 rounded-sm shadow-md border border-white/20"
+                      />
+                    ) : (
+                      <BookCover
+                        title={book.title}
+                        author={book.author}
+                        className="w-24 h-32 rounded-sm shadow-md border border-white/20"
+                      />
+                    )}
+
+                    {/* Status Indicators */}
+                    <div className="absolute top-1 right-1 flex flex-col gap-1">
+                      {book.isFavorite && (
+                        <div className="bg-red-500 text-white rounded-full p-0.5 shadow-sm">
+                          <Heart size={8} fill="currentColor" />
+                        </div>
+                      )}
+                      {book.isBookmarked && (
+                        <div className="bg-accent-primary text-white rounded-full p-0.5 shadow-sm">
+                          <Bookmark size={8} fill="currentColor" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
 

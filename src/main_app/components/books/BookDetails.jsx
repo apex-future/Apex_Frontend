@@ -105,8 +105,46 @@ function BookDetails() {
 
                         <div className="max-w-2xl">
                             <h2 className="text-xs sm:text-sm font-bold text-text-placeholder uppercase tracking-[0.2em] mb-4">About this book</h2>
-                            <div className="bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md border-2 border-border-default rounded-2xl p-6 sm:p-8 hover:border-accent-primary/10 hover:shadow-sm hover:shadow-neutral-200/50 transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base">
+                            <div className="bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md border-2 border-border-default rounded-2xl p-6 sm:p-8 hover:border-accent-primary/10 hover:shadow-sm hover:shadow-neutral-200/50 transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-accent-primary/20 group-hover/desc:bg-accent-primary transition-colors" />
                                 {book.description || "No description available for this title."}
+
+                                {/* Quick Bookmarks / Status Section under description */}
+                                {(book.isFavorite || book.isBookmarked || (book.metadata?.bookmarks?.length > 0)) && (
+                                    <div className="mt-6 pt-6 border-t border-border-default/50 flex flex-wrap items-center gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-text-placeholder uppercase tracking-widest">Collections:</span>
+                                            <div className="flex items-center gap-2">
+                                                {book.isFavorite && (
+                                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-500 border border-red-100 rounded-full text-[10px] font-bold uppercase tracking-wider animate-in fade-in zoom-in duration-300">
+                                                        <Heart size={10} fill="currentColor" />
+                                                        Favorite
+                                                    </div>
+                                                )}
+                                                {book.isBookmarked && (
+                                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-accent-subtle text-accent-primary border border-accent-primary/10 rounded-full text-[10px] font-bold uppercase tracking-wider animate-in fade-in zoom-in duration-300">
+                                                        <Bookmark size={10} fill="currentColor" />
+                                                        Bookmarked
+                                                    </div>
+                                                )}
+                                                {!book.isFavorite && !book.isBookmarked && (
+                                                    <span className="text-[10px] font-medium text-text-tertiary">Not in any collections</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {book.metadata?.bookmarks?.length > 0 && (
+                                            <div className="flex items-center gap-2 ml-auto group/stats">
+                                                <div className="flex items-center gap-1.5 text-text-tertiary group-hover/stats:text-accent-primary transition-colors">
+                                                    <Bookmark size={12} className="opacity-60" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+                                                        {book.metadata.bookmarks.length} Page Bookmarks
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
 

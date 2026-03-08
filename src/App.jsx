@@ -7,6 +7,7 @@ import LoginPage from './landing_page/LoginPage'
 import authService from './main_app/services/authService'
 import syncService from './main_app/services/syncService'
 import useAuthStore from './main_app/store/authStore'
+import useThemeStore from './main_app/store/themeStore'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
 
 function App() {
@@ -15,6 +16,9 @@ function App() {
   const [hydrating, setHydrating] = useState(false);
 
   useEffect(() => {
+    // Initialize theme
+    useThemeStore.getState().initTheme();
+
     const checkAuth = async () => {
       // Initialize sync service (listeners, debounced functions)
       syncService.init();

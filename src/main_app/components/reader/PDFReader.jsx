@@ -134,7 +134,7 @@ const PDFReader = ({
         className="flex flex-col items-start lg:items-center justify-center lg:justify-start min-h-full w-full mx-auto"
       >
         <div
-          className="rounded-sm bg-white mx-auto mb-8 lg:mb-0"
+          className="rounded-sm bg-bg-elevated mx-auto mb-8 lg:mb-0"
           style={{
             transition: 'transform 0.25s ease-out',
           }}
@@ -146,16 +146,16 @@ const PDFReader = ({
             renderTextLayer={true}
             renderAnnotationLayer={true}
             customTextRenderer={customTextRenderer}
-            className="bg-white"
+            className="bg-bg-elevated"
             width={pdfWidth}
             loading={
-                <div className="flex flex-col items-center justify-center bg-white" style={{ width: pdfWidth, height: pdfWidth * 1.41 }}>
+                <div className="flex flex-col items-center justify-center bg-bg-elevated" style={{ width: pdfWidth, height: pdfWidth * 1.41 }}>
                      <div className="w-full h-full p-8 space-y-4 animate-pulse">
-                        <div className="h-4 w-1/3 bg-slate-100 rounded-full" />
+                        <div className="h-4 w-1/3 bg-bg-subtle rounded-full" />
                         <div className="space-y-4">
-                            <div className="h-2 w-full bg-slate-50 rounded-full" />
-                            <div className="h-2 w-full bg-slate-50 rounded-full" />
-                            <div className="h-2 w-2/3 bg-slate-50 rounded-full" />
+                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                            <div className="h-2 w-2/3 bg-bg-subtle rounded-full" />
                         </div>
                      </div>
                 </div>
