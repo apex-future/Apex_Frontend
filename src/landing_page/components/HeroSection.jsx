@@ -5,7 +5,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { TextPlugin } from 'gsap/TextPlugin';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import heroImg from "../../../assets/e-book-dashboard.jpg"
+import heroImg from "../../assets/e-book-dashboard.jpg"
 
 gsap.registerPlugin(TextPlugin, ScrollTrigger);
 

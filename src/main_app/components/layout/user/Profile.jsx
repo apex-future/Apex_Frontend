@@ -2,7 +2,7 @@ import { ArrowLeft, Settings, Flame, Book, BookOpen, Calendar, TrendingUp } from
 import useAuthStore from '../../../store/authStore'
 import { BookContext } from '../../../context/BookContextInstance'
 import { useContext, useMemo } from 'react'
-import dummyProfileImg from "../../../../../assets/user_imgs/user_img_1.jpg"
+import dummyProfileImg from "../../../../assets/user_imgs/user_img_1.jpg"
 import { useNavigate } from 'react-router-dom'
 import OnlineStatusBadge from '../OnlineStatusBadge'
 

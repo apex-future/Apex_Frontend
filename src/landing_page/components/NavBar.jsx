@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import logoLight from "../../../assets/logo/logo-light.jpg"
+import logoLight from "../../assets/logo/logo-light.jpg"
 import { Menu, X } from 'lucide-react';
 
 import { Link } from 'react-router-dom';

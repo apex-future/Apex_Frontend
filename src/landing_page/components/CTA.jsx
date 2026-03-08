@@ -1,5 +1,5 @@
 import React from 'react'
-import sparkle from "../../../assets/star-project.png"
+import sparkle from "../../assets/star-project.png"
 import WaitlistForm from './WaitlistForm'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';

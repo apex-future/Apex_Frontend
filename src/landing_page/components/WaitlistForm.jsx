@@ -4,9 +4,9 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Lock, Send, CheckCircle2, AlertCircle, User, Mail } from 'lucide-react';
-import student1 from '../../../assets/students/student1.jpg';
-import student2 from '../../../assets/students/student2.jpg';
-import student3 from '../../../assets/students/student3.jpg';
+import student1 from '../../assets/students/student1.jpg';
+import student2 from '../../assets/students/student2.jpg';
+import student3 from '../../assets/students/student3.jpg';
 import authService from '../../main_app/services/authService';
 
 gsap.registerPlugin(ScrollTrigger);
