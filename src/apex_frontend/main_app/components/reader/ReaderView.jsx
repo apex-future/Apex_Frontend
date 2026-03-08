@@ -168,6 +168,11 @@ function ReaderView() {
         addNote: (text) => addNote(book.id, text),
         updateNote: (noteId, text) => updateNote(book.id, noteId, text),
         deleteNote: (noteId) => deleteNote(book.id, noteId),
+        // Favorites & Bookmarked Status (Book Level)
+        isFavorite: book?.isFavorite,
+        onToggleFavorite: () => toggleFavorite(book.id),
+        isBookmarkedBook: book?.isBookmarked,
+        onToggleBookmarkedBook: () => toggleBookmarkedBook(book.id),
     };
 
     // Screen handlers

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen } from 'lucide-react'
+import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Heart } from 'lucide-react'
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
@@ -14,6 +14,10 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
     pages = { current: 1, total: 1 },
     isBookmarked = false,
     onToggleBookmark,
+    isFavorite = false,
+    onToggleFavorite,
+    isBookmarkedBook = false,
+    onToggleBookmarkedBook,
   } = readerControls || {};
 
   useEffect(() => {
@@ -53,15 +57,49 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         </div>
 
         <div className='flex items-center gap-3'>
-          {/* Bookmark button — purple fill when bookmarked */}
+          {/* Favorite button */}
           <button
-            className={`w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 ${
-              isBookmarked
+            className={`w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 ${isFavorite
+                ? 'text-red-500'
+                : 'text-text-primary hover:bg-bg-subtle'
+              }`}
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(); }}
+            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <Heart
+              strokeWidth={2}
+              size={18}
+              className={`transition-all duration-200 ${isFavorite ? 'fill-red-500' : 'fill-none'}`}
+            />
+          </button>
+
+          {/* Book-level Bookmark (Save for Later) button */}
+          <button
+            className={`w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 ${isBookmarkedBook
                 ? 'text-accent-primary'
                 : 'text-text-primary hover:bg-bg-subtle'
-            }`}
+              }`}
+            onClick={(e) => { e.stopPropagation(); onToggleBookmarkedBook?.(); }}
+            title={isBookmarkedBook ? 'Remove book-level bookmark' : 'Bookmark this book'}
+          >
+            <div className='relative'>
+              <Bookmark
+                strokeWidth={2}
+                size={18}
+                className={`transition-all duration-200 ${isBookmarkedBook ? 'fill-accent-primary' : 'fill-none'}`}
+              />
+              <div className='absolute -top-1 -right-1 w-2 h-2 bg-accent-primary rounded-full border border-white' />
+            </div>
+          </button>
+
+          {/* Page Bookmark button — purple fill when bookmarked */}
+          <button
+            className={`w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 ${isBookmarked
+                ? 'text-accent-primary'
+                : 'text-text-primary hover:bg-bg-subtle'
+              }`}
             onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
-            title={isBookmarked ? 'Remove bookmark' : 'Bookmark this page'}
+            title={isBookmarked ? 'Remove page bookmark' : 'Bookmark this page'}
           >
             <Bookmark
               strokeWidth={2}
@@ -88,11 +126,10 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         <div className='flex items-center justify-between w-full'>
           {/* Lock — toggles pan/scroll lock */}
           <button
-            className={`w-10 h-10 flex items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${
-              locked
+            className={`w-10 h-10 flex items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${locked
                 ? 'bg-accent-primary text-bg-elevated'
                 : 'bg-bg-elevated text-text-primary hover:bg-bg-subtle'
-            }`}
+              }`}
             onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
             title={locked ? 'Unlock scroll' : 'Lock scroll'}
           >

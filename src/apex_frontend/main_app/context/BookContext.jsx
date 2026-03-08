@@ -280,22 +280,39 @@ export const BookProvider = ({ children }) => {
   const toggleFavorite = useCallback(async (bookId) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
     setShelves((prevShelves) => {
+      // Find the updated book state first
       let updatedBook = null;
-      const newShelves = prevShelves.map((shelf) => ({
-        ...shelf,
-        books: shelf.books.map((book) => {
-          if (book.id === targetId) {
-            updatedBook = { ...book, isFavorite: !book.isFavorite };
-            return updatedBook;
-          }
-          return book;
-        }),
-      }));
+      prevShelves.forEach(shelf => {
+        const found = shelf.books.find(b => b.id === targetId);
+        if (found) updatedBook = { ...found, isFavorite: !found.isFavorite };
+      });
 
-      if (updatedBook) {
-        db.books.update(targetId, { isFavorite: updatedBook.isFavorite })
-          .catch(err => console.error("Failed to update favorite status:", err));
-      }
+      if (!updatedBook) return prevShelves;
+
+      // Map over all shelves to ensure the book is added to/removed from 'Favorites'
+      const newShelves = prevShelves.map((shelf) => {
+        if (shelf.shelfName === 'Favorites') {
+          if (updatedBook.isFavorite) {
+            const exists = shelf.books.some(b => b.id === targetId);
+            return {
+              ...shelf,
+              books: exists
+                ? shelf.books.map(b => b.id === targetId ? updatedBook : b)
+                : [...shelf.books, updatedBook]
+            };
+          } else {
+            return { ...shelf, books: shelf.books.filter(b => b.id !== targetId) };
+          }
+        }
+        return {
+          ...shelf,
+          books: shelf.books.map(b => b.id === targetId ? updatedBook : b)
+        };
+      });
+
+      db.books.update(targetId, { isFavorite: updatedBook.isFavorite })
+        .catch(err => console.error("Failed to update favorite status:", err));
+
       return newShelves;
     });
   }, []);
@@ -303,22 +320,39 @@ export const BookProvider = ({ children }) => {
   const toggleBookmarkedBook = useCallback(async (bookId) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
     setShelves((prevShelves) => {
+      // Find the updated book state first
       let updatedBook = null;
-      const newShelves = prevShelves.map((shelf) => ({
-        ...shelf,
-        books: shelf.books.map((book) => {
-          if (book.id === targetId) {
-            updatedBook = { ...book, isBookmarked: !book.isBookmarked };
-            return updatedBook;
-          }
-          return book;
-        }),
-      }));
+      prevShelves.forEach(shelf => {
+        const found = shelf.books.find(b => b.id === targetId);
+        if (found) updatedBook = { ...found, isBookmarked: !found.isBookmarked };
+      });
 
-      if (updatedBook) {
-        db.books.update(targetId, { isBookmarked: updatedBook.isBookmarked })
-          .catch(err => console.error("Failed to update bookmark status:", err));
-      }
+      if (!updatedBook) return prevShelves;
+
+      // Map over all shelves to ensure the book is added to/removed from 'Bookmarks'
+      const newShelves = prevShelves.map((shelf) => {
+        if (shelf.shelfName === 'Bookmarks') {
+          if (updatedBook.isBookmarked) {
+            const exists = shelf.books.some(b => b.id === targetId);
+            return {
+              ...shelf,
+              books: exists
+                ? shelf.books.map(b => b.id === targetId ? updatedBook : b)
+                : [...shelf.books, updatedBook]
+            };
+          } else {
+            return { ...shelf, books: shelf.books.filter(b => b.id !== targetId) };
+          }
+        }
+        return {
+          ...shelf,
+          books: shelf.books.map(b => b.id === targetId ? updatedBook : b)
+        };
+      });
+
+      db.books.update(targetId, { isBookmarked: updatedBook.isBookmarked })
+        .catch(err => console.error("Failed to update bookmark status:", err));
+
       return newShelves;
     });
   }, []);
