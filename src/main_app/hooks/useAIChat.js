@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { streamExplain, streamAsk } from '../services/aiService';
 import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
+import db from '../db/apex.db';
 
 /**
  * useAIChat — Custom hook for streaming AI chat interactions with persistence.
@@ -165,10 +166,24 @@ export default function useAIChat(options = {}) {
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }));
 
+      // Resolve bookId to a Supabase UUID string if it's a local integer
+      // Prevents 22P02 Postgres errors for the remote ai_conversations insert
+      let resolvedBookId = null;
+      if (bookId) {
+        if (typeof bookId === 'string' && bookId.includes('-')) {
+            resolvedBookId = bookId;
+        } else {
+            try {
+                const localBook = await db.books.get(parseInt(bookId));
+                if (localBook && localBook.supabaseId) resolvedBookId = localBook.supabaseId;
+            } catch (e) {}
+        }
+      }
+
       const response = await streamAsk({
         message: text.trim(),
         bookTitle,
-        bookId,
+        bookId: resolvedBookId,
         chatType: scope === 'general' ? 'general' : 'in_reader',
         conversationHistory: history,
       });
@@ -197,11 +212,24 @@ export default function useAIChat(options = {}) {
 
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }));
+      
+      let resolvedBookId = null;
+      if (bookId) {
+        if (typeof bookId === 'string' && bookId.includes('-')) {
+            resolvedBookId = bookId;
+        } else {
+            try {
+                const localBook = await db.books.get(parseInt(bookId));
+                if (localBook && localBook.supabaseId) resolvedBookId = localBook.supabaseId;
+            } catch (e) {}
+        }
+      }
+
       const response = await streamExplain({
         selectedText: selectedText.trim(),
         context,
         bookTitle,
-        bookId,
+        bookId: resolvedBookId,
         chatType: 'in_reader',
         conversationHistory: history,
       });

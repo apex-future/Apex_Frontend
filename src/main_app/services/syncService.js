@@ -204,6 +204,10 @@ const syncService = {
       // Dictionary History is Category B — fetched directly from the API when needed
       // AI Conversations (Map to ApexBooksDB)
       if (ai_conversations && ai_conversations.length > 0) {
+        
+        // Wipe local chats before applying the new 1-to-1 Hydration list
+        await db.chats.clear();
+
         // Find book titles for scopes
         const bookTitles = {};
         const localBooks = await db.books.toArray();
