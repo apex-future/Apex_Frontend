@@ -71,6 +71,7 @@ function ReaderView() {
     // Deep loading state
     const [isLoading, setIsLoading] = useState(true);
     const [loadingMessage, setLoadingMessage] = useState("Setting up file");
+    const [downloadError, setDownloadError] = useState(false);
 
     const [selection, setSelection] = useState({ text: '', x: 0, y: 0 });
     const [showHighlightMenu, setShowHighlightMenu] = useState(false);
@@ -292,8 +293,10 @@ function ReaderView() {
             downloadMissingFile(book.id).then(downloadedFile => {
                 if (!downloadedFile) {
                     setLoadingMessage(navigator.onLine 
-                        ? "Failed to download book." 
+                        ? "Failed to load book from the cloud." 
                         : "Connect to internet to download this book.");
+                    setDownloadError(true);
+                    setIsLoading(false);
                 }
             });
             return;
@@ -415,6 +418,36 @@ function ReaderView() {
             clearTimeout(timer);
         };
     }, [bookId, textContent, fileUrl, isPdf]);
+
+    if (downloadError) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-slate-50 relative p-8 font-sans">
+               <div className="absolute top-6 left-6 z-10">
+                   <button 
+                       onClick={() => navigate('/')} 
+                       className="p-3 bg-white rounded-xl shadow-md border border-slate-200 text-slate-700 hover:text-accent-primary hover:border-purple-200 transition-all font-bold text-sm tracking-wide flex items-center gap-2 group"
+                   >
+                       <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Library
+                   </button>
+               </div>
+               <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 max-w-sm w-full text-center flex flex-col items-center gap-6 animate-in slide-in-from-bottom-6 fade-in duration-500">
+                   <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center">
+                       <AlertCircle size={32} />
+                   </div>
+                   <div className="space-y-2">
+                       <h2 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Download Error</h2>
+                       <p className="text-sm font-medium text-slate-500">{loadingMessage}</p>
+                   </div>
+                   <button 
+                       onClick={() => window.location.reload()} 
+                       className="w-full py-4 rounded-xl bg-accent-primary hover:bg-purple-700 text-white font-bold transition-all shadow-lg shadow-purple-500/20 active:scale-95 flex items-center justify-center gap-2"
+                   >
+                       <Menu size={18} /> Try Again
+                   </button>
+               </div>
+            </div>
+        );
+    }
 
     if (!book) return null;
 
