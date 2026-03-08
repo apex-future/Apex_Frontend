@@ -7,7 +7,7 @@ import AIModal from './reading_navigations/reading_layout/AIModal';
 import HighlightMenu from './HighlightMenu';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 import BookSkeleton from './BookSkeleton';
-import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
 
 const ScrollOrientationOverlay = ({ visible }) => {
     if (!visible) return null;
