@@ -206,6 +206,8 @@ export const BookProvider = ({ children }) => {
         import('../services/syncService').then(async (m) => {
           const result = await m.default.uploadBook(fileObject, title, 'Unknown', id);
           if (!result) {
+            console.error("Upload failed: queuing for later.");
+            alert("Upload to cloud failed. The book was saved offline and queued for later sync.");
             // Upload failed — fall back to sync queue for metadata only
             await db.sync_queue.add({
               action: 'upload',
