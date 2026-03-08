@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { shelves as initialShelves } from '../data/shelves';
-import db from '../../../db/apex.db';
-import syncService from '../../../services/syncService';
+import db from '../db/apex.db';
+import syncService from '../services/syncService';
 
 import { BookContext } from './BookContextInstance.jsx';
 
@@ -160,7 +160,7 @@ export const BookProvider = ({ children }) => {
       });
 
       // Trigger immediate sync attempt
-      import('../../../services/syncService').then(m => m.default.triggerSync?.());
+      import('../services/syncService').then(m => m.default.triggerSync?.());
 
       // Create in-memory book object with the File for immediate use
       const newBook = {

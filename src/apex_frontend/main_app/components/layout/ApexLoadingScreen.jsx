@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import apexLogo from '../assets/logo/logo-light-removebg-preview.png';
+import apexLogo from '../../../../assets/logo/logo-light-removebg-preview.png';
 
 function ApexLoadingScreen() {
   const [showSlowMessage, setShowSlowMessage] = useState(false);

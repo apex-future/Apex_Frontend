@@ -16,7 +16,7 @@ import Dictionary from './components/dictionary/Dictionary';
 import ApexAI from './components/ai/ApexAI';
 import Settings from './components/layout/user/Settings';
 import DuplicateBookModal from './components/modals/DuplicateBookModal';
-import ImportPage from '../../pages/ImportPage';
+import ImportPage from './pages/ImportPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 

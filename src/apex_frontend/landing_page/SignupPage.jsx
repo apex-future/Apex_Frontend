@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
 import logoLight from "../../assets/logo/logo-light.jpg";
-import authService from '../../services/authService';
+import authService from '../main_app/services/authService';
 
 function SignupPage({ onLogin }) {
   const navigate = useNavigate();

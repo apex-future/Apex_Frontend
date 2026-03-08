@@ -1,10 +1,10 @@
 import { ArrowLeft, Settings, Flame, Book, BookOpen, Calendar, TrendingUp } from 'lucide-react'
-import useAuthStore from '../../../../../store/authStore'
+import useAuthStore from '../../../store/authStore'
 import { BookContext } from '../../../context/BookContextInstance'
 import { useContext, useMemo } from 'react'
 import dummyProfileImg from "../../../../../assets/user_imgs/user_img_1.jpg"
 import { useNavigate } from 'react-router-dom'
-import OnlineStatusBadge from '../../../../../components/OnlineStatusBadge'
+import OnlineStatusBadge from '../OnlineStatusBadge'
 
 function Profile() {
   const navigate = useNavigate();

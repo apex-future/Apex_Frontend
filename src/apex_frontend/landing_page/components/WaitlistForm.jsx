@@ -7,7 +7,7 @@ import { Lock, Send, CheckCircle2, AlertCircle, User, Mail } from 'lucide-react'
 import student1 from '../../../assets/students/student1.jpg';
 import student2 from '../../../assets/students/student2.jpg';
 import student3 from '../../../assets/students/student3.jpg';
-import authService from '../../../services/authService';
+import authService from '../../main_app/services/authService';
 
 gsap.registerPlugin(ScrollTrigger);
 

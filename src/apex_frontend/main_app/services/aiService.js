@@ -1,4 +1,4 @@
-import authService from '../../../services/authService';
+import authService from './authService';
 
 /**
  * AI Service — Fetch wrappers for Apex AI backend endpoints.

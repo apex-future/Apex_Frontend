@@ -4,10 +4,10 @@ import MainApp from './apex_frontend/main_app/MainApp'
 import LandingPage from './apex_frontend/landing_page/LandingPage'
 import SignupPage from './apex_frontend/landing_page/SignupPage'
 import LoginPage from './apex_frontend/landing_page/LoginPage'
-import authService from './services/authService'
-import syncService from './services/syncService'
-import useAuthStore from './store/authStore'
-import ApexLoadingScreen from './components/ApexLoadingScreen'
+import authService from './apex_frontend/main_app/services/authService'
+import syncService from './apex_frontend/main_app/services/syncService'
+import useAuthStore from './apex_frontend/main_app/store/authStore'
+import ApexLoadingScreen from './apex_frontend/main_app/components/layout/ApexLoadingScreen'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
