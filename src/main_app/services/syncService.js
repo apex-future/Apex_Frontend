@@ -1,4 +1,5 @@
 import db from '../db/apex.db';
+import { saveChat } from '../utils/db';
 import apiClient from './apiClient';
 import authService from './authService';
 import useAuthStore from '../store/authStore';
@@ -123,7 +124,7 @@ const syncService = {
       const response = await apiClient.get('/api/sync/pull/all');
       if (!response.data) return;
 
-      const { user, books, reading_progress, highlights, bookmarks } = response.data;
+      const { user, books, reading_progress, highlights, bookmarks, ai_conversations } = response.data;
 
       // Store user in auth store
       if (user) {
@@ -200,14 +201,67 @@ const syncService = {
       }
 
       // ---- Category B data → Zustand only (no Dexie) ----
-      // AI Conversations and Dictionary History are Category B — not stored in Dexie
-      // Components fetch them directly from the API when needed
+      // Dictionary History is Category B — fetched directly from the API when needed
+      // AI Conversations (Map to ApexBooksDB)
+      if (ai_conversations && ai_conversations.length > 0) {
+        // Find book titles for scopes
+        const bookTitles = {};
+        const localBooks = await db.books.toArray();
+        for (const b of localBooks) {
+          const supabaseId = b.supabaseId || (b.synced ? b.id?.toString() : null);
+          if (supabaseId) bookTitles[supabaseId] = b.title;
+        }
+
+        // Group Q&A pairs by book_id or 'general'
+        const groupedChats = {};
+        for (const row of ai_conversations) {
+          const groupId = row.chat_type === 'general' ? 'general' : row.book_id;
+          if (!groupId) continue;
+
+          if (!groupedChats[groupId]) groupedChats[groupId] = [];
+          groupedChats[groupId].push(row);
+        }
+
+        // Convert grouped rows into Chat Sessions
+        for (const [groupId, rows] of Object.entries(groupedChats)) {
+          // Sort chronologically by created_at
+          rows.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+          const messages = [];
+          for (const row of rows) {
+             const timeMs = new Date(row.created_at).getTime();
+             messages.push({ id: timeMs, role: 'user', content: row.query_text });
+             messages.push({ id: timeMs + 1, role: 'ai', content: row.ai_response });
+          }
+
+          if (messages.length > 0) {
+            const firstUserMsg = messages.find(m => m.role === 'user');
+            const title = firstUserMsg 
+              ? (firstUserMsg.content.slice(0, 40) + (firstUserMsg.content.length > 40 ? '...' : ''))
+              : 'Sync Chat';
+
+            const scope = groupId === 'general' ? 'general' : (bookTitles[groupId] || 'Unknown Book');
+            
+            // We use the last message's time as the session ID so it doesn't collide
+            const sessionId = messages[messages.length - 1].id;
+
+            await saveChat({
+              id: sessionId,
+              title,
+              messages,
+              updatedAt: sessionId,
+              scope
+            });
+          }
+        }
+      }
 
       // Update last_synced_at
       const setting = await db.app_settings.where('key').equals('last_synced_at').first();
-      if (setting) {
+      if (setting && setting.id !== undefined) {
         await db.app_settings.update(setting.id, { value: new Date().toISOString() });
       } else {
+        if (setting) await db.app_settings.where('key').equals('last_synced_at').delete();
         await db.app_settings.add({ key: 'last_synced_at', value: new Date().toISOString() });
       }
 
