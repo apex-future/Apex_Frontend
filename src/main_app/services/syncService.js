@@ -213,68 +213,34 @@ const syncService = {
         }
 
         // Group Q&A pairs by book_id or 'general'
-        const groupedChats = {};
+        // 1-to-1 Match: Convert every single query row into its own isolated Chat Session
         for (const row of ai_conversations) {
+          const timeMs = new Date(row.created_at).getTime();
           const groupId = row.chat_type === 'general' ? 'general' : row.book_id;
+          
           if (!groupId) continue;
 
-          if (!groupedChats[groupId]) groupedChats[groupId] = [];
-          groupedChats[groupId].push(row);
-        }
+          // Title is extracted directly from the user's question
+          const title = row.query_text 
+            ? (row.query_text.slice(0, 40) + (row.query_text.length > 40 ? '...' : ''))
+            : 'Sync Chat';
 
-        // Convert grouped rows into distinct Chat Sessions using a 90-minute inactivity threshold
-        const SESSION_THRESHOLD_MS = 90 * 60 * 1000; // 90 minutes
+          // Assign correct Book title if scoped
+          const scope = groupId === 'general' ? 'general' : (bookTitles[groupId] || 'Unknown Book');
+          
+          // Formulate the distinct session
+          const messagesToSave = [
+            { id: timeMs, role: 'user', content: row.query_text },
+            { id: timeMs + 1, role: 'ai', content: row.ai_response }
+          ];
 
-        for (const [groupId, rows] of Object.entries(groupedChats)) {
-          // Sort chronologically by created_at
-          rows.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-
-          let currentSessionMessages = [];
-          let lastMessageTimeMs = null;
-
-          // Helper to save a single isolated session
-          const saveIsolatedSession = async (messagesToSave) => {
-             if (messagesToSave.length === 0) return;
-             
-             const firstUserMsg = messagesToSave.find(m => m.role === 'user');
-             const title = firstUserMsg 
-               ? (firstUserMsg.content.slice(0, 40) + (firstUserMsg.content.length > 40 ? '...' : ''))
-               : 'Sync Chat';
-
-             const scope = groupId === 'general' ? 'general' : (bookTitles[groupId] || 'Unknown Book');
-             
-             // We use the last message's time as the session ID so it doesn't collide
-             const sessionId = messagesToSave[messagesToSave.length - 1].id;
-
-             await saveChat({
-               id: sessionId,
-               title,
-               scope,
-               updatedAt: new Date(sessionId).toISOString(),
-               messages: messagesToSave
-             });
-          };
-
-          for (const row of rows) {
-             const timeMs = new Date(row.created_at).getTime();
-             
-             // If this is not the first message AND the time gap exceeds our threshold,
-             // cap off the current session and start a new one!
-             if (lastMessageTimeMs !== null && (timeMs - lastMessageTimeMs) > SESSION_THRESHOLD_MS) {
-                 await saveIsolatedSession([...currentSessionMessages]);
-                 currentSessionMessages = []; // Reset for the new session
-             }
-
-             // Add the current Q&A to the running session chunk
-             currentSessionMessages.push({ id: timeMs, role: 'user', content: row.query_text });
-             currentSessionMessages.push({ id: timeMs + 1, role: 'ai', content: row.ai_response });
-             lastMessageTimeMs = timeMs + 1;
-          }
-
-          // Save the final remaining chunk for this book/group
-          if (currentSessionMessages.length > 0) {
-              await saveIsolatedSession([...currentSessionMessages]);
-          }
+          await saveChat({
+            id: timeMs,          // Enforce absolute isolation by making the creation Unix time its ID
+            title,
+            scope,
+            updatedAt: new Date(timeMs).toISOString(),
+            messages: messagesToSave
+          });
         }
       }
 

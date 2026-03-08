@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { X, Send, Sparkle, Info, RotateCcw, Trash2, AlertCircle, Highlighter, User, SquarePen, MessageSquare, History, ArrowLeft } from 'lucide-react'
+import { X, Send, Sparkle, Info, RotateCcw, Trash2, AlertCircle, Highlighter, User, SquarePen, MessageSquare, History, ArrowLeft, BookOpen } from 'lucide-react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
@@ -113,8 +113,13 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
           )}
         </div>
 
-        <h2 className='text-[11px] font-bold text-slate-900 uppercase tracking-[0.2em]'>
+        <h2 className='text-[11px] flex items-center gap-1.5 font-bold text-slate-900 uppercase tracking-[0.2em]'>
           {showHistory ? 'History' : 'Apex Intelligence'}
+          {!showHistory && chatHistory.find(c => c.id === sessionId)?.scope && chatHistory.find(c => c.id === sessionId)?.scope !== 'general' && (
+            <span className='normal-case tracking-normal text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full flex items-center gap-1 border border-slate-200'>
+              <BookOpen size={10} /> {chatHistory.find(c => c.id === sessionId)?.scope}
+            </span>
+          )}
         </h2>
 
         <button
@@ -146,8 +151,17 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
                                 onClick={() => handleSwitchChat(item)}
                                 className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-white border border-transparent hover:border-slate-200 text-slate-600 shadow-sm'}`}
                             >
-                                <MessageSquare size={14} className={sessionId === item.id ? 'text-accent-primary' : 'text-slate-400'} />
-                                <span className='flex-1 truncate text-xs'>{item.title || 'New Chat'}</span>
+                                <div className={`p-1.5 rounded-lg ${sessionId === item.id ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-500'}`}>
+                                    <BookOpen size={14} />
+                                </div>
+                                <div className="flex-1 min-w-0 flex flex-col">
+                                    <span className='truncate text-xs font-medium leading-tight'>{item.title || 'New Chat'}</span>
+                                    {item.scope && item.scope !== 'general' && (
+                                        <span className='text-[9px] text-slate-400 truncate mt-0.5 flex items-center gap-1'>
+                                            {item.scope}
+                                        </span>
+                                    )}
+                                </div>
                                 <button 
                                     onClick={(e) => {
                                         e.stopPropagation();
