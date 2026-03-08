@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import apexLogo from '../../../assets/logo/logo-light-removebg-preview.png';
+import apexLogo from '../../../assets/logo/logo-dark-removebg-preview.png';
 
 function ApexLoadingScreen() {
   const [showSlowMessage, setShowSlowMessage] = useState(false);
@@ -36,23 +36,21 @@ function ApexLoadingScreen() {
         )}
       </div>
 
-      {/* Subtle loading bar */}
-      <div className="w-48 h-0.5 bg-white/10 rounded-full overflow-hidden">
-        <div className="h-full bg-purple-500/60 rounded-full animate-loading-bar" />
-      </div>
+      {/* Spinner */}
+      <div className="w-10 h-10 border-2 border-white/5 border-t-purple-500/80 rounded-full animate-spin-slow" />
 
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes loading-bar {
-          0% { width: 0%; }
-          50% { width: 70%; }
-          100% { width: 100%; }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
-        .animate-loading-bar {
-          animation: loading-bar 3s ease-in-out infinite;
+        .animate-spin-slow {
+          animation: spin 1s linear infinite;
         }
       `}} />
     </div>
   );
 }
+
 
 export default ApexLoadingScreen;
