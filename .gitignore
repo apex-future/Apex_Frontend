@@ -29,5 +29,4 @@ build_*.txt
 *lint*.txt
 *lint*.json
 
-# Explictly do not ignore status.txt
-!status.txt
+
