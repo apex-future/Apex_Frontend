@@ -548,6 +548,7 @@ function ReaderView() {
                         setAiModal={setAiModal}
                         bookTitle={book?.title || book?.file?.name}
                         selectedText={selection.text}
+                        bookId={book?.id?.toString()}
                     />
                 )}
             </div>

@@ -6,7 +6,7 @@ import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
  * useAIChat — Custom hook for streaming AI chat interactions with persistence.
  */
 export default function useAIChat(options = {}) {
-  const { autoLoad = true, persist = true, scope = 'general' } = options;
+  const { autoLoad = true, persist = true, scope = 'general', bookId = null } = options;
   
   const [messages, setMessages] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -168,6 +168,8 @@ export default function useAIChat(options = {}) {
       const response = await streamAsk({
         message: text.trim(),
         bookTitle,
+        bookId,
+        chatType: scope === 'general' ? 'general' : 'in_reader',
         conversationHistory: history,
       });
 
@@ -199,6 +201,8 @@ export default function useAIChat(options = {}) {
         selectedText: selectedText.trim(),
         context,
         bookTitle,
+        bookId,
+        chatType: 'in_reader',
         conversationHistory: history,
       });
 

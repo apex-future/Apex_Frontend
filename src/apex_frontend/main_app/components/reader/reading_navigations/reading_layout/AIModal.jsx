@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
 import TypingIndicator from '../../../ai/TypingIndicator'
 
-function AIModal({ setAiModal, selectedText, bookTitle }) {
+function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
   const {
     messages,
     isStreaming,
@@ -17,7 +17,7 @@ function AIModal({ setAiModal, selectedText, bookTitle }) {
     switchChat,
     deleteSession,
     retry,
-  } = useAIChat({ autoLoad: true, persist: true, scope: bookTitle });
+  } = useAIChat({ autoLoad: true, persist: true, scope: bookTitle, bookId });
 
   const [inputValue, setInputValue] = useState('');
   const [showHistory, setShowHistory] = useState(false);

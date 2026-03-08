@@ -3,27 +3,403 @@ import apiClient from './apiClient';
 import authService from './authService';
 import useAuthStore from '../store/authStore';
 
+// Helper: generate a local ID
+function generateLocalId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
 // Helper: convert Supabase snake_case keys to Dexie camelCase keys
 function mapSnakeToCamel(record) {
   const mapped = {};
   for (const [key, value] of Object.entries(record)) {
-    // Convert snake_case to camelCase
     const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
     mapped[camelKey] = value;
   }
   return mapped;
 }
 
+// Debounce helper
+function createDebounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
 const syncService = {
-  // --- Push Sync (Local -> Supabase) ---
-  pushSync: async function() {
+  // ============================================
+  // PULL ALL USER DATA (login / app load)
+  // ============================================
+  pullAllUserData: async function () {
     try {
-      // 1. Read all records from Dexie sync_queue where status = 'pending'
+      const response = await apiClient.get('/api/sync/pull/all');
+      if (!response.data) return;
+
+      const { user, books, reading_progress, highlights, ai_conversations, bookmarks, user_dictionary_history } = response.data;
+
+      // Store user in auth store
+      if (user) {
+        const authStore = useAuthStore.getState();
+        authStore.setUser(user);
+      }
+
+      // Hydrate Dexie tables — clear existing, insert pulled data
+      // We do NOT clear the books table fileBlob data since pull doesn't include that
+      // Instead we merge: update metadata from Supabase but keep local fileBlob
+
+      // Reading Progress
+      if (reading_progress && reading_progress.length > 0) {
+        await db.reading_progress.clear();
+        const mapped = reading_progress.map(r => ({
+          ...mapSnakeToCamel(r),
+          supabaseId: r.id,
+          synced: true,
+        }));
+        // Remove supabase 'id' to avoid clashing with Dexie auto-increment
+        for (const m of mapped) { delete m.id; }
+        await db.reading_progress.bulkAdd(mapped);
+      }
+
+      // Highlights
+      if (highlights && highlights.length > 0) {
+        await db.highlights.clear();
+        const mapped = highlights.map(h => ({
+          ...mapSnakeToCamel(h),
+          supabaseId: h.id,
+          synced: true,
+        }));
+        for (const m of mapped) { delete m.id; }
+        await db.highlights.bulkAdd(mapped);
+      }
+
+      // AI Conversations
+      if (ai_conversations && ai_conversations.length > 0) {
+        await db.ai_conversations.clear();
+        const mapped = ai_conversations.map(c => ({
+          ...mapSnakeToCamel(c),
+          supabaseId: c.id,
+          synced: true,
+        }));
+        for (const m of mapped) { delete m.id; }
+        await db.ai_conversations.bulkAdd(mapped);
+      }
+
+      // Bookmarks
+      if (bookmarks && bookmarks.length > 0) {
+        await db.bookmarks.clear();
+        const mapped = bookmarks.map(b => ({
+          ...mapSnakeToCamel(b),
+          supabaseId: b.id,
+          synced: true,
+        }));
+        for (const m of mapped) { delete m.id; }
+        await db.bookmarks.bulkAdd(mapped);
+      }
+
+      // Dictionary History
+      if (user_dictionary_history && user_dictionary_history.length > 0) {
+        await db.user_dictionary_history.clear();
+        const mapped = user_dictionary_history.map(d => ({
+          ...mapSnakeToCamel(d),
+          synced: true,
+        }));
+        for (const m of mapped) { delete m.id; }
+        await db.user_dictionary_history.bulkAdd(mapped);
+      }
+
+      // Update last_synced_at
+      await db.app_settings.put({ key: 'last_synced_at', value: new Date().toISOString() });
+
+      console.log('Pull sync complete: all user data hydrated');
+    } catch (error) {
+      console.error('pullAllUserData failed:', error);
+      throw error;
+    }
+  },
+
+  // ============================================
+  // DIRECT SAVE — HIGHLIGHTS
+  // ============================================
+  saveHighlight: async function (bookId, highlightData) {
+    const localId = generateLocalId();
+    const now = new Date().toISOString();
+
+    const dexieRecord = {
+      bookId,
+      localId,
+      highlightedText: highlightData.highlighted_text || highlightData.text || '',
+      color: highlightData.color || 'yellow',
+      pageNumber: highlightData.page_number || highlightData.page || 0,
+      textPosition: highlightData.text_position || highlightData.position || '',
+      note: highlightData.note || null,
+      createdAt: now,
+      updatedAt: now,
+      synced: false,
+      supabaseId: null,
+    };
+
+    // Step 1: Save to Dexie immediately
+    const dexieId = await db.highlights.add(dexieRecord);
+
+    // Step 2: If online, save to Supabase directly
+    if (navigator.onLine) {
+      try {
+        const response = await apiClient.post(`/api/books/${bookId}/highlights`, {
+          highlighted_text: dexieRecord.highlightedText,
+          color: dexieRecord.color,
+          page_number: dexieRecord.pageNumber,
+          text_position: dexieRecord.textPosition,
+          note: dexieRecord.note,
+          local_id: localId,
+        });
+        // Step 3: Update Dexie with Supabase UUID
+        await db.highlights.update(dexieId, {
+          supabaseId: response.data.id,
+          synced: true,
+        });
+        return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
+      } catch (error) {
+        console.error('Failed to save highlight to Supabase:', error);
+        // Step 4: Queue for later sync
+        await this._queueForSync('upload', 'highlights', localId, {
+          book_id: bookId,
+          highlighted_text: dexieRecord.highlightedText,
+          color: dexieRecord.color,
+          page_number: dexieRecord.pageNumber,
+          text_position: dexieRecord.textPosition,
+          note: dexieRecord.note,
+        });
+      }
+    } else {
+      // Step 5: Offline — queue for sync
+      await this._queueForSync('upload', 'highlights', localId, {
+        book_id: bookId,
+        highlighted_text: dexieRecord.highlightedText,
+        color: dexieRecord.color,
+        page_number: dexieRecord.pageNumber,
+        text_position: dexieRecord.textPosition,
+        note: dexieRecord.note,
+      });
+    }
+
+    return { ...dexieRecord, id: dexieId };
+  },
+
+  updateHighlight: async function (supabaseId, updateData) {
+    if (navigator.onLine && supabaseId) {
+      try {
+        await apiClient.put(`/api/highlights/${supabaseId}`, updateData);
+      } catch (error) {
+        console.error('Failed to update highlight on Supabase:', error);
+      }
+    }
+  },
+
+  deleteHighlight: async function (supabaseId, dexieId) {
+    // Delete from Dexie
+    if (dexieId) {
+      await db.highlights.delete(dexieId).catch(() => {});
+    }
+    // Delete from Supabase if online
+    if (navigator.onLine && supabaseId) {
+      try {
+        await apiClient.delete(`/api/highlights/${supabaseId}`);
+      } catch (error) {
+        console.error('Failed to delete highlight from Supabase:', error);
+      }
+    }
+  },
+
+  // ============================================
+  // DIRECT SAVE — READING PROGRESS (debounced)
+  // ============================================
+  _saveProgressDirect: async function (bookId, progressData) {
+    const localId = generateLocalId();
+    const now = new Date().toISOString();
+
+    // Save to Dexie — upsert by bookId
+    const existing = await db.reading_progress.where('bookId').equals(bookId).first();
+    const dexieData = {
+      bookId,
+      currentPage: progressData.current_page,
+      scrollPosition: progressData.scroll_position || 0,
+      progressPercentage: progressData.progress_percentage,
+      lastReadAt: now,
+      synced: false,
+    };
+
+    if (existing) {
+      await db.reading_progress.update(existing.id, dexieData);
+    } else {
+      dexieData.localId = localId;
+      await db.reading_progress.add(dexieData);
+    }
+
+    // If online, save to Supabase directly
+    if (navigator.onLine) {
+      try {
+        const response = await apiClient.post(`/api/books/${bookId}/progress`, {
+          current_page: progressData.current_page,
+          scroll_position: progressData.scroll_position || 0,
+          progress_percentage: progressData.progress_percentage,
+          total_time_read: progressData.total_time_read || 0,
+          local_id: existing?.localId || localId,
+        });
+        // Update Dexie synced status
+        const record = await db.reading_progress.where('bookId').equals(bookId).first();
+        if (record) {
+          await db.reading_progress.update(record.id, {
+            supabaseId: response.data.id,
+            synced: true,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to save progress to Supabase:', error);
+        await this._queueForSync('upload', 'reading_progress', existing?.localId || localId, {
+          book_id: bookId,
+          current_page: progressData.current_page,
+          scroll_position: progressData.scroll_position || 0,
+          progress_percentage: progressData.progress_percentage,
+          last_read_at: now,
+        });
+      }
+    } else {
+      await this._queueForSync('upload', 'reading_progress', existing?.localId || localId, {
+        book_id: bookId,
+        current_page: progressData.current_page,
+        scroll_position: progressData.scroll_position || 0,
+        progress_percentage: progressData.progress_percentage,
+        last_read_at: now,
+      });
+    }
+  },
+
+  // Debounced version — called by BookContext
+  saveProgress: null, // initialized in init()
+
+  // ============================================
+  // DIRECT SAVE — BOOKMARKS
+  // ============================================
+  saveBookmark: async function (bookId, bookmarkData) {
+    const localId = generateLocalId();
+    const now = new Date().toISOString();
+
+    const dexieRecord = {
+      bookId,
+      localId,
+      pageNumber: bookmarkData.page_number || bookmarkData.page,
+      label: bookmarkData.label || `Page ${bookmarkData.page_number || bookmarkData.page}`,
+      createdAt: now,
+      synced: false,
+      supabaseId: null,
+    };
+
+    const dexieId = await db.bookmarks.add(dexieRecord);
+
+    if (navigator.onLine) {
+      try {
+        const response = await apiClient.post(`/api/books/${bookId}/bookmarks`, {
+          page_number: dexieRecord.pageNumber,
+          label: dexieRecord.label,
+          local_id: localId,
+        });
+        await db.bookmarks.update(dexieId, {
+          supabaseId: response.data.id,
+          synced: true,
+        });
+        return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
+      } catch (error) {
+        console.error('Failed to save bookmark to Supabase:', error);
+        await this._queueForSync('upload', 'bookmarks', localId, {
+          book_id: bookId,
+          page_number: dexieRecord.pageNumber,
+          label: dexieRecord.label,
+        });
+      }
+    } else {
+      await this._queueForSync('upload', 'bookmarks', localId, {
+        book_id: bookId,
+        page_number: dexieRecord.pageNumber,
+        label: dexieRecord.label,
+      });
+    }
+
+    return { ...dexieRecord, id: dexieId };
+  },
+
+  deleteBookmark: async function (supabaseId, dexieId) {
+    if (dexieId) {
+      await db.bookmarks.delete(dexieId).catch(() => {});
+    }
+    if (navigator.onLine && supabaseId) {
+      try {
+        await apiClient.delete(`/api/bookmarks/${supabaseId}`);
+      } catch (error) {
+        console.error('Failed to delete bookmark from Supabase:', error);
+      }
+    }
+  },
+
+  // ============================================
+  // DIRECT SAVE — AI CONVERSATIONS (no debounce)
+  // ============================================
+  saveAIConversation: async function (conversationData) {
+    const localId = generateLocalId();
+    const now = new Date().toISOString();
+
+    const dexieRecord = {
+      localId,
+      bookId: conversationData.book_id || null,
+      chatType: conversationData.chat_type || 'general',
+      queryText: conversationData.query_text,
+      aiResponse: conversationData.ai_response,
+      pageNumber: conversationData.page_number || null,
+      createdAt: now,
+      synced: true, // Backend already saves during streaming
+      supabaseId: null,
+    };
+
+    await db.ai_conversations.add(dexieRecord);
+  },
+
+  // ============================================
+  // DIRECT SAVE — DICTIONARY HISTORY
+  // ============================================
+  saveDictionaryLookup: async function (word) {
+    const now = new Date().toISOString();
+    await db.user_dictionary_history.add({
+      word: word.toLowerCase(),
+      localId: generateLocalId(),
+      lookedUpAt: now,
+      synced: true, // Backend already saves via dictionary endpoint
+    });
+  },
+
+  // ============================================
+  // SYNC QUEUE HELPER
+  // ============================================
+  _queueForSync: async function (action, tableName, localId, payload) {
+    await db.sync_queue.add({
+      action,
+      tableName,
+      local_id: localId,
+      payload,
+      status: 'pending',
+      attempts: 0,
+      createdAt: new Date().toISOString(),
+    });
+  },
+
+  // ============================================
+  // PUSH SYNC — flush sync_queue to Supabase
+  // ============================================
+  pushSync: async function () {
+    try {
       const queueItems = await db.sync_queue
         .where('status').equals('pending')
         .toArray();
 
-      // 2. If queue is empty, return early
       if (queueItems.length === 0) {
         console.log('Sync: No pending items to push');
         return;
@@ -31,7 +407,6 @@ const syncService = {
 
       console.log(`Sync: Pushing ${queueItems.length} pending items...`);
 
-      // 3. POST to /api/sync with the queue payload
       const payload = {
         queue: queueItems.map(item => ({
           action: item.action,
@@ -44,14 +419,11 @@ const syncService = {
 
       const response = await apiClient.post('/api/sync', payload);
 
-      // 4. On success response:
       if (response.data) {
         const { synced, failed } = response.data;
 
-        // Process synced items
         for (const item of synced) {
           const tableName = item.tableName || 'books';
-          // Update the matching Dexie record with the returned Supabase record_id
           try {
             await db[tableName].update(parseInt(item.local_id), {
               recordId: item.record_id
@@ -60,7 +432,6 @@ const syncService = {
             console.warn(`Sync: Could not update local record for ${tableName}:`, err);
           }
 
-          // Mark sync_queue item as 'synced'
           if (item.local_queue_id) {
             await db.sync_queue.update(item.local_queue_id, {
               status: 'synced'
@@ -68,9 +439,7 @@ const syncService = {
           }
         }
 
-        // Process failed items
         for (const item of failed) {
-          // Find the queue item by local_id
           const queueItem = queueItems.find(q => q.local_id === item.local_id);
           if (queueItem) {
             const attempts = (queueItem.attempts || 0) + 1;
@@ -80,7 +449,7 @@ const syncService = {
             });
           }
         }
-        
+
         if (synced.length > 0) {
           console.log(`Sync: Successfully pushed ${synced.length} items`);
         }
@@ -93,73 +462,23 @@ const syncService = {
     }
   },
 
-  // --- Pull Sync (Supabase -> Local) ---
-  pullSync: async function() {
-    try {
-      // 1. Read last_synced_at from Dexie app_settings table
-      const lastSyncedAtSetting = await db.app_settings.get({ key: 'last_synced_at' });
-      const lastSyncedAt = lastSyncedAtSetting ? lastSyncedAtSetting.value : '1970-01-01T00:00:00Z';
-
-      // 2. GET /api/sync/pull?last_synced_at={last_synced_at}  (query param, NOT path param)
-      const response = await apiClient.get('/api/sync/pull', {
-        params: { last_synced_at: lastSyncedAt }
-      });
-
-      // 3. For each returned record:
-      if (response.data) {
-        let totalPulled = 0;
-
-        for (const [tableName, records] of Object.entries(response.data)) {
-          for (const record of records) {
-            // Map Supabase snake_case fields to Dexie camelCase
-            const mappedRecord = mapSnakeToCamel(record);
-            
-            // The Supabase 'id' becomes 'recordId' in Dexie
-            const supabaseId = record.id;
-            
-            // Check if record_id exists in Dexie
-            const existing = await db[tableName].where('recordId').equals(supabaseId).first();
-
-            const dexieData = {
-              ...mappedRecord,
-              recordId: supabaseId,
-            };
-            delete dexieData.id; // Don't overwrite Dexie's auto-increment id
-
-            if (existing) {
-              // If yes: update the Dexie record
-              await db[tableName].update(existing.id, dexieData);
-            } else {
-              // If no: insert as new record
-              await db[tableName].add(dexieData);
-            }
-            totalPulled++;
-          }
-        }
-
-        // 4. Update last_synced_at in Dexie app_settings
-        await db.app_settings.put({ key: 'last_synced_at', value: new Date().toISOString() });
-        
-        if (totalPulled > 0) {
-          console.log(`Sync: Pulled ${totalPulled} records from server`);
-        } else {
-          console.log('Sync: No new records to pull');
-        }
-      }
-    } catch (error) {
-      console.error('Pull sync failed:', error);
-    }
-  },
-
-  // --- Initialize Sync listeners and status ---
+  // ============================================
+  // INITIALIZE — listeners, debounced functions
+  // ============================================
   init() {
+    // Debounced progress save (1500ms)
+    this.saveProgress = createDebounce(
+      (bookId, progressData) => this._saveProgressDirect(bookId, progressData),
+      1500
+    );
+
+    // Online event — flush sync queue
     window.addEventListener('online', () => {
-      console.log('Device online, triggering sync...');
+      console.log('Device online, flushing sync queue...');
       this.pushSync();
-      this.pullSync();
     });
 
-    // Debounced trigger helper
+    // Debounced trigger helper for legacy sync_queue pattern
     let timeoutId;
     this.triggerSync = () => {
       if (timeoutId) clearTimeout(timeoutId);
@@ -169,23 +488,20 @@ const syncService = {
     };
   },
 
-  // --- On app load sequence ---
-  onAppLoad: async function() {
+  // ============================================
+  // ON APP LOAD — full pull then push
+  // ============================================
+  onAppLoad: async function () {
     const authStore = useAuthStore.getState();
-    
-    // 1. Check if user is authenticated (valid JWT in localStorage)
+
     if (authService.isAuthenticated()) {
       try {
-        // 2. Call GET /api/auth/me to verify token still valid
         const user = await authService.me();
         authStore.setUser(user);
 
-        // 3. If online: run pullSync() then pushSync()
         if (navigator.onLine) {
-          await this.pullSync();
+          await this.pullAllUserData();
           await this.pushSync();
-          // Safety: check for any orphaned local data that needs migrating
-          await this.migrateLocalData();
         }
       } catch (error) {
         console.error('Auth verification failed:', error);
@@ -195,11 +511,11 @@ const syncService = {
       authStore.setLoading(false);
     }
   },
-  // --- Migrate pre-account local data to Supabase ---
-  // Called after a user signs up or logs in for the first time.
-  // Scans Dexie for records that were created locally (no recordId)
-  // and queues them all for sync to the new user's Supabase account.
-  migrateLocalData: async function() {
+
+  // ============================================
+  // MIGRATE LOCAL DATA (pre-account)
+  // ============================================
+  migrateLocalData: async function () {
     try {
       const allBooks = await db.books.toArray();
       const unsyncedBooks = allBooks.filter(b => !b.recordId);
@@ -213,13 +529,11 @@ const syncService = {
       let queuedCount = 0;
 
       for (const book of unsyncedBooks) {
-        // Ensure the book has a local_id
         const localId = (book.local_id || book.id).toString();
         if (!book.local_id) {
           await db.books.update(book.id, { local_id: localId });
         }
 
-        // Check if already in sync_queue to avoid duplicates
         const existingQueue = await db.sync_queue
           .where('local_id').equals(localId)
           .and(item => item.tableName === 'books' && item.status === 'pending')
@@ -245,81 +559,8 @@ const syncService = {
         }
       }
 
-      // Migrate reading progress for those books
-      const allProgress = await db.reading_progress.toArray();
-      const unsyncedProgress = allProgress.filter(p => !p.recordId);
-
-      for (const progress of unsyncedProgress) {
-        const localId = (progress.local_id || progress.id).toString();
-        if (!progress.local_id) {
-          await db.reading_progress.update(progress.id, { local_id: localId });
-        }
-
-        const existingQueue = await db.sync_queue
-          .where('local_id').equals(localId)
-          .and(item => item.tableName === 'reading_progress' && item.status === 'pending')
-          .first();
-
-        if (!existingQueue) {
-          await db.sync_queue.add({
-            action: 'upload',
-            tableName: 'reading_progress',
-            local_id: localId,
-            payload: {
-              book_id: (progress.bookId || '').toString(),
-              current_page: progress.currentPage || 0,
-              scroll_position: progress.scrollPosition || 0,
-              progress_percentage: progress.progressPercentage || 0,
-              last_read_at: progress.lastReadAt || new Date().toISOString(),
-            },
-            createdAt: new Date().toISOString(),
-            attempts: 0,
-            status: 'pending'
-          });
-          queuedCount++;
-        }
-      }
-
-      // Migrate highlights
-      const allHighlights = await db.highlights.toArray();
-      const unsyncedHighlights = allHighlights.filter(h => !h.recordId);
-
-      for (const highlight of unsyncedHighlights) {
-        const localId = (highlight.local_id || highlight.id).toString();
-        if (!highlight.local_id) {
-          await db.highlights.update(highlight.id, { local_id: localId });
-        }
-
-        const existingQueue = await db.sync_queue
-          .where('local_id').equals(localId)
-          .and(item => item.tableName === 'highlights' && item.status === 'pending')
-          .first();
-
-        if (!existingQueue) {
-          await db.sync_queue.add({
-            action: 'upload',
-            tableName: 'highlights',
-            local_id: localId,
-            payload: {
-              book_id: (highlight.bookId || '').toString(),
-              highlighted_text: highlight.highlightedText || '',
-              color: highlight.color || 'yellow',
-              page_number: highlight.pageNumber || 0,
-              text_position: highlight.textPosition || '',
-              note: highlight.note || null,
-              updated_at: highlight.updatedAt || highlight.createdAt || new Date().toISOString(),
-            },
-            createdAt: new Date().toISOString(),
-            attempts: 0,
-            status: 'pending'
-          });
-          queuedCount++;
-        }
-      }
-
       console.log(`Migration: Queued ${queuedCount} records for sync`);
 
-      // Trigger immediate push sync
       if (queuedCount > 0 && navigator.onLine) {
         await this.pushSync();
       }

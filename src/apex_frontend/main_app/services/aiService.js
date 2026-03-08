@@ -27,7 +27,7 @@ const getHeaders = (contentType = 'application/json') => {
  * Stream an explanation of highlighted text.
  * Returns a Response object whose body is an SSE stream.
  */
-export async function streamExplain({ selectedText, context, bookTitle, conversationHistory = [] }) {
+export async function streamExplain({ selectedText, context, bookTitle, bookId, chatType, conversationHistory = [] }) {
   const response = await fetch(`${API_BASE}/explain`, {
     method: 'POST',
     headers: getHeaders(),
@@ -35,6 +35,8 @@ export async function streamExplain({ selectedText, context, bookTitle, conversa
       selected_text: selectedText,
       context: context || null,
       book_title: bookTitle || null,
+      book_id: bookId || null,
+      chat_type: chatType || 'in_reader',
       conversation_history: conversationHistory.map(msg => ({
         role: msg.role === 'ai' ? 'model' : msg.role,
         content: msg.content,
@@ -55,13 +57,15 @@ export async function streamExplain({ selectedText, context, bookTitle, conversa
  * Stream an AI response to an open-ended question.
  * Returns a Response object whose body is an SSE stream.
  */
-export async function streamAsk({ message, bookTitle, conversationHistory = [] }) {
+export async function streamAsk({ message, bookTitle, bookId, chatType, conversationHistory = [] }) {
   const response = await fetch(`${API_BASE}/ask`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({
       message,
       book_title: bookTitle || null,
+      book_id: bookId || null,
+      chat_type: chatType || 'general',
       conversation_history: conversationHistory.map(msg => ({
         role: msg.role === 'ai' ? 'model' : msg.role,
         content: msg.content,

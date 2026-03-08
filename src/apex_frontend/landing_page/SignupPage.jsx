@@ -18,8 +18,8 @@ function SignupPage({ onLogin }) {
     setError('');
 
     try {
-      await authService.register(fullName, email, password);
-      onLogin();
+      const response = await authService.register(fullName, email, password);
+      onLogin(response);
       navigate('/');
     } catch (err) {
       console.error('Signup error:', err);

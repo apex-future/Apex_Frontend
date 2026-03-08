@@ -17,8 +17,8 @@ function LoginPage({ onLogin }) {
     setError('');
 
     try {
-      await authService.login(email, password);
-      onLogin();
+      const response = await authService.login(email, password);
+      onLogin(response);
       navigate('/');
     } catch (err) {
       console.error('Login error:', err);
