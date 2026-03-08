@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Moon, Sun, Monitor, Bell, HardDrive, Download, Trash2, HelpCircle, FileText, ExternalLink, Activity, BookOpen, Bot } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import useThemeStore from '../../../../../store/themeStore';
+import useThemeStore from '../../../store/themeStore';
 
 function Settings() {
     const navigate = useNavigate();
