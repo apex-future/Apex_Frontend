@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { Send, ArrowLeft, User, Sparkle, RotateCcw, Trash2, AlertCircle, Plus, MessageSquare, PanelRightOpen, PanelRightClose, MoreVertical, X, SquarePen } from 'lucide-react'
+import { Send, ArrowLeft, User, Sparkle, RotateCcw, Trash2, AlertCircle, Plus, MessageSquare, PanelRightOpen, PanelRightClose, MoreVertical, X, SquarePen, BookOpen } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -102,8 +102,13 @@ function ApexAI() {
                             <ArrowLeft size={20} />
                         </button>
                         
-                        <h1 className='text-sm font-bold tracking-tight text-slate-900 truncate max-w-[200px] md:max-w-md'>
+                        <h1 className='text-sm font-bold tracking-tight text-slate-900 flex items-center gap-2 truncate max-w-[200px] md:max-w-md'>
                             {chatHistory.find(c => c.id === sessionId)?.title || "Apex AI Companion"}
+                            {chatHistory.find(c => c.id === sessionId)?.scope && chatHistory.find(c => c.id === sessionId)?.scope !== 'general' && (
+                                <span className='text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1.5 border border-slate-200'>
+                                    <BookOpen size={12} /> {chatHistory.find(c => c.id === sessionId)?.scope}
+                                </span>
+                            )}
                         </h1>
                     </div>
 
@@ -304,10 +309,25 @@ function ApexAI() {
                                     <div 
                                         key={item.id}
                                         onClick={() => handleSwitchChat(item)}
-                                        className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-slate-50 text-slate-600'}`}
+                                        className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-blue-50 text-blue-700 font-medium border border-blue-100/50' : 'hover:bg-slate-50 text-slate-600 border border-transparent'}`}
                                     >
-                                        <MessageSquare size={16} className={sessionId === item.id ? 'text-accent-primary' : 'text-slate-400'} />
-                                        <span className='flex-1 truncate text-sm'>{item.title || 'New Chat'}</span>
+                                        {item.scope && item.scope !== 'general' ? (
+                                            <div className={`p-1.5 rounded-lg ${sessionId === item.id ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-500'}`}>
+                                                <BookOpen size={14} />
+                                            </div>
+                                        ) : (
+                                            <div className={`p-1.5 rounded-lg ${sessionId === item.id ? 'bg-accent-primary/10 text-accent-primary' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-500'}`}>
+                                                <MessageSquare size={14} />
+                                            </div>
+                                        )}
+                                        <div className="flex-1 min-w-0 flex flex-col">
+                                            <span className='truncate text-sm font-medium leading-tight'>{item.title || 'New Chat'}</span>
+                                            {item.scope && item.scope !== 'general' && (
+                                                <span className='text-[10px] text-slate-400 truncate mt-0.5 mt-0.5 flex items-center gap-1'>
+                                                    {item.scope}
+                                                </span>
+                                            )}
+                                        </div>
                                         <button 
                                             onClick={(e) => {
                                                 e.stopPropagation();
