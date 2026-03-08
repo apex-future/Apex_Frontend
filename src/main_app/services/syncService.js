@@ -29,6 +29,61 @@ function createDebounce(fn, delay) {
 
 const syncService = {
   // ============================================
+  // HELPER: Resolve a Dexie book ID to Supabase UUID
+  // ============================================
+  _resolveBookId: async function (bookId) {
+    // If it already looks like a UUID string, return it directly
+    if (typeof bookId === 'string' && bookId.includes('-')) {
+      return bookId;
+    }
+    // Look up the book in Dexie to get its supabaseId
+    try {
+      const book = await db.books.get(bookId);
+      if (book?.supabaseId) return book.supabaseId;
+      // Also try matching by local_id
+      if (!book) {
+        const byLocalId = await db.books.where('local_id').equals(bookId.toString()).first();
+        if (byLocalId?.supabaseId) return byLocalId.supabaseId;
+      }
+    } catch (err) {
+      console.warn('Failed to resolve book ID:', err);
+    }
+    return null; // Book hasn't synced to Supabase yet
+  },
+
+  // ============================================
+  // UPLOAD BOOK FILE + METADATA directly to Supabase
+  // ============================================
+  uploadBook: async function (fileObject, title, author, dexieBookId) {
+    if (!navigator.onLine) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', fileObject);
+      formData.append('title', title);
+      formData.append('author', author || 'Unknown');
+
+      const response = await apiClient.post('/api/books/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (response.data && response.data.id) {
+        // Update Dexie with the Supabase UUID
+        await db.books.update(dexieBookId, {
+          supabaseId: response.data.id,
+          synced: true,
+          filePath: response.data.file_path,
+        });
+        console.log('Book uploaded to Supabase:', response.data.id);
+        return response.data;
+      }
+    } catch (error) {
+      console.error('Failed to upload book to Supabase:', error);
+    }
+    return null;
+  },
+
+  // ============================================
   // PULL ALL USER DATA (login / app load)
   // ============================================
   pullAllUserData: async function () {
@@ -36,7 +91,7 @@ const syncService = {
       const response = await apiClient.get('/api/sync/pull/all');
       if (!response.data) return;
 
-      const { user, books, reading_progress, highlights, ai_conversations, bookmarks, user_dictionary_history } = response.data;
+      const { user, books, reading_progress, highlights, bookmarks } = response.data;
 
       // Store user in auth store
       if (user) {
@@ -51,7 +106,6 @@ const syncService = {
         const existingBlobMap = {};
         for (const eb of existingBooks) {
           if (eb.fileBlob) {
-            // Key by supabaseId or local_id
             const key = eb.supabaseId || eb.local_id || eb.id?.toString();
             if (key) existingBlobMap[key] = eb.fileBlob;
           }
@@ -64,7 +118,7 @@ const syncService = {
             supabaseId: b.id,
             synced: true,
           };
-          delete mapped.id; // Remove Supabase UUID to avoid Dexie auto-increment clash
+          delete mapped.id;
 
           // Restore fileBlob if we had it locally
           const blobKey = b.id || b.local_id;
@@ -114,11 +168,8 @@ const syncService = {
       }
 
       // ---- Category B data → Zustand only (no Dexie) ----
-      // AI Conversations — store in Zustand for components to read
-      // (Components that need these should read from Zustand or fetch from API directly)
-      // We don't store in Dexie as per Category B rules
-
-      // Dictionary History — same, Category B, no Dexie
+      // AI Conversations and Dictionary History are Category B — not stored in Dexie
+      // Components fetch them directly from the API when needed
 
       // Update last_synced_at
       await db.app_settings.put({ key: 'last_synced_at', value: new Date().toISOString() });
@@ -131,7 +182,7 @@ const syncService = {
   },
 
   // ============================================
-  // DIRECT SAVE — HIGHLIGHTS
+  // DIRECT SAVE — HIGHLIGHTS (Category A)
   // ============================================
   saveHighlight: async function (bookId, highlightData) {
     const localId = generateLocalId();
@@ -154,29 +205,41 @@ const syncService = {
     // Step 1: Save to Dexie immediately
     const dexieId = await db.highlights.add(dexieRecord);
 
-    // Step 2: If online, save to Supabase directly
+    // Step 2: If online, resolve the Supabase book UUID and save directly
     if (navigator.onLine) {
-      try {
-        const response = await apiClient.post(`/api/books/${bookId}/highlights`, {
-          highlighted_text: dexieRecord.highlightedText,
-          color: dexieRecord.color,
-          page_number: dexieRecord.pageNumber,
-          text_position: dexieRecord.textPosition,
-          note: dexieRecord.note,
-          local_id: localId,
-        });
-        // Step 3: Update Dexie with Supabase UUID
-        await db.highlights.update(dexieId, {
-          supabaseId: response.data.id,
-          synced: true,
-        });
-        this._triggerDebouncedFlush();
-        return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
-      } catch (error) {
-        console.error('Failed to save highlight to Supabase:', error);
-        // Step 4: Queue for later sync
+      const supabaseBookId = await this._resolveBookId(bookId);
+      if (supabaseBookId) {
+        try {
+          const response = await apiClient.post(`/api/books/${supabaseBookId}/highlights`, {
+            highlighted_text: dexieRecord.highlightedText,
+            color: dexieRecord.color,
+            page_number: dexieRecord.pageNumber,
+            text_position: dexieRecord.textPosition,
+            note: dexieRecord.note,
+            local_id: localId,
+          });
+          await db.highlights.update(dexieId, {
+            supabaseId: response.data.id,
+            synced: true,
+          });
+          this._triggerDebouncedFlush();
+          return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
+        } catch (error) {
+          console.error('Failed to save highlight to Supabase:', error);
+          await this._queueForSync('upload', 'highlights', localId, {
+            book_id: supabaseBookId,
+            highlighted_text: dexieRecord.highlightedText,
+            color: dexieRecord.color,
+            page_number: dexieRecord.pageNumber,
+            text_position: dexieRecord.textPosition,
+            note: dexieRecord.note,
+          });
+        }
+      } else {
+        // Book hasn't synced yet — queue for later
+        console.warn('Book not synced to Supabase yet, queuing highlight');
         await this._queueForSync('upload', 'highlights', localId, {
-          book_id: bookId,
+          _dexie_book_id: bookId, // Will need to resolve later
           highlighted_text: dexieRecord.highlightedText,
           color: dexieRecord.color,
           page_number: dexieRecord.pageNumber,
@@ -185,9 +248,8 @@ const syncService = {
         });
       }
     } else {
-      // Step 5: Offline — queue for sync
       await this._queueForSync('upload', 'highlights', localId, {
-        book_id: bookId,
+        _dexie_book_id: bookId,
         highlighted_text: dexieRecord.highlightedText,
         color: dexieRecord.color,
         page_number: dexieRecord.pageNumber,
@@ -210,11 +272,9 @@ const syncService = {
   },
 
   deleteHighlight: async function (supabaseId, dexieId) {
-    // Delete from Dexie
     if (dexieId) {
       await db.highlights.delete(dexieId).catch(() => {});
     }
-    // Delete from Supabase if online
     if (navigator.onLine && supabaseId) {
       try {
         await apiClient.delete(`/api/highlights/${supabaseId}`);
@@ -225,7 +285,7 @@ const syncService = {
   },
 
   // ============================================
-  // DIRECT SAVE — READING PROGRESS (debounced)
+  // DIRECT SAVE — READING PROGRESS (Category A, debounced)
   // ============================================
   _saveProgressDirect: async function (bookId, progressData) {
     const localId = generateLocalId();
@@ -249,29 +309,39 @@ const syncService = {
       await db.reading_progress.add(dexieData);
     }
 
-    // If online, save to Supabase directly
+    // If online, resolve UUID and save to Supabase
     if (navigator.onLine) {
-      try {
-        const response = await apiClient.post(`/api/books/${bookId}/progress`, {
-          current_page: progressData.current_page,
-          scroll_position: progressData.scroll_position || 0,
-          progress_percentage: progressData.progress_percentage,
-          total_time_read: progressData.total_time_read || 0,
-          local_id: existing?.localId || localId,
-        });
-        // Update Dexie synced status
-        const record = await db.reading_progress.where('bookId').equals(bookId).first();
-        if (record) {
-          await db.reading_progress.update(record.id, {
-            supabaseId: response.data.id,
-            synced: true,
+      const supabaseBookId = await this._resolveBookId(bookId);
+      if (supabaseBookId) {
+        try {
+          const response = await apiClient.post(`/api/books/${supabaseBookId}/progress`, {
+            current_page: progressData.current_page,
+            scroll_position: progressData.scroll_position || 0,
+            progress_percentage: progressData.progress_percentage,
+            total_time_read: progressData.total_time_read || 0,
+            local_id: existing?.localId || localId,
+          });
+          const record = await db.reading_progress.where('bookId').equals(bookId).first();
+          if (record) {
+            await db.reading_progress.update(record.id, {
+              supabaseId: response.data.id,
+              synced: true,
+            });
+          }
+          this._triggerDebouncedFlush();
+        } catch (error) {
+          console.error('Failed to save progress to Supabase:', error);
+          await this._queueForSync('upload', 'reading_progress', existing?.localId || localId, {
+            book_id: supabaseBookId,
+            current_page: progressData.current_page,
+            scroll_position: progressData.scroll_position || 0,
+            progress_percentage: progressData.progress_percentage,
+            last_read_at: now,
           });
         }
-        this._triggerDebouncedFlush();
-      } catch (error) {
-        console.error('Failed to save progress to Supabase:', error);
+      } else {
         await this._queueForSync('upload', 'reading_progress', existing?.localId || localId, {
-          book_id: bookId,
+          _dexie_book_id: bookId,
           current_page: progressData.current_page,
           scroll_position: progressData.scroll_position || 0,
           progress_percentage: progressData.progress_percentage,
@@ -280,7 +350,7 @@ const syncService = {
       }
     } else {
       await this._queueForSync('upload', 'reading_progress', existing?.localId || localId, {
-        book_id: bookId,
+        _dexie_book_id: bookId,
         current_page: progressData.current_page,
         scroll_position: progressData.scroll_position || 0,
         progress_percentage: progressData.progress_percentage,
@@ -293,7 +363,7 @@ const syncService = {
   saveProgress: null, // initialized in init()
 
   // ============================================
-  // DIRECT SAVE — BOOKMARKS
+  // DIRECT SAVE — BOOKMARKS (Category A)
   // ============================================
   saveBookmark: async function (bookId, bookmarkData) {
     const localId = generateLocalId();
@@ -312,29 +382,38 @@ const syncService = {
     const dexieId = await db.bookmarks.add(dexieRecord);
 
     if (navigator.onLine) {
-      try {
-        const response = await apiClient.post(`/api/books/${bookId}/bookmarks`, {
-          page_number: dexieRecord.pageNumber,
-          label: dexieRecord.label,
-          local_id: localId,
-        });
-        await db.bookmarks.update(dexieId, {
-          supabaseId: response.data.id,
-          synced: true,
-        });
-        this._triggerDebouncedFlush();
-        return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
-      } catch (error) {
-        console.error('Failed to save bookmark to Supabase:', error);
+      const supabaseBookId = await this._resolveBookId(bookId);
+      if (supabaseBookId) {
+        try {
+          const response = await apiClient.post(`/api/books/${supabaseBookId}/bookmarks`, {
+            page_number: dexieRecord.pageNumber,
+            label: dexieRecord.label,
+            local_id: localId,
+          });
+          await db.bookmarks.update(dexieId, {
+            supabaseId: response.data.id,
+            synced: true,
+          });
+          this._triggerDebouncedFlush();
+          return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
+        } catch (error) {
+          console.error('Failed to save bookmark to Supabase:', error);
+          await this._queueForSync('upload', 'bookmarks', localId, {
+            book_id: supabaseBookId,
+            page_number: dexieRecord.pageNumber,
+            label: dexieRecord.label,
+          });
+        }
+      } else {
         await this._queueForSync('upload', 'bookmarks', localId, {
-          book_id: bookId,
+          _dexie_book_id: bookId,
           page_number: dexieRecord.pageNumber,
           label: dexieRecord.label,
         });
       }
     } else {
       await this._queueForSync('upload', 'bookmarks', localId, {
-        book_id: bookId,
+        _dexie_book_id: bookId,
         page_number: dexieRecord.pageNumber,
         label: dexieRecord.label,
       });
@@ -357,13 +436,10 @@ const syncService = {
   },
 
   // ============================================
-  // DIRECT SAVE — AI CONVERSATIONS (Category B — no Dexie)
+  // AI CONVERSATIONS (Category B — no Dexie, backend saves during streaming)
   // ============================================
-  saveAIConversation: async function (conversationData) {
-    // Category B: AI conversations are saved by the backend during streaming.
-    // This is kept as a no-op placeholder for consistency.
-    // The backend saves the conversation after streaming completes.
-    console.log('AI conversation saved by backend during streaming');
+  saveAIConversation: async function () {
+    // No-op: backend saves AI conversations during streaming
   },
 
   // ============================================
@@ -398,12 +474,37 @@ const syncService = {
   // ============================================
   pushSync: async function () {
     try {
-      const queueItems = await db.sync_queue
+      let queueItems = await db.sync_queue
         .where('status').equals('pending')
         .toArray();
 
       if (queueItems.length === 0) {
         console.log('Sync: No pending items to push');
+        return;
+      }
+
+      // Pre-process: resolve _dexie_book_id to actual Supabase UUID for queued items
+      for (const item of queueItems) {
+        if (item.payload?._dexie_book_id && !item.payload?.book_id) {
+          const supabaseBookId = await this._resolveBookId(item.payload._dexie_book_id);
+          if (supabaseBookId) {
+            item.payload.book_id = supabaseBookId;
+            delete item.payload._dexie_book_id;
+            // Update in Dexie so we don't re-resolve next time
+            await db.sync_queue.update(item.id, { payload: item.payload });
+          } else {
+            // Book still not synced — skip this item for now
+            console.warn(`Sync: Skipping ${item.tableName} — book not synced yet`);
+            continue;
+          }
+        }
+      }
+
+      // Filter out items that still have unresolved book IDs
+      queueItems = queueItems.filter(item => !item.payload?._dexie_book_id);
+
+      if (queueItems.length === 0) {
+        console.log('Sync: All pending items waiting for book sync');
         return;
       }
 
@@ -433,7 +534,6 @@ const syncService = {
             for (const item of synced) {
               const tableName = item.tableName || 'books';
               try {
-                // Update the local Dexie record with supabaseId
                 const localRecord = await db[tableName]
                   .where('local_id').equals(item.local_id)
                   .first()
@@ -449,7 +549,6 @@ const syncService = {
                 console.warn(`Sync: Could not update local record for ${tableName}:`, err);
               }
 
-              // Mark queue item as synced
               if (item.local_queue_id) {
                 await db.sync_queue.update(item.local_queue_id, {
                   status: 'synced'
@@ -469,14 +568,14 @@ const syncService = {
             }
 
             if (synced.length > 0) {
-              console.log(`Sync: Successfully pushed ${synced.length} items (batch ${Math.floor(i / batchSize) + 1})`);
+              console.log(`Sync: Successfully pushed ${synced.length} items`);
             }
             if (failed.length > 0) {
-              console.warn(`Sync: ${failed.length} items failed in batch`, failed);
+              console.warn(`Sync: ${failed.length} items failed`, failed);
             }
           }
         } catch (batchError) {
-          console.error(`Sync: Batch ${Math.floor(i / batchSize) + 1} failed:`, batchError);
+          console.error(`Sync: Batch failed:`, batchError);
         }
       }
 
@@ -490,9 +589,6 @@ const syncService = {
         for (const item of oldSynced) {
           await db.sync_queue.delete(item.id);
         }
-        if (oldSynced.length > 0) {
-          console.log(`Sync: Cleaned up ${oldSynced.length} old synced queue items`);
-        }
       } catch (cleanupErr) {
         console.warn('Sync queue cleanup failed:', cleanupErr);
       }
@@ -501,7 +597,7 @@ const syncService = {
     }
   },
 
-  // Debounced flush trigger — called after every successful Category A save
+  // Debounced flush trigger
   _flushTimeout: null,
   _triggerDebouncedFlush: function () {
     if (this._flushTimeout) clearTimeout(this._flushTimeout);
@@ -514,19 +610,16 @@ const syncService = {
   // INITIALIZE — listeners, debounced functions
   // ============================================
   init() {
-    // Debounced progress save (1500ms)
     this.saveProgress = createDebounce(
       (bookId, progressData) => this._saveProgressDirect(bookId, progressData),
       1500
     );
 
-    // Online event — flush sync queue
     window.addEventListener('online', () => {
       console.log('Device online, flushing sync queue...');
       this.pushSync();
     });
 
-    // Legacy triggerSync alias
     this.triggerSync = () => this._triggerDebouncedFlush();
   },
 
@@ -545,8 +638,6 @@ const syncService = {
           await this.pullAllUserData();
           await this.pushSync();
         }
-        // If offline, Dexie already has Category A data from last sync
-        // Category B data (AI convos, dict history) will be empty but that's expected
       } catch (error) {
         console.error('Auth verification failed:', error);
         authStore.clearUser();
