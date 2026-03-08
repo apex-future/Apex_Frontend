@@ -109,3 +109,16 @@ export const deleteChat = async (id) => {
     request.onerror = () => reject(request.error);
   });
 };
+
+export const clearAllChats = async () => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([CHAT_STORE], 'readwrite');
+    const store = transaction.objectStore(CHAT_STORE);
+    const request = store.clear();
+
+    request.onsuccess = () => resolve(true);
+    request.onerror = () => reject(request.error);
+  });
+};
+

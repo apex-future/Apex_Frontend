@@ -1,5 +1,5 @@
 import db from '../db/apex.db';
-import { saveChat } from '../utils/db';
+import { saveChat, clearAllChats } from '../utils/db';
 import apiClient from './apiClient';
 import authService from './authService';
 import useAuthStore from '../store/authStore';
@@ -206,7 +206,7 @@ const syncService = {
       if (ai_conversations && ai_conversations.length > 0) {
         
         // Wipe local chats before applying the new 1-to-1 Hydration list
-        await db.chats.clear();
+        await clearAllChats();
 
         // Find book titles for scopes
         const bookTitles = {};
