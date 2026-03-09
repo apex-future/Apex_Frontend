@@ -1,17 +1,27 @@
 import React, { useState } from 'react';
-import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff } from 'lucide-react';
+import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff, StickyNote, Save } from 'lucide-react';
 import dictionaryService from '../../services/dictionaryService';
 
-function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHighlight, onDictToggle }) {
+function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote }) {
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showDict, setShowDict] = useState(false);
+    const [showNote, setShowNote] = useState(false);
+    const [noteText, setNoteText] = useState('');
+    const [noteSaved, setNoteSaved] = useState(false);
     const [wordSaved, setWordSaved] = useState(false);
 
     const toggleDict = (val) => {
         setShowDict(val);
-        onDictToggle?.(val);
+        setShowNote(false);
+        onDictToggle?.(val || showNote);
+    };
+
+    const toggleNote = (val) => {
+        setShowNote(val);
+        setShowDict(false);
+        onDictToggle?.(val || showDict);
     };
 
     const fetchDefinition = async (searchWord) => {
@@ -21,7 +31,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
         toggleDict(true);
         setWordSaved(false);
         try {
-            const cleanWord = searchWord.trim().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
+            const cleanWord = searchWord.trim().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
             // Use dictionaryService with in_reader context
             const result = await dictionaryService.lookupWord(cleanWord, 'in_reader', bookId);
             // dictionaryService returns the raw API response (array or object)
@@ -48,6 +58,17 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
         setWordSaved(true);
     };
 
+    const handleSaveNote = () => {
+        if (!noteText.trim() || !onAddNote) return;
+        onAddNote(noteText);
+        setNoteSaved(true);
+        setTimeout(() => {
+            toggleNote(false);
+            setNoteSaved(false);
+            setNoteText('');
+        }, 1500);
+    };
+
     const playAudio = (url) => {
         if (!url) return;
         const audio = new Audio(url);
@@ -59,36 +80,36 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
     const isMobile = window.innerWidth < 640;
 
     const menuStyle = isMobile
-        ? { 
-            top: `${Math.max(80, position.y - 100)}px`, 
+        ? {
+            top: `${Math.max(80, position.y - 100)}px`,
             left: `${Math.min(window.innerWidth - 310, Math.max(10, position.x - 150))}px`,
             width: '300px'
-          }
+        }
         : {
             top: `${Math.max(10, position.y - 120)}px`,
             left: `${Math.min(window.innerWidth - 300, Math.max(10, position.x - 100))}px`,
         };
 
     return (
-        <div 
+        <div
             className={`fixed z-[300] animate-in fade-in duration-200 pointer-events-auto ${isMobile ? 'zoom-in-95' : 'zoom-in'}`}
             style={menuStyle}
             onClick={(e) => e.stopPropagation()}
         >
             <div className="bg-bg-elevated border border-border-default shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
-                {!showDict ? (
+                {!showDict && !showNote ? (
                     <div className="flex items-center p-1.5 gap-1">
-                        <button 
+                        <button
                             onClick={() => fetchDefinition(selection)}
                             className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                         >
                             <Book size={20} className="text-text-secondary group-hover:text-blue-600 transition-colors" />
                             <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Define</span>
                         </button>
-                        
+
                         <div className="w-[1px] h-8 bg-bg-subtle" />
 
-                        <button 
+                        <button
                             onClick={onAskAI}
                             className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                         >
@@ -98,9 +119,19 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
 
                         <div className="w-[1px] h-8 bg-bg-subtle" />
 
+                        <button
+                            onClick={() => toggleNote(true)}
+                            className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
+                        >
+                            <StickyNote size={20} className="text-text-secondary group-hover:text-amber-600 transition-colors" />
+                            <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Note</span>
+                        </button>
+
+                        <div className="w-[1px] h-8 bg-bg-subtle" />
+
                         <div className="flex gap-1.5 px-3">
                             {['#fef08a', '#bbf7d0', '#bfdbfe'].map(color => (
-                                <button 
+                                <button
                                     key={color}
                                     onClick={() => onHighlight?.(color)}
                                     className="w-5 h-5 rounded-full border border-border-default hover:scale-110 transition-transform"
@@ -110,7 +141,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                             ))}
                         </div>
                     </div>
-                ) : (
+                ) : showDict ? (
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Dictionary</h3>
@@ -141,8 +172,8 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                                 <div className="flex items-center justify-between gap-3 mb-3">
                                     <h2 className="text-2xl font-black text-text-primary capitalize font-sans tracking-tight">{definition.word}</h2>
                                     {definition.phonetics?.find(p => p.audio) && (
-                                        <button 
-                                            onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)} 
+                                        <button
+                                            onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)}
                                             className="w-8 h-8 rounded-full bg-accent-subtle flex items-center justify-center text-blue-500 hover:bg-accent-subtle transition-all hover:scale-110"
                                         >
                                             <Volume2 size={18} />
@@ -150,7 +181,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                                     )}
                                 </div>
                                 <p className="text-sm text-blue-600 font-bold mb-5 font-sans bg-accent-subtle/50 px-2 py-1 rounded-md inline-block">{definition.phonetic}</p>
-                                
+
                                 {definition.meanings.slice(0, 3).map((m, i) => (
                                     <div key={i} className="mb-5 last:mb-2">
                                         <div className="flex items-center gap-2 mb-2">
@@ -171,11 +202,10 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                                     <button
                                         onClick={handleSaveWord}
                                         disabled={wordSaved}
-                                        className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
-                                            wordSaved
+                                        className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${wordSaved
                                                 ? 'bg-green-50 text-green-600 border border-green-200'
                                                 : 'bg-text-primary text-bg-elevated hover:bg-black active:scale-[0.98]'
-                                        }`}
+                                            }`}
                                     >
                                         {wordSaved ? <Check size={18} /> : <BookmarkPlus size={18} />}
                                         {wordSaved ? 'Word Saved' : 'Save to Vocabulary'}
@@ -184,15 +214,52 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                             </div>
                         )}
                     </div>
+                ) : (
+                    <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Add Note</h3>
+                            <button onClick={() => toggleNote(false)} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
+                                <X size={16} className="text-text-tertiary" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="bg-bg-subtle/50 p-3 rounded-xl border border-border-default/50 mb-3">
+                                <p className="text-[11px] text-text-tertiary font-bold uppercase tracking-wider mb-1 opacity-50">Selected Text</p>
+                                <p className="text-sm text-text-secondary line-clamp-2 italic">"{selection}"</p>
+                            </div>
+
+                            <textarea
+                                value={noteText}
+                                onChange={(e) => setNoteText(e.target.value)}
+                                placeholder="Write your note here..."
+                                className="w-full h-32 bg-bg-subtle border border-border-default rounded-xl p-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/20 resize-none font-sans"
+                                autoFocus
+                            />
+
+                            <button
+                                onClick={handleSaveNote}
+                                disabled={noteSaved || !noteText.trim()}
+                                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${noteSaved
+                                        ? 'bg-green-50 text-green-600 border border-green-200'
+                                        : 'bg-accent-primary text-white hover:bg-accent-primary/90 active:scale-[0.98] disabled:opacity-50'
+                                    }`}
+                            >
+                                {noteSaved ? <Check size={18} /> : <Save size={18} />}
+                                {noteSaved ? 'Note Saved' : 'Save Note'}
+                            </button>
+                        </div>
+                    </div>
                 )}
             </div>
-            
+
             {/* Arrow — hide on mobile as it might not align well with dynamic float */}
             {!isMobile && (
                 <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white mx-auto" />
             )}
 
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 4px;
                 }
