@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build and lint logs
+build_*.log
+build_*.txt
+*lint*.txt
+*lint*.json
+
+
