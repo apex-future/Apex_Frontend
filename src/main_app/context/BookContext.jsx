@@ -213,10 +213,10 @@ export const BookProvider = ({ children }) => {
               action: 'upload',
               tableName: 'books',
               local_id: id.toString(),
-              payload: { 
-                title, 
+              payload: {
+                title,
                 author: "Unknown",
-                file_type: fileType, 
+                file_type: fileType,
                 file_size: fileObject.size,
                 uploaded_at: newBookData.uploadedAt
               },
@@ -232,10 +232,10 @@ export const BookProvider = ({ children }) => {
           action: 'upload',
           tableName: 'books',
           local_id: id.toString(),
-          payload: { 
-            title, 
+          payload: {
+            title,
             author: "Unknown",
-            file_type: fileType, 
+            file_type: fileType,
             file_size: fileObject.size,
             uploaded_at: newBookData.uploadedAt
           },
@@ -359,19 +359,19 @@ export const BookProvider = ({ children }) => {
       if (updatedBook) {
         db.books.update(bookId, { metadata: updatedBook.metadata })
           .catch(err => console.error('Failed to save bookmark metadata:', err));
-          
+
         const isBookmarked = updatedBook.metadata?.bookmarks?.some(b => b.page === page);
-        
+
         if (isBookmarked) {
-            // It was added
-            syncService.saveBookmark(bookId, { page_number: page, label: `Page ${page}` });
+          // It was added
+          syncService.saveBookmark(bookId, { page_number: page, label: `Page ${page}` });
         } else {
-            // It was removed. We need to find the record in Dexie to delete it.
-            db.bookmarks.where({ bookId, pageNumber: page }).first().then(record => {
-                if (record) {
-                    syncService.deleteBookmark(record.supabaseId, record.id);
-                }
-            });
+          // It was removed. We need to find the record in Dexie to delete it.
+          db.bookmarks.where({ bookId, pageNumber: page }).first().then(record => {
+            if (record) {
+              syncService.deleteBookmark(record.supabaseId, record.id);
+            }
+          });
         }
       }
       return newShelves;
@@ -525,16 +525,16 @@ export const BookProvider = ({ children }) => {
 
   const deleteBookFromShelves = useCallback(async (id) => {
     const targetId = typeof id === 'string' ? parseInt(id) : id;
-    
+
     // Get the book record before deleting to capture recordId for sync
     const bookRecord = await db.books.get(targetId).catch(() => null);
-    
+
     setShelves((prevShelves) => {
       const newShelves = prevShelves.map((shelf) => ({
         ...shelf,
         books: shelf.books.filter((book) => book.id !== targetId),
       }));
-      
+
       // Queue delete for sync if the book has been synced to Supabase
       if (bookRecord?.recordId) {
         db.sync_queue.add({
@@ -549,7 +549,7 @@ export const BookProvider = ({ children }) => {
         }).then(() => syncService.triggerSync?.())
           .catch(err => console.error('Failed to queue book delete:', err));
       }
-      
+
       // Delete from Dexie
       db.books.delete(targetId).catch(err => console.error("Failed to delete book:", err));
       // Also clean up related progress and highlights
@@ -649,9 +649,9 @@ export const BookProvider = ({ children }) => {
           text_position: highlight.position || highlight.textPosition || '',
           note: highlight.note || null,
         }).then((savedRecord) => {
-            // Optionally update the in-memory metadata array to have the real ID
-            // so deleting works identically but for now relying on metadata matching is fine
-            // since we use local mapping
+          // Optionally update the in-memory metadata array to have the real ID
+          // so deleting works identically but for now relying on metadata matching is fine
+          // since we use local mapping
         });
       }
       return newShelves;
@@ -660,13 +660,13 @@ export const BookProvider = ({ children }) => {
 
   const removeHighlight = useCallback(async (bookId, highlightId) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
-    
+
     // Get highlight record before removing to capture recordId for sync
     const highlightRecord = await db.highlights
       .where('local_id').equals(highlightId.toString())
       .first()
       .catch(() => null);
-    
+
     setShelves((prevShelves) => {
       let updatedBook = null;
       const newShelves = prevShelves.map((shelf) => ({
@@ -690,14 +690,14 @@ export const BookProvider = ({ children }) => {
 
         // Delete via syncService if we have a record
         if (highlightRecord) {
-            syncService.deleteHighlight(highlightRecord.supabaseId, highlightRecord.id);
+          syncService.deleteHighlight(highlightRecord.supabaseId, highlightRecord.id);
         }
       }
       return newShelves;
     });
   }, []);
 
-  const addNote = useCallback(async (bookId, text) => {
+  const addNote = useCallback(async (bookId, noteData) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
     setShelves((prevShelves) => {
       let updatedBook = null;
@@ -706,11 +706,18 @@ export const BookProvider = ({ children }) => {
         books: shelf.books.map((book) => {
           if (book.id !== targetId) return book;
           const existingNotes = book.metadata?.notes || [];
+          const noteObj = typeof noteData === 'string' ? { text: noteData } : noteData;
+
           updatedBook = {
             ...book,
             metadata: {
               ...(book.metadata || {}),
-              notes: [{ id: Date.now().toString(), text, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...existingNotes],
+              notes: [{
+                id: Date.now().toString(),
+                ...noteObj,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              }, ...existingNotes],
             },
           };
           return updatedBook;

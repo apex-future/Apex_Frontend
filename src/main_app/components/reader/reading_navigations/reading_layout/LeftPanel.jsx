@@ -5,7 +5,6 @@ import SidebarNotesView from './SidebarNotesView'
 
 const NAV_ITEMS = [
   { id: 'toc', icon: List, label: 'Table of Contents' },
-  { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
   { id: 'notes', icon: BookOpen, label: 'Notes' },
 ];
 
@@ -13,16 +12,10 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
   const [activeSection, setActiveSection] = useState(null);
 
   const {
-    bookmarks = [],
-    onRemoveBookmark,
     notes = [],
     addNote,
     updateNote,
     deleteNote,
-    isFavorite,
-    onToggleFavorite,
-    isBookmarkedBook,
-    onToggleBookmarkedBook,
   } = readerControls || {};
 
   function handleNavClick(id) {
@@ -64,44 +57,12 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
       {/* ── Body ── */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {!activeSection && (
-          /* Book Status Summary */
-          <div className="px-5 py-5 flex items-center justify-between border-b border-border-default bg-bg-subtle/10">
-            <div className="flex flex-col gap-1.5 w-full">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary px-1">Book Status</span>
-              <div className="flex items-center gap-4 mt-1">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(); }}
-                  className={`flex items-center gap-2 p-2 rounded-xl border transition-all duration-300 flex-1 justify-center ${isFavorite
-                      ? 'border-red-100 bg-red-50/50 text-red-500 shadow-sm'
-                      : 'border-transparent bg-bg-subtle/50 text-text-tertiary hover:border-red-100 hover:text-red-400'
-                    }`}
-                >
-                  <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} strokeWidth={isFavorite ? 0 : 2} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">{isFavorite ? 'Saved' : 'Save'}</span>
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onToggleBookmarkedBook?.(); }}
-                  className={`flex items-center gap-2 p-2 rounded-xl border transition-all duration-300 flex-1 justify-center ${isBookmarkedBook
-                      ? 'border-accent-primary/20 bg-accent-primary/5 text-accent-primary shadow-sm'
-                      : 'border-transparent bg-bg-subtle/50 text-text-tertiary hover:border-accent-primary/20 hover:text-accent-primary'
-                    }`}
-                >
-                  <Bookmark size={15} fill={isBookmarkedBook ? 'currentColor' : 'none'} strokeWidth={isBookmarkedBook ? 0 : 2} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">{isBookmarkedBook ? 'Marked' : 'Mark'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!activeSection && (
           /* Main nav list */
           <div className="p-4 flex flex-col gap-4">
             {NAV_ITEMS.map((item) => {
               const { id, label, icon: ItemIcon } = item;
-              const isBookmarksItem = id === 'bookmarks';
               const isNotesItem = id === 'notes';
-              const count = isBookmarksItem ? bookmarks.length : isNotesItem ? notes.length : 0;
+              const count = isNotesItem ? notes.length : 0;
 
               return (
                 <button
@@ -113,8 +74,8 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
                     <ItemIcon size={20} strokeWidth={2} />
                   </div>
                   <span className="flex-1 tracking-tight">{label}</span>
-                  {/* Show bookmark count badge */}
-                  {isBookmarksItem && count > 0 && (
+                  {/* Show notes count badge */}
+                  {isNotesItem && count > 0 && (
                     <span className="text-[11px] font-black bg-accent-primary text-bg-elevated rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
                       {count}
                     </span>
@@ -123,15 +84,6 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
               );
             })}
           </div>
-        )}
-
-        {/* Bookmarks section */}
-        {activeSection === 'bookmarks' && (
-          <BookmarksView
-            bookmarks={bookmarks}
-            onJumpTo={handleJumpTo}
-            onRemove={onRemoveBookmark}
-          />
         )}
 
         {/* Table of contents — placeholder */}

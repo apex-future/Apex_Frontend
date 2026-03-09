@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Heart } from 'lucide-react'
+import { ArrowLeft, EllipsisVertical, Fullscreen, Lock, LockOpen } from 'lucide-react'
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
@@ -12,12 +12,6 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
     onResetZoom,
     progress = 0,
     pages = { current: 1, total: 1 },
-    isBookmarked = false,
-    onToggleBookmark,
-    isFavorite = false,
-    onToggleFavorite,
-    isBookmarkedBook = false,
-    onToggleBookmarkedBook,
   } = readerControls || {};
 
   useEffect(() => {

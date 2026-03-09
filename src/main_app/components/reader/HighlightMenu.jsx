@@ -60,7 +60,11 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
 
     const handleSaveNote = () => {
         if (!noteText.trim() || !onAddNote) return;
-        onAddNote(noteText);
+        onAddNote({
+            text: noteText.trim(),
+            context: selection,
+            type: 'highlight_note'
+        });
         setNoteSaved(true);
         setTimeout(() => {
             toggleNote(false);
@@ -203,8 +207,8 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                                         onClick={handleSaveWord}
                                         disabled={wordSaved}
                                         className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${wordSaved
-                                                ? 'bg-green-50 text-green-600 border border-green-200'
-                                                : 'bg-text-primary text-bg-elevated hover:bg-black active:scale-[0.98]'
+                                            ? 'bg-green-50 text-green-600 border border-green-200'
+                                            : 'bg-text-primary text-bg-elevated hover:bg-black active:scale-[0.98]'
                                             }`}
                                     >
                                         {wordSaved ? <Check size={18} /> : <BookmarkPlus size={18} />}
@@ -241,8 +245,8 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                                 onClick={handleSaveNote}
                                 disabled={noteSaved || !noteText.trim()}
                                 className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${noteSaved
-                                        ? 'bg-green-50 text-green-600 border border-green-200'
-                                        : 'bg-accent-primary text-white hover:bg-accent-primary/90 active:scale-[0.98] disabled:opacity-50'
+                                    ? 'bg-green-50 text-green-600 border border-green-200'
+                                    : 'bg-accent-primary text-white hover:bg-accent-primary/90 active:scale-[0.98] disabled:opacity-50'
                                     }`}
                             >
                                 {noteSaved ? <Check size={18} /> : <Save size={18} />}
