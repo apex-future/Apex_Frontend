@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "./Header";
 import AllBooks from "./AllBooks";
@@ -7,6 +7,7 @@ import { BookContext } from "../../context/BookContextInstance";
 
 function HomePage({ setIsMobileOpen }) {
   const { books, addBookToShelf, handleBookClick } = useContext(BookContext);
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   const handleBookNavigate = (id) => {
@@ -17,6 +18,16 @@ function HomePage({ setIsMobileOpen }) {
   const onUpload = (file) => {
     addBookToShelf(file);
   };
+
+  // Filter books based on search query
+  const filteredBooks = useMemo(() => {
+    if (!searchQuery.trim()) return books;
+    const query = searchQuery.toLowerCase();
+    return books.filter(book =>
+      book.title?.toLowerCase().includes(query) ||
+      book.author?.toLowerCase().includes(query)
+    );
+  }, [books, searchQuery]);
 
   // Sort logic for "Last Read"
   const sortedByDate = [...books].sort((a, b) => {
@@ -29,11 +40,21 @@ function HomePage({ setIsMobileOpen }) {
 
   return (
     <div className="min-h-screen pt-4 flex flex-col gap-6 lg:gap-8">
-      <TopNavBar setIsMobileOpen={setIsMobileOpen} onUpload={onUpload} />
+      <TopNavBar
+        setIsMobileOpen={setIsMobileOpen}
+        onUpload={onUpload}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
 
-      <Header lastReadBook={lastReadBook} />
+      {/* Only show Header (Last Read) when not searching */}
+      {!searchQuery && <Header lastReadBook={lastReadBook} />}
 
-      <AllBooks books={books} onBookClick={handleBookNavigate} />
+      <AllBooks
+        books={filteredBooks}
+        onBookClick={handleBookNavigate}
+        isSearching={!!searchQuery}
+      />
     </div>
   )
 }
