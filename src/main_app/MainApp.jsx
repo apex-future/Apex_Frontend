@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import useToast from './hooks/useToast';
+import ToastContainer from './components/ui/Toast';
 import AsideNavBar from './components/layout/navigation/AsideNavBar';
 import NavBarProvider from './components/layout/navigation/NavBarContext';
 import { BookProvider } from './context/BookContext';
@@ -26,6 +28,7 @@ function MainApp({ onLogout }) {
   const [asideIsOpen, setAsideIsOpen] = useState(true);
   // isMobileOpen: State variable specifically for the mobile slide-over sidebar visibility.
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { toasts, removeToast } = useToast();
   const asideToggle = {
     closeAside: () => setAsideIsOpen(false),
     openAside: () => setAsideIsOpen(true),
@@ -70,6 +73,7 @@ function MainApp({ onLogout }) {
             isOpen={showDuplicateModal}
             onClose={() => setShowDuplicateModal(false)}
           />
+          <ToastContainer toasts={toasts} removeToast={removeToast} />
         </NavBarProvider>
       </BookProvider>
     </div>

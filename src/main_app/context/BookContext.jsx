@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { shelves as initialShelves } from '../data/shelves';
 import db from '../db/apex.db';
 import syncService from '../services/syncService';
+import { showToastGlobal } from '../hooks/useToast';
 
 import { BookContext } from './BookContextInstance.jsx';
 
@@ -203,19 +204,23 @@ export const BookProvider = ({ children }) => {
 
       // Upload file to Supabase Storage + create metadata record (direct, not through queue)
       if (navigator.onLine) {
-        import('../services/syncService').then(async (m) => {
-          const result = await m.default.uploadBook(fileObject, title, 'Unknown', id);
+        try {
+          const result = await syncService.uploadBook(fileObject, title, 'Unknown', id);
           if (!result) {
-            console.error("Upload failed: queuing for later.");
-            alert("Upload to cloud failed. The book was saved offline and queued for later sync.");
-            // Upload failed — fall back to sync queue for metadata only
+            // Developer log only — never show raw errors to users
+            console.error('[Apex Sync] Book upload to Supabase failed — queued for retry:', title);
+
+            // User-facing custom toast — friendly, not alarming
+            showToastGlobal('Book saved offline. It will sync when your connection is stable.', 'warning');
+
+            // Queue metadata for sync (file will upload via migrateLocalData when online)
             await db.sync_queue.add({
               action: 'upload',
               tableName: 'books',
               local_id: id.toString(),
               payload: {
                 title,
-                author: "Unknown",
+                author: 'Unknown',
                 file_type: fileType,
                 file_size: fileObject.size,
                 uploaded_at: newBookData.uploadedAt
@@ -225,7 +230,10 @@ export const BookProvider = ({ children }) => {
               status: 'pending'
             });
           }
-        });
+        } catch (uploadErr) {
+          console.error('[Apex Sync] Upload exception:', uploadErr);
+          showToastGlobal('Book saved offline. It will sync when your connection is stable.', 'warning');
+        }
       } else {
         // Offline — queue metadata for sync (file upload when back online via migrateLocalData)
         await db.sync_queue.add({
@@ -271,13 +279,21 @@ export const BookProvider = ({ children }) => {
 
       const supabaseId = book.supabaseId || book.recordId;
       if (!supabaseId) {
-        console.error("Cannot download book: no supabase ID found");
+        console.error('[Apex Sync] Cannot download book: no supabase ID found for bookId:', bookId);
+        showToastGlobal('This book hasn\u2019t synced to the cloud yet.', 'warning');
         return null; // Not synced to cloud
       }
 
+      // Show download started toast
+      showToastGlobal('Downloading book...', 'info');
+
       // Download file blob and cache it in Dexie
       const blob = await syncService.downloadBookFile(supabaseId, bookId);
-      if (!blob) return null;
+      if (!blob) {
+        console.error('[Apex Sync] Download returned null for book:', { bookId, supabaseId });
+        showToastGlobal('Download failed. Check your connection and try again.', 'error');
+        return null;
+      }
 
       // Reconstruct the File object for the UI
       const fileExt = book.fileType === 'application/epub+zip' ? '.epub' : '.pdf';
@@ -291,9 +307,11 @@ export const BookProvider = ({ children }) => {
         books: shelf.books.map(b => b.id === bookId ? { ...b, file, fileBlob: blob } : b)
       })));
 
+      showToastGlobal('Book ready to read!', 'success');
       return file;
     } catch (error) {
-      console.error("Failed to download missing file:", error);
+      console.error('[Apex Sync] Failed to download missing file:', { bookId, error });
+      showToastGlobal('Download failed. Check your connection and try again.', 'error');
       return null;
     }
   }, [books]);
@@ -357,9 +375,7 @@ export const BookProvider = ({ children }) => {
       }));
 
       if (updatedBook) {
-        db.books.update(bookId, { metadata: updatedBook.metadata })
-          .catch(err => console.error('Failed to save bookmark metadata:', err));
-
+        // Bookmarks are stored ONLY in db.bookmarks table (not in db.books metadata)
         const isBookmarked = updatedBook.metadata?.bookmarks?.some(b => b.page === page);
 
         if (isBookmarked) {

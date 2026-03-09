@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { showToastGlobal } from '../../../hooks/useToast';
 import { ArrowLeft, Moon, Sun, Monitor, Bell, HardDrive, Download, Trash2, HelpCircle, FileText, ExternalLink, Activity, BookOpen, Bot } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -137,7 +138,7 @@ function Settings() {
                         icon={<Download size={16} className="text-text-secondary" />}
                         label="Export Data"
                         desc="Download your bookmarks and reading history"
-                        onClick={() => alert("Exporting data feature coming soon!")}
+                        onClick={() => showToastGlobal('Exporting data feature coming soon!', 'info')}
                     />
                     <ActionRow
                         icon={<Trash2 size={16} className="text-error" />}

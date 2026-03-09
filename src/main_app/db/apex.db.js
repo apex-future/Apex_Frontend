@@ -2,6 +2,8 @@ import Dexie from 'dexie';
 
 const db = new Dexie('ApexDB');
 
+// Version 4 → 5: Normalize field name from localId → local_id for consistency
+// across bookmarks, highlights, reading_progress, ai_conversations, user_dictionary_history
 db.version(4).stores({
   books: '++id, local_id, recordId, title, author, fileType, fileSize, coverImage, totalPages, uploadedAt, lastReadAt, synced, supabaseId',
   reading_progress: '++id, local_id, recordId, bookId, currentPage, scrollPosition, progressPercentage, lastReadAt, synced, supabaseId',
@@ -12,6 +14,47 @@ db.version(4).stores({
   dictionary_cache: 'word, cachedAt',
   sync_queue: '++id, action, tableName, local_id, recordId, payload, createdAt, attempts, status',
   app_settings: '++id, key, value',
+});
+
+db.version(5).stores({
+  books: '++id, local_id, recordId, title, author, fileType, fileSize, coverImage, totalPages, uploadedAt, lastReadAt, synced, supabaseId',
+  reading_progress: '++id, local_id, recordId, bookId, currentPage, scrollPosition, progressPercentage, lastReadAt, synced, supabaseId',
+  highlights: '++id, local_id, recordId, bookId, userId, highlightedText, color, pageNumber, textPosition, note, createdAt, updatedAt, synced, supabaseId',
+  ai_conversations: '++id, bookId, userId, chatType, local_id, synced, supabaseId, queryText, aiResponse, createdAt',
+  bookmarks: '++id, bookId, userId, pageNumber, local_id, synced, supabaseId, label, createdAt',
+  user_dictionary_history: '++id, userId, word, local_id, synced, lookedUpAt',
+  dictionary_cache: 'word, cachedAt',
+  sync_queue: '++id, action, tableName, local_id, recordId, payload, createdAt, attempts, status',
+  app_settings: '++id, key, value',
+}).upgrade(async tx => {
+  // Fix localId → local_id for bookmarks
+  await tx.table('bookmarks').toCollection().modify(bookmark => {
+    if (bookmark.localId && !bookmark.local_id) {
+      bookmark.local_id = bookmark.localId;
+      delete bookmark.localId;
+    }
+  });
+  // Fix for highlights
+  await tx.table('highlights').toCollection().modify(highlight => {
+    if (highlight.localId && !highlight.local_id) {
+      highlight.local_id = highlight.localId;
+      delete highlight.localId;
+    }
+  });
+  // Fix for reading_progress
+  await tx.table('reading_progress').toCollection().modify(progress => {
+    if (progress.localId && !progress.local_id) {
+      progress.local_id = progress.localId;
+      delete progress.localId;
+    }
+  });
+  // Fix for ai_conversations
+  await tx.table('ai_conversations').toCollection().modify(conv => {
+    if (conv.localId && !conv.local_id) {
+      conv.local_id = conv.localId;
+      delete conv.localId;
+    }
+  });
 });
 
 export default db;
