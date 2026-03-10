@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import { ArrowLeft, EllipsisVertical, Fullscreen, Lock, LockOpen } from 'lucide-react'
+import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen } from 'lucide-react'
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
@@ -12,6 +12,8 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
     onResetZoom,
     progress = 0,
     pages = { current: 1, total: 1 },
+    isBookmarked = false,
+    onToggleBookmark,
   } = readerControls || {};
 
   useEffect(() => {
@@ -51,6 +53,23 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         </div>
 
         <div className='flex items-center gap-3'>
+          {/* Page Bookmark button — purple fill when bookmarked */}
+          <button
+            className={`w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 ${
+              isBookmarked
+                ? 'text-accent-primary'
+                : 'text-text-primary hover:bg-bg-subtle'
+            }`}
+            onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
+            title={isBookmarked ? 'Remove page bookmark' : 'Bookmark this page'}
+          >
+            <Bookmark
+              strokeWidth={2}
+              size={18}
+              className={`transition-all duration-200 ${isBookmarked ? 'fill-accent-primary' : 'fill-none'}`}
+            />
+          </button>
+
           {/* Dots — open second layer */}
           <button
             className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
