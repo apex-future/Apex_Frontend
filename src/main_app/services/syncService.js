@@ -773,8 +773,9 @@ const syncService = {
         authStore.setUser(user);
 
         if (navigator.onLine) {
-          await this.pullAllUserData();
           await this.pushSync();
+          await this.pullAllUserData();
+          
         }
       } catch (error) {
         console.error('Auth verification failed:', error);
