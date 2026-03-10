@@ -35,7 +35,7 @@ export default function BookCard({ book, onClick }) {
     return (
         <div
             onClick={() => onClick && onClick(book.id)}
-            className="group relative flex flex-col p-2 transition-shadow duration-300 cursor-pointer hover:bg-slate-50/50"
+            className="group relative flex flex-col p-4 bg-card-glass backdrop-blur-md border border-border-default rounded-2xl transition-all duration-300 cursor-pointer hover:border-text-tertiary hover:shadow-lg shadow-sm"
         >
             <div className="flex flex-row gap-4">
                 {/* Cover - Left Side */}
@@ -66,7 +66,7 @@ export default function BookCard({ book, onClick }) {
                         <h3 className="font-semibold text-base sm:text-lg md:text-xl font-display text-text-primary truncate mb-1 group-hover:text-accent-primary transition-colors">
                             {book.title}
                         </h3>
-                        <p className="text-sm text-black/50 mb-3 text-left">by {book.author || "N/A"}</p>
+                        <p className="text-sm text-text-secondary mb-3 text-left">by {book.author || "N/A"}</p>
 
                         {/* Progress Bar */}
                         <div className="w-full bg-gray-200 rounded-full h-1">
@@ -75,9 +75,9 @@ export default function BookCard({ book, onClick }) {
                                 style={{ width: `${book.progress}%` }}
                             />
                         </div>
-                        <p className="text-xs text-black/50 mt-1 text-left">Page {book.currentPage || 0} of {book.totalPages || 0} completed</p>
+                        <p className="text-xs text-text-secondary mt-1 text-left">Page {book.currentPage || 0} of {book.totalPages || 0} completed</p>
                         {book.lastAccessed && (
-                          <p className="text-[10px] text-black/30 mt-0.5 text-left">
+                          <p className="text-[10px] text-text-tertiary mt-0.5 text-left">
                             Last read: {new Date(book.lastAccessed).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                           </p>
                         )}

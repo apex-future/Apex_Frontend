@@ -29,7 +29,7 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
           className="search-bar flex justify-end md:justify-center items-center gap-2 w-full md:max-w-2xl mx-auto flex-1"
           onSubmit={(e) => e.preventDefault()}
         >
-          <div className="relative w-full flex items-center bg-white/60 backdrop-blur-md border-2 border-border-default rounded-full hover:border-text-tertiary focus-within:border-accent-primary transition-all">
+          <div className="relative w-full flex items-center bg-card-glass backdrop-blur-md border-2 border-border-default rounded-full hover:border-text-tertiary focus-within:border-accent-primary transition-all shadow-sm">
             <Search className='absolute left-3 md:left-4 text-text-tertiary pointer-events-none' size={18} />
             <input
               type="text"

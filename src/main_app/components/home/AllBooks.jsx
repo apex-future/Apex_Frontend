@@ -5,7 +5,7 @@ import BookCard from '../books/BookCard';
 export default function AllBooks({ books = [], onBookClick, isSearching }) {
 
     return (
-        <section className='all-book-section py-4 px-4'>
+        <section className='all-book-section py-10 px-6 sm:px-8 lg:px-12 bg-bg-subtle/30 dark:bg-black/10 rounded-[2.5rem] border border-border-default/50 shadow-inner mt-8 mb-12'>
             <div className="flex justify-between items-center mb-6">
                 <h2 className='text-2xl font-bold font-display text-text-primary'>
                     {isSearching ? 'Search Results' : 'Your Library'}

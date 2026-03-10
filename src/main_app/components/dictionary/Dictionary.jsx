@@ -70,8 +70,8 @@ function Dictionary() {
 
     return (
         <div className="w-full min-h-screen bg-bg-primary overflow-x-hidden">
-            {/* Header - Glassmorphic with Subtle Gradient */}
-            <div className="relative bg-white/40 backdrop-blur-md  z-20">
+            {/* Header - Glassmorphic with Dark Adaptation */}
+            <div className="sticky top-0 z-50 bg-card-glass/80 backdrop-blur-xl border-b border-border-default">
                 <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
                     <button
                         onClick={() => navigate(-1)}
@@ -97,7 +97,7 @@ function Dictionary() {
                             value={word}
                             onChange={(e) => setWord(e.target.value)}
                             placeholder="Search for a word..."
-                            className="w-full h-16 pl-6 pr-6 bg-white/80 backdrop-blur-sm border-2 border-border-default rounded-2xl text-lg font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm placeholder:text-sm group-hover:border-text-tertiary"
+                            className="w-full h-16 pl-6 pr-6 bg-card-glass backdrop-blur-md border-2 border-border-default rounded-2xl text-lg font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm placeholder:text-sm group-hover:border-text-tertiary"
                         />
                         <button
                             type="submit"
@@ -181,7 +181,7 @@ function Dictionary() {
                         {/* Meanings */}
                         <div className="space-y-8">
                             {definition.meanings.map((meaning, idx) => (
-                                <div key={idx} className="bg-white/60 backdrop-blur-md border-2 border-border-default rounded-3xl p-6 md:p-8 hover:border-text-tertiary transition-all">
+                                <div key={idx} className="bg-card-glass backdrop-blur-md border-2 border-border-default rounded-3xl p-6 md:p-8 hover:border-text-tertiary transition-all shadow-sm">
                                     <div className="flex items-center gap-4 mb-6">
                                         <span className="text-sm font-bold uppercase tracking-[0.2em] text-accent-primary">
                                             {meaning.partOfSpeech}
