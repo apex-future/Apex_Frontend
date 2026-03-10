@@ -5,6 +5,7 @@ import SidebarNotesView from './SidebarNotesView'
 
 const NAV_ITEMS = [
   { id: 'toc', icon: List, label: 'Table of Contents' },
+  { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
   { id: 'notes', icon: BookOpen, label: 'Notes' },
 ];
 
@@ -16,6 +17,8 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
     addNote,
     updateNote,
     deleteNote,
+    bookmarks = [],
+    onRemoveBookmark,
   } = readerControls || {};
 
   function handleNavClick(id) {
@@ -62,7 +65,11 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
             {NAV_ITEMS.map((item) => {
               const { id, label, icon: ItemIcon } = item;
               const isNotesItem = id === 'notes';
-              const count = isNotesItem ? notes.length : 0;
+              const isBookmarksItem = id === 'bookmarks';
+              
+              let count = 0;
+              if (isNotesItem) count = notes.length;
+              if (isBookmarksItem) count = bookmarks.length;
 
               return (
                 <button
@@ -74,8 +81,8 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
                     <ItemIcon size={20} strokeWidth={2} />
                   </div>
                   <span className="flex-1 tracking-tight">{label}</span>
-                  {/* Show notes count badge */}
-                  {isNotesItem && count > 0 && (
+                  {/* Show count badge */}
+                  {(isNotesItem || isBookmarksItem) && count > 0 && (
                     <span className="text-[11px] font-black bg-accent-primary text-bg-elevated rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
                       {count}
                     </span>
@@ -95,6 +102,15 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
             <p className='text-sm font-semibold text-text-secondary'>Table of Contents</p>
             <p className='text-xs text-text-tertiary mt-1'>Coming soon</p>
           </div>
+        )}
+
+        {/* Bookmarks section */}
+        {activeSection === 'bookmarks' && (
+          <BookmarksView
+            bookmarks={bookmarks}
+            onJumpTo={handleJumpTo}
+            onRemove={onRemoveBookmark}
+          />
         )}
 
         {/* Notes section */}
