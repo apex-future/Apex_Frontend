@@ -143,40 +143,8 @@ function ReaderView() {
         syncProgress(page, numPages);
     }
 
-    // Bookmarks — loaded from Dexie bookmarks table (single source of truth)
-    const [bookmarks, setBookmarks] = useState([]);
-
-    useEffect(() => {
-        if (!book?.id) return;
-
-        const loadBookmarks = async () => {
-            try {
-                const records = await db.bookmarks
-                    .where('bookId')
-                    .equals(book.id)
-                    .toArray();
-                setBookmarks(records);
-            } catch (err) {
-                console.error('[Apex] Failed to load bookmarks from Dexie:', err);
-                setBookmarks([]);
-            }
-        };
-
-        loadBookmarks();
-    }, [book?.id]);
-
-    const refreshBookmarks = useCallback(async () => {
-        if (!book?.id) return;
-        try {
-            const records = await db.bookmarks
-                .where('bookId')
-                .equals(book.id)
-                .toArray();
-            setBookmarks(records);
-        } catch (err) {
-            console.error('[Apex] Failed to refresh bookmarks:', err);
-        }
-    }, [book?.id]);
+    // Bookmarks — loaded from book context instead of manually from Dexie to prevent async UI lag
+    const bookmarks = book?.metadata?.bookmarks || [];
 
     const isCurrentPageBookmarked = bookmarks.some(
         bm => bm.pageNumber === pageNumber || bm.page === pageNumber
@@ -196,16 +164,10 @@ function ReaderView() {
         pages: localPages,
         // Bookmarks
         isBookmarked: isCurrentPageBookmarked,
-        onToggleBookmark: async () => {
-            await toggleBookmark(book.id, pageNumber);
-            refreshBookmarks();
-        },
+        onToggleBookmark: async () => toggleBookmark(book.id, pageNumber),
         bookmarks,
         onJumpToBookmark: goToPage,
-        onRemoveBookmark: async (page) => {
-            await toggleBookmark(book.id, page);
-            refreshBookmarks();
-        },
+        onRemoveBookmark: async (page) => toggleBookmark(book.id, page),
         // Notes
         notes: book?.metadata?.notes || [],
         addNote: (text) => addNote(book.id, text),

@@ -381,7 +381,11 @@ export const BookProvider = ({ children }) => {
       }));
 
       if (updatedBook) {
-        // Bookmarks are stored ONLY in db.bookmarks table (not in db.books metadata)
+        // Save the new metadata array (with the bookmark removed/added) to Dexie
+        db.books.update(bookId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to update bookmark metadata:', err));
+
+        // Bookmarks are stored ONLY in db.bookmarks table for sync (not in db.books metadata)
         const isBookmarked = updatedBook.metadata?.bookmarks?.some(b => b.page === page);
 
         if (isBookmarked) {

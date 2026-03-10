@@ -11,6 +11,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.2] - 2026-03-09
+
+### Fixed
+
+- Resolved book upload failing with a 500 error on the first attempt by sending a fresh, unconsumed File object to the backend
+
+---
+
 ## [1.6.1] - 2026-03-09
 
 ### Fixed
