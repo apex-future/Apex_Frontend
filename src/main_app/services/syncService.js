@@ -585,7 +585,12 @@ const syncService = {
           .where('local_id').equals(item.local_id)
           .first();
 
-        if (!localBook?.fileBlob) continue;
+        console.log('[DEBUG] Book lookup:', item.local_id, '→', localBook?.id, '| hasBlob:', !!localBook?.fileBlob);
+
+        if (!localBook?.fileBlob) {
+          console.log('[DEBUG] Skipping — no blob for local_id:', item.local_id);
+          continue;
+        }
 
         const file = new File(
           [localBook.fileBlob],
