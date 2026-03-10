@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
+import db from '../../db/apex.db';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
@@ -142,9 +143,44 @@ function ReaderView() {
         syncProgress(page, numPages);
     }
 
-    // Bookmarks
-    const bookmarks = book?.metadata?.bookmarks || [];
-    const isCurrentPageBookmarked = bookmarks.some(bm => bm.page === pageNumber);
+    // Bookmarks — loaded from Dexie bookmarks table (single source of truth)
+    const [bookmarks, setBookmarks] = useState([]);
+
+    useEffect(() => {
+        if (!book?.id) return;
+
+        const loadBookmarks = async () => {
+            try {
+                const records = await db.bookmarks
+                    .where('bookId')
+                    .equals(book.id)
+                    .toArray();
+                setBookmarks(records);
+            } catch (err) {
+                console.error('[Apex] Failed to load bookmarks from Dexie:', err);
+                setBookmarks([]);
+            }
+        };
+
+        loadBookmarks();
+    }, [book?.id]);
+
+    const refreshBookmarks = useCallback(async () => {
+        if (!book?.id) return;
+        try {
+            const records = await db.bookmarks
+                .where('bookId')
+                .equals(book.id)
+                .toArray();
+            setBookmarks(records);
+        } catch (err) {
+            console.error('[Apex] Failed to refresh bookmarks:', err);
+        }
+    }, [book?.id]);
+
+    const isCurrentPageBookmarked = bookmarks.some(
+        bm => bm.pageNumber === pageNumber || bm.page === pageNumber
+    );
 
     // Expose pdfControls object
     const pdfControls = isPdf
@@ -160,10 +196,16 @@ function ReaderView() {
         pages: localPages,
         // Bookmarks
         isBookmarked: isCurrentPageBookmarked,
-        onToggleBookmark: () => toggleBookmark(book.id, pageNumber),
+        onToggleBookmark: async () => {
+            await toggleBookmark(book.id, pageNumber);
+            refreshBookmarks();
+        },
         bookmarks,
         onJumpToBookmark: goToPage,
-        onRemoveBookmark: (page) => toggleBookmark(book.id, page),
+        onRemoveBookmark: async (page) => {
+            await toggleBookmark(book.id, page);
+            refreshBookmarks();
+        },
         // Notes
         notes: book?.metadata?.notes || [],
         addNote: (text) => addNote(book.id, text),
