@@ -101,11 +101,11 @@ function BookDetails() {
                         <div className="max-w-2xl">
                             <h2 className="text-xs sm:text-sm font-bold text-text-placeholder uppercase tracking-[0.2em] mb-4">About this book</h2>
                             <div className="bg-gradient-to-br from-neutral-100/80 to-neutral-50/40 backdrop-blur-md border-2 border-border-default rounded-2xl p-6 sm:p-8 hover:border-accent-primary/10 hover:shadow-sm hover:shadow-neutral-200/50 transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc">
-                                <div className="absolute top-0 left-0 w-1 h-full bg-accent-primary/20 group-hover/desc:bg-accent-primary transition-colors" />
+                            
                                 {book.description || "No description available for this title."}
 
                                 {/* Quick Bookmarks / Status Section under description */}
-                                {(book.isFavorite || book.isBookmarked || (book.metadata?.bookmarks?.length > 0)) && (
+                                {/* {(book.isFavorite || book.isBookmarked || (book.metadata?.bookmarks?.length > 0)) && (
                                     <div className="mt-6 pt-6 border-t border-border-default/50 flex flex-wrap items-center gap-4">
                                         <div className="flex items-center gap-2">
                                             <span className="text-[10px] font-black text-text-placeholder uppercase tracking-widest">Collections:</span>
@@ -139,7 +139,7 @@ function BookDetails() {
                                             </div>
                                         )}
                                     </div>
-                                )}
+                                )} */}
                             </div>
                         </div>
 

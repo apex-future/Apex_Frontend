@@ -1,5 +1,6 @@
 import { Menu, Search, Plus } from 'lucide-react'
-import logo from "../../../../assets/logo/logo-light-removebg-preview.png";
+import logoLight from "../../../../assets/logo/logo-light-removebg-preview.png";
+import logoDark from "../../../../assets/logo/logo-dark-removebg-preview.png";
 
 function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
   const handleFileChange = (e) => {
@@ -63,9 +64,14 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
 
           <div className="logo-wrapper h-full">
             <img
-              src={logo}
+              src={logoLight}
               alt="Apex Logo"
-              className='size-10 rounded-full object-cover'
+              className='size-10 rounded-full object-cover dark:hidden'
+            />
+            <img
+              src={logoDark}
+              alt="Apex Logo"
+              className='size-10 rounded-full object-cover hidden dark:block'
             />
           </div>
         </div>
