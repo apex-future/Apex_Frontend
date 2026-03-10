@@ -4,6 +4,7 @@ import { ArrowLeft, Moon, Sun, Monitor, Bell, HardDrive, Download, Trash2, HelpC
 import { useNavigate } from 'react-router-dom';
 
 import useThemeStore from '../../../store/themeStore';
+import { APP_VERSION } from '../../../constants/version';
 
 function Settings() {
     const navigate = useNavigate();
@@ -169,7 +170,7 @@ function Settings() {
                         onClick={() => { }}
                     />
                     <div className="p-4 text-center">
-                        <p className="text-xs text-text-tertiary">Apex App Version 1.0.0</p>
+                        <p className="text-xs text-text-tertiary">Apex App Version {APP_VERSION}</p>
                     </div>
                 </SettingSection>
 
