@@ -63,6 +63,7 @@ const syncService = {
       formData.append('file', fileObject);
       formData.append('title', title);
       formData.append('author', author || 'Unknown');
+      formData.append('local_id', dexieBookId.toString());
 
       const response = await apiClient.post('/api/books/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },

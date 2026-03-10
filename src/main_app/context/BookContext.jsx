@@ -203,9 +203,15 @@ export const BookProvider = ({ children }) => {
       await db.books.update(id, { local_id: id.toString() });
 
       // Upload file to Supabase Storage + create metadata record (direct, not through queue)
+      // Reconstruct a fresh File from the stored ArrayBuffer
+      // The original fileObject stream is consumed after arrayBuffer() is called
+      // Using it directly for upload would send empty/corrupted data
+      const freshBlob = new Blob([arrayBuffer], { type: fileType });
+      const freshFile = new File([freshBlob], fileObject.name, { type: fileType });
+
       if (navigator.onLine) {
         try {
-          const result = await syncService.uploadBook(fileObject, title, 'Unknown', id);
+          const result = await syncService.uploadBook(freshFile, title, 'Unknown', id);
           if (!result) {
             // Developer log only — never show raw errors to users
             console.error('[Apex Sync] Book upload to Supabase failed — queued for retry:', title);
