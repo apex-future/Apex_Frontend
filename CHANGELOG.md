@@ -11,6 +11,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.3] - 2026-03-10
+
+### Fixed
+
+- PDF reader now works offline — worker file is precached by service worker
+- Resolved "Setting up fake worker" error when opening books without internet
+
+### Infrastructure
+
+- Migrated chat storage from legacy ApexBooksDB into ApexDB (Dexie)
+- Deleted ApexBooksDB ghost database on client devices via one-time cleanup
+- PDF worker (.mjs) added to service worker glob patterns for offline caching
+- Bumped one-time cleanup version to 1.6.3 to trigger ghost database deletion on all devices
+
+---
+
 ## [1.6.2] - 2026-03-09
 
 ### Fixed

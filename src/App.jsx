@@ -19,7 +19,7 @@ function App() {
   // One-time local database cleanup
   // Clears broken book data from before the upload fix was deployed
   // Version string must be bumped if another cleanup is ever needed
-  const CLEAN_SLATE_VERSION = '1.6.2';
+  const CLEAN_SLATE_VERSION = '1.6.3';
 
   useEffect(() => {
     const runOneTimeCleanup = async () => {
@@ -33,6 +33,24 @@ function App() {
         await db.bookmarks.clear();
         await db.reading_progress.clear();
         await db.sync_queue.clear();
+
+        // Delete the legacy ApexBooksDB ghost database
+        try {
+          await new Promise((resolve, reject) => {
+            const req = indexedDB.deleteDatabase('ApexBooksDB');
+            req.onsuccess = () => {
+              console.log('[Apex] Legacy ApexBooksDB deleted');
+              resolve();
+            };
+            req.onerror = () => reject(req.error);
+            req.onblocked = () => {
+              console.warn('[Apex] ApexBooksDB deletion blocked — will retry next load');
+              resolve(); // Don't block the app
+            };
+          });
+        } catch (err) {
+          console.warn('[Apex] Could not delete ApexBooksDB:', err);
+        }
 
         // Mark cleanup as done — this device will never run it again
         localStorage.setItem('apex_db_cleaned', CLEAN_SLATE_VERSION);
