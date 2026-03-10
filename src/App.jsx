@@ -6,6 +6,7 @@ import SignupPage from './landing_page/SignupPage'
 import LoginPage from './landing_page/LoginPage'
 import authService from './main_app/services/authService'
 import syncService from './main_app/services/syncService'
+import db from './main_app/db/apex.db'
 import useAuthStore from './main_app/store/authStore'
 import useThemeStore from './main_app/store/themeStore'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
@@ -14,6 +15,35 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
   const [hydrating, setHydrating] = useState(false);
+
+  // One-time local database cleanup
+  // Clears broken book data from before the upload fix was deployed
+  // Version string must be bumped if another cleanup is ever needed
+  const CLEAN_SLATE_VERSION = '1.6.2';
+
+  useEffect(() => {
+    const runOneTimeCleanup = async () => {
+      try {
+        const cleaned = localStorage.getItem('apex_db_cleaned');
+        if (cleaned === CLEAN_SLATE_VERSION) return; // already ran on this device
+
+        // Clear all local tables that may contain broken data
+        await db.books.clear();
+        await db.highlights.clear();
+        await db.bookmarks.clear();
+        await db.reading_progress.clear();
+        await db.sync_queue.clear();
+
+        // Mark cleanup as done — this device will never run it again
+        localStorage.setItem('apex_db_cleaned', CLEAN_SLATE_VERSION);
+        console.log('[Apex] One-time local database cleanup complete');
+      } catch (err) {
+        console.error('[Apex] One-time cleanup failed:', err);
+      }
+    };
+
+    runOneTimeCleanup();
+  }, []);
 
   useEffect(() => {
     // Initialize theme
