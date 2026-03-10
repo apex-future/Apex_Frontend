@@ -153,8 +153,11 @@ const syncService = {
         // Build blob map using ONLY supabaseId — the stable identifier that persists across Dexie clears
         const existingBlobMap = {};
         for (const eb of existingBooks) {
-          if (eb.fileBlob && eb.supabaseId) {
-            existingBlobMap[eb.supabaseId] = eb.fileBlob;
+          if (eb.fileBlob) {
+            if (eb.supabaseId) existingBlobMap[eb.supabaseId] = eb.fileBlob;
+            if (eb.localId || eb.local_id) {
+              existingBlobMap[eb.localId || eb.local_id] = eb.fileBlob;
+            }
           }
         }
 
@@ -167,9 +170,11 @@ const syncService = {
           };
           delete mapped.id;
 
-          // Restore blob using supabaseId as stable key
+          // Restore blob using supabaseId as stable key (or local_id if unpublished)
           if (existingBlobMap[b.id]) {
             mapped.fileBlob = existingBlobMap[b.id];
+          } else if (existingBlobMap[b.local_id]) {
+            mapped.fileBlob = existingBlobMap[b.local_id];
           }
 
           return mapped;
@@ -570,6 +575,32 @@ const syncService = {
   // ============================================
   pushSync: async function () {
     try {
+      const pendingBooks = await db.sync_queue
+        .where('status').equals('pending')
+        .filter(item => item.tableName === 'books')
+        .toArray();
+
+      for (const item of pendingBooks) {
+        const localBook = await db.books
+          .where('local_id').equals(item.local_id)
+          .first();
+
+        if (!localBook?.fileBlob) continue;
+
+        const file = new File(
+          [localBook.fileBlob],
+          localBook.title,
+          { type: localBook.fileType }
+        );
+
+        const result = await this.uploadBook(file, localBook.title, localBook.author, localBook.id);
+
+        await db.sync_queue.update(item.id, {
+          status: result ? 'synced' : 'pending',
+          attempts: result ? item.attempts : (item.attempts || 0) + 1,
+        });
+      }
+
       let queueItems = await db.sync_queue
         .where('status').equals('pending')
         .toArray();
