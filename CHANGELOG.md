@@ -7,7 +7,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-<!-- Future changes go here before the next release -->
+### Added
+
+- Automated welcome emails containing app instructions and WhatsApp community links are now sent to users upon successful sign-up
+
+### Improved
+
+- Extracted and centralized email sending logic in backend utilities for better maintainability
 
 ---
 
