@@ -22,6 +22,8 @@ import DuplicateBookModal from './components/modals/DuplicateBookModal';
 import ImportPage from './pages/ImportPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
+import useThemeStore from './store/themeStore';
+
 
 function MainApp({ onLogout }) {
   // asideIsOpen: State variable that determines if the desktop-style sidebar should be rendered.
@@ -36,9 +38,10 @@ function MainApp({ onLogout }) {
 
   const location = useLocation();
   const { showDuplicateModal, setShowDuplicateModal } = useContext(BookContext) || {};
+  const { resolvedTheme } = useThemeStore();
 
   return (
-    <div className='flex relative min-h-screen bg-bg-elevated'>
+    <div className={`flex relative min-h-screen bg-bg-elevated ${resolvedTheme}`}>
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>

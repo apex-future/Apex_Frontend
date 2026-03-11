@@ -1,28 +1,38 @@
 import { create } from 'zustand';
 
-const useThemeStore = create((set) => ({
+const useThemeStore = create((set, get) => ({
     theme: localStorage.getItem('theme') || 'system',
+    resolvedTheme: 'light',
     setTheme: (theme) => {
         localStorage.setItem('theme', theme);
         set({ theme });
-        applyTheme(theme);
+        get().updateResolvedTheme();
+    },
+    updateResolvedTheme: () => {
+        const { theme } = get();
+        if (theme === 'system') {
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            set({ resolvedTheme: systemTheme });
+        } else {
+            set({ resolvedTheme: theme });
+        }
     },
     initTheme: () => {
-        const theme = localStorage.getItem('theme') || 'system';
-        applyTheme(theme);
+        get().updateResolvedTheme();
+
+        // Listen for system theme changes
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const listener = (e) => {
+            if (get().theme === 'system') {
+                set({ resolvedTheme: e.matches ? 'dark' : 'light' });
+            }
+        };
+
+        mediaQuery.addEventListener('change', listener);
+        
+        // Remove global classes just in case they were set by a previous version
+        window.document.documentElement.classList.remove('dark', 'light');
     }
 }));
-
-const applyTheme = (theme) => {
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-
-    if (theme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        root.classList.add(systemTheme);
-    } else {
-        root.classList.add(theme);
-    }
-};
 
 export default useThemeStore;
