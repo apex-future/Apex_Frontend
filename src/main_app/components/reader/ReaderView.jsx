@@ -24,7 +24,7 @@ const ScrollOrientationOverlay = ({ visible }) => {
 };
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, downloadMissingFile, addNote, updateNote, deleteNote } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addNote, updateNote, deleteNote } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -80,6 +80,41 @@ function ReaderView() {
 
     const handleHighlight = (color) => {
         if (!book || !selection.text) return;
+
+        // Apply visual highlight to the DOM immediately
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            try {
+                const range = sel.getRangeAt(0);
+                const mark = document.createElement('mark');
+                mark.style.backgroundColor = color;
+                mark.style.color = 'inherit';
+                mark.style.borderRadius = '2px';
+                mark.style.padding = '0 1px';
+                mark.dataset.highlightColor = color;
+                mark.className = 'apex-highlight';
+                range.surroundContents(mark);
+            } catch (e) {
+                // surroundContents can fail if selection spans multiple elements
+                // In that case, fall back to extracting and re-wrapping
+                try {
+                    const range = sel.getRangeAt(0);
+                    const fragment = range.extractContents();
+                    const mark = document.createElement('mark');
+                    mark.style.backgroundColor = color;
+                    mark.style.color = 'inherit';
+                    mark.style.borderRadius = '2px';
+                    mark.style.padding = '0 1px';
+                    mark.dataset.highlightColor = color;
+                    mark.className = 'apex-highlight';
+                    mark.appendChild(fragment);
+                    range.insertNode(mark);
+                } catch (innerError) {
+                    console.warn('Could not apply visual highlight:', innerError);
+                }
+            }
+        }
+
         addHighlight(book.id, {
             text: selection.text,
             color,
@@ -145,6 +180,7 @@ function ReaderView() {
 
     // Bookmarks — loaded from book context instead of manually from Dexie to prevent async UI lag
     const bookmarks = book?.metadata?.bookmarks || [];
+    const highlights = book?.metadata?.highlights || [];
 
     const isCurrentPageBookmarked = bookmarks.some(
         bm => bm.pageNumber === pageNumber || bm.page === pageNumber
@@ -168,6 +204,10 @@ function ReaderView() {
         bookmarks,
         onJumpToBookmark: goToPage,
         onRemoveBookmark: async (page) => toggleBookmark(book.id, page),
+        // Highlights
+        highlights,
+        removeHighlight: (highlightId) => removeHighlight(book.id, highlightId),
+        onJumpToHighlight: goToPage,
         // Notes
         notes: book?.metadata?.notes || [],
         addNote: (text) => addNote(book.id, text),
