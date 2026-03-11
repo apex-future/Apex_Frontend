@@ -44,7 +44,7 @@ const PWAPrompt = ({ deferredPrompt }) => {
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-sm md:max-w-md animate-in fade-in slide-in-from-bottom-8 duration-700">
-      <div className="relative overflow-hidden bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-violet-500/20 p-6 group">
+      <div className="relative overflow-hidden bg-white dark:bg-zinc-900 rounded-3xl shadow-sm border border-violet-500/20 p-6 group">
         {/* Decorative background glow */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-600/10 blur-3xl rounded-full" />
         
