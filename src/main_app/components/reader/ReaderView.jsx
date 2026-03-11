@@ -208,6 +208,19 @@ function ReaderView() {
         return () => document.removeEventListener('contextmenu', handleContextMenu);
     }, []);
 
+    // Helper to get selection bounding box
+    const getSelectionRect = useCallback((sel) => {
+        try {
+            if (sel.rangeCount > 0) {
+                const range = sel.getRangeAt(0);
+                return range.getBoundingClientRect();
+            }
+        } catch (e) {
+            console.warn("Failed to get selection rect", e);
+        }
+        return null;
+    }, []);
+
     // Touch Gesture State
     const touchState = useRef({
         initialDist: 0,
@@ -272,22 +285,44 @@ function ReaderView() {
         const handleTouchEnd = (e) => {
             if (e.touches.length < 2) {
                 touchState.current.isPinching = false;
-                handleSelectionChange();
             }
         };
 
-        document.addEventListener('mouseup', handleSelectionChange);
+        // More responsive selection monitoring
+        const handleSelectionUpdate = () => {
+            const activeSel = window.getSelection();
+            const text = activeSel.toString().trim();
+
+            if (text && text.length > 0) {
+                const rect = getSelectionRect(activeSel);
+                if (rect) {
+                    setSelection({
+                        text,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top
+                    });
+                    setShowHighlightMenu(true);
+                }
+            } else {
+                // Only hide if dictionary isn't open
+                if (!isDictOpen) {
+                    setShowHighlightMenu(false);
+                }
+            }
+        };
+
+        document.addEventListener('selectionchange', handleSelectionUpdate);
         document.addEventListener('touchstart', handleTouchStart, { passive: false });
         document.addEventListener('touchmove', handleTouchMove, { passive: false });
         document.addEventListener('touchend', handleTouchEnd);
 
         return () => {
-            document.removeEventListener('mouseup', handleSelectionChange);
+            document.removeEventListener('selectionchange', handleSelectionUpdate);
             document.removeEventListener('touchstart', handleTouchStart);
             document.removeEventListener('touchmove', handleTouchMove);
             document.removeEventListener('touchend', handleTouchEnd);
         };
-    }, [scale, isDictOpen]);
+    }, [scale, isDictOpen, getSelectionRect]);
 
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
@@ -471,7 +506,7 @@ function ReaderView() {
 
     return (
         <div
-            className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden"
+            className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden [touch-action:manipulation] [-webkit-touch-callout:none]"
             onClick={closeNav}
         >
             <ScrollOrientationOverlay visible={showScrollOverlay} />
