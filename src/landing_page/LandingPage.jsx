@@ -6,7 +6,9 @@ import AboutUs from './components/AboutUs'
 import FAQ from "./components/FAQ.jsx"
 import CTA from "./components/CTA.jsx"
 import Footer from "./components/Footer.jsx"
-function LandingPage({ onLogin }) {
+import PWAPrompt from './components/PWAPrompt'
+
+function LandingPage({ onLogin, deferredPrompt }) {
   return (
     <div className='bg-bg-subtle overflow-x-hidden'>
     <NavBar />    
@@ -16,6 +18,7 @@ function LandingPage({ onLogin }) {
     <FAQ />
     <CTA onLogin={onLogin} />
     <Footer />
+    <PWAPrompt deferredPrompt={deferredPrompt} />
 </div>
   )
 }

@@ -15,6 +15,23 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
   const [hydrating, setHydrating] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+      console.log('[Apex] beforeinstallprompt event captured');
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
 
   // One-time local database cleanup
   // Clears broken book data from before the upload fix was deployed
@@ -140,7 +157,7 @@ function App() {
       <Routes>
         {!isLoggedIn ? (
           <>
-            <Route path="/" element={<LandingPage onLogin={handleLogin} />} />
+            <Route path="/" element={<LandingPage onLogin={handleLogin} deferredPrompt={deferredPrompt} />} />
             <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             {/* Redirect any other logged-out route to landing */}
