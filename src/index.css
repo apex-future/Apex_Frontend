@@ -53,9 +53,9 @@
         --border-subtle: 38 38 40;
         /* #262628 */
 
-        --card-glass: 40 40 42;
-        --card-glass-border: 60 60 62;
-        --card-glass-hover: 70 70 72;
+        --card-glass: 24 24 27;
+        --card-glass-border: 45 45 48;
+        --card-glass-hover: 55 55 58;
     }
 }
 

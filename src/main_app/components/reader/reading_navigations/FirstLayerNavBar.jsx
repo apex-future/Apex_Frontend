@@ -46,7 +46,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         <div>
           <button
             onClick={() => navigate('/')}
-            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
           >
             <ArrowLeft size={18} strokeWidth={2} />
           </button>
@@ -72,7 +72,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
 
           {/* Dots — open second layer */}
           <button
-            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
             onClick={onDotsClick}
           >
             <EllipsisVertical strokeWidth={2} size={18} />
@@ -90,7 +90,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
           <button
             className={`w-10 h-10 flex items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${locked
               ? 'bg-accent-primary text-bg-elevated'
-              : 'bg-bg-elevated text-text-primary hover:bg-bg-subtle'
+              : 'bg-card-glass backdrop-blur-md text-text-primary hover:bg-bg-subtle border border-border-default'
               }`}
             onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
             title={locked ? 'Unlock scroll' : 'Lock scroll'}
@@ -103,7 +103,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
 
           {/* Fit-to-screen — resets zoom to 100% */}
           <button
-            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
             onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
             title="Fit to screen (reset zoom)"
           >
@@ -112,7 +112,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         </div>
 
         {/* Real progress bar */}
-        <div className="progress w-full max-w-md bg-bg-elevated/90 backdrop-blur-md p-4 rounded-3xl shadow-lg border border-border-default">
+        <div className="progress w-full max-w-md bg-card-glass backdrop-blur-xl p-4 rounded-3xl shadow-lg border-2 border-border-default">
           <div className="text-progress mb-2.5 flex items-center justify-between font-sans">
             <span className="percent text-[11px] font-black uppercase tracking-widest text-text-tertiary">{progress}% Read</span>
             <span className="chapter text-[11px] font-bold text-text-tertiary bg-bg-subtle px-2 py-0.5 rounded-full">page {pages.current} of {pages.total}</span>

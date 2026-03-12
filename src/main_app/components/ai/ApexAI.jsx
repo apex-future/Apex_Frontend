@@ -92,7 +92,7 @@ function ApexAI() {
             {/* ── Main Chat Area ── */}
             <main className='flex-1 flex flex-col relative min-w-0 bg-bg-elevated'>
                 {/* Header */}
-                <header className='flex items-center justify-between px-6 py-4 border-b border-border-default bg-bg-elevated/80 backdrop-blur-md z-10 flex-shrink-0'>
+                <header className='flex items-center justify-between px-6 py-4 border-b border-border-default bg-card-glass/80 backdrop-blur-md z-10 flex-shrink-0'>
                     <div className='flex items-center gap-4 flex-1 min-w-0'>
                         <button
                             onClick={() => navigate(-1)}
@@ -151,7 +151,7 @@ function ApexAI() {
                                         <button
                                             key={i}
                                             onClick={() => handleSend(suggestion.text)}
-                                            className='flex items-center gap-3 px-5 py-4 rounded-2xl bg-bg-elevated border border-border-default text-sm text-text-secondary hover:border-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 hover:shadow-lg hover:shadow-accent-subtle transition-all duration-300 text-left group'
+                                            className='flex items-center gap-3 px-5 py-4 rounded-2xl bg-card-glass backdrop-blur-md border border-border-default text-sm text-text-secondary hover:border-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 hover:shadow-lg hover:shadow-accent-subtle transition-all duration-300 text-left group'
                                         >
                                             <span className='text-xl grayscale group-hover:grayscale-0 transition-all'>{suggestion.icon}</span>
                                             <span className='font-medium'>{suggestion.text}</span>
@@ -179,7 +179,7 @@ function ApexAI() {
                                     <div className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}>
                                         <div className={`max-w-[95%] md:max-w-[85%] px-6 py-4 text-[15px] leading-relaxed ${msg.role === 'user'
                                             ? 'bg-text-primary text-bg-elevated rounded-3xl rounded-tr-none shadow-sm ring-1 ring-border-default'
-                                            : 'bg-bg-elevated text-text-primary'
+                                            : 'bg-card-glass backdrop-blur-md text-text-primary rounded-3xl rounded-tl-none border border-border-default shadow-sm'
                                             }`}>
                                             {msg.role === 'ai' ? (
                                                 <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-base max-w-none prose-p:my-6 prose-headings:mt-8 prose-headings:mb-4 prose-li:my-3 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-8 prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-4 prose-th:border prose-th:border-border-default prose-td:p-4 prose-td:border prose-td:border-border-default'>
@@ -235,7 +235,7 @@ function ApexAI() {
                         onSubmit={handleSubmit}
                         className={`max-w-4xl mx-auto flex flex-col gap-2 transition-all duration-300 ${isStreaming ? 'opacity-60' : 'opacity-100'}`}
                     >
-                        <div className={`relative flex items-end gap-3 bg-bg-elevated border-2 border-border-default p-2 pr-3 shadow-xl shadow-border-default/50 focus-within:border-accent-primary focus-within:shadow-accent-subtle transition-all duration-300 ${inputValue.split('\n').length > 1 || (inputRef.current && inputRef.current.scrollHeight > 60) ? 'rounded-[28px]' : 'rounded-full'}`}>
+                        <div className={`relative flex items-end gap-3 bg-card-glass backdrop-blur-xl border-2 border-border-default p-2 pr-3 shadow-xl focus-within:border-accent-primary focus-within:ring-4 focus-within:ring-accent-primary/5 transition-all duration-300 ${inputValue.split('\n').length > 1 || (inputRef.current && inputRef.current.scrollHeight > 60) ? 'rounded-[28px]' : 'rounded-full'}`}>
                             <textarea
                                 ref={inputRef}
                                 value={inputValue}
