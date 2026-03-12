@@ -25,7 +25,7 @@ function ApexLoadingScreen() {
       {/* Status Text */}
       <div className="flex flex-col items-center gap-3">
         <p className="text-white/70 text-sm font-medium tracking-wide">
-          Setting up your workspace...
+          Setting up your reading space...
         </p>
 
         {/* Slow message */}
