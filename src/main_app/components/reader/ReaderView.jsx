@@ -554,11 +554,11 @@ function ReaderView() {
             <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
                 <button
                     onClick={(e) => { e.stopPropagation(); toggleNav(); }}
-                    className={`group hover:bg-bg-elevated/90 backdrop-blur-md border border-border-default/50 px-4 py-1.5 rounded-b-2xl transition-all duration-700 hover:translate-y-0 flex items-center gap-2 shadow-sm ${showMenuBriefly ? 'translate-y-0 bg-bg-elevated shadow-md' : 'bg-bg-elevated/40 border-border-default/30 -translate-y-[80%]'}`}
+                    className={`group hover:bg-bg-elevated/90 backdrop-blur-md border border-border-default/50 px-4 py-3 rounded-b-2xl transition-all duration-700 hover:translate-y-0 flex items-center gap-2 shadow-sm ${showMenuBriefly ? 'translate-y-0 bg-bg-elevated shadow-md' : 'bg-bg-elevated/40 border-border-default/30 -translate-y-[80%]'}`}
                 >
                     <div className={`w-1.5 h-1.5 rounded-full transition-colors ${showMenuBriefly ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-blue-500'}`} />
-                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${showMenuBriefly ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-secondary'}`}>Menu</span>
-                    <Menu size={12} className={`transition-colors ${showMenuBriefly ? 'text-text-tertiary' : 'text-text-placeholder group-hover:text-text-secondary'}`} />
+                    <span className={`text-[12px] font-bold uppercase tracking-widest transition-colors ${showMenuBriefly ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-secondary'}`}>Menu</span>
+                    <Menu size={14} className={`transition-colors ${showMenuBriefly ? 'text-text-tertiary' : 'text-text-placeholder group-hover:text-text-secondary'}`} />
                 </button>
             </div>
 
