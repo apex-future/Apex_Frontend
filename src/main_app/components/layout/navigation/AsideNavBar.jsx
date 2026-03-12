@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // Import Lucide icons for visual representation in the navigation
-import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu, LogOut, Sun, Moon, Monitor } from 'lucide-react';
+import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu, LogOut, Sun, Moon, Monitor, User } from 'lucide-react';
 // Import navigation hooks and components from react-router-dom
 import { NavLink, useLocation } from 'react-router-dom';
 import useThemeStore from '../../../store/themeStore';
@@ -177,6 +177,32 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                     <Monitor size={16} />
                 </button>
               </div>
+            </li>
+            <li>
+              <NavLink
+                to="/profile"
+                className={`flex items-center p-3 rounded-xl transition-all duration-300 
+                  ${!isExpanded ? 'justify-center' : 'gap-3'}
+                  ${location.pathname === '/profile'
+                    ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default shadow-sm'
+                    : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
+                  }`}
+                title={!isExpanded ? 'Profile' : ''}
+                onClick={() => isMobileOpen && closeMobileNav()}
+              >
+                <User
+                  size={20}
+                  className={`flex-shrink-0 transition-colors z-10`}
+                />
+                <span
+                  className={`
+                    whitespace-nowrap transition-all duration-300 text-sm z-10
+                    ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
+                  `}
+                >
+                  Profile
+                </span>
+              </NavLink>
             </li>
             <li>
               <NavLink
