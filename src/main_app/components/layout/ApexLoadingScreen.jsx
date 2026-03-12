@@ -28,7 +28,7 @@ function ApexLoadingScreen() {
           Setting up your reading space...
         </p>
 
-        {/* Slow message */}
+        {/* Slow message - if it takes longer than 8 seconds */}
         {showSlowMessage && (
           <p className="text-white/40 text-xs font-medium animate-in fade-in duration-500">
             Taking longer than usual... hang tight
