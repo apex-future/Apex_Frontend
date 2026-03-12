@@ -14,18 +14,20 @@ function BookShelf() {
 
   return (
     <div className='w-full'>
-      {/* Page Header */}
-      <div className="relative flex justify-between items-center p-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 hover:bg-neutral-100 rounded-lg transition-all"
-        >
-          <ArrowLeft size={20} />
-        </button>
+      {/* Page Header - Glassmorphic with Dark Adaptation */}
+      <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
+        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group"
+          >
+            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+          </button>
 
-        <h3 className='text-lg font-semibold text-text-primary'>Book Shelf</h3>
+          <h3 className='text-xl font-bold font-display text-text-primary'>Book Shelf</h3>
 
-        <div className="w-9" />
+          <div className="w-10" />
+        </div>
       </div>
 
       {/* Shelves List */}

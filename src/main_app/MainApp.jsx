@@ -56,7 +56,7 @@ function MainApp({ onLogout }) {
                   />
                 } />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/settings" element={<Settings />} />
+                <Route path="/settings" element={<Settings onLogout={onLogout} />} />
                 <Route path="/reader/:bookId" element={<ReaderView />} />
                 <Route path="/bookshelf" element={<BookShelf />} />
                 <Route path="/shelf/:shelfName" element={<ShelfDetail />} />

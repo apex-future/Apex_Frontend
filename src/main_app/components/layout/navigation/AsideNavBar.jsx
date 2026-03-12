@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 // Import Lucide icons for visual representation in the navigation
-import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu, LogOut } from 'lucide-react';
+import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu, LogOut, Sun, Moon, Monitor } from 'lucide-react';
 // Import navigation hooks and components from react-router-dom
 import { NavLink, useLocation } from 'react-router-dom';
+import useThemeStore from '../../../store/themeStore';
 
 /**
  * AsideNavBar Component:
@@ -13,6 +14,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
   const location = useLocation();
   // isExpanded: State to toggle between the full-width (expanded) and icon-only (collapsed) sidebar views
   const [isExpanded, setIsExpanded] = useState(true);
+  const { theme, setTheme } = useThemeStore();
 
   // toggleNavLink: Flips the expansion state of the sidebar
   const toggleNavLink = () => {
@@ -150,7 +152,32 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
           </ul>
 
           {/* Footer Navigation Section: Separated by a border, used for settings or low-priority links */}
-          <ul className="border-t border-border-default pt-4 mt-4">
+          <ul className="border-t border-border-default pt-4 mt-4 space-y-2">
+            <li className="flex justify-center mb-2 px-1">
+              <div className={`flex ${isExpanded ? 'flex-row' : 'flex-col'} bg-bg-elevated/50 p-1 rounded-xl border border-border-default shadow-inner gap-1 transition-all duration-300 w-fit justify-center items-center`}>
+                <button
+                    onClick={() => setTheme('light')}
+                    className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                    title="Light Theme"
+                >
+                    <Sun size={16} />
+                </button>
+                <button
+                    onClick={() => setTheme('dark')}
+                    className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'dark' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                    title="Dark Theme"
+                >
+                    <Moon size={16} />
+                </button>
+                <button
+                    onClick={() => setTheme('system')}
+                    className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'system' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                    title="System Default"
+                >
+                    <Monitor size={16} />
+                </button>
+              </div>
+            </li>
             <li>
               <NavLink
                 to="/settings"
@@ -177,35 +204,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                 </span>
               </NavLink>
             </li>
-            <li>
-              <button
-                onClick={() => {
-                  onLogout();
-                  isMobileOpen && closeMobileNav();
-                }}
-                className={`
-                  flex items-center px-3 py-2.5 rounded-full
-                  transition-all duration-300
-                  font-medium relative overflow-hidden w-full
-                  ${!isExpanded ? 'justify-center' : 'gap-3'}
-                  text-red-500 hover:bg-red-50 hover:text-red-600
-                `}
-                title={!isExpanded ? 'Logout' : ''}
-              >
-                <LogOut
-                  size={20}
-                  className={`flex-shrink-0 transition-colors z-10`}
-                />
-                <span
-                  className={`
-                    whitespace-nowrap transition-all duration-300 text-sm z-10
-                    ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
-                  `}
-                >
-                  Logout
-                </span>
-              </button>
-            </li>
+
           </ul>
         </nav>
       </aside>

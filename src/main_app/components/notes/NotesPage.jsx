@@ -1,6 +1,6 @@
 import React, { useContext, useState, useMemo } from 'react';
 import { BookContext } from '../../context/BookContextInstance';
-import { Search, Pen, Clock, BookOpen, ChevronRight, Hash } from 'lucide-react';
+import { ArrowLeft, Search, Pen, Clock, BookOpen, ChevronRight, Hash } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 function NotesPage() {
@@ -62,49 +62,53 @@ function NotesPage() {
     };
 
     return (
-        <div className='min-h-screen bg-bg-elevated px-4 md:px-8 py-8 md:py-12 animate-in fade-in slide-in-from-bottom-4 duration-500'>
-            <div className='max-w-6xl mx-auto flex flex-col gap-10'>
+        <div className='min-h-screen bg-bg-elevated w-full overflow-x-hidden'>
+            {/* Page Header - Glassmorphic with Dark Adaptation */}
+            <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
+                <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group"
+                    >
+                        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                    </button>
 
-                {/* Header Section */}
-                <header className='flex flex-col md:flex-row md:items-end justify-between gap-6'>
-                    <div className='flex flex-col gap-3'>
-                        <div className='flex items-center gap-3'>
-                            <div className='w-12 h-12 bg-accent-primary/10 text-accent-primary rounded-2xl flex items-center justify-center border border-accent-primary/20 shadow-inner'>
-                                <Pen size={24} />
-                            </div>
-                            <h1 className='text-4xl md:text-5xl font-black text-text-primary tracking-tight font-display'>Your Notes</h1>
-                        </div>
-                        <p className='text-text-secondary text-base md:text-lg max-w-lg leading-relaxed'>
-                            Capture definitions, concepts, and ideas across your entire library.
-                        </p>
+                    <h3 className='text-xl font-bold font-display text-text-primary'>Notes</h3>
+
+                    <div className="w-10" />
+                </div>
+            </div>
+
+            <div className='max-w-6xl mx-auto flex flex-col gap-10 px-4 md:px-8 py-8 md:py-12 animate-in fade-in slide-in-from-bottom-4 duration-500'>
+
+                <div className='flex flex-col md:flex-row md:items-center justify-between gap-6'>
+                    {/* Filter Tabs moved here for cleaner flow */}
+                    <div className='flex gap-2 border-b border-border-default w-full md:w-auto overflow-x-auto custom-scrollbar pb-1'>
+                        <button
+                            onClick={() => setActiveTab('all')}
+                            className={`px-5 py-3 rounded-full text-sm font-bold tracking-widest uppercase transition-all whitespace-nowrap ${activeTab === 'all' ? 'bg-bg-subtle text-accent-primary border  border-accent-primary' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-subtle/50'}`}
+                        >
+                            All ({allNotes.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('recent')}
+                            className={`px-5 py-3 rounded-full text-sm font-bold tracking-widest uppercase transition-all whitespace-nowrap ${activeTab === 'recent' ? 'bg-bg-subtle text-accent-primary border  border-accent-primary' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-subtle/50'}`}
+                        >
+                            Recent
+                        </button>
                     </div>
 
+                    {/* Search Bar - Underneath header border but aligned to right on desktop */}
                     <div className='relative w-full md:w-80 group'>
                         <Search className='absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary transition-colors' size={20} />
                         <input
                             type="text"
-                            placeholder="Search across all notes..."
+                            placeholder="Search notes..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className='w-full bg-bg-subtle border-2 border-border-default rounded-2xl py-3.5 pl-12 pr-4 text-text-primary placeholder:text-text-placeholder focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/10 transition-all shadow-sm'
+                            className='w-full bg-bg-subtle border-2 border-border-default rounded-2xl py-3 pl-12 pr-4 text-text-primary placeholder:text-text-placeholder focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/10 transition-all shadow-sm'
                         />
                     </div>
-                </header>
-
-                {/* Filters/Tabs */}
-                <div className='flex gap-2 border-b border-border-default w-full overflow-x-auto custom-scrollbar pb-1'>
-                    <button
-                        onClick={() => setActiveTab('all')}
-                        className={`px-5 py-3 rounded-t-xl text-sm font-bold tracking-widest uppercase transition-all whitespace-nowrap ${activeTab === 'all' ? 'bg-bg-subtle text-accent-primary border-b-2 border-accent-primary' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-subtle/50'}`}
-                    >
-                        All Notes ({allNotes.length})
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('recent')}
-                        className={`px-5 py-3 rounded-t-xl text-sm font-bold tracking-widest uppercase transition-all whitespace-nowrap ${activeTab === 'recent' ? 'bg-bg-subtle text-accent-primary border-b-2 border-accent-primary' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-subtle/50'}`}
-                    >
-                        Recently Added
-                    </button>
                 </div>
 
                 {/* Content Section */}
