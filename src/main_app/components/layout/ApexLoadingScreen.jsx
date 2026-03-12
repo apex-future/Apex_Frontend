@@ -13,7 +13,7 @@ function ApexLoadingScreen() {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-[#08090C] flex flex-col items-center justify-center gap-8">
-      {/* Pulsing Apex Logo */}
+      {/* Pulsing Apex Logo - for visual effect*/}
       <div className="animate-pulse">
         <img
           src={apexLogo}
