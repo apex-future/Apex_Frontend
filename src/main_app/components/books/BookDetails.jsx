@@ -81,10 +81,10 @@ function BookDetails() {
                         </div>
 
                         <div className="flex flex-wrap items-center justify-center gap-3">
-                            <span className="bg-accent-subtle text-accent-pressed text-xs font-semibold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
+                            <span className="bg-accent-subtle text-accent-pressed dark:text-accent-pressed text-xs font-semibold px-4 py-1.5 border border-border-default dark:border-border-default-dark rounded-full tracking-widest shadow-sm">
                                 {book.status || 'Library'}
                             </span>
-                            <span className="bg-neutral-100 text-text-tertiary text-xs font-semibold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
+                            <span className="bg-neutral-100 dark:bg-bg-dark-elevated text-text-tertiary dark:text-text-tertiary-dark text-xs font-semibold px-4 py-1.5 border border-border-default dark:border-border-default-dark rounded-full tracking-widest shadow-sm">
                                 {Math.round(book.progress || 0)}% Completed
                             </span>
                         </div>
@@ -100,8 +100,8 @@ function BookDetails() {
 
                         <div className="max-w-2xl">
                             <h2 className="text-xs sm:text-sm font-bold text-text-placeholder uppercase tracking-[0.2em] mb-4">About this book</h2>
-                            <div className="bg-card-glass backdrop-blur-md border border-border-default rounded-2xl p-6 sm:p-8 hover:border-text-tertiary/20 hover:shadow-xl transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc mb-8 shadow-sm">
-                                <div className="absolute top-0 left-0 w-1 h-full bg-accent-primary group-hover/desc:w-1.5 transition-all" />
+                            <div className="bg-card-glass backdrop-blur-md border border-border-default rounded-2xl p-6 sm:p-8 hover:border-text-tertiary/20 hover:shadow-md transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc mb-8 shadow-sm">
+                               
                                 {book.description || "No description available for this title."}
 
                                 {/* Quick Bookmarks / Status Section under description */}
@@ -181,7 +181,7 @@ function BookDetails() {
                     </div>
                 </div>
 
-                <div className="overflow-hidden max-w-[850px] mx-auto w-full bg-card-glass backdrop-blur-xl p-2.5 border border-border-default rounded-[3rem] shadow-2xl">
+                <div className="overflow-hidden max-w-[850px] mx-auto w-full bg-card-glass backdrop-blur-xl p-2.5 border border-border-default rounded-[3rem] shadow-md">
                     <ul className="flex gap-2 overflow-x-auto py-2.5 bg-card-glass/60 backdrop-blur-md px-2.5 rounded-full items-center no-scrollbar border border-border-default/20">
                         {tabs.map((tab) => (
                             <li
