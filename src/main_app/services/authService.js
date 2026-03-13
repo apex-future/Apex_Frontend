@@ -40,6 +40,11 @@ const authService = {
     return response.data;
   },
 
+  async saveOnboarding(onboardingData) {
+    const response = await apiClient.patch('/api/auth/onboarding', onboardingData);
+    return response.data;
+  },
+
   getToken() {
     return localStorage.getItem('apex_token');
   },

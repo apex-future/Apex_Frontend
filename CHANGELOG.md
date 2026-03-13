@@ -17,6 +17,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.4] - 2026-03-13
+
+### Added
+
+- Two-step signup flow with onboarding personalization
+- New PATCH /api/auth/onboarding endpoint
+- User type, study goals, exam date, and device preference collected on signup
+
+---
+
 ## [1.6.3] - 2026-03-10
 
 ### Fixed
