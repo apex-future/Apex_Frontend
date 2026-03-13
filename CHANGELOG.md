@@ -17,6 +17,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.5] - 2026-03-13
+
+### Added
+
+- Existing user onboarding screen for accounts created before personalization was introduced
+- New PATCH /api/auth/onboarding endpoint
+- Onboarding screen triggers automatically for any user with null user_type on login
+
+---
+
 ## [1.6.4] - 2026-03-13
 
 ### Added

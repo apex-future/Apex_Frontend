@@ -11,12 +11,14 @@ import useAuthStore from './main_app/store/authStore'
 import useThemeStore from './main_app/store/themeStore'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
 import LandingLoadingScreen from './main_app/components/layout/LandingLoadingScreen'
+import OnboardingPage from './landing_page/OnboardingPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
   const [hydrating, setHydrating] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   // Determine if we should show the landing-specific loader
   const isLandingPath = window.location.pathname === '/' || window.location.pathname === '';
@@ -99,6 +101,12 @@ function App() {
           const user = await authService.me();
           // Store user in Zustand immediately
           useAuthStore.getState().setUser(user);
+
+          // Check if existing user needs onboarding
+          if (!user.user_type) {
+            setNeedsOnboarding(true);
+          }
+
           setIsLoggedIn(true);
 
           // Run full data pull if online
@@ -129,6 +137,11 @@ function App() {
     // Store user data from login/register response in Zustand
     if (userData?.user) {
       useAuthStore.getState().setUser(userData.user);
+
+      // Check if user needs onboarding
+      if (!userData.user?.user_type) {
+        setNeedsOnboarding(true);
+      }
     }
     setIsLoggedIn(true);
 
@@ -152,9 +165,18 @@ function App() {
     setIsLoggedIn(false);
   };
 
+  const handleOnboardingComplete = () => {
+    setNeedsOnboarding(false);
+  };
+
   // Show loading screen during initial auth check OR during data hydration
   if (loading || hydrating) {
     return showLandingLoader ? <LandingLoadingScreen /> : <ApexLoadingScreen />;
+  }
+
+  // Show onboarding for existing users who haven't personalized yet
+  if (isLoggedIn && needsOnboarding) {
+    return <OnboardingPage onComplete={handleOnboardingComplete} />;
   }
 
   return (
