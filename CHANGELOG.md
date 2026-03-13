@@ -21,9 +21,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Two-step signup flow with onboarding personalization
-- New PATCH /api/auth/onboarding endpoint
-- User type, study goals, exam date, and device preference collected on signup
+- Two-step signup flow with personalization onboarding
+- User type, study goals, exam date and device preference collected on signup
+- Single POST /api/auth/register now accepts all onboarding fields together
 
 ---
 

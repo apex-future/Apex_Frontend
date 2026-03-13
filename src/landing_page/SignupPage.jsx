@@ -5,10 +5,6 @@ import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
 import FloatingLines from './components/ui/FloatingLines';
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: 4 }, (_, i) => currentYear + i);
-
 function SignupPage({ onLogin }) {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
@@ -19,53 +15,57 @@ function SignupPage({ onLogin }) {
 
   // Step system
   const [step, setStep] = useState(1);
-  const [stepLoading, setStepLoading] = useState(false);
 
   // Onboarding fields
   const [userType, setUserType] = useState('');
   const [studyingFor, setStudyingFor] = useState([]);
-  const [examDate, setExamDate] = useState('');
+  const [examDate, setExamDate] = useState({ month: '', year: '' });
   const [studyDevice, setStudyDevice] = useState('');
 
-  // Exam date parts
-  const [examMonth, setExamMonth] = useState('');
-  const [examYear, setExamYear] = useState('');
-
-  const handleNext = async (e) => {
+  const handleNext = (e) => {
     e.preventDefault();
-    setStepLoading(true);
-    setError('');
-    try {
-      const response = await authService.register(fullName, email, password);
-      // Store token immediately so step 2 API call is authenticated
-      onLogin(response);
-      setStep(2);
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
-    } finally {
-      setStepLoading(false);
+    if (!fullName.trim()) {
+      setError('Please enter your full name.');
+      return;
     }
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    setError('');
+    setStep(2);
   };
 
-  const handleDone = async () => {
-    if (!userType) return; // Field 1 is required
-    setStepLoading(true);
-    try {
-      // Build exam date string from month + year
-      const computedExamDate = examMonth && examYear ? `${examMonth} ${examYear}` : null;
+  const handleSignup = async () => {
+    if (!userType) return; // Field 1 required
+    setLoading(true);
+    setError('');
 
-      await authService.saveOnboarding({
-        user_type: userType,
-        studying_for: studyingFor.length > 0 ? studyingFor : null,
-        exam_date: computedExamDate,
-        study_device: studyDevice || null,
-      });
-    } catch (err) {
-      console.error('Onboarding save failed:', err);
-      // Non-blocking — don't show error, just proceed
-    } finally {
-      setStepLoading(false);
+    const onboardingData = {
+      user_type: userType,
+      ...(studyingFor.length > 0 && { studying_for: studyingFor }),
+      ...(examDate.month && examDate.year && { 
+        exam_date: `${examDate.month} ${examDate.year}` 
+      }),
+      ...(studyDevice && { study_device: studyDevice }),
+    };
+
+    try {
+      const response = await authService.register(
+        fullName, email, password, onboardingData
+      );
+      onLogin(response);
       navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      // On error, go back to step 1 so user can fix details
+      setStep(1);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,28 +86,26 @@ function SignupPage({ onLogin }) {
   const showStudyingFor = userType === 'student' || userType === 'both';
   const showExamDate = studyingFor.includes('JAMB') || studyingFor.includes('WAEC') || studyingFor.includes('University Exams');
 
-  // Progress bar component
   const ProgressBar = () => (
     <div className="mb-6">
       <div className="flex gap-2">
-        <div className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${step >= 1 ? 'bg-[#7C3AED]' : 'bg-white/20'}`} />
-        <div className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${step >= 2 ? 'bg-[#7C3AED]' : 'bg-white/20'}`} />
+        <div className={`h-1.5 rounded-full flex-1 transition-colors duration-300 ${step >= 1 ? 'bg-[#7C3AED]' : 'bg-white/20'}`} />
+        <div className={`h-1.5 rounded-full flex-1 transition-colors duration-300 ${step >= 2 ? 'bg-[#7C3AED]' : 'bg-white/20'}`} />
       </div>
-      <p className="text-white/50 text-xs mt-2 text-center">Step {step} of 2</p>
+      <p className="text-white/40 text-xs text-center mt-1">Step {step} of 2</p>
     </div>
   );
 
-  // Pill toggle component
   const Pill = ({ label, selected, onClick, ariaPressed }) => (
     <button
       type="button"
       role="button"
       aria-pressed={ariaPressed !== undefined ? ariaPressed : selected}
       onClick={onClick}
-      className={`px-4 py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 cursor-pointer ${
+      className={`px-4 py-2 rounded-xl border text-sm font-medium cursor-pointer transition-all ${
         selected
           ? 'bg-[#7C3AED] text-white border-[#7C3AED]'
-          : 'bg-white/10 text-white/70 border-white/20 hover:bg-white/15'
+          : 'bg-white/10 text-white/60 border-white/20 hover:bg-white/15'
       }`}
     >
       {label}
@@ -140,11 +138,9 @@ function SignupPage({ onLogin }) {
         </div>
 
         {/* Signup Form Card */}
-        <div className="w-full max-w-md bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/20 relative z-10">
-          
-          {/* Step 1 */}
-          {step === 1 && (
-            <div key="step1" className="animate-in fade-in slide-in-from-right-4 duration-400">
+        <div className="w-full max-w-md bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/20 relative z-10 transition-all duration-500">
+          <div key={step} className="animate-in fade-in slide-in-from-right-4 duration-300">
+            {step === 1 ? (
               <form onSubmit={handleNext} className="space-y-5">
                 <ProgressBar />
 
@@ -208,53 +204,49 @@ function SignupPage({ onLogin }) {
 
                 <button
                   type="submit"
-                  disabled={stepLoading}
-                  className="group w-full h-14 bg-[#7C3AED] hover:bg-[#6D28D9] disabled:bg-neutral-300 text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-3 active:scale-95 mt-4"
+                  className="group w-full h-14 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-3 active:scale-95 mt-4"
                 >
-                  {stepLoading ? (
-                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      Next
-                      <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
+                  Next
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </form>
-            </div>
-          )}
-
-          {/* Step 2 — Onboarding */}
-          {step === 2 && (
-            <div key="step2" className="animate-in fade-in slide-in-from-right-4 duration-400">
+            ) : (
               <div className="space-y-5">
-                {/* Subtle header */}
-                <p className="text-white/70 text-sm text-center">✦ Let's personalize Apex for you</p>
-
+                <button 
+                  onClick={() => setStep(1)}
+                  className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer block mb-2"
+                >
+                  ← Back
+                </button>
+                
+                <p className="text-white/60 text-sm text-center">✦ Let's personalize Apex for you</p>
+                
                 <ProgressBar />
 
-                {/* Field 1 — What describes you best? (required) */}
                 <div className="space-y-2.5">
-                  <label className="text-xs font-bold text-white/80 uppercase tracking-wider ml-1">
-                    What describes you best? <span className="text-red-400">*</span>
+                  <label className="text-xs font-bold text-white/80 uppercase tracking-wider">
+                    What describes you best? <span className="text-red-400 ml-0.5">*</span>
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {['student', 'casual reader', 'both'].map((type) => (
+                    {[
+                      { value: 'student', label: 'Student' },
+                      { value: 'casual_reader', label: 'Casual Reader' },
+                      { value: 'both', label: 'Both' },
+                    ].map((type) => (
                       <Pill
-                        key={type}
-                        label={type.charAt(0).toUpperCase() + type.slice(1)}
-                        selected={userType === type}
-                        onClick={() => setUserType(type)}
+                        key={type.value}
+                        label={type.label}
+                        selected={userType === type.value}
+                        onClick={() => setUserType(type.value)}
                       />
                     ))}
                   </div>
                 </div>
 
-                {/* Field 2 — What are you studying for? (optional, conditional) */}
                 {showStudyingFor && (
                   <div className="space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <label className="text-xs font-bold text-white/80 uppercase tracking-wider ml-1">
-                      What are you studying for? <span className="text-white/40 text-xs font-normal ml-1">(optional)</span>
+                    <label className="text-white/40 text-xs font-normal">
+                      What are you studying for? (optional)
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {['JAMB', 'WAEC', 'University Exams', 'Professional Cert', 'Not studying for anything right now'].map((item) => (
@@ -270,47 +262,39 @@ function SignupPage({ onLogin }) {
                   </div>
                 )}
 
-                {/* Field 3 — When is your exam? (optional, conditional) */}
                 {showExamDate && (
                   <div className="space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <label className="text-xs font-bold text-white/80 uppercase tracking-wider ml-1">
-                      When is your exam? <span className="text-white/40 text-xs font-normal ml-1">(optional)</span>
+                    <label className="text-white/40 text-xs font-normal">
+                      When is your exam? (optional)
                     </label>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <select
-                        value={examMonth}
-                        onChange={(e) => {
-                          setExamMonth(e.target.value);
-                          setExamDate(e.target.value && examYear ? `${e.target.value} ${examYear}` : '');
-                        }}
-                        className="flex-1 px-4 py-3.5 bg-white/10 border border-white/20 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white transition-all backdrop-blur-md appearance-none cursor-pointer"
+                        value={examDate.month}
+                        onChange={(e) => setExamDate({ ...examDate, month: e.target.value })}
+                        className="flex-1 bg-white/10 border border-white/20 text-white rounded-2xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
                       >
-                        <option value="" className="bg-[#1a1a2e] text-white">Month</option>
-                        {MONTHS.map((m) => (
-                          <option key={m} value={m} className="bg-[#1a1a2e] text-white">{m}</option>
+                        <option value="" className="text-white/50 bg-neutral-900">Month</option>
+                        {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m => (
+                          <option key={m} value={m} className="bg-neutral-900">{m}</option>
                         ))}
                       </select>
                       <select
-                        value={examYear}
-                        onChange={(e) => {
-                          setExamYear(e.target.value);
-                          setExamDate(examMonth && e.target.value ? `${examMonth} ${e.target.value}` : '');
-                        }}
-                        className="flex-1 px-4 py-3.5 bg-white/10 border border-white/20 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white transition-all backdrop-blur-md appearance-none cursor-pointer"
+                        value={examDate.year}
+                        onChange={(e) => setExamDate({ ...examDate, year: e.target.value })}
+                        className="flex-1 bg-white/10 border border-white/20 text-white rounded-2xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
                       >
-                        <option value="" className="bg-[#1a1a2e] text-white">Year</option>
-                        {YEARS.map((y) => (
-                          <option key={y} value={y} className="bg-[#1a1a2e] text-white">{y}</option>
+                        <option value="" className="text-white/50 bg-neutral-900">Year</option>
+                        {[2026, 2027, 2028, 2029].map(y => (
+                          <option key={y} value={y} className="bg-neutral-900">{y}</option>
                         ))}
                       </select>
                     </div>
                   </div>
                 )}
 
-                {/* Field 4 — How do you currently study? (optional, always visible) */}
                 <div className="space-y-2.5">
-                  <label className="text-xs font-bold text-white/80 uppercase tracking-wider ml-1">
-                    How do you currently study? <span className="text-white/40 text-xs font-normal ml-1">(optional)</span>
+                  <label className="text-white/40 text-xs font-normal">
+                    How do you currently study? (optional)
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {['phone', 'laptop', 'both'].map((device) => (
@@ -324,39 +308,30 @@ function SignupPage({ onLogin }) {
                   </div>
                 </div>
 
-                {/* Done button */}
                 <button
                   type="button"
-                  onClick={handleDone}
-                  disabled={!userType || stepLoading}
-                  aria-disabled={!userType}
-                  className={`group w-full h-14 rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg flex items-center justify-center gap-3 active:scale-95 mt-4 ${
-                    userType
-                      ? 'bg-[#7C3AED] hover:bg-[#6D28D9] text-white shadow-purple-500/20 cursor-pointer'
-                      : 'bg-white/10 text-white/30 shadow-none cursor-not-allowed'
-                  }`}
+                  onClick={handleSignup}
+                  disabled={!userType || loading}
+                  className={`group w-full h-14 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-3 active:scale-95 mt-4 ${(!userType || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {stepLoading ? (
+                  {loading ? (
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
-                      Done
+                      Create Account
                       <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* "Already have an account?" link — only on step 1 */}
-          {step === 1 && (
-            <div className="mt-6 pt-6 border-t border-white/20 text-center">
-              <p className="text-white/70 text-sm font-medium">
-                Already have an account? <Link to="/login" className="text-white hover:underline font-bold">Sign in</Link>
-              </p>
-            </div>
-          )}
+          <div className="mt-6 pt-6 border-t border-white/20 text-center">
+            <p className="text-white/70 text-sm font-medium">
+              Already have an account? <Link to="/login" className="text-white hover:underline font-bold">Sign in</Link>
+            </p>
+          </div>
         </div>
       </div>
 
