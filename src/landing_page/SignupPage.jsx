@@ -45,18 +45,18 @@ function SignupPage({ onLogin }) {
         />
       </div>
 
-      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-700">
+      <div className="w-full max-w-md lg:max-w-5xl lg:flex lg:flex-row lg:items-center lg:justify-center lg:gap-20 relative z-10 animate-in fade-in zoom-in-95 duration-700">
         {/* Logo/Brand Header */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center lg:items-start mb-10 lg:mb-0 lg:max-w-sm">
           <Link to="/">
-            <img src={logoLight} alt="Apex Logo" className="w-14 h-14 rounded-2xl mb-4 shadow-xl shadow-accent-primary/10" />
+            <img src={logoLight} alt="Apex Logo" className="w-16 h-16 lg:w-20 lg:h-20 rounded-[2rem] mb-6 shadow-2xl shadow-purple-500/20" />
           </Link>
-          <h2 className="text-white text-3xl font-bold font-display tracking-tight">Create Account</h2>
-          <p className="text-neutral-400 mt-2 text-sm">Join the next generation of focused learners</p>
+          <h2 className="text-white text-3xl lg:text-5xl font-bold font-display tracking-tight text-center lg:text-left leading-tight">Create your<br className="hidden lg:block" /> Account</h2>
+          <p className="text-neutral-400 mt-4 text-sm lg:text-lg text-center lg:text-left">Join the next generation of focused learners and master your craft.</p>
         </div>
 
         {/* Signup Form Card */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/20 relative z-10">
+        <div className="w-full max-w-md bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/20 relative z-10">
           <form onSubmit={handleSignup} className="space-y-5">
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
@@ -132,10 +132,7 @@ function SignupPage({ onLogin }) {
             </button>
           </form>
 
-          <div className="mt-8 flex items-center justify-center gap-2 text-white/70">
-            <Sparkles size={14} className="text-white" />
-            <span className="text-xs uppercase tracking-widest font-semibold text-white/60">Instant Setup Enabled</span>
-          </div>
+       
 
           <div className="mt-6 pt-6 border-t border-white/20 text-center">
             <p className="text-white/70 text-sm font-medium">

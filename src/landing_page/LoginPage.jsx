@@ -44,18 +44,18 @@ function LoginPage({ onLogin }) {
         />
       </div>
 
-      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-700">
+      <div className="w-full max-w-md lg:max-w-5xl lg:flex lg:flex-row lg:items-center lg:justify-center lg:gap-20 relative z-10 animate-in fade-in zoom-in-95 duration-700">
         {/* Logo/Brand Header */}
-        <div className="flex flex-col items-center mb-10">
+        <div className="flex flex-col items-center lg:items-start mb-10 lg:mb-0 lg:max-w-sm">
           <Link to="/">
-            <img src={logoLight} alt="Apex Logo" className="w-14 h-14 rounded-2xl mb-4 shadow-xl shadow-accent-primary/10" />
+            <img src={logoLight} alt="Apex Logo" className="w-16 h-16 lg:w-20 lg:h-20 rounded-[2rem] mb-6 shadow-2xl shadow-purple-500/20" />
           </Link>
-          <h2 className="text-white text-3xl font-bold font-display tracking-tight">Welcome Back</h2>
-          <p className="text-neutral-400 mt-2 text-sm">Sign in to continue your learning journey</p>
+          <h2 className="text-white text-3xl lg:text-5xl font-bold font-display tracking-tight text-center lg:text-left leading-tight">Welcome<br className="hidden lg:block" /> Back</h2>
+          <p className="text-neutral-400 mt-4 text-sm lg:text-lg text-center lg:text-left">Sign in to continue your learning journey and access your dashboard.</p>
         </div>
 
         {/* Login Form Card */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/20 relative z-10">
+        <div className="w-full max-w-md bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/20 relative z-10">
           <form onSubmit={handleLogin} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
