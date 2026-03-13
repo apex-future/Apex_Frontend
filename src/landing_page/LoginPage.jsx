@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
-import ColorBends from './components/ui/ColorBends';
+import FloatingLines from './components/ui/FloatingLines';
 
 function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -33,19 +33,14 @@ function LoginPage({ onLogin }) {
     <div className="min-h-screen bg-[#08090C] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
       {/* Background Decorative Elements */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <ColorBends
-          colors={["#7C3AED", "#00ffd1"]}
-          rotation={0}
-          speed={0.2}
-          scale={1}
-          frequency={1}
-          warpStrength={1}
-          mouseInfluence={1}
-          parallax={0.5}
-          noise={0.1}
-          transparent
-          autoRotate={0}
-          color="#d51ad5"
+        <FloatingLines 
+          enabledWaves={["top","middle","bottom"]}
+          lineCount={5}
+          lineDistance={5}
+          bendRadius={5}
+          bendStrength={-0.5}
+          interactive={true}
+          parallax={true}
         />
       </div>
 
