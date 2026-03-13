@@ -7,7 +7,7 @@ import FAQ from "./components/FAQ.jsx"
 import CTA from "./components/CTA.jsx"
 import Footer from "./components/Footer.jsx"
 import PWAPrompt from './components/PWAPrompt'
-import LandingLoadingScreen from '../main_app/components/layout/LandingLoadingScreen.jsx'
+import LandingLoadingScreen from './components/LandingLoadingScreen.jsx'
 
 function LandingPage({ onLogin, deferredPrompt }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -22,7 +22,7 @@ function LandingPage({ onLogin, deferredPrompt }) {
     };
 
     // If the page is already fully loaded by the time React mounts,
-    // trigger the fade-out after a tiny delay to ensure a smooth transition.
+    // trigger the fade-out after a delay to ensure it's actually seen.
     if (document.readyState === 'complete') {
       const waitTimer = setTimeout(handleLoad, 100);
       return () => clearTimeout(waitTimer);

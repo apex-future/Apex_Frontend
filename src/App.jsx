@@ -10,7 +10,7 @@ import db from './main_app/db/apex.db'
 import useAuthStore from './main_app/store/authStore'
 import useThemeStore from './main_app/store/themeStore'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
-import LandingLoadingScreen from './main_app/components/layout/LandingLoadingScreen'
+import LandingLoadingScreen from './landing_page/components/LandingLoadingScreen'
 import OnboardingPage from './landing_page/OnboardingPage';
 
 function App() {
