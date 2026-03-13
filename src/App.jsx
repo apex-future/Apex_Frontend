@@ -10,12 +10,17 @@ import db from './main_app/db/apex.db'
 import useAuthStore from './main_app/store/authStore'
 import useThemeStore from './main_app/store/themeStore'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
+import LandingLoadingScreen from './main_app/components/layout/LandingLoadingScreen'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
   const [hydrating, setHydrating] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  // Determine if we should show the landing-specific loader
+  const isLandingPath = window.location.pathname === '/' || window.location.pathname === '';
+  const showLandingLoader = !isLoggedIn && isLandingPath;
 
   useEffect(() => {
     const handler = (e) => {
@@ -149,7 +154,7 @@ function App() {
 
   // Show loading screen during initial auth check OR during data hydration
   if (loading || hydrating) {
-    return <ApexLoadingScreen />;
+    return showLandingLoader ? <LandingLoadingScreen /> : <ApexLoadingScreen />;
   }
 
   return (

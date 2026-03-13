@@ -21,8 +21,11 @@ function LandingPage({ onLogin, deferredPrompt }) {
       }, 200); // 200ms for fade-out transition
     };
 
+    // If the page is already fully loaded by the time React mounts,
+    // trigger the fade-out after a tiny delay to ensure a smooth transition.
     if (document.readyState === 'complete') {
-      handleLoad();
+      const waitTimer = setTimeout(handleLoad, 100);
+      return () => clearTimeout(waitTimer);
     } else {
       window.addEventListener('load', handleLoad);
       return () => window.removeEventListener('load', handleLoad);

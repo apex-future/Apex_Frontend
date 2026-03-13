@@ -60,12 +60,58 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
       /* Prevent CLS by ensuring fonts load with swap */
-      body { font-family: 'Inter', sans-serif; }
+      body { font-family: 'Inter', sans-serif; background-color: #08090C; margin: 0; }
       .font-display { font-family: 'Space Grotesk', sans-serif; }
+      
+      /* Initial Loading Shell Styles */
+      .initial-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background-color: #08090C;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 32px;
+        transition: opacity 0.2s ease-out;
+      }
+      .loader-logo {
+        width: 96px;
+        height: 96px;
+        object-fit: contain;
+        filter: drop-shadow(0 25px 25px rgb(0 0 0 / 0.15));
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      .loader-spinner {
+        width: 40px;
+        height: 40px;
+        border: 2px solid rgba(255, 255, 255, 0.05);
+        border-top: 2px solid rgba(139, 92, 246, 0.8);
+        border-radius: 9999px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .5; }
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @media (min-width: 768px) {
+        .loader-logo { width: 128px; height: 128px; }
+      }
     </style>
   </head>
   <body>
-    <div id="root"  class="font-sans" ></div>
+    <div id="root"  class="font-sans" >
+      <!-- Loading Shell: This is replaced once React hydrates -->
+      <div class="initial-loader">
+        <img src="/logo-dark.png" alt="Apex" class="loader-logo" />
+        <div class="loader-spinner"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
