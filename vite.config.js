@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import legacy from '@vitejs/plugin-legacy'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 import { copyFileSync, existsSync, mkdirSync } from 'fs'
@@ -8,6 +9,9 @@ import { copyFileSync, existsSync, mkdirSync } from 'fs'
 export default defineConfig({
   plugins: [
     react(),
+    legacy({
+      targets: ['defaults', 'not IE 11']
+    }),
     // Copy PDF worker to public/ so it's served as a static asset
     {
       name: 'copy-pdf-worker',
@@ -117,6 +121,9 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    target: 'es2015'
+  },
   server: {
     proxy: {
       '/api': {
