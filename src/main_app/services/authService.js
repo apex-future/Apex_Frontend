@@ -1,11 +1,12 @@
 import apiClient from './apiClient';
 
 const authService = {
-  async register(fullName, email, password) {
+  async register(fullName, email, password, onboardingData = {}) {
     const response = await apiClient.post('/api/auth/register', {
       full_name: fullName,
       email: email.toLowerCase(),
       password,
+      ...onboardingData,
     });
     if (response.data.access_token) {
       localStorage.setItem('apex_token', response.data.access_token);

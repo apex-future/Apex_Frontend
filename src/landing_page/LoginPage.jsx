@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
+import FloatingLines from './components/ui/FloatingLines';
 
 function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -31,23 +32,30 @@ function LoginPage({ onLogin }) {
   return (
     <div className="min-h-screen bg-[#08090C] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
       {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-accent-primary/5 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[100px]"></div>
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <FloatingLines 
+          enabledWaves={["top","middle","bottom"]}
+          lineCount={5}
+          lineDistance={5}
+          bendRadius={5}
+          bendStrength={-0.5}
+          interactive={true}
+          parallax={true}
+        />
       </div>
 
-      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-700">
+      <div className="w-full max-w-md lg:max-w-5xl lg:flex lg:flex-row lg:items-center lg:justify-center lg:gap-20 relative z-10 animate-in fade-in zoom-in-95 duration-700">
         {/* Logo/Brand Header */}
-        <div className="flex flex-col items-center mb-10">
+        <div className="flex flex-col items-center lg:items-start mb-10 lg:mb-0 lg:max-w-sm">
           <Link to="/">
-            <img src={logoLight} alt="Apex Logo" className="w-14 h-14 rounded-2xl mb-4 shadow-xl shadow-accent-primary/10" />
+            <img src={logoLight} alt="Apex Logo" className="w-16 h-16 lg:w-20 lg:h-20 rounded-[2rem] mb-6 shadow-2xl shadow-purple-500/20" />
           </Link>
-          <h2 className="text-white text-3xl font-bold font-display tracking-tight">Welcome Back</h2>
-          <p className="text-neutral-400 mt-2 text-sm">Sign in to continue your learning journey</p>
+          <h2 className="text-white text-3xl lg:text-5xl font-bold font-display tracking-tight text-center lg:text-left leading-tight">Welcome<br className="hidden lg:block" /> Back</h2>
+          <p className="text-neutral-400 mt-4 text-sm lg:text-lg text-center lg:text-left">Sign in to continue your learning journey and access your dashboard.</p>
         </div>
 
         {/* Login Form Card */}
-        <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/10">
+        <div className="w-full max-w-md bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/20 relative z-10">
           <form onSubmit={handleLogin} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
@@ -57,9 +65,9 @@ function LoginPage({ onLogin }) {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-neutral-700 ml-1">Email Address</label>
+              <label className="text-sm font-semibold text-white/90 ml-1">Email Address</label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-accent-primary transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50 group-focus-within:text-white transition-colors">
                   <Mail size={18} />
                 </div>
                 <input
@@ -67,7 +75,7 @@ function LoginPage({ onLogin }) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value.toLowerCase())}
-                  className="w-full pl-11 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-2xl text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all"
+                  className="w-full pl-11 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white transition-all backdrop-blur-md"
                   placeholder="name@example.com"
                 />
               </div>
@@ -75,11 +83,11 @@ function LoginPage({ onLogin }) {
 
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
-                <label className="text-sm font-semibold text-neutral-700">Password</label>
-                <a href="#" className="text-xs font-semibold text-accent-primary hover:underline">Forgot password?</a>
+                <label className="text-sm font-semibold text-white/90">Password</label>
+                <a href="#" className="text-xs font-semibold text-white/70 hover:text-white hover:underline">Forgot password?</a>
               </div>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-accent-primary transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50 group-focus-within:text-white transition-colors">
                   <Lock size={18} />
                 </div>
                 <input
@@ -87,7 +95,7 @@ function LoginPage({ onLogin }) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-2xl text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all"
+                  className="w-full pl-11 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white transition-all backdrop-blur-md"
                   placeholder="••••••••"
                 />
               </div>
@@ -109,9 +117,9 @@ function LoginPage({ onLogin }) {
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-neutral-100 text-center">
-            <p className="text-neutral-500 text-sm">
-              Don't have an account? <Link to="/signup" className="text-accent-primary hover:underline font-bold">Sign up now</Link>
+          <div className="mt-8 pt-8 border-t border-white/20 text-center">
+            <p className="text-white/70 text-sm">
+              Don't have an account? <Link to="/signup" className="text-white hover:underline font-bold">Sign up now</Link>
             </p>
           </div>
         </div>
