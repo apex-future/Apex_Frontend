@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
+import ColorBends from './components/ui/ColorBends';
 
 function SignupPage({ onLogin }) {
   const navigate = useNavigate();
@@ -32,9 +33,21 @@ function SignupPage({ onLogin }) {
   return (
     <div className="min-h-screen bg-[#08090C] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
       {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-accent-primary/5 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[100px]"></div>
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <ColorBends
+          colors={["#00ffd1", " #7C3AED"]}
+          rotation={0}
+          speed={0.2}
+          scale={0.5}
+          frequency={1}
+          warpStrength={1}
+          mouseInfluence={1}
+          parallax={0.5}
+          noise={0.1}
+          transparent
+          autoRotate={0}
+          color="#d51ad5"
+        />
       </div>
 
       <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-700">
@@ -48,7 +61,7 @@ function SignupPage({ onLogin }) {
         </div>
 
         {/* Signup Form Card */}
-        <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/10">
+        <div className="bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-2xl shadow-black/50 border border-white/20 relative z-10">
           <form onSubmit={handleSignup} className="space-y-5">
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
@@ -58,9 +71,9 @@ function SignupPage({ onLogin }) {
             )}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider ml-1">Full Name</label>
+              <label className="text-xs font-bold text-white/80 uppercase tracking-wider ml-1">Full Name</label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-accent-primary transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50 group-focus-within:text-white transition-colors">
                   <User size={18} />
                 </div>
                 <input
@@ -68,16 +81,16 @@ function SignupPage({ onLogin }) {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all"
+                  className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white transition-all backdrop-blur-md"
                   placeholder="John Doe"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider ml-1">Email Address</label>
+              <label className="text-xs font-bold text-white/80 uppercase tracking-wider ml-1">Email Address</label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-accent-primary transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50 group-focus-within:text-white transition-colors">
                   <Mail size={18} />
                 </div>
                 <input
@@ -85,16 +98,16 @@ function SignupPage({ onLogin }) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value.toLowerCase())}
-                  className="w-full pl-11 pr-4 py-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all"
+                  className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white transition-all backdrop-blur-md"
                   placeholder="name@example.com"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider ml-1">Password</label>
+              <label className="text-xs font-bold text-white/80 uppercase tracking-wider ml-1">Password</label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-accent-primary transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50 group-focus-within:text-white transition-colors">
                   <Lock size={18} />
                 </div>
                 <input
@@ -102,7 +115,7 @@ function SignupPage({ onLogin }) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all"
+                  className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white transition-all backdrop-blur-md"
                   placeholder="••••••••"
                 />
               </div>
@@ -124,14 +137,14 @@ function SignupPage({ onLogin }) {
             </button>
           </form>
 
-          <div className="mt-8 flex items-center justify-center gap-2 text-neutral-400">
-            <Sparkles size={14} className="text-accent-primary" />
-            <span className="text-xs uppercase tracking-widest font-semibold text-neutral-400/60">Instant Setup Enabled</span>
+          <div className="mt-8 flex items-center justify-center gap-2 text-white/70">
+            <Sparkles size={14} className="text-white" />
+            <span className="text-xs uppercase tracking-widest font-semibold text-white/60">Instant Setup Enabled</span>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-neutral-100 text-center">
-            <p className="text-neutral-500 text-sm font-medium">
-              Already have an account? <Link to="/login" className="text-accent-primary hover:underline font-bold">Sign in</Link>
+          <div className="mt-6 pt-6 border-t border-white/20 text-center">
+            <p className="text-white/70 text-sm font-medium">
+              Already have an account? <Link to="/login" className="text-white hover:underline font-bold">Sign in</Link>
             </p>
           </div>
         </div>
