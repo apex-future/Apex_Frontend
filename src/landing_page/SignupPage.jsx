@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
-import FloatingLines from './components/ui/FloatingLines';
 
 function SignupPage({ onLogin }) {
   const navigate = useNavigate();
@@ -113,18 +112,11 @@ function SignupPage({ onLogin }) {
   );
 
   return (
-    <div className="min-h-screen bg-[#08090C] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans" style={{ background: 'radial-gradient(circle at 50% 50%, #161a29 0%, #0f111a 100%)' }}>
       {/* Background Decorative Elements */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <FloatingLines 
-          enabledWaves={["top","middle","bottom"]}
-          lineCount={5}
-          lineDistance={5}
-          bendRadius={5}
-          bendStrength={-0.5}
-          interactive={true}
-          parallax={true}
-        />
+      <div className="absolute inset-0 z-0 opacity-40">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/20 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full" />
       </div>
 
       <div className="w-full max-w-md lg:max-w-5xl lg:flex lg:flex-row lg:items-center lg:justify-center lg:gap-20 relative z-10 animate-in fade-in zoom-in-95 duration-700">
