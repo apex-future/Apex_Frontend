@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
+import db from '../../db/apex.db';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
@@ -23,7 +24,7 @@ const ScrollOrientationOverlay = ({ visible }) => {
 };
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, downloadMissingFile, addNote, updateNote, deleteNote } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addNote, updateNote, deleteNote } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -79,6 +80,41 @@ function ReaderView() {
 
     const handleHighlight = (color) => {
         if (!book || !selection.text) return;
+
+        // Apply visual highlight to the DOM immediately
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            try {
+                const range = sel.getRangeAt(0);
+                const mark = document.createElement('mark');
+                mark.style.backgroundColor = color;
+                mark.style.color = 'inherit';
+                mark.style.borderRadius = '2px';
+                mark.style.padding = '0 1px';
+                mark.dataset.highlightColor = color;
+                mark.className = 'apex-highlight';
+                range.surroundContents(mark);
+            } catch (e) {
+                // surroundContents can fail if selection spans multiple elements
+                // In that case, fall back to extracting and re-wrapping
+                try {
+                    const range = sel.getRangeAt(0);
+                    const fragment = range.extractContents();
+                    const mark = document.createElement('mark');
+                    mark.style.backgroundColor = color;
+                    mark.style.color = 'inherit';
+                    mark.style.borderRadius = '2px';
+                    mark.style.padding = '0 1px';
+                    mark.dataset.highlightColor = color;
+                    mark.className = 'apex-highlight';
+                    mark.appendChild(fragment);
+                    range.insertNode(mark);
+                } catch (innerError) {
+                    console.warn('Could not apply visual highlight:', innerError);
+                }
+            }
+        }
+
         addHighlight(book.id, {
             text: selection.text,
             color,
@@ -142,9 +178,13 @@ function ReaderView() {
         syncProgress(page, numPages);
     }
 
-    // Bookmarks
+    // Bookmarks — loaded from book context instead of manually from Dexie to prevent async UI lag
     const bookmarks = book?.metadata?.bookmarks || [];
-    const isCurrentPageBookmarked = bookmarks.some(bm => bm.page === pageNumber);
+    const highlights = book?.metadata?.highlights || [];
+
+    const isCurrentPageBookmarked = bookmarks.some(
+        bm => bm.pageNumber === pageNumber || bm.page === pageNumber
+    );
 
     // Expose pdfControls object
     const pdfControls = isPdf
@@ -160,10 +200,14 @@ function ReaderView() {
         pages: localPages,
         // Bookmarks
         isBookmarked: isCurrentPageBookmarked,
-        onToggleBookmark: () => toggleBookmark(book.id, pageNumber),
+        onToggleBookmark: async () => toggleBookmark(book.id, pageNumber),
         bookmarks,
         onJumpToBookmark: goToPage,
-        onRemoveBookmark: (page) => toggleBookmark(book.id, page),
+        onRemoveBookmark: async (page) => toggleBookmark(book.id, page),
+        // Highlights
+        highlights,
+        removeHighlight: (highlightId) => removeHighlight(book.id, highlightId),
+        onJumpToHighlight: goToPage,
         // Notes
         notes: book?.metadata?.notes || [],
         addNote: (text) => addNote(book.id, text),
@@ -202,6 +246,19 @@ function ReaderView() {
 
         document.addEventListener('contextmenu', handleContextMenu, { passive: false });
         return () => document.removeEventListener('contextmenu', handleContextMenu);
+    }, []);
+
+    // Helper to get selection bounding box
+    const getSelectionRect = useCallback((sel) => {
+        try {
+            if (sel.rangeCount > 0) {
+                const range = sel.getRangeAt(0);
+                return range.getBoundingClientRect();
+            }
+        } catch (e) {
+            console.warn("Failed to get selection rect", e);
+        }
+        return null;
     }, []);
 
     // Touch Gesture State
@@ -268,22 +325,44 @@ function ReaderView() {
         const handleTouchEnd = (e) => {
             if (e.touches.length < 2) {
                 touchState.current.isPinching = false;
-                handleSelectionChange();
             }
         };
 
-        document.addEventListener('mouseup', handleSelectionChange);
+        // More responsive selection monitoring
+        const handleSelectionUpdate = () => {
+            const activeSel = window.getSelection();
+            const text = activeSel.toString().trim();
+
+            if (text && text.length > 0) {
+                const rect = getSelectionRect(activeSel);
+                if (rect) {
+                    setSelection({
+                        text,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top
+                    });
+                    setShowHighlightMenu(true);
+                }
+            } else {
+                // Only hide if dictionary isn't open
+                if (!isDictOpen) {
+                    setShowHighlightMenu(false);
+                }
+            }
+        };
+
+        document.addEventListener('selectionchange', handleSelectionUpdate);
         document.addEventListener('touchstart', handleTouchStart, { passive: false });
         document.addEventListener('touchmove', handleTouchMove, { passive: false });
         document.addEventListener('touchend', handleTouchEnd);
 
         return () => {
-            document.removeEventListener('mouseup', handleSelectionChange);
+            document.removeEventListener('selectionchange', handleSelectionUpdate);
             document.removeEventListener('touchstart', handleTouchStart);
             document.removeEventListener('touchmove', handleTouchMove);
             document.removeEventListener('touchend', handleTouchEnd);
         };
-    }, [scale, isDictOpen]);
+    }, [scale, isDictOpen, getSelectionRect]);
 
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
@@ -467,7 +546,7 @@ function ReaderView() {
 
     return (
         <div
-            className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden"
+            className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden [touch-action:manipulation] [-webkit-touch-callout:none]"
             onClick={closeNav}
         >
             <ScrollOrientationOverlay visible={showScrollOverlay} />

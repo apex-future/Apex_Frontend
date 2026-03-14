@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { showToastGlobal } from '../../../hooks/useToast';
 import { ArrowLeft, Moon, Sun, Monitor, Bell, HardDrive, Download, Trash2, HelpCircle, FileText, ExternalLink, Activity, BookOpen, Bot } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import useThemeStore from '../../../store/themeStore';
+import { APP_VERSION } from '../../../constants/version';
 
 function Settings() {
     const navigate = useNavigate();
@@ -137,7 +139,7 @@ function Settings() {
                         icon={<Download size={16} className="text-text-secondary" />}
                         label="Export Data"
                         desc="Download your bookmarks and reading history"
-                        onClick={() => alert("Exporting data feature coming soon!")}
+                        onClick={() => showToastGlobal('Exporting data feature coming soon!', 'info')}
                     />
                     <ActionRow
                         icon={<Trash2 size={16} className="text-error" />}
@@ -168,7 +170,7 @@ function Settings() {
                         onClick={() => { }}
                     />
                     <div className="p-4 text-center">
-                        <p className="text-xs text-text-tertiary">Apex App Version 1.0.0</p>
+                        <p className="text-xs text-text-tertiary">Apex App Version {APP_VERSION}</p>
                     </div>
                 </SettingSection>
 

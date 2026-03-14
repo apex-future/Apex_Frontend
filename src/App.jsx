@@ -6,6 +6,7 @@ import SignupPage from './landing_page/SignupPage'
 import LoginPage from './landing_page/LoginPage'
 import authService from './main_app/services/authService'
 import syncService from './main_app/services/syncService'
+import db from './main_app/db/apex.db'
 import useAuthStore from './main_app/store/authStore'
 import useThemeStore from './main_app/store/themeStore'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
@@ -14,6 +15,70 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
   const [hydrating, setHydrating] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+      console.log('[Apex] beforeinstallprompt event captured');
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  // One-time local database cleanup
+  // Clears broken book data from before the upload fix was deployed
+  // Version string must be bumped if another cleanup is ever needed
+  const CLEAN_SLATE_VERSION = '1.6.3';
+
+  useEffect(() => {
+    const runOneTimeCleanup = async () => {
+      try {
+        const cleaned = localStorage.getItem('apex_db_cleaned');
+        if (cleaned === CLEAN_SLATE_VERSION) return; // already ran on this device
+
+        // Clear all local tables that may contain broken data
+        await db.books.clear();
+        await db.highlights.clear();
+        await db.bookmarks.clear();
+        await db.reading_progress.clear();
+        await db.sync_queue.clear();
+
+        // Delete the legacy ApexBooksDB ghost database
+        try {
+          await new Promise((resolve, reject) => {
+            const req = indexedDB.deleteDatabase('ApexBooksDB');
+            req.onsuccess = () => {
+              console.log('[Apex] Legacy ApexBooksDB deleted');
+              resolve();
+            };
+            req.onerror = () => reject(req.error);
+            req.onblocked = () => {
+              console.warn('[Apex] ApexBooksDB deletion blocked — will retry next load');
+              resolve(); // Don't block the app
+            };
+          });
+        } catch (err) {
+          console.warn('[Apex] Could not delete ApexBooksDB:', err);
+        }
+
+        // Mark cleanup as done — this device will never run it again
+        localStorage.setItem('apex_db_cleaned', CLEAN_SLATE_VERSION);
+        console.log('[Apex] One-time local database cleanup complete');
+      } catch (err) {
+        console.error('[Apex] One-time cleanup failed:', err);
+      }
+    };
+
+    runOneTimeCleanup();
+  }, []);
 
   useEffect(() => {
     // Initialize theme
@@ -92,7 +157,7 @@ function App() {
       <Routes>
         {!isLoggedIn ? (
           <>
-            <Route path="/" element={<LandingPage onLogin={handleLogin} />} />
+            <Route path="/" element={<LandingPage onLogin={handleLogin} deferredPrompt={deferredPrompt} />} />
             <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             {/* Redirect any other logged-out route to landing */}

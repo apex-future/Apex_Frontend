@@ -1,10 +1,11 @@
 import React, { useContext, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
-import { ArrowLeft, Share2, CheckCircle2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Heart, Share2, Bookmark, CheckCircle2, Trash2 } from 'lucide-react';
 
 import BookCover from './BookCover';
 import DocumentChatHistory from './book_details_related/DocumentChatHistory';
+import DocumentBookmarks from './book_details_related/DocumentBookmarks';
 import DocumentNotes from './book_details_related/DocumentNotes';
 import DocumentsWords from './book_details_related/DocumentsWords';
 import DocumentsReviews from './book_details_related/DocumentsReviews';
@@ -13,12 +14,13 @@ import DocumentsAdvanced from './book_details_related/DocumentsAdvanced';
 function BookDetails() {
     const { bookId } = useParams();
     const navigate = useNavigate();
-    const { books, deleteBookFromShelves } = useContext(BookContext);
+    const { books, toggleFavorite, toggleBookmarkedBook, deleteBookFromShelves } = useContext(BookContext);
 
     const [activeTab, setActiveTab] = useState('chat');
 
     const tabs = [
         { id: 'chat', label: 'Chat', component: DocumentChatHistory },
+        { id: 'bookmarks', label: 'Bookmarks', component: DocumentBookmarks },
         { id: 'notes', label: 'Notes', component: DocumentNotes },
         { id: 'words', label: 'Words', component: DocumentsWords },
         { id: 'review', label: 'Review', component: DocumentsReviews },
@@ -101,29 +103,80 @@ function BookDetails() {
                             <div className="bg-card-glass backdrop-blur-md border border-border-default rounded-2xl p-6 sm:p-8 hover:border-text-tertiary/20 hover:shadow-xl transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc mb-8 shadow-sm">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-accent-primary group-hover/desc:w-1.5 transition-all" />
                                 {book.description || "No description available for this title."}
+
+                                {/* Quick Bookmarks / Status Section under description */}
+                                {/* {(book.isFavorite || book.isBookmarked || (book.metadata?.bookmarks?.length > 0)) && (
+                                    <div className="mt-6 pt-6 border-t border-border-default/50 flex flex-wrap items-center gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-text-placeholder uppercase tracking-widest">Collections:</span>
+                                            <div className="flex items-center gap-2">
+                                                {book.isFavorite && (
+                                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-500 border border-red-100 rounded-full text-[10px] font-bold uppercase tracking-wider animate-in fade-in zoom-in duration-300">
+                                                        <Heart size={10} fill="currentColor" />
+                                                        Favorite
+                                                    </div>
+                                                )}
+                                                {book.isBookmarked && (
+                                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-accent-subtle text-accent-primary border border-accent-primary/10 rounded-full text-[10px] font-bold uppercase tracking-wider animate-in fade-in zoom-in duration-300">
+                                                        <Bookmark size={10} fill="currentColor" />
+                                                        Bookmarked
+                                                    </div>
+                                                )}
+                                                {!book.isFavorite && !book.isBookmarked && (
+                                                    <span className="text-[10px] font-medium text-text-tertiary">Not in any collections</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {book.metadata?.bookmarks?.length > 0 && (
+                                            <div className="flex items-center gap-2 ml-auto group/stats">
+                                                <div className="flex items-center gap-1.5 text-text-tertiary group-hover/stats:text-accent-primary transition-colors">
+                                                    <Bookmark size={12} className="opacity-60" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+                                                        {book.metadata.bookmarks.length} Page Bookmarks
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )} */}
+                            </div>
+                        </div>
+
+                        <div className="book-actions flex flex-col items-center md:items-start gap-4">
+
+                            <div className="book-icons flex flex-wrap justify-center md:justify-start">
+                                <button
+                                    onClick={() => toggleFavorite(book.id)}
+                                    className={`p-3 rounded-xl transition-all ${book.isFavorite ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-gray-400 hover:text-red-500 hover:bg-neutral-100'}`}
+                                >
+                                    <Heart size={20} fill={book.isFavorite ? 'currentColor' : 'none'} />
+                                </button>
+                                <button className="p-3 text-gray-400 rounded-xl hover:text-success hover:bg-neutral-100 transition-all">
+                                    <CheckCircle2 size={20} />
+                                </button>
+                                <button
+                                    onClick={() => toggleBookmarkedBook(book.id)}
+                                    className={`p-3 rounded-xl transition-all ${book.isBookmarked ? 'text-accent-primary bg-accent-subtle hover:bg-accent-primary/20' : 'text-gray-400 hover:text-accent-primary hover:bg-neutral-100'}`}
+                                >
+                                    <Bookmark size={20} fill={book.isBookmarked ? 'currentColor' : 'none'} />
+                                </button>
+                                <button className="p-3 text-gray-400 rounded-xl hover:text-blue-500 hover:bg-neutral-100 transition-all">
+                                    <Share2 size={20} />
+                                </button>
+                                <button onClick={handleDelete} className="p-3 text-gray-400 rounded-xl hover:text-error hover:bg-neutral-100 transition-all">
+                                    <Trash2 size={20} />
+                                </button>
+                            </div>
+                            <div className="w-full sm:w-auto text-center">
+                                <button
+                                    onClick={() => navigate(`/reader/${book.id}`)}
+                                    className="w-full sm:w-auto px-12 py-3.5 bg-accent-primary text-white rounded-xl font-bold hover:shadow-lg hover:shadow-accent-primary/20 hover:-translate-y-0.5 transition-all text-center"
+                                >
+                                    Continue Reading
+                                </button>
                             </div>
 
-                            <div className="book-actions flex flex-col items-center md:items-start gap-8">
-                                <div className="book-icons flex items-center justify-center md:justify-start gap-3">
-                                    <button className="p-3.5 text-text-placeholder rounded-2xl hover:text-success hover:bg-success/5 transition-all border border-border-default/50 hover:border-success/30 shadow-sm active:scale-95">
-                                        <CheckCircle2 size={22} />
-                                    </button>
-                                    <button className="p-3.5 text-text-placeholder rounded-2xl hover:text-accent-primary hover:bg-accent-subtle transition-all border border-border-default/50 hover:border-accent-primary/30 shadow-sm active:scale-95">
-                                        <Share2 size={22} />
-                                    </button>
-                                    <button onClick={handleDelete} className="p-3.5 text-text-placeholder rounded-2xl hover:text-error hover:bg-error/5 transition-all border border-border-default/50 hover:border-error/30 shadow-sm active:scale-95">
-                                        <Trash2 size={22} />
-                                    </button>
-                                </div>
-                                <div className="w-full sm:w-auto">
-                                    <button
-                                        onClick={() => navigate(`/reader/${book.id}`)}
-                                        className="w-full sm:w-auto px-16 py-4.5 bg-accent-primary text-white rounded-3xl font-black uppercase tracking-[0.2em] hover:shadow-2xl hover:shadow-accent-primary/40 hover:-translate-y-1.5 active:translate-y-0 transition-all text-xs"
-                                    >
-                                        Continue Reading
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -134,10 +187,10 @@ function BookDetails() {
                             <li
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`text-[10px] font-black transition-all p-3.5 px-9 rounded-full cursor-pointer whitespace-nowrap uppercase tracking-[0.25em]
+                                className={`text-base font-medium transition-all p-2 px-4 rounded-full cursor-pointer whitespace-nowrap
                                     ${activeTab === tab.id
-                                        ? 'text-accent-primary bg-accent-subtle shadow-inner'
-                                        : 'text-text-placeholder hover:text-text-primary hover:bg-neutral-50/50'
+                                        ? 'text-accent-primary bg-accent-subtle hover:border border-accent-hover'
+                                        : 'text-text-primary hover:text-text-secondary hover:bg-neutral-50'
                                     }`}
                             >
                                 {tab.label}
@@ -145,7 +198,7 @@ function BookDetails() {
                         ))}
                     </ul>
 
-                    <div className="selected-section mt-6 min-h-[500px] p-6">
+                    <div className="selected-section mt-2 min-h-[400px]">
                         <ActiveComponent book={book} />
                     </div>
                 </div>

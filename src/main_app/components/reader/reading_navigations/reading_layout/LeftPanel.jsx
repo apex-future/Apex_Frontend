@@ -1,10 +1,13 @@
 import React, { useState } from 'react'
-import { BookOpen, List, Bookmark, X, ChevronLeft, Heart } from 'lucide-react'
+import { BookOpen, List, Bookmark, X, ChevronLeft, Heart, Highlighter } from 'lucide-react'
 import BookmarksView from './BookmarksView'
 import SidebarNotesView from './SidebarNotesView'
+import HighlightsView from './HighlightsView'
 
 const NAV_ITEMS = [
   { id: 'toc', icon: List, label: 'Table of Contents' },
+  { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
+  { id: 'highlights', icon: Highlighter, label: 'Highlights' },
   { id: 'notes', icon: BookOpen, label: 'Notes' },
 ];
 
@@ -16,6 +19,11 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
     addNote,
     updateNote,
     deleteNote,
+    bookmarks = [],
+    onRemoveBookmark,
+    highlights = [],
+    removeHighlight,
+    onJumpToHighlight,
   } = readerControls || {};
 
   function handleNavClick(id) {
@@ -62,7 +70,13 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
             {NAV_ITEMS.map((item) => {
               const { id, label, icon: ItemIcon } = item;
               const isNotesItem = id === 'notes';
-              const count = isNotesItem ? notes.length : 0;
+              const isBookmarksItem = id === 'bookmarks';
+              const isHighlightsItem = id === 'highlights';
+              
+              let count = 0;
+              if (isNotesItem) count = notes.length;
+              if (isBookmarksItem) count = bookmarks.length;
+              if (isHighlightsItem) count = highlights.length;
 
               return (
                 <button
@@ -74,8 +88,8 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
                     <ItemIcon size={20} strokeWidth={2} />
                   </div>
                   <span className="flex-1 tracking-tight">{label}</span>
-                  {/* Show notes count badge */}
-                  {isNotesItem && count > 0 && (
+                  {/* Show count badge */}
+                  {(isNotesItem || isBookmarksItem || isHighlightsItem) && count > 0 && (
                     <span className="text-[11px] font-black bg-accent-primary text-bg-elevated rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
                       {count}
                     </span>
@@ -97,6 +111,15 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
           </div>
         )}
 
+        {/* Bookmarks section */}
+        {activeSection === 'bookmarks' && (
+          <BookmarksView
+            bookmarks={bookmarks}
+            onJumpTo={handleJumpTo}
+            onRemove={onRemoveBookmark}
+          />
+        )}
+
         {/* Notes section */}
         {activeSection === 'notes' && (
           <SidebarNotesView
@@ -104,6 +127,19 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
             addNote={addNote}
             updateNote={updateNote}
             deleteNote={deleteNote}
+          />
+        )}
+
+        {/* Highlights section */}
+        {activeSection === 'highlights' && (
+          <HighlightsView
+            highlights={highlights}
+            onJumpTo={(page) => {
+              onJumpToHighlight?.(page);
+              pdfControls?.goToPage?.(page);
+              setLeftPanel(false);
+            }}
+            onRemove={removeHighlight}
           />
         )}
       </div>

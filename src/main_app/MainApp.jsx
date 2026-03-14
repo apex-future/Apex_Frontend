@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import useToast from './hooks/useToast';
+import ToastContainer from './components/ui/Toast';
 import AsideNavBar from './components/layout/navigation/AsideNavBar';
 import NavBarProvider from './components/layout/navigation/NavBarContext';
 import { BookProvider } from './context/BookContext';
@@ -20,12 +22,15 @@ import DuplicateBookModal from './components/modals/DuplicateBookModal';
 import ImportPage from './pages/ImportPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
+import useThemeStore from './store/themeStore';
+
 
 function MainApp({ onLogout }) {
   // asideIsOpen: State variable that determines if the desktop-style sidebar should be rendered.
   const [asideIsOpen, setAsideIsOpen] = useState(true);
   // isMobileOpen: State variable specifically for the mobile slide-over sidebar visibility.
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { toasts, removeToast } = useToast();
   const asideToggle = {
     closeAside: () => setAsideIsOpen(false),
     openAside: () => setAsideIsOpen(true),
@@ -33,9 +38,10 @@ function MainApp({ onLogout }) {
 
   const location = useLocation();
   const { showDuplicateModal, setShowDuplicateModal } = useContext(BookContext) || {};
+  const { resolvedTheme } = useThemeStore();
 
   return (
-    <div className='flex relative min-h-screen bg-bg-elevated'>
+    <div className={`flex relative min-h-screen bg-bg-elevated ${resolvedTheme}`}>
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>
@@ -70,6 +76,7 @@ function MainApp({ onLogout }) {
             isOpen={showDuplicateModal}
             onClose={() => setShowDuplicateModal(false)}
           />
+          <ToastContainer toasts={toasts} removeToast={removeToast} />
         </NavBarProvider>
       </BookProvider>
     </div>

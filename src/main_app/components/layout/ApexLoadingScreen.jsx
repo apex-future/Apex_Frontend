@@ -13,7 +13,7 @@ function ApexLoadingScreen() {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-[#08090C] flex flex-col items-center justify-center gap-8">
-      {/* Pulsing Apex Logo */}
+      {/* Pulsing Apex Logo - for visual effect*/}
       <div className="animate-pulse">
         <img
           src={apexLogo}
@@ -25,10 +25,10 @@ function ApexLoadingScreen() {
       {/* Status Text */}
       <div className="flex flex-col items-center gap-3">
         <p className="text-white/70 text-sm font-medium tracking-wide">
-          Setting up your workspace...
+          Setting up your reading space...
         </p>
 
-        {/* Slow message */}
+        {/* Slow message - if it takes longer than 8 seconds */}
         {showSlowMessage && (
           <p className="text-white/40 text-xs font-medium animate-in fade-in duration-500">
             Taking longer than usual... hang tight

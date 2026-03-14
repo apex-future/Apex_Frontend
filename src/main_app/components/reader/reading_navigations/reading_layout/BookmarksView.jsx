@@ -10,20 +10,6 @@ import { Bookmark, BookmarkX, ChevronRight, Trash2 } from 'lucide-react';
  *   onRemove   – (page) => void
  */
 function BookmarksView({ bookmarks = [], onJumpTo, onRemove }) {
-  if (bookmarks.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-accent-primary/10 flex items-center justify-center mb-3">
-          <Bookmark size={22} className="text-accent-primary opacity-60" strokeWidth={1.5} />
-        </div>
-        <p className="text-sm font-semibold text-text-secondary">No bookmarks yet</p>
-        <p className="text-xs text-text-tertiary mt-1 leading-relaxed uppercase tracking-wider">
-          Tap the bookmark icon while reading to save a page.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-1 px-2 py-1">
       {bookmarks.map((bm) => (

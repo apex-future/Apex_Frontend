@@ -21,28 +21,7 @@ function DocumentBookmarks({ book }) {
 
     return (
         <div className='flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500'>
-            {/* Book Level Status Card */}
-            <div className={`p-4 rounded-2xl border-2 transition-all duration-300 flex items-center justify-between ${isBookLevelMarked
-                ? 'bg-accent-subtle/30 border-accent-primary/20 shadow-sm'
-                : 'bg-neutral-50/50 border-border-default/50 border-dashed'
-                }`}>
-                <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isBookLevelMarked ? 'bg-accent-primary text-white' : 'bg-neutral-200 text-text-placeholder'
-                        }`}>
-                        <Bookmark size={24} fill={isBookLevelMarked ? 'currentColor' : 'none'} />
-                    </div>
-                    <div className="flex flex-col">
-                        <h3 className={`font-bold text-sm uppercase tracking-wider ${isBookLevelMarked ? 'text-accent-primary' : 'text-text-tertiary'}`}>
-                            {isBookLevelMarked ? 'Bookmarked' : 'Save Book'}
-                        </h3>
-                        <p className="text-xs text-text-tertiary">
-                            {isBookLevelMarked ? 'This book is in your saved collection' : 'Mark this entire book to save it for later'}
-                        </p>
-                    </div>
-                </div>
-                {/* Visual indicator of bookmark status */}
-                <div className={`w-2 h-2 rounded-full ${isBookLevelMarked ? 'bg-accent-primary animate-pulse' : 'bg-neutral-300'}`} />
-            </div>
+           
 
             {/* Page Bookmarks List */}
             <div className="flex flex-col gap-4">

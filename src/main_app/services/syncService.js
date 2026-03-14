@@ -63,6 +63,7 @@ const syncService = {
       formData.append('file', fileObject);
       formData.append('title', title);
       formData.append('author', author || 'Unknown');
+      formData.append('local_id', dexieBookId.toString());
 
       const response = await apiClient.post('/api/books/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -88,30 +89,43 @@ const syncService = {
   // DOWNLOAD BOOK FILE (lazy load missing blob)
   // ============================================
   downloadBookFile: async function (supabaseBookId, dexieBookId) {
-    if (!navigator.onLine) return null;
+    if (!navigator.onLine) {
+      console.error('[Apex Sync] Cannot download book file — device is offline');
+      return null;
+    }
 
     try {
       // 1. Get signed URL from backend
       const response = await apiClient.get(`/api/books/${supabaseBookId}/file`);
-      if (response.data && response.data.url) {
-        // 2. Fetch the actual file blob
-        const fileResponse = await fetch(response.data.url);
-        if (!fileResponse.ok) throw new Error('Failed to fetch file from signed URL');
-        
-        const blob = await fileResponse.blob();
-        const arrayBuffer = await blob.arrayBuffer();
-
-        // 3. Save to Dexie for offline use
-        await db.books.update(dexieBookId, {
-          fileBlob: arrayBuffer,
-          fileType: blob.type
-        });
-
-        console.log(`Downloaded and cached file for book ${supabaseBookId}`);
-        return blob;
+      if (!response.data || !response.data.url) {
+        console.error('[Apex Sync] Signed URL fetch returned empty for book:', supabaseBookId);
+        return null;
       }
+
+      // 2. Fetch the actual file blob
+      const fileResponse = await fetch(response.data.url);
+      if (!fileResponse.ok) {
+        console.error('[Apex Sync] File download failed with status', fileResponse.status, 'for book:', supabaseBookId);
+        return null;
+      }
+
+      const blob = await fileResponse.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+
+      // 3. Save to Dexie for offline use
+      const updateCount = await db.books.update(dexieBookId, {
+        fileBlob: arrayBuffer,
+        fileType: blob.type
+      });
+
+      if (updateCount === 0) {
+        console.error('[Apex Sync] Dexie update returned 0 — book record may not exist for id:', dexieBookId);
+      } else {
+        console.log(`[Apex Sync] Downloaded and cached file for book ${supabaseBookId}`);
+      }
+      return blob;
     } catch (error) {
-      console.error('Failed to download book file:', error);
+      console.error('[Apex Sync] Failed to download book file:', { supabaseBookId, dexieBookId, error });
     }
     return null;
   },
@@ -136,11 +150,14 @@ const syncService = {
       // Books: merge — keep local fileBlob, update metadata from Supabase
       if (books && books.length > 0) {
         const existingBooks = await db.books.toArray();
+        // Build blob map using ONLY supabaseId — the stable identifier that persists across Dexie clears
         const existingBlobMap = {};
         for (const eb of existingBooks) {
           if (eb.fileBlob) {
-            const key = eb.supabaseId || eb.local_id || eb.id?.toString();
-            if (key) existingBlobMap[key] = eb.fileBlob;
+            if (eb.supabaseId) existingBlobMap[eb.supabaseId] = eb.fileBlob;
+            if (eb.localId || eb.local_id) {
+              existingBlobMap[eb.localId || eb.local_id] = eb.fileBlob;
+            }
           }
         }
 
@@ -153,10 +170,11 @@ const syncService = {
           };
           delete mapped.id;
 
-          // Restore fileBlob if we had it locally
-          const blobKey = b.id || b.local_id;
-          if (blobKey && existingBlobMap[blobKey]) {
-            mapped.fileBlob = existingBlobMap[blobKey];
+          // Restore blob using supabaseId as stable key (or local_id if unpublished)
+          if (existingBlobMap[b.id]) {
+            mapped.fileBlob = existingBlobMap[b.id];
+          } else if (existingBlobMap[b.local_id]) {
+            mapped.fileBlob = existingBlobMap[b.local_id];
           }
 
           return mapped;
@@ -273,7 +291,7 @@ const syncService = {
 
     const dexieRecord = {
       bookId,
-      localId,
+      local_id: localId,
       highlightedText: highlightData.highlighted_text || highlightData.text || '',
       color: highlightData.color || 'yellow',
       pageNumber: highlightData.page_number || highlightData.page || 0,
@@ -388,7 +406,7 @@ const syncService = {
     if (existing) {
       await db.reading_progress.update(existing.id, dexieData);
     } else {
-      dexieData.localId = localId;
+      dexieData.local_id = localId;
       await db.reading_progress.add(dexieData);
     }
 
@@ -402,7 +420,7 @@ const syncService = {
             scroll_position: progressData.scroll_position || 0,
             progress_percentage: progressData.progress_percentage,
             total_time_read: progressData.total_time_read || 0,
-            local_id: existing?.localId || localId,
+            local_id: existing?.local_id || localId,
           });
           const record = await db.reading_progress.where('bookId').equals(bookId).first();
           if (record) {
@@ -414,7 +432,7 @@ const syncService = {
           this._triggerDebouncedFlush();
         } catch (error) {
           console.error('Failed to save progress to Supabase:', error);
-          await this._queueForSync('upload', 'reading_progress', existing?.localId || localId, {
+          await this._queueForSync('upload', 'reading_progress', existing?.local_id || localId, {
             book_id: supabaseBookId,
             current_page: progressData.current_page,
             scroll_position: progressData.scroll_position || 0,
@@ -423,7 +441,7 @@ const syncService = {
           });
         }
       } else {
-        await this._queueForSync('upload', 'reading_progress', existing?.localId || localId, {
+        await this._queueForSync('upload', 'reading_progress', existing?.local_id || localId, {
           _dexie_book_id: bookId,
           current_page: progressData.current_page,
           scroll_position: progressData.scroll_position || 0,
@@ -432,7 +450,7 @@ const syncService = {
         });
       }
     } else {
-      await this._queueForSync('upload', 'reading_progress', existing?.localId || localId, {
+      await this._queueForSync('upload', 'reading_progress', existing?.local_id || localId, {
         _dexie_book_id: bookId,
         current_page: progressData.current_page,
         scroll_position: progressData.scroll_position || 0,
@@ -454,7 +472,7 @@ const syncService = {
 
     const dexieRecord = {
       bookId,
-      localId,
+      local_id: localId,
       pageNumber: bookmarkData.page_number || bookmarkData.page,
       label: bookmarkData.label || `Page ${bookmarkData.page_number || bookmarkData.page}`,
       createdAt: now,
@@ -557,6 +575,37 @@ const syncService = {
   // ============================================
   pushSync: async function () {
     try {
+      const pendingBooks = await db.sync_queue
+        .where('status').equals('pending')
+        .filter(item => item.tableName === 'books')
+        .toArray();
+
+      for (const item of pendingBooks) {
+        const localBook = await db.books
+          .where('local_id').equals(item.local_id)
+          .first();
+
+        console.log('[DEBUG] Book lookup:', item.local_id, '→', localBook?.id, '| hasBlob:', !!localBook?.fileBlob);
+
+        if (!localBook?.fileBlob) {
+          console.log('[DEBUG] Skipping — no blob for local_id:', item.local_id);
+          continue;
+        }
+
+        const file = new File(
+          [localBook.fileBlob],
+          localBook.title,
+          { type: localBook.fileType }
+        );
+
+        const result = await this.uploadBook(file, localBook.title, localBook.author, localBook.id);
+
+        await db.sync_queue.update(item.id, {
+          status: result ? 'synced' : 'pending',
+          attempts: result ? item.attempts : (item.attempts || 0) + 1,
+        });
+      }
+
       let queueItems = await db.sync_queue
         .where('status').equals('pending')
         .toArray();
@@ -617,10 +666,21 @@ const syncService = {
             for (const item of synced) {
               const tableName = item.tableName || 'books';
               try {
-                const localRecord = await db[tableName]
+                let localRecord = await db[tableName]
                   .where('local_id').equals(item.local_id)
                   .first()
                   .catch(() => null);
+
+                // Fallback: try by supabaseId if local_id lookup fails
+                if (!localRecord && item.record_id) {
+                  const bySupabaseId = await db[tableName]
+                    .where('supabaseId').equals(item.record_id)
+                    .first()
+                    .catch(() => null);
+                  if (bySupabaseId) {
+                    localRecord = bySupabaseId;
+                  }
+                }
 
                 if (localRecord) {
                   await db[tableName].update(localRecord.id, {
@@ -718,8 +778,9 @@ const syncService = {
         authStore.setUser(user);
 
         if (navigator.onLine) {
-          await this.pullAllUserData();
           await this.pushSync();
+          await this.pullAllUserData();
+          
         }
       } catch (error) {
         console.error('Auth verification failed:', error);

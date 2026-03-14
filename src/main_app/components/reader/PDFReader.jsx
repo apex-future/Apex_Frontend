@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useSwipeable } from 'react-swipeable';
 import { Loader2 } from 'lucide-react';
@@ -6,11 +6,77 @@ import BookSkeleton from './BookSkeleton';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Configure worker for Vite
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
+// Configure worker — static path so the service worker can precache it
+pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
+
+/**
+ * Scans all text nodes inside `container`, concatenates them, finds `searchText`,
+ * then wraps the matching character range across text nodes with <mark> elements.
+ */
+function applyHighlightToDOM(container, searchText, color) {
+  if (!container || !searchText) return;
+
+  // Collect all text nodes via TreeWalker
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+  const textNodes = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    // Skip nodes already inside a <mark> we created
+    if (node.parentElement?.classList?.contains('apex-hl')) continue;
+    textNodes.push(node);
+  }
+
+  // Build a concatenated string with character offset mapping
+  let fullText = '';
+  const nodeMap = []; // { node, start, end }
+  for (const tn of textNodes) {
+    const start = fullText.length;
+    fullText += tn.textContent;
+    nodeMap.push({ node: tn, start, end: fullText.length });
+  }
+
+  // Find the highlight text (case-insensitive) in the concatenated string
+  const lowerFull = fullText.toLowerCase();
+  const lowerSearch = searchText.toLowerCase();
+  let idx = lowerFull.indexOf(lowerSearch);
+
+  while (idx !== -1) {
+    const matchStart = idx;
+    const matchEnd = idx + lowerSearch.length;
+
+    // Find which text nodes overlap with [matchStart, matchEnd)
+    for (let i = 0; i < nodeMap.length; i++) {
+      const nm = nodeMap[i];
+      if (nm.end <= matchStart || nm.start >= matchEnd) continue;
+
+      // This text node overlaps with the match
+      const overlapStart = Math.max(0, matchStart - nm.start);
+      const overlapEnd = Math.min(nm.node.textContent.length, matchEnd - nm.start);
+
+      try {
+        const range = document.createRange();
+        range.setStart(nm.node, overlapStart);
+        range.setEnd(nm.node, overlapEnd);
+
+        const mark = document.createElement('mark');
+        mark.className = 'apex-hl';
+        mark.style.backgroundColor = color;
+        mark.style.color = 'inherit';
+        mark.style.borderRadius = '2px';
+        mark.style.padding = '0';
+        range.surroundContents(mark);
+
+        // After wrapping, the nodeMap is stale — break and re-search won't work
+        // for the same highlight, but that's fine since we found the match
+      } catch (e) {
+        // If surroundContents fails (cross-element), skip this node portion
+      }
+    }
+
+    // Search for next occurrence after this one
+    idx = lowerFull.indexOf(lowerSearch, matchEnd);
+  }
+}
 
 const PDFReader = ({
   fileUrl,
@@ -28,6 +94,46 @@ const PDFReader = ({
 }) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(windowSize?.width || window.innerWidth);
+  const [pageRendered, setPageRendered] = useState(0);
+
+  // Called when react-pdf finishes rendering a page
+  const handlePageRenderSuccess = useCallback(() => {
+    setPageRendered(prev => prev + 1);
+  }, []);
+
+  // Post-render: apply highlights to the text layer DOM
+  // This handles multi-span highlights that customTextRenderer can't match
+  useEffect(() => {
+    if (!highlights || highlights.length === 0) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const pageHighlights = highlights.filter(
+      (h) => (h.page || h.pageNumber) === pageNumber
+    );
+    if (pageHighlights.length === 0) return;
+
+    // Wait a tick for the text layer to be fully in the DOM
+    const timer = setTimeout(() => {
+      const textLayer = container.querySelector('.react-pdf__Page__textContent');
+      if (!textLayer) return;
+
+      // Remove any previously applied highlight marks to avoid duplicates
+      textLayer.querySelectorAll('mark.apex-hl').forEach((m) => {
+        const parent = m.parentNode;
+        while (m.firstChild) parent.insertBefore(m.firstChild, m);
+        parent.removeChild(m);
+      });
+
+      // Apply each highlight
+      for (const h of pageHighlights) {
+        const text = h.text || h.highlightedText || '';
+        if (text) applyHighlightToDOM(textLayer, text, h.color || '#fef08a');
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [highlights, pageNumber, pageRendered]);
 
   const customTextRenderer = React.useCallback(
     ({ str }) => {
@@ -146,6 +252,7 @@ const PDFReader = ({
             renderTextLayer={true}
             renderAnnotationLayer={true}
             customTextRenderer={customTextRenderer}
+            onRenderSuccess={handlePageRenderSuccess}
             className="bg-bg-elevated"
             width={pdfWidth}
             loading={

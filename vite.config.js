@@ -1,11 +1,26 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { resolve } from 'path'
+import { copyFileSync, existsSync, mkdirSync } from 'fs'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    // Copy PDF worker to public/ so it's served as a static asset
+    {
+      name: 'copy-pdf-worker',
+      buildStart() {
+        const workerSrc = resolve(
+          'node_modules/pdfjs-dist/build/pdf.worker.min.mjs'
+        );
+        const destDir = resolve('public');
+        const destFile = resolve('public/pdf.worker.min.mjs');
+        if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
+        copyFileSync(workerSrc, destFile);
+      }
+    },
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['pwa-192x192.png', 'pwa-512x512.png'],
@@ -50,8 +65,20 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,mjs,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
+          {
+            // Cache-first for PDF worker — must be first entry
+            urlPattern: /pdf\.worker(\.min)?\.mjs$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'pdf-worker',
+              expiration: {
+                maxEntries: 2,
+                maxAgeSeconds: 60 * 24 * 60 * 60, // 60 days
+              },
+            },
+          },
           {
             // Cache-first for static assets (images, fonts, etc.)
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico|woff2?)$/i,
@@ -97,5 +124,8 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version)
   }
 })

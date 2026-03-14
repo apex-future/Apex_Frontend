@@ -66,18 +66,18 @@ export default function BookCard({ book, onClick }) {
                         <h3 className="font-semibold text-base sm:text-lg md:text-xl font-display text-text-primary truncate mb-1 group-hover:text-accent-primary transition-colors">
                             {book.title}
                         </h3>
-                        <p className="text-sm text-text-secondary mb-3 text-left">by {book.author || "N/A"}</p>
+                        <p className="text-sm text-text-tertiary mb-3 text-left">by {book.author || "N/A"}</p>
 
                         {/* Progress Bar */}
-                        <div className="w-full bg-gray-200 rounded-full h-1">
+                        <div className="w-full bg-border-default rounded-full h-1">
                             <div
                                 className="bg-accent-primary h-1 rounded-full transition-all duration-500"
                                 style={{ width: `${book.progress}%` }}
                             />
                         </div>
-                        <p className="text-xs text-text-secondary mt-1 text-left">Page {book.currentPage || 0} of {book.totalPages || 0} completed</p>
+                        <p className="text-xs text-text-tertiary mt-1 text-left">Page {book.currentPage || 0} of {book.totalPages || 0} completed</p>
                         {book.lastAccessed && (
-                          <p className="text-[10px] text-text-tertiary mt-0.5 text-left">
+                          <p className="text-[10px] text-text-placeholder mt-0.5 text-left">
                             Last read: {new Date(book.lastAccessed).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                           </p>
                         )}

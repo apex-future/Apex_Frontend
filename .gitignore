@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dev-dist
 *.local
 
 # Editor directories and files
@@ -29,4 +30,5 @@ build_*.txt
 *lint*.txt
 *lint*.json
 
-
+# Generated at build time by copy-pdf-worker plugin
+public/pdf.worker.min.mjs
