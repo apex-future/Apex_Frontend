@@ -101,6 +101,15 @@ const PDFReader = ({
   const isVertical = scrollOrientation === 'vertical';
 
   const isJumping = useRef(false);
+  const lastReportedPage = useRef(pageNumber);
+  const pendingJump = useRef(null);
+
+  // Sync internal state when pageNumber prop changes programmatically
+  useEffect(() => {
+    if (pageNumber !== lastReportedPage.current) {
+      pendingJump.current = pageNumber;
+    }
+  }, [pageNumber]);
 
   // Timed lazy loading for vertical mode
   useEffect(() => {
@@ -125,33 +134,34 @@ const PDFReader = ({
 
     const observerOptions = {
       root: containerRef.current,
-      threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+      rootMargin: '0px 0px -90% 0px', 
+      threshold: [0, 0.01, 0.1, 0.5, 1.0],
     };
 
     const observerCallback = (entries) => {
-      if (isJumping.current) return;
+      // Ignore scroll updates if we're in the middle of a jump
+      if (isJumping.current || pendingJump.current !== null) return;
 
       const containerRect = containerRef.current?.getBoundingClientRect();
       if (!containerRect) return;
 
+      const visibleEntries = entries.filter(e => e.isIntersecting);
+      if (visibleEntries.length === 0) return;
+
       let bestPage = -1;
       let minTopDiff = Infinity;
 
-      // We look for the page whose top is closest to the top of the container
-      // This is more reliable for vertical scroll than intersection ratio
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
+      visibleEntries.forEach((entry) => {
           const rect = entry.target.getBoundingClientRect();
           const topDiff = Math.abs(rect.top - containerRect.top);
-          
           if (topDiff < minTopDiff) {
-            minTopDiff = topDiff;
-            bestPage = parseInt(entry.target.dataset.pageIndex, 10);
+              minTopDiff = topDiff;
+              bestPage = parseInt(entry.target.dataset.pageIndex, 10);
           }
-        }
       });
 
       if (bestPage !== -1 && bestPage !== pageNumber) {
+        lastReportedPage.current = bestPage;
         onPageChangeRef.current?.(bestPage);
       }
     };
@@ -162,37 +172,38 @@ const PDFReader = ({
     pageElements?.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
-  }, [isVertical, numPages, pageRendered, maxPagesToRender]);
+  }, [isVertical, numPages, pageRendered, maxPagesToRender, pageNumber]);
 
   // Handle programmatic scroll for goToPage in vertical mode
   useEffect(() => {
-    if (isVertical && containerRef.current) {
-        // If we're jumping to a page not yet rendered, force render it
-        if (pageNumber > maxPagesToRender) {
+    if (isVertical && containerRef.current && pendingJump.current !== null) {
+        const targetPageNumber = pendingJump.current;
+
+        // If we're jumping to a page not yet rendered, force render all pages immediately
+        if (targetPageNumber > maxPagesToRender) {
             setMaxPagesToRender(numPages);
+            // The effect will re-run when maxPagesToRender updates
+            return;
         }
 
-        const targetPage = containerRef.current.querySelector(`[data-page-index="${pageNumber}"]`);
+        const targetPage = containerRef.current.querySelector(`[data-page-index="${targetPageNumber}"]`);
+        
         if (targetPage) {
-            const rect = targetPage.getBoundingClientRect();
-            const containerRect = containerRef.current.getBoundingClientRect();
+            isJumping.current = true;
+            targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
             
-            const offset = rect.top - containerRect.top;
-            const isAtTop = Math.abs(offset) < 10;
+            // Sync refs and clear pending jump
+            lastReportedPage.current = targetPageNumber;
+            pendingJump.current = null;
+
+            const timeout = setTimeout(() => {
+                isJumping.current = false;
+            }, 1000); 
             
-            if (!isAtTop) {
-                isJumping.current = true;
-                targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                
-                const timeout = setTimeout(() => {
-                    isJumping.current = false;
-                }, 1000); 
-                
-                return () => clearTimeout(timeout);
-            }
+            return () => clearTimeout(timeout);
         }
     }
-  }, [pageNumber, isVertical, maxPagesToRender]);
+  }, [pageNumber, isVertical, maxPagesToRender, numPages]);
 
   // Called when react-pdf finishes rendering a page
   const handlePageRenderSuccess = useCallback(() => {
@@ -351,8 +362,8 @@ const PDFReader = ({
             return (
               <div 
                   key={i} 
-                  className="pdf-page-wrapper border-b border-black/10 dark:border-white/10 mx-auto" 
-                  style={{ minHeight: pdfWidth * 1.41 }}
+                  className="pdf-page-wrapper mx-auto flex flex-col items-center justify-center min-h-full w-full bg-bg-elevated relative" 
+                  style={{ minHeight: isVertical ? '100%' : (pdfWidth * 1.41 * scale) }}
                   data-page-index={pageIdx}
               >
                 {shouldRender ? (
@@ -364,8 +375,9 @@ const PDFReader = ({
                     renderAnnotationLayer={true}
                     onRenderSuccess={handlePageRenderSuccess}
                     width={pdfWidth}
+                    className="!shadow-none" 
                     loading={
-                        <div className="flex flex-col items-center justify-center bg-bg-elevated" style={{ width: pdfWidth, height: pdfWidth * 1.41 }}>
+                        <div className="flex flex-col items-center justify-center bg-bg-elevated" style={{ width: pdfWidth, height: pdfWidth * 1.41 * scale }}>
                              <div className="w-full h-full p-8 space-y-4 animate-pulse text-center">
                                 <div className="h-4 w-1/3 bg-bg-subtle rounded-full mx-auto" />
                                 <div className="space-y-4">
@@ -379,10 +391,12 @@ const PDFReader = ({
                   />
                 ) : (
                   // Placeholder for lazy loading
-                  <div className="flex flex-col items-center justify-center bg-bg-elevated/20" style={{ width: pdfWidth, height: pdfWidth * 1.41 }}>
+                  <div className="flex flex-col items-center justify-center bg-bg-elevated/20" style={{ width: pdfWidth, height: pdfWidth * 1.41 * scale }}>
                      <p className="text-text-tertiary text-xs font-black uppercase tracking-widest opacity-20">Page {pageIdx}</p>
                   </div>
                 )}
+                {/* Visual Divider - Absolute to ensure it's on top of page content */}
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/60 dark:bg-white/20 z-20 pointer-events-none" />
               </div>
             );
           })
