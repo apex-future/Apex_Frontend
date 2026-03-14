@@ -151,8 +151,8 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                         </div>
                     )}
                 </div>
-                <span className={`text-[10px] font-bold mt-1.5 transition-colors ${
-                    isCurrent ? 'text-accent-primary' : 'text-text-tertiary'
+                <span className={`text-sm font-bold mt-1.5 transition-colors ${
+                    isCurrent ? '' : 'text-text-tertiary'
                 }`}>
                     {i}
                 </span>
@@ -190,7 +190,7 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                         <span className="text-[10px] font-black uppercase tracking-widest text-text-tertiary px-2">
                             Jump to page
                         </span>
-                        <span className="text-[10px] font-bold text-text-tertiary px-2">
+                        <span className="text-sm font-bold text-text-tertiary px-2">
                             Page {pageNumber} of {numPages}
                         </span>
                     </div>
