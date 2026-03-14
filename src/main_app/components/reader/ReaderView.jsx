@@ -183,17 +183,20 @@ function ReaderView() {
     }
 
     function syncProgress(page, total) {
-        if (!book || !total) return;
-        const progress = Math.round((page / total) * 100);
+        const effectiveTotal = total || numPages || book?.totalPages || localPages.total;
+        if (!book || !effectiveTotal) return;
+        
+        const progress = Math.round((page / effectiveTotal) * 100);
         setLocalProgress(progress);
-        setLocalPages({ current: page, total });
-        updateBookProgress(book.id, progress, page, total);
+        setLocalPages({ current: page, total: effectiveTotal });
+        updateBookProgress(book.id, progress, page, effectiveTotal);
     }
 
     function goToPage(n) {
-        const page = Math.min(Math.max(1, n), numPages || n);
+        const total = numPages || book?.totalPages || localPages.total;
+        const page = Math.min(Math.max(1, n), total || n);
         setPageNumber(page);
-        syncProgress(page, numPages);
+        syncProgress(page, total);
     }
 
     // Bookmarks — loaded from book context instead of manually from Dexie to prevent async UI lag
