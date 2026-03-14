@@ -2,7 +2,7 @@ import React from 'react'
 import FirstLayerNavBar from './reading_navigations/FirstLayerNavBar';
 import SecondLayerNavBar from './reading_navigations/SecondLayerNavBar';
 
-function ReaderNavBar({ navigate, navState, setNavState, aiModal, setAiModal, leftPanel, setLeftPanel, pdfControls, readerControls, showPageStrip, closePageStrip, fileUrl, isPdf }) {
+function ReaderNavBar({ navigate, navState, setNavState, aiModal, setAiModal, leftPanel, setLeftPanel, pdfControls, readerControls, showPageStrip, closePageStrip, fileUrl, isPdf, scrollOrientation }) {
   const handleDotsClick = (e) => {
     e.stopPropagation();
     setNavState('second');
@@ -15,6 +15,7 @@ function ReaderNavBar({ navigate, navState, setNavState, aiModal, setAiModal, le
           navigate={navigate}
           onDotsClick={handleDotsClick}
           readerControls={readerControls}
+          scrollOrientation={scrollOrientation}
         />
       )}
       <SecondLayerNavBar

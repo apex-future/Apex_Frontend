@@ -10,16 +10,19 @@ import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 import PageSettings from './reading_navigations/reading_layout/PageSettings';
 import BookSkeleton from './BookSkeleton';
 import PageStrip from './PageStrip';
-import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 
-const ScrollOrientationOverlay = ({ visible }) => {
+const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
+    const isVertical = orientation === 'vertical';
     return (
         <div className="fixed inset-x-0 bottom-32 z-[100] flex items-center justify-center pointer-events-none lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-bg-elevated/80 backdrop-blur-sm border border-border-default/20 text-text-primary shadow-2xl">
-                <ArrowLeft size={18} className="opacity-70" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">Swipe left or right</span>
-                <ArrowRight size={18} className="opacity-70" />
+                {isVertical ? <ArrowUp size={18} className="opacity-70" /> : <ArrowLeft size={18} className="opacity-70" />}
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">
+                    Swipe {isVertical ? 'up or down' : 'left or right'}
+                </span>
+                {isVertical ? <ArrowDown size={18} className="opacity-70" /> : <ArrowRight size={18} className="opacity-70" />}
             </div>
         </div>
     );
@@ -71,6 +74,7 @@ function ReaderView() {
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
     const [pageSettings, setPageSettings] = useState(false);
+    const [scrollOrientation, setScrollOrientation] = useState('vertical'); // 'vertical' or 'horizontal'
 
     // Deep loading state
     const [isLoading, setIsLoading] = useState(true);
@@ -238,6 +242,8 @@ function ReaderView() {
             if (val) setLeftPanel(false); // Close left panel if settings open
             setPageSettings(val);
         },
+        scrollOrientation,
+        setScrollOrientation,
     };
 
     // Screen handlers
@@ -569,7 +575,7 @@ function ReaderView() {
             className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden [touch-action:manipulation] [-webkit-touch-callout:none]"
             onClick={closeNav}
         >
-            <ScrollOrientationOverlay visible={showScrollOverlay} />
+            <ScrollOrientationOverlay visible={showScrollOverlay} orientation={scrollOrientation} />
             {/* Subtle Menu Trigger - Persistent at top */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
                 <button
@@ -635,6 +641,7 @@ function ReaderView() {
                         closePageStrip={closePageStrip}
                         fileUrl={fileUrl}
                         isPdf={isPdf}
+                        scrollOrientation={scrollOrientation}
                     />
 
                     {/* PDF Content */}
@@ -653,6 +660,11 @@ function ReaderView() {
                                 highlights={book?.metadata?.highlights || []}
                                 locked={locked}
                                 windowSize={windowSize}
+                                scrollOrientation={scrollOrientation}
+                                onPageChange={(n) => {
+                                    setPageNumber(n);
+                                    syncProgress(n, numPages);
+                                }}
                             />
 
                             <button

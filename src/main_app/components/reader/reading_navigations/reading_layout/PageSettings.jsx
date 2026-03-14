@@ -3,7 +3,7 @@ import { X, ChevronLeft, ArrowUpDown, ArrowLeftRight, Settings, Sliders } from '
 
 function PageSettings({ setPageSettings, readerControls }) {
   const [activeSection, setActiveSection] = useState(null);
-  const [scrollOrientation, setScrollOrientation] = useState('vertical'); // 'vertical' or 'horizontal'
+  const { scrollOrientation = 'vertical', setScrollOrientation } = readerControls || {};
 
   const sections = [
     { id: 'orientation', label: 'Scroll Orientation', icon: Sliders }

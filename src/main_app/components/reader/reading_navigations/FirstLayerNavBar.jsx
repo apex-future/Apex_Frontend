@@ -124,7 +124,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         {/* Real progress bar */}
         
         <div 
-          className="progress w-full max-w-md bg-white/80 md:bg-black/80 backdrop-blur-lg p-4 rounded-3xl shadow-md border-2 border-border-default cursor-pointer"
+          className="progress w-full max-w-md bg-white/80 dark:bg-black/80 backdrop-blur-lg p-4 rounded-3xl shadow-md border-2 border-border-default cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onProgressBarClick?.(); }}
         >
           
