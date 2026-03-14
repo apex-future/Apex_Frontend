@@ -147,7 +147,7 @@ function Dictionary() {
                                         setWord(prevWord);
                                         fetchDefinition(prevWord);
                                     }}
-                                    className="px-4 py-2 bg-white border-2 border-border-default rounded-xl text-text-secondary hover:border-accent-primary hover:text-accent-primary transition-all font-medium"
+                                    className="px-4 py-2 bg-white dark:bg-bg-dark-elevated border-2 border-border-default rounded-xl text-text-secondary hover:border-accent-primary hover:text-accent-primary transition-all font-medium"
                                 >
                                     {prevWord}
                                 </button>

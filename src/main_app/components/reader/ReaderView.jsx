@@ -7,17 +7,22 @@ import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
 import HighlightMenu from './HighlightMenu';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
+import PageSettings from './reading_navigations/reading_layout/PageSettings';
 import BookSkeleton from './BookSkeleton';
-import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
+import PageStrip from './PageStrip';
+import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 
-const ScrollOrientationOverlay = ({ visible }) => {
+const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
+    const isVertical = orientation === 'vertical';
     return (
         <div className="fixed inset-x-0 bottom-32 z-[100] flex items-center justify-center pointer-events-none lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-bg-elevated/80 backdrop-blur-sm border border-border-default/20 text-text-primary shadow-2xl">
-                <ArrowLeft size={18} className="opacity-70" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">Swipe left or right</span>
-                <ArrowRight size={18} className="opacity-70" />
+                {isVertical ? <ArrowUp size={18} className="opacity-70" /> : <ArrowLeft size={18} className="opacity-70" />}
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">
+                    Swipe {isVertical ? 'up or down' : 'left or right'}
+                </span>
+                {isVertical ? <ArrowDown size={18} className="opacity-70" /> : <ArrowRight size={18} className="opacity-70" />}
             </div>
         </div>
     );
@@ -68,6 +73,8 @@ function ReaderView() {
     const [locked, setLocked] = useState(false);
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
+    const [pageSettings, setPageSettings] = useState(false);
+    const [scrollOrientation, setScrollOrientation] = useState('vertical'); // 'vertical' or 'horizontal'
 
     // Deep loading state
     const [isLoading, setIsLoading] = useState(true);
@@ -77,6 +84,17 @@ function ReaderView() {
     const [selection, setSelection] = useState({ text: '', x: 0, y: 0 });
     const [showHighlightMenu, setShowHighlightMenu] = useState(false);
     const [isDictOpen, setIsDictOpen] = useState(false);
+    const [showPageStrip, setShowPageStrip] = useState(false);
+
+    const openPageStrip = useCallback(() => {
+        setNavState('none');
+        setShowPageStrip(true);
+    }, []);
+
+    const closePageStrip = useCallback(() => {
+        setShowPageStrip(false);
+        setNavState('first');
+    }, []);
 
     const handleHighlight = (color) => {
         if (!book || !selection.text) return;
@@ -165,17 +183,20 @@ function ReaderView() {
     }
 
     function syncProgress(page, total) {
-        if (!book || !total) return;
-        const progress = Math.round((page / total) * 100);
+        const effectiveTotal = total || numPages || book?.totalPages || localPages.total;
+        if (!book || !effectiveTotal) return;
+        
+        const progress = Math.round((page / effectiveTotal) * 100);
         setLocalProgress(progress);
-        setLocalPages({ current: page, total });
-        updateBookProgress(book.id, progress, page, total);
+        setLocalPages({ current: page, total: effectiveTotal });
+        updateBookProgress(book.id, progress, page, effectiveTotal);
     }
 
     function goToPage(n) {
-        const page = Math.min(Math.max(1, n), numPages || n);
+        const total = numPages || book?.totalPages || localPages.total;
+        const page = Math.min(Math.max(1, n), total || n);
         setPageNumber(page);
-        syncProgress(page, numPages);
+        syncProgress(page, total);
     }
 
     // Bookmarks — loaded from book context instead of manually from Dexie to prevent async UI lag
@@ -218,6 +239,14 @@ function ReaderView() {
         onToggleFavorite: () => toggleFavorite(book.id),
         isBookmarkedBook: book?.isBookmarked,
         onToggleBookmarkedBook: () => toggleBookmarkedBook(book.id),
+        onProgressBarClick: openPageStrip,
+        pageSettings,
+        setPageSettings: (val) => {
+            if (val) setLeftPanel(false); // Close left panel if settings open
+            setPageSettings(val);
+        },
+        scrollOrientation,
+        setScrollOrientation,
     };
 
     // Screen handlers
@@ -549,22 +578,32 @@ function ReaderView() {
             className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden [touch-action:manipulation] [-webkit-touch-callout:none]"
             onClick={closeNav}
         >
-            <ScrollOrientationOverlay visible={showScrollOverlay} />
+            <ScrollOrientationOverlay visible={showScrollOverlay} orientation={scrollOrientation} />
             {/* Subtle Menu Trigger - Persistent at top */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
                 <button
                     onClick={(e) => { e.stopPropagation(); toggleNav(); }}
-                    className={`group hover:bg-bg-elevated/90 backdrop-blur-md border border-border-default/50 px-4 py-1.5 rounded-b-2xl transition-all duration-700 hover:translate-y-0 flex items-center gap-2 shadow-sm ${showMenuBriefly ? 'translate-y-0 bg-bg-elevated shadow-md' : 'bg-bg-elevated/40 border-border-default/30 -translate-y-[80%]'}`}
+                    className="group bg-bg-elevated hover:bg-bg-subtle backdrop-blur-md shadow-sm border border-border-default/50 px-3 py-1.5 rounded-b-xl transition-all duration-300 flex items-center gap-1.5"
                 >
-                    <div className={`w-1.5 h-1.5 rounded-full transition-colors ${showMenuBriefly ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-blue-500'}`} />
-                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${showMenuBriefly ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-secondary'}`}>Menu</span>
-                    <Menu size={12} className={`transition-colors ${showMenuBriefly ? 'text-text-tertiary' : 'text-text-placeholder group-hover:text-text-secondary'}`} />
+                    <div className={`w-1 h-1 rounded-full transition-colors ${navState !== 'none' ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-accent-primary'}`} />
+                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`}>Menu</span>
+                    <Menu size={12} className={`transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`} />
                 </button>
             </div>
 
             <div className="flex h-full max-h-full overflow-hidden relative">
                 {/* Far-left panel */}
-                {leftPanel && <LeftPanel setLeftPanel={setLeftPanel} readerControls={readerControls} pdfControls={pdfControls} />}
+                {leftPanel && <LeftPanel 
+                    setLeftPanel={(val) => {
+                        if (val) setPageSettings(false); // Close settings if left panel open
+                        setLeftPanel(val);
+                    }} 
+                    readerControls={readerControls} 
+                    pdfControls={pdfControls} 
+                />}
+                
+                {/* Settings panel */}
+                {pageSettings && <PageSettings setPageSettings={setPageSettings} readerControls={readerControls} />}
 
                 {/* Highlight Menu */}
                 {showHighlightMenu && (
@@ -595,9 +634,17 @@ function ReaderView() {
                         aiModal={aiModal}
                         setAiModal={setAiModal}
                         leftPanel={leftPanel}
-                        setLeftPanel={setLeftPanel}
+                        setLeftPanel={(val) => {
+                            if (val) setPageSettings(false);
+                            setLeftPanel(val);
+                        }}
                         pdfControls={pdfControls}
                         readerControls={readerControls}
+                        showPageStrip={showPageStrip}
+                        closePageStrip={closePageStrip}
+                        fileUrl={fileUrl}
+                        isPdf={isPdf}
+                        scrollOrientation={scrollOrientation}
                     />
 
                     {/* PDF Content */}
@@ -616,6 +663,11 @@ function ReaderView() {
                                 highlights={book?.metadata?.highlights || []}
                                 locked={locked}
                                 windowSize={windowSize}
+                                scrollOrientation={scrollOrientation}
+                                onPageChange={(n) => {
+                                    setPageNumber(n);
+                                    syncProgress(n, numPages);
+                                }}
                             />
 
                             <button
@@ -688,6 +740,18 @@ function ReaderView() {
                     />
                 )}
             </div>
+
+            {/* Page Strip Overlay */}
+            {((showPageStrip && isPdf && fileUrl) || (showPageStrip && !isPdf)) && (
+                <PageStrip
+                    fileUrl={fileUrl}
+                    isPdf={isPdf}
+                    numPages={numPages || (isPdf ? 0 : localPages.total)}
+                    pageNumber={pageNumber}
+                    goToPage={goToPage}
+                    onClose={closePageStrip}
+                />
+            )}
         </div>
     );
 }

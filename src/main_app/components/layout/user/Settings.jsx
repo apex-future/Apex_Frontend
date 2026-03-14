@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { showToastGlobal } from '../../../hooks/useToast';
-import { ArrowLeft, Moon, Sun, Monitor, Bell, HardDrive, Download, Trash2, HelpCircle, FileText, ExternalLink, Activity, BookOpen, Bot } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Monitor, Bell, HardDrive, Download, Trash2, HelpCircle, FileText, ExternalLink, Activity, BookOpen, Bot, LogOut, User, UserMinus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import useThemeStore from '../../../store/themeStore';
 import { APP_VERSION } from '../../../constants/version';
 
-function Settings() {
+function Settings({ onLogout }) {
     const navigate = useNavigate();
     // Global state for theme
     const { theme, setTheme } = useThemeStore();
@@ -153,6 +153,30 @@ function Settings() {
                         label="Clear App Data"
                         desc="Erase all books and progress from this browser"
                         onClick={() => window.confirm("Are you sure you want to completely erase all data? This cannot be undone.")}
+                        danger={true}
+                    />
+                </SettingSection>
+
+                {/* Account */}
+                <SettingSection title="Account" icon={<User size={18} />}>
+                    <ActionRow
+                        icon={<LogOut size={16} className="text-error" />}
+                        label="Log Out"
+                        desc="Sign out of your account on this device"
+                        onClick={() => {
+                            if (onLogout) {
+                                onLogout();
+                            } else {
+                                navigate('/');
+                            }
+                        }}
+                        danger={true}
+                    />
+                    <ActionRow
+                        icon={<UserMinus size={16} className="text-error" />}
+                        label="Delete Account"
+                        desc="Permanently delete your account and all data"
+                        onClick={() => window.confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")}
                         danger={true}
                     />
                 </SettingSection>

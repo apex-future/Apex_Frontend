@@ -91,10 +91,119 @@ const PDFReader = ({
   windowSize,
   highlights = [],
   locked = false,
+  scrollOrientation = 'vertical',
+  onPageChange,
 }) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(windowSize?.width || window.innerWidth);
   const [pageRendered, setPageRendered] = useState(0);
+  const [maxPagesToRender, setMaxPagesToRender] = useState(3);
+  const isVertical = scrollOrientation === 'vertical';
+
+  const isJumping = useRef(false);
+  const lastReportedPage = useRef(pageNumber);
+  const pendingJump = useRef(null);
+
+  // Sync internal state when pageNumber prop changes programmatically
+  useEffect(() => {
+    if (pageNumber !== lastReportedPage.current) {
+      pendingJump.current = pageNumber;
+    }
+  }, [pageNumber]);
+
+  // Timed lazy loading for vertical mode
+  useEffect(() => {
+    if (!isVertical || !numPages) return;
+    
+    // Reset if book or numPages changes
+    setMaxPagesToRender(3);
+
+    const timer = setTimeout(() => {
+      setMaxPagesToRender(numPages);
+    }, 3000); // Load the rest after 3 seconds
+
+    return () => clearTimeout(timer);
+  }, [isVertical, numPages, fileUrl]);
+
+  const onPageChangeRef = useRef(onPageChange);
+  useEffect(() => { onPageChangeRef.current = onPageChange; }, [onPageChange]);
+
+  // IntersectionObserver to track which page is current in vertical mode
+  useEffect(() => {
+    if (!isVertical || !numPages) return;
+
+    const observerOptions = {
+      root: containerRef.current,
+      rootMargin: '0px 0px -90% 0px', 
+      threshold: [0, 0.01, 0.1, 0.5, 1.0],
+    };
+
+    const observerCallback = (entries) => {
+      // Ignore scroll updates if we're in the middle of a jump
+      if (isJumping.current || pendingJump.current !== null) return;
+
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      if (!containerRect) return;
+
+      const visibleEntries = entries.filter(e => e.isIntersecting);
+      if (visibleEntries.length === 0) return;
+
+      let bestPage = -1;
+      let minTopDiff = Infinity;
+
+      visibleEntries.forEach((entry) => {
+          const rect = entry.target.getBoundingClientRect();
+          const topDiff = Math.abs(rect.top - containerRect.top);
+          if (topDiff < minTopDiff) {
+              minTopDiff = topDiff;
+              bestPage = parseInt(entry.target.dataset.pageIndex, 10);
+          }
+      });
+
+      if (bestPage !== -1 && bestPage !== pageNumber) {
+        lastReportedPage.current = bestPage;
+        onPageChangeRef.current?.(bestPage);
+      }
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    const pageElements = containerRef.current?.querySelectorAll('.pdf-page-wrapper');
+    pageElements?.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [isVertical, numPages, pageRendered, maxPagesToRender, pageNumber]);
+
+  // Handle programmatic scroll for goToPage in vertical mode
+  useEffect(() => {
+    if (isVertical && containerRef.current && pendingJump.current !== null) {
+        const targetPageNumber = pendingJump.current;
+
+        // If we're jumping to a page not yet rendered, force render all pages immediately
+        if (targetPageNumber > maxPagesToRender) {
+            setMaxPagesToRender(numPages);
+            // The effect will re-run when maxPagesToRender updates
+            return;
+        }
+
+        const targetPage = containerRef.current.querySelector(`[data-page-index="${targetPageNumber}"]`);
+        
+        if (targetPage) {
+            isJumping.current = true;
+            targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Sync refs and clear pending jump
+            lastReportedPage.current = targetPageNumber;
+            pendingJump.current = null;
+
+            const timeout = setTimeout(() => {
+                isJumping.current = false;
+            }, 1000); 
+            
+            return () => clearTimeout(timeout);
+        }
+    }
+  }, [pageNumber, isVertical, maxPagesToRender, numPages]);
 
   // Called when react-pdf finishes rendering a page
   const handlePageRenderSuccess = useCallback(() => {
@@ -102,69 +211,55 @@ const PDFReader = ({
   }, []);
 
   // Post-render: apply highlights to the text layer DOM
-  // This handles multi-span highlights that customTextRenderer can't match
   useEffect(() => {
     if (!highlights || highlights.length === 0) return;
     const container = containerRef.current;
     if (!container) return;
 
-    const pageHighlights = highlights.filter(
-      (h) => (h.page || h.pageNumber) === pageNumber
-    );
-    if (pageHighlights.length === 0) return;
+    const applyToPage = (pageNum, pageEl) => {
+        const pageHighlights = highlights.filter(
+            (h) => (h.page || h.pageNumber) === pageNum
+        );
+        if (pageHighlights.length === 0) return;
 
-    // Wait a tick for the text layer to be fully in the DOM
+        const textLayer = pageEl.querySelector('.react-pdf__Page__textContent');
+        if (!textLayer) return;
+
+        // Remove any previously applied highlight marks to avoid duplicates
+        textLayer.querySelectorAll('mark.apex-hl').forEach((m) => {
+            const parent = m.parentNode;
+            while (m.firstChild) parent.insertBefore(m.firstChild, m);
+            parent.removeChild(m);
+        });
+
+        // Apply each highlight
+        for (const h of pageHighlights) {
+            const text = h.text || h.highlightedText || '';
+            if (text) applyHighlightToDOM(textLayer, text, h.color || '#fef08a');
+        }
+    };
+
     const timer = setTimeout(() => {
-      const textLayer = container.querySelector('.react-pdf__Page__textContent');
-      if (!textLayer) return;
-
-      // Remove any previously applied highlight marks to avoid duplicates
-      textLayer.querySelectorAll('mark.apex-hl').forEach((m) => {
-        const parent = m.parentNode;
-        while (m.firstChild) parent.insertBefore(m.firstChild, m);
-        parent.removeChild(m);
-      });
-
-      // Apply each highlight
-      for (const h of pageHighlights) {
-        const text = h.text || h.highlightedText || '';
-        if (text) applyHighlightToDOM(textLayer, text, h.color || '#fef08a');
-      }
+        if (isVertical) {
+            container.querySelectorAll('.pdf-page-wrapper').forEach((wrapper) => {
+                const pageNum = parseInt(wrapper.dataset.pageIndex, 10);
+                applyToPage(pageNum, wrapper);
+            });
+        } else {
+            const pageEl = container.querySelector('.react-pdf__Page');
+            if (pageEl) applyToPage(pageNumber, container);
+        }
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [highlights, pageNumber, pageRendered]);
+  }, [highlights, pageNumber, pageRendered, isVertical]);
 
   const customTextRenderer = React.useCallback(
-    ({ str }) => {
-      if (!highlights || highlights.length === 0) return str;
-
-      const pageHighlights = highlights.filter((h) => h.page === pageNumber);
-      if (pageHighlights.length === 0) return str;
-
-      // Sort highlights by length (longest first) to avoid partial matches
-      const sortedHighlights = [...pageHighlights].sort((a, b) => b.text.length - a.text.length);
-
-      for (const h of sortedHighlights) {
-        const escapedText = h.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        if (str.includes(h.text)) {
-          const parts = str.split(new RegExp(`(${escapedText})`, 'gi'));
-          return (
-            <span>
-              {parts.map((part, i) => 
-                part.toLowerCase() === h.text.toLowerCase() ? (
-                  <mark key={i} style={{ backgroundColor: h.color, color: 'black', borderRadius: '2px', padding: '0 1px' }}>
-                    {part}
-                  </mark>
-                ) : (
-                  part
-                )
-              )}
-            </span>
-          );
-        }
-      }
-
+    ({ str, itemIndex, pageIndex }) => {
+      // Note: react-pdf might not pass pageIndex here easily, but we can infer or filter
+      // For now, we'll keep the existing logic which was single-page focused.
+      // In vertical mode, we might need a more robust way to match highlights to pages.
+      // However, the post-render highlight application (above) is more reliable for multi-span.
       return str;
     },
     [highlights, pageNumber]
@@ -189,36 +284,55 @@ const PDFReader = ({
     ? Math.min(containerWidth - 120, 1100)
     : containerWidth;
 
-  // Swipe handlers — only meaningful on touch devices (mobile/tablet < md)
+  const lastEdgeHit = useRef({ left: 0, right: 0 });
+
+  // Swipe handlers — only for horizontal mode
   const handleSwipedLeft = () => {
-    if (locked) return;
+    if (locked || isVertical) return;
     if (scale > 1) {
       const el = containerRef.current;
       if (el) {
-        // Check if we are at the right edge (within a small buffer)
         const isAtRightEdge = el.scrollLeft + el.clientWidth >= el.scrollWidth - 20;
         if (!isAtRightEdge) return;
+
+        // Implementation of double-swipe confirmation for zoomed edges
+        const now = Date.now();
+        if (now - lastEdgeHit.current.right > 2000) {
+            lastEdgeHit.current.right = now;
+            // Maybe show a subtle hint here in the future
+            return;
+        }
+        // If we reach here, it's the second swipe within 2s
+        lastEdgeHit.current.right = 0;
       }
     }
     onNextPage?.();
   };
 
   const handleSwipedRight = () => {
-    if (locked) return;
+    if (locked || isVertical) return;
     if (scale > 1) {
       const el = containerRef.current;
       if (el) {
-        // Check if we are at the left edge (within a small buffer)
         const isAtLeftEdge = el.scrollLeft <= 20;
         if (!isAtLeftEdge) return;
+
+        // Implementation of double-swipe confirmation for zoomed edges
+        const now = Date.now();
+        if (now - lastEdgeHit.current.left > 2000) {
+            lastEdgeHit.current.left = now;
+            return;
+        }
+        // If we reach here, it's the second swipe within 2s
+        lastEdgeHit.current.left = 0;
       }
     }
     onPrevPage?.();
   };
 
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: handleSwipedLeft,
-    onSwipedRight: handleSwipedRight,
+    onSwipedLeft: !isVertical ? handleSwipedLeft : undefined,
+    onSwipedRight: !isVertical ? handleSwipedRight : undefined,
     trackMouse: false,
     preventScrollOnSwipe: false,
     delta: 50,
@@ -229,7 +343,7 @@ const PDFReader = ({
     <div
       ref={containerRef}
       {...swipeHandlers}
-      className={`flex-1 flex flex-col items-center justify-center lg:justify-start h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-auto'}`}
+      className={`flex-1 flex flex-col items-center h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-auto custom-scrollbar'}`}
       id="pdf-container"
     >
       <Document
@@ -237,38 +351,85 @@ const PDFReader = ({
         onLoadSuccess={onDocumentLoad}
         onLoadError={(err) => console.error('PDF load error:', err)}
         loading={<BookSkeleton message="Rendering document..." />}
-        className="flex flex-col items-start lg:items-center justify-center lg:justify-start min-h-full w-full mx-auto"
+        className="flex flex-col items-center sm:items-start justify-start min-h-full w-full mx-auto"
       >
-        <div
-          className="rounded-sm bg-bg-elevated mx-auto mb-8 lg:mb-0"
-          style={{
-            transition: 'transform 0.25s ease-out',
-          }}
-        >
-          <Page
-            pageNumber={pageNumber}
-            rotate={rotation}
-            scale={scale}
-            renderTextLayer={true}
-            renderAnnotationLayer={true}
-            customTextRenderer={customTextRenderer}
-            onRenderSuccess={handlePageRenderSuccess}
-            className="bg-bg-elevated"
-            width={pdfWidth}
-            loading={
-                <div className="flex flex-col items-center justify-center bg-bg-elevated" style={{ width: pdfWidth, height: pdfWidth * 1.41 }}>
-                     <div className="w-full h-full p-8 space-y-4 animate-pulse">
-                        <div className="h-4 w-1/3 bg-bg-subtle rounded-full" />
-                        <div className="space-y-4">
-                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                            <div className="h-2 w-2/3 bg-bg-subtle rounded-full" />
+        {isVertical ? (
+          // Render all pages for vertical flow with lazy loading
+          Array.from({ length: numPages || 0 }, (_, i) => {
+            const pageIdx = i + 1;
+            const shouldRender = pageIdx <= maxPagesToRender;
+            
+            return (
+              <div 
+                  key={i} 
+                  className="pdf-page-wrapper mx-auto flex flex-col items-center justify-center min-h-full w-full bg-bg-elevated relative" 
+                  style={{ minHeight: isVertical ? '100%' : (pdfWidth * 1.41 * scale) }}
+                  data-page-index={pageIdx}
+              >
+                {shouldRender ? (
+                  <Page
+                    pageNumber={pageIdx}
+                    rotate={rotation}
+                    scale={scale}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    onRenderSuccess={handlePageRenderSuccess}
+                    width={pdfWidth}
+                    className="!shadow-none" 
+                    loading={
+                        <div className="flex flex-col items-center justify-center bg-bg-elevated" style={{ width: pdfWidth, height: pdfWidth * 1.41 * scale }}>
+                             <div className="w-full h-full p-8 space-y-4 animate-pulse text-center">
+                                <div className="h-4 w-1/3 bg-bg-subtle rounded-full mx-auto" />
+                                <div className="space-y-4">
+                                    <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                                    <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                                    <div className="h-2 w-2/3 bg-bg-subtle rounded-full mx-auto" />
+                                </div>
+                             </div>
                         </div>
-                     </div>
-                </div>
-            }
-          />
-        </div>
+                    }
+                  />
+                ) : (
+                  // Placeholder for lazy loading
+                  <div className="flex flex-col items-center justify-center bg-bg-elevated/20" style={{ width: pdfWidth, height: pdfWidth * 1.41 * scale }}>
+                     <p className="text-text-tertiary text-xs font-black uppercase tracking-widest opacity-20">Page {pageIdx}</p>
+                  </div>
+                )}
+                {/* Visual Divider - Absolute to ensure it's on top of page content */}
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/60 dark:bg-white/20 z-20 pointer-events-none" />
+              </div>
+            );
+          })
+        ) : (
+          // Single page for horizontal mode
+          <div
+            className="rounded-sm bg-bg-elevated mx-auto mb-8 lg:mb-0"
+            style={{ transition: 'transform 0.25s ease-out' }}
+          >
+            <Page
+              pageNumber={pageNumber}
+              rotate={rotation}
+              scale={scale}
+              renderTextLayer={true}
+              renderAnnotationLayer={true}
+              onRenderSuccess={handlePageRenderSuccess}
+              width={pdfWidth}
+              className="bg-bg-elevated"
+              loading={
+                  <div className="flex flex-col items-center justify-center bg-bg-elevated" style={{ width: pdfWidth, height: pdfWidth * 1.41 }}>
+                       <div className="w-full h-full p-8 space-y-4 animate-pulse">
+                          <div className="h-4 w-1/3 bg-bg-subtle rounded-full" />
+                          <div className="space-y-4">
+                              <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                              <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                              <div className="h-2 w-2/3 bg-bg-subtle rounded-full" />
+                          </div>
+                       </div>
+                  </div>
+              }
+            />
+          </div>
+        )}
       </Document>
     </div>
   );

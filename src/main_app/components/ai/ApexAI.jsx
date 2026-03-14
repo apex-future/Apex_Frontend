@@ -102,10 +102,10 @@ function ApexAI() {
                             <ArrowLeft size={20} />
                         </button>
                         
-                        <h1 className='text-sm font-bold tracking-tight text-slate-900 truncate max-w-[200px] md:max-w-md'>
+                        <h1 className='text-sm font-bold tracking-tight text-slate-900 dark:text-white/80 truncate max-w-[200px] md:max-w-md'>
                             {chatHistory.find(c => c.id === sessionId)?.title || "Apex AI Companion"}
                             {chatHistory.find(c => c.id === sessionId)?.scope && chatHistory.find(c => c.id === sessionId)?.scope !== 'general' && (
-                                <span className='text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1.5 border border-slate-200'>
+                                <span className='text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-bg-dark-elevated px-2 py-0.5 rounded-full flex items-center gap-1.5 border border-slate-200'>
                                     <BookOpen size={12} /> {chatHistory.find(c => c.id === sessionId)?.scope}
                                 </span>
                             )}
@@ -151,7 +151,7 @@ function ApexAI() {
                                         <button
                                             key={i}
                                             onClick={() => handleSend(suggestion.text)}
-                                            className='flex items-center gap-3 px-5 py-4 rounded-2xl bg-card-glass backdrop-blur-md border border-border-default text-sm text-text-secondary hover:border-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 hover:shadow-lg hover:shadow-accent-subtle transition-all duration-300 text-left group'
+                                            className='flex items-center gap-3 px-5 py-4 rounded-2xl bg-card-glass backdrop-blur-md border border-border-default text-sm text-text-secondary hover:border-accent-primary  hover:bg-accent-subtle/20 hover:shadow-md hover:shadow-accent-subtle transition-all duration-300 text-left group'
                                         >
                                             <span className='text-xl grayscale group-hover:grayscale-0 transition-all'>{suggestion.icon}</span>
                                             <span className='font-medium'>{suggestion.text}</span>

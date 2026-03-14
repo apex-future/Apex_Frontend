@@ -29,10 +29,10 @@ export default function Header({ lastReadBook }) {
                 <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
                 <div
                     onClick={() => lastReadBook && navigate(`/reader/${lastReadBook.id}`)}
-                    className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-text-tertiary hover:shadow-2xl hover:shadow-black/10 transition-all duration-500 group overflow-hidden ${lastReadBook ? 'cursor-pointer' : ''} shadow-xl relative`}
+                    className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-text-tertiary hover:shadow-md transition-all duration-500 group overflow-hidden ${lastReadBook ? 'cursor-pointer' : ''} shadow-md relative`}
                 >
                     <div className="flex gap-4 md:gap-8 w-full overflow-hidden">
-                        <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-lg flex-shrink-0 bg-bg-subtle border border-border-subtle group-hover:scale-[1.02] transition-transform duration-300">
+                        <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-md flex-shrink-0 bg-bg-subtle border border-border-subtle group-hover:scale-[1.02] transition-transform duration-300">
                             {currentBook.cover ? (
                                 <img src={currentBook.cover} alt="Book cover" className="w-full h-full object-cover" />
                             ) : (
@@ -57,7 +57,7 @@ export default function Header({ lastReadBook }) {
                                         {currentBook.progress}%
                                     </span>
                                 </div>
-                                <div className="w-full bg-border-default rounded-full h-1.5 overflow-hidden">
+                                <div className="w-full bg-border-default rounded-full h-1 overflow-hidden">
                                     <div
                                         className="bg-accent-primary h-full rounded-full transition-all duration-700 ease-out"
                                         style={{ width: `${currentBook.progress}%` }}

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen } from 'lucide-react'
+import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Settings } from 'lucide-react'
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
@@ -14,6 +14,9 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
     pages = { current: 1, total: 1 },
     isBookmarked = false,
     onToggleBookmark,
+    onProgressBarClick,
+    setPageSettings,
+    setLeftPanel: internalSetLeftPanel, // renamed to avoid conflict if any
   } = readerControls || {};
 
   useEffect(() => {
@@ -42,13 +45,20 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         className='flex top-bar pb-4 items-center justify-between w-full pointer-events-auto'
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Back button */}
-        <div>
+        {/* Back and Settings buttons */}
+        <div className='flex items-center gap-3'>
           <button
             onClick={() => navigate('/')}
             className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
           >
             <ArrowLeft size={18} strokeWidth={2} />
+          </button>
+          
+          <button
+            onClick={(e) => { e.stopPropagation(); setPageSettings?.(true); }}
+            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
+          >
+            <Settings size={18} strokeWidth={2} />
           </button>
         </div>
 
@@ -112,18 +122,27 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         </div>
 
         {/* Real progress bar */}
-        <div className="progress w-full max-w-md bg-card-glass backdrop-blur-xl p-4 rounded-3xl shadow-lg border-2 border-border-default">
+        
+        <div 
+          className="progress w-full max-w-md bg-white/80 dark:bg-black/80 backdrop-blur-lg p-4 rounded-3xl shadow-md border-2 border-border-default cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); onProgressBarClick?.(); }}
+        >
+          
           <div className="text-progress mb-2.5 flex items-center justify-between font-sans">
             <span className="percent text-[11px] font-black uppercase tracking-widest text-text-tertiary">{progress}% Read</span>
             <span className="chapter text-[11px] font-bold text-text-tertiary bg-bg-subtle px-2 py-0.5 rounded-full">page {pages.current} of {pages.total}</span>
           </div>
-          <div className="progress-bar h-2 rounded-full w-full bg-bg-subtle overflow-hidden">
+          <div className="progress-bar h-1 rounded-full w-full bg-bg-subtle overflow-hidden">
             <div
               className="progress-fill h-full rounded-full bg-accent-primary transition-all duration-700 ease-out shadow-[0_0_12px_rgba(139,92,246,0.3)]"
               style={{ width: `${progress}%` }}
             />
           </div>
+        
         </div>
+          <div className=" text-center -mt-2">
+            <span className="text-[10px] font-bold text-text-tertiary/60 uppercase tracking-widest ">Click to paginate</span>
+          </div>
       </div>
     </div>
   )
