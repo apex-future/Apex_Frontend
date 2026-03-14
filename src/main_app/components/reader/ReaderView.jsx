@@ -8,6 +8,7 @@ import AIModal from './reading_navigations/reading_layout/AIModal';
 import HighlightMenu from './HighlightMenu';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 import BookSkeleton from './BookSkeleton';
+import PageStrip from './PageStrip';
 import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
 
 const ScrollOrientationOverlay = ({ visible }) => {
@@ -77,6 +78,17 @@ function ReaderView() {
     const [selection, setSelection] = useState({ text: '', x: 0, y: 0 });
     const [showHighlightMenu, setShowHighlightMenu] = useState(false);
     const [isDictOpen, setIsDictOpen] = useState(false);
+    const [showPageStrip, setShowPageStrip] = useState(false);
+
+    const openPageStrip = useCallback(() => {
+        setNavState('none');
+        setShowPageStrip(true);
+    }, []);
+
+    const closePageStrip = useCallback(() => {
+        setShowPageStrip(false);
+        setNavState('first');
+    }, []);
 
     const handleHighlight = (color) => {
         if (!book || !selection.text) return;
@@ -218,6 +230,7 @@ function ReaderView() {
         onToggleFavorite: () => toggleFavorite(book.id),
         isBookmarkedBook: book?.isBookmarked,
         onToggleBookmarkedBook: () => toggleBookmarkedBook(book.id),
+        onProgressBarClick: openPageStrip,
     };
 
     // Screen handlers
@@ -598,6 +611,10 @@ function ReaderView() {
                         setLeftPanel={setLeftPanel}
                         pdfControls={pdfControls}
                         readerControls={readerControls}
+                        showPageStrip={showPageStrip}
+                        closePageStrip={closePageStrip}
+                        fileUrl={fileUrl}
+                        isPdf={isPdf}
                     />
 
                     {/* PDF Content */}
@@ -688,6 +705,18 @@ function ReaderView() {
                     />
                 )}
             </div>
+
+            {/* Page Strip Overlay */}
+            {((showPageStrip && isPdf && fileUrl) || (showPageStrip && !isPdf)) && (
+                <PageStrip
+                    fileUrl={fileUrl}
+                    isPdf={isPdf}
+                    numPages={numPages || (isPdf ? 0 : localPages.total)}
+                    pageNumber={pageNumber}
+                    goToPage={goToPage}
+                    onClose={closePageStrip}
+                />
+            )}
         </div>
     );
 }

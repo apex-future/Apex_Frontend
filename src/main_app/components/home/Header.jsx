@@ -57,7 +57,7 @@ export default function Header({ lastReadBook }) {
                                         {currentBook.progress}%
                                     </span>
                                 </div>
-                                <div className="w-full bg-border-default rounded-full h-1.5 overflow-hidden">
+                                <div className="w-full bg-border-default rounded-full h-1 overflow-hidden">
                                     <div
                                         className="bg-accent-primary h-full rounded-full transition-all duration-700 ease-out"
                                         style={{ width: `${currentBook.progress}%` }}

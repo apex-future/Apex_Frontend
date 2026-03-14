@@ -14,6 +14,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
     pages = { current: 1, total: 1 },
     isBookmarked = false,
     onToggleBookmark,
+    onProgressBarClick,
   } = readerControls || {};
 
   useEffect(() => {
@@ -112,18 +113,27 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         </div>
 
         {/* Real progress bar */}
-        <div className="progress w-full max-w-md bg-card-glass backdrop-blur-xl p-4 rounded-3xl shadow-lg border-2 border-border-default">
+        
+        <div 
+          className="progress w-full max-w-md bg-card-glass backdrop-blur-xl p-4 rounded-3xl shadow-lg border-2 border-border-default cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); onProgressBarClick?.(); }}
+        >
+          
           <div className="text-progress mb-2.5 flex items-center justify-between font-sans">
             <span className="percent text-[11px] font-black uppercase tracking-widest text-text-tertiary">{progress}% Read</span>
             <span className="chapter text-[11px] font-bold text-text-tertiary bg-bg-subtle px-2 py-0.5 rounded-full">page {pages.current} of {pages.total}</span>
           </div>
-          <div className="progress-bar h-2 rounded-full w-full bg-bg-subtle overflow-hidden">
+          <div className="progress-bar h-1 rounded-full w-full bg-bg-subtle overflow-hidden">
             <div
               className="progress-fill h-full rounded-full bg-accent-primary transition-all duration-700 ease-out shadow-[0_0_12px_rgba(139,92,246,0.3)]"
               style={{ width: `${progress}%` }}
             />
           </div>
+        
         </div>
+          <div className=" text-center -mt-2">
+            <span className="text-[10px] font-bold text-text-tertiary/60 uppercase tracking-widest ">Click to paginate</span>
+          </div>
       </div>
     </div>
   )
