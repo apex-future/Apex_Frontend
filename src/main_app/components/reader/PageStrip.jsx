@@ -123,7 +123,6 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                 className="thumbnail-container flex flex-col items-center flex-shrink-0 w-[100px]"
                 onClick={() => {
                     goToPage(i);
-                    handleClose();
                 }}
             >
                 <div 
@@ -199,14 +198,14 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                     {/* Navigation Buttons (Desktop Only) */}
                     <button 
                         onClick={() => scrollByChunk('left')}
-                        className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-24 items-center justify-center bg-gradient-to-r from-bg-primary/80 to-transparent hover:from-bg-primary text-text-secondary transition-all"
+                        className="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-24 items-center justify-center hover:text-accent-primary rounded-full text-text-secondary transition-all"
                     >
                         <ChevronLeft size={24} />
                     </button>
                     
                     <button 
                         onClick={() => scrollByChunk('right')}
-                        className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-24 items-center justify-center bg-gradient-to-l from-bg-primary/80 to-transparent hover:from-bg-primary text-text-secondary transition-all"
+                        className="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-24 items-center justify-center hover:text-accent-primary rounded-full text-text-secondary transition-all"
                     >
                         <ChevronRight size={24} />
                     </button>
