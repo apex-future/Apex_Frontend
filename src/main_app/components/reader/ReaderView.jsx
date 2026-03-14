@@ -7,6 +7,7 @@ import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
 import HighlightMenu from './HighlightMenu';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
+import PageSettings from './reading_navigations/reading_layout/PageSettings';
 import BookSkeleton from './BookSkeleton';
 import PageStrip from './PageStrip';
 import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
@@ -69,6 +70,7 @@ function ReaderView() {
     const [locked, setLocked] = useState(false);
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
+    const [pageSettings, setPageSettings] = useState(false);
 
     // Deep loading state
     const [isLoading, setIsLoading] = useState(true);
@@ -231,6 +233,11 @@ function ReaderView() {
         isBookmarkedBook: book?.isBookmarked,
         onToggleBookmarkedBook: () => toggleBookmarkedBook(book.id),
         onProgressBarClick: openPageStrip,
+        pageSettings,
+        setPageSettings: (val) => {
+            if (val) setLeftPanel(false); // Close left panel if settings open
+            setPageSettings(val);
+        },
     };
 
     // Screen handlers
@@ -577,7 +584,17 @@ function ReaderView() {
 
             <div className="flex h-full max-h-full overflow-hidden relative">
                 {/* Far-left panel */}
-                {leftPanel && <LeftPanel setLeftPanel={setLeftPanel} readerControls={readerControls} pdfControls={pdfControls} />}
+                {leftPanel && <LeftPanel 
+                    setLeftPanel={(val) => {
+                        if (val) setPageSettings(false); // Close settings if left panel open
+                        setLeftPanel(val);
+                    }} 
+                    readerControls={readerControls} 
+                    pdfControls={pdfControls} 
+                />}
+                
+                {/* Settings panel */}
+                {pageSettings && <PageSettings setPageSettings={setPageSettings} readerControls={readerControls} />}
 
                 {/* Highlight Menu */}
                 {showHighlightMenu && (
@@ -608,7 +625,10 @@ function ReaderView() {
                         aiModal={aiModal}
                         setAiModal={setAiModal}
                         leftPanel={leftPanel}
-                        setLeftPanel={setLeftPanel}
+                        setLeftPanel={(val) => {
+                            if (val) setPageSettings(false);
+                            setLeftPanel(val);
+                        }}
                         pdfControls={pdfControls}
                         readerControls={readerControls}
                         showPageStrip={showPageStrip}

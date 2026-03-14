@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen } from 'lucide-react'
+import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Settings } from 'lucide-react'
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
@@ -15,6 +15,8 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
     isBookmarked = false,
     onToggleBookmark,
     onProgressBarClick,
+    setPageSettings,
+    setLeftPanel: internalSetLeftPanel, // renamed to avoid conflict if any
   } = readerControls || {};
 
   useEffect(() => {
@@ -43,13 +45,20 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         className='flex top-bar pb-4 items-center justify-between w-full pointer-events-auto'
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Back button */}
-        <div>
+        {/* Back and Settings buttons */}
+        <div className='flex items-center gap-3'>
           <button
             onClick={() => navigate('/')}
             className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
           >
             <ArrowLeft size={18} strokeWidth={2} />
+          </button>
+          
+          <button
+            onClick={(e) => { e.stopPropagation(); setPageSettings?.(true); }}
+            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
+          >
+            <Settings size={18} strokeWidth={2} />
           </button>
         </div>
 
