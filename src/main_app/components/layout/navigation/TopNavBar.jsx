@@ -1,6 +1,7 @@
 import { Menu, Search, Plus } from 'lucide-react'
 import logoLight from "../../../../assets/logo/logo-light-removebg-preview.png";
 import logoDark from "../../../../assets/logo/logo-dark-removebg-preview.png";
+import StreakBadge from '../../ui/StreakBadge';
 
 function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
   const handleFileChange = (e) => {
@@ -42,8 +43,10 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
           </div>
         </form>
 
-        {/* Upload & Logo Group */}
-        <div className="flex items-center gap-3 ">
+        {/* Streak & Upload & Logo Group */}
+        <div className="flex items-center gap-2 md:gap-3">
+          <StreakBadge />
+          
           {/* Upload Button - Responsive */}
           <div className="md:flex hidden items-center h-full">
             <input

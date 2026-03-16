@@ -16,6 +16,7 @@ export default {
         blink: 'blink 1s step-end infinite',
         'slide-up': 'slideUp 0.3s ease-out',
         'pulse-purple': 'pulse-purple 0.6s ease-in-out infinite',
+        'bounce-slow': 'bounce 3s infinite',
       },
       screens: {
         'xs': '425px',

@@ -1,6 +1,7 @@
 import React, { useContext, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "./Header";
+import ExamReminder from "./ExamReminder";
 import AllBooks from "./AllBooks";
 import TopNavBar from "../layout/navigation/TopNavBar";
 import { BookContext } from "../../context/BookContextInstance";
@@ -48,7 +49,12 @@ function HomePage({ setIsMobileOpen }) {
       />
 
       {/* Only show Header (Last Read) when not searching */}
-      {!searchQuery && <Header lastReadBook={lastReadBook} />}
+      {!searchQuery && (
+        <>
+          <Header lastReadBook={lastReadBook} />
+          <ExamReminder />
+        </>
+      )}
 
       <AllBooks
         books={filteredBooks}

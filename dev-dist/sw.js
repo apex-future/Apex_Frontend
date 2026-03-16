@@ -82,12 +82,19 @@ define(['./workbox-f87553f6'], (function (workbox) { 'use strict';
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
     "url": "index.html",
-    "revision": "0.vmmdkm3icrc"
+    "revision": "0.9mtpub6dlto"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
     allowlist: [/^\/$/]
   }));
+  workbox.registerRoute(/pdf\.worker(\.min)?\.mjs$/i, new workbox.CacheFirst({
+    "cacheName": "pdf-worker",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 2,
+      maxAgeSeconds: 5184000
+    })]
+  }), 'GET');
   workbox.registerRoute(/\.(?:png|jpg|jpeg|svg|gif|webp|ico|woff2?)$/i, new workbox.CacheFirst({
     "cacheName": "static-assets",
     plugins: [new workbox.ExpirationPlugin({

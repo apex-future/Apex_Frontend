@@ -18,7 +18,7 @@ export default function Header({ lastReadBook }) {
 
     return (
         <div className="w-full">
-            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4">
+            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-0 pb-2">
                 <div className="welcome-message mb-8">
                     <h1 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-2 tracking-tightest leading-premium-tight">
                         Hey, {firstName}
