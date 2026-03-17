@@ -37,7 +37,7 @@ function ToastItem({ toast, onDismiss }) {
     <div
       className={`
         flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg backdrop-blur-sm
-        max-w-[90vw] sm:max-w-sm
+        w-[70vw] max-w-[350px]
         transition-all duration-300 ease-out
         ${exiting ? 'opacity-0 translate-y-2 scale-95' : 'opacity-100 translate-y-0 scale-100'}
         ${TYPE_STYLES[type] || TYPE_STYLES.info}

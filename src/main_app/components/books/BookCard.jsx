@@ -64,6 +64,14 @@ export default function BookCard({ book, onClick }) {
                         />
                     )}
 
+                    {/* Uploading overlay — shows while book is being uploaded to Supabase */}
+                    {book.isUploading && (
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center rounded-lg gap-1">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span className="text-white text-[9px] font-bold uppercase tracking-wider">Uploading</span>
+                      </div>
+                    )}
+
                     {/* Status Badge */}
                     <span className={`absolute top-1 left-1 text-[8px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${statusStyles[book.status] || 'bg-gray-100'}`}>
                         {book.status}

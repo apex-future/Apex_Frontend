@@ -17,6 +17,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.9] - 2026-03-17
+### Improved
+- Book appears in library immediately when uploaded (optimistic UI)
+- Persistent "Uploading your book..." toast shows during upload
+- Toast updates to success or warning when upload resolves
+- Book card shows uploading spinner overlay while upload is in progress
+
+---
+
 ## [1.6.8] - 2026-03-17
 ### Fixed
 - Book delete now uses in-memory book object as fallback when Dexie record has shifted ID after pull sync
