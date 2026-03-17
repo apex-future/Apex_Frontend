@@ -552,37 +552,87 @@ export const BookProvider = ({ children }) => {
   const deleteBookFromShelves = useCallback(async (id) => {
     const targetId = typeof id === 'string' ? parseInt(id) : id;
 
-    // Get the book record before deleting to capture recordId for sync
-    const bookRecord = await db.books.get(targetId).catch(() => null);
+    console.log('[Apex] deleteBookFromShelves called for bookId:', targetId);
 
-    setShelves((prevShelves) => {
-      const newShelves = prevShelves.map((shelf) => ({
-        ...shelf,
-        books: shelf.books.filter((book) => book.id !== targetId),
-      }));
+    try {
+      // Step 1: Get the full book record BEFORE deleting
+      // We need supabaseId for the sync queue and Supabase delete
+      const bookRecord = await db.books.get(targetId);
+      console.log('[Apex] Book record fetched for delete:', {
+        targetId,
+        supabaseId: bookRecord?.supabaseId,
+        synced: bookRecord?.synced,
+      });
 
-      // Queue delete for sync if the book has been synced to Supabase
-      if (bookRecord?.recordId) {
-        db.sync_queue.add({
+      // Step 2: Remove from UI state immediately (optimistic)
+      setShelves((prevShelves) =>
+        prevShelves.map((shelf) => ({
+          ...shelf,
+          books: shelf.books.filter((book) => book.id !== targetId),
+        }))
+      );
+
+      // Step 3: Delete ALL related records from Dexie
+      // Must delete bookmarks, highlights, reading_progress, and the book itself
+      console.log('[Apex] Deleting book and related records from Dexie...');
+
+      await db.bookmarks
+        .where('bookId').equals(targetId)
+        .delete()
+        .catch(err => console.error('[Apex] Failed to delete bookmarks from Dexie:', err));
+
+      await db.highlights
+        .where('bookId').equals(targetId)
+        .delete()
+        .catch(err => console.error('[Apex] Failed to delete highlights from Dexie:', err));
+
+      await db.reading_progress
+        .where('bookId').equals(targetId)
+        .delete()
+        .catch(err => console.error('[Apex] Failed to delete reading_progress from Dexie:', err));
+
+      await db.books
+        .delete(targetId)
+        .catch(err => console.error('[Apex] Failed to delete book from Dexie:', err));
+
+      console.log('[Apex] Dexie delete complete for bookId:', targetId);
+
+      // Step 4: If book was synced to Supabase, queue the delete
+      // Use supabaseId — NOT recordId — as the stable Supabase identifier
+      if (bookRecord?.supabaseId) {
+        console.log('[Apex] Queueing Supabase delete for supabaseId:', bookRecord.supabaseId);
+
+        await db.sync_queue.add({
           action: 'delete',
           tableName: 'books',
           local_id: (bookRecord.local_id || targetId).toString(),
-          recordId: bookRecord.recordId,
+          // record_id must be the Supabase UUID for the delete endpoint to work
+          recordId: bookRecord.supabaseId,
           payload: {},
           createdAt: new Date().toISOString(),
           attempts: 0,
-          status: 'pending'
-        }).then(() => syncService.triggerSync?.())
-          .catch(err => console.error('Failed to queue book delete:', err));
+          status: 'pending',
+        });
+
+        // If online, trigger sync immediately so Supabase delete fires right away
+        if (navigator.onLine) {
+          console.log('[Apex] Online — triggering immediate sync for delete');
+          syncService.triggerSync?.();
+        } else {
+          console.log('[Apex] Offline — delete queued, will sync when online');
+          showToastGlobal('Book removed. Cloud sync will complete when you\'re back online.', 'info');
+        }
+      } else {
+        // Book was never synced — local delete is sufficient
+        console.log('[Apex] Book was local only — no Supabase delete needed');
       }
 
-      // Delete from Dexie
-      db.books.delete(targetId).catch(err => console.error("Failed to delete book:", err));
-      // Also clean up related progress and highlights
-      db.reading_progress.where('bookId').equals(targetId).delete().catch(() => { });
-      db.highlights.where('bookId').equals(targetId).delete().catch(() => { });
-      return newShelves;
-    });
+      showToastGlobal('Book deleted.', 'success');
+
+    } catch (err) {
+      console.error('[Apex] deleteBookFromShelves failed:', err);
+      showToastGlobal('Failed to delete book. Please try again.', 'error');
+    }
   }, []);
 
   const addSavedWord = useCallback(async (bookId, wordObj) => {

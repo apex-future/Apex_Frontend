@@ -1,7 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Heart, Eye, Bookmark, Trash } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
+import ConfirmModal from '../ui/ConfirmModal';
 import { BookContext } from '../../context/BookContextInstance';
 
 const statusStyles = {
@@ -16,6 +17,9 @@ const statusStyles = {
 export default function BookCard({ book, onClick }) {
     const navigate = useNavigate();
     const { toggleFavorite, toggleBookmarkedBook, deleteBookFromShelves } = useContext(BookContext) || {};
+
+    // State for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const handleDetailsClick = (e) => {
         e.stopPropagation();
@@ -34,7 +38,8 @@ export default function BookCard({ book, onClick }) {
 
     const handleDeleteClick = (e) => {
         e.stopPropagation();
-        if (deleteBookFromShelves) deleteBookFromShelves(book.id);
+        // Show confirmation modal — never delete directly without confirmation
+        setShowDeleteModal(true);
     };
 
     return (
@@ -117,6 +122,31 @@ export default function BookCard({ book, onClick }) {
                     </div>
                 </div>
             </div>
+
+            {/* Delete confirmation modal */}
+            <ConfirmModal
+              isOpen={showDeleteModal}
+              hideOverlay={true}
+              title={`Delete "${book.title}"?`}
+              message="This will permanently remove the book and all your highlights, bookmarks, and reading progress. This cannot be undone."
+              onClose={() => setShowDeleteModal(false)}
+              actions={[
+                {
+                  label: 'Delete',
+                  variant: 'danger',
+                  onClick: () => {
+                    console.log('[Apex] User confirmed book delete for bookId:', book.id);
+                    if (deleteBookFromShelves) deleteBookFromShelves(book.id);
+                    setShowDeleteModal(false);
+                  },
+                },
+                {
+                  label: 'Cancel',
+                  variant: 'ghost',
+                  onClick: () => setShowDeleteModal(false),
+                },
+              ]}
+            />
         </div>
     );
 }

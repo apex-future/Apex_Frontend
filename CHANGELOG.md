@@ -17,6 +17,20 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.6] - 2026-03-17
+### Fixed
+- Book delete now correctly removes from Dexie (books, highlights, bookmarks, reading_progress)
+- Book delete now correctly queues Supabase delete using supabaseId instead of recordId
+- Offline deletes queued and synced when back online
+
+### Added
+- Reusable ConfirmModal component
+- Book delete confirmation modal before permanent deletion
+- Clear App Data — two options: device only or everything (cloud + device)
+- DELETE /api/books/all endpoint for bulk cloud delete
+
+---
+
 ## [1.6.5] - 2026-03-13
 
 ### Added
