@@ -135,8 +135,9 @@ export default function BookCard({ book, onClick }) {
                   label: 'Delete',
                   variant: 'danger',
                   onClick: () => {
-                    console.log('[Apex] User confirmed book delete for bookId:', book.id);
-                    if (deleteBookFromShelves) deleteBookFromShelves(book.id);
+                    console.log('[Apex] User confirmed book delete for bookId:', book.id, '| supabaseId:', book.supabaseId);
+                    // Pass full book object as fallback in case Dexie record has shifted ID after pull sync
+                    if (deleteBookFromShelves) deleteBookFromShelves(book.id, book);
                     setShowDeleteModal(false);
                   },
                 },

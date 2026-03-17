@@ -17,6 +17,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.8] - 2026-03-17
+### Fixed
+- Book delete now uses in-memory book object as fallback when Dexie record has shifted ID after pull sync
+- Supabase delete queue now fires correctly even when Dexie lookup returns null
+- Book delete also searches by supabaseId to catch mismatched Dexie integer IDs
+
+---
+
 ## [1.6.7] - 2026-03-17
 ### Fixed
 - Book delete now correctly removes highlights, bookmarks and reading progress stored by Supabase UUID bookId

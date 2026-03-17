@@ -549,50 +549,54 @@ export const BookProvider = ({ children }) => {
     });
   }, []);
 
-  const deleteBookFromShelves = useCallback(async (id) => {
+  const deleteBookFromShelves = useCallback(async (id, bookFallback = null) => {
     const targetId = typeof id === 'string' ? parseInt(id) : id;
 
     console.log('[Apex] deleteBookFromShelves called for bookId:', targetId);
 
     try {
-      // Step 1: Get full book record BEFORE deleting
-      // Need both Dexie integer id AND supabaseId to clean up all related records
-      const bookRecord = await db.books.get(targetId);
-      console.log('[Apex] Book record fetched for delete:', {
+      // Step 1: Get full book record from Dexie
+      // If Dexie returns null (stale ID after pull sync), fall back to in-memory book object
+      let bookRecord = await db.books.get(targetId);
+
+      if (!bookRecord && bookFallback) {
+        console.warn('[Apex] Dexie record not found — using in-memory fallback for bookId:', targetId);
+        // Construct a minimal bookRecord from the in-memory book object
+        // so we still have supabaseId for the Supabase delete queue
+        bookRecord = {
+          id: targetId,
+          supabaseId: bookFallback.supabaseId || bookFallback.recordId || null,
+          local_id: bookFallback.local_id || targetId.toString(),
+          synced: bookFallback.synced || false,
+        };
+      }
+
+      console.log('[Apex] Book record for delete:', {
         targetId,
         supabaseId: bookRecord?.supabaseId,
         synced: bookRecord?.synced,
+        source: bookRecord ? (bookFallback && !await db.books.get(targetId) ? 'fallback' : 'dexie') : 'none',
       });
 
-      if (!bookRecord) {
-        console.warn('[Apex] Book record not found in Dexie for id:', targetId);
-        // Still remove from UI
-        setShelves(prev => prev.map(shelf => ({
-          ...shelf,
-          books: shelf.books.filter(b => b.id !== targetId),
-        })));
-        return;
-      }
-
       // Step 2: Remove from UI immediately (optimistic)
+      // Always do this regardless of whether bookRecord exists
       setShelves(prev => prev.map(shelf => ({
         ...shelf,
         books: shelf.books.filter(b => b.id !== targetId),
       })));
 
-      // Step 3: Delete related records from Dexie
-      // Related records may store bookId as EITHER:
-      //   - Dexie integer ID (locally created records)
-      //   - Supabase UUID string (pulled records)
-      // So we must delete by BOTH to guarantee full cleanup
+      if (!bookRecord) {
+        // No record anywhere — UI removal is all we can do
+        console.warn('[Apex] No book record found anywhere for id:', targetId);
+        showToastGlobal('Book removed.', 'success');
+        return;
+      }
 
-      console.log('[Apex] Deleting related records from Dexie by integer id AND supabaseId...');
+      // Step 3: Delete related records from Dexie by BOTH integer ID and supabaseId
+      console.log('[Apex] Deleting related records from Dexie...');
 
-      // Delete bookmarks by Dexie integer bookId
-      const bookmarksByInt = await db.bookmarks
-        .where('bookId').equals(targetId)
-        .toArray();
-      // Delete bookmarks by supabaseId string bookId
+      // Bookmarks
+      const bookmarksByInt = await db.bookmarks.where('bookId').equals(targetId).toArray();
       const bookmarksByUuid = bookRecord.supabaseId
         ? await db.bookmarks.where('bookId').equals(bookRecord.supabaseId).toArray()
         : [];
@@ -602,11 +606,8 @@ export const BookProvider = ({ children }) => {
         console.log('[Apex] Deleted bookmarks:', allBookmarkIds.length);
       }
 
-      // Delete highlights by Dexie integer bookId
-      const highlightsByInt = await db.highlights
-        .where('bookId').equals(targetId)
-        .toArray();
-      // Delete highlights by supabaseId string bookId
+      // Highlights
+      const highlightsByInt = await db.highlights.where('bookId').equals(targetId).toArray();
       const highlightsByUuid = bookRecord.supabaseId
         ? await db.highlights.where('bookId').equals(bookRecord.supabaseId).toArray()
         : [];
@@ -616,11 +617,8 @@ export const BookProvider = ({ children }) => {
         console.log('[Apex] Deleted highlights:', allHighlightIds.length);
       }
 
-      // Delete reading progress by Dexie integer bookId
-      const progressByInt = await db.reading_progress
-        .where('bookId').equals(targetId)
-        .toArray();
-      // Delete reading progress by supabaseId string bookId
+      // Reading Progress
+      const progressByInt = await db.reading_progress.where('bookId').equals(targetId).toArray();
       const progressByUuid = bookRecord.supabaseId
         ? await db.reading_progress.where('bookId').equals(bookRecord.supabaseId).toArray()
         : [];
@@ -630,12 +628,27 @@ export const BookProvider = ({ children }) => {
         console.log('[Apex] Deleted reading progress:', allProgressIds.length);
       }
 
-      // Delete the book itself from Dexie
-      await db.books.delete(targetId);
-      console.log('[Apex] Deleted book from Dexie:', targetId);
+      // Also try deleting by supabaseId directly in case Dexie integer lookup missed it
+      if (bookRecord.supabaseId) {
+        try {
+          const bookByUuid = await db.books
+            .where('supabaseId').equals(bookRecord.supabaseId)
+            .first();
+          if (bookByUuid && bookByUuid.id !== targetId) {
+            // Found the actual current Dexie record — delete it too
+            console.log('[Apex] Found book by supabaseId with different Dexie id:', bookByUuid.id);
+            await db.books.delete(bookByUuid.id);
+          }
+        } catch (err) {
+          console.warn('[Apex] supabaseId lookup failed:', err);
+        }
+      }
+
+      // Delete the book by integer id
+      await db.books.delete(targetId).catch(() => {});
+      console.log('[Apex] Dexie delete complete for bookId:', targetId);
 
       // Step 4: Queue Supabase delete if book was synced
-      // MUST use supabaseId — not Dexie integer id — as record_id for backend delete
       if (bookRecord.supabaseId) {
         console.log('[Apex] Queueing Supabase delete for supabaseId:', bookRecord.supabaseId);
 
@@ -643,7 +656,6 @@ export const BookProvider = ({ children }) => {
           action: 'delete',
           tableName: 'books',
           local_id: (bookRecord.local_id || targetId).toString(),
-          // recordId MUST be the Supabase UUID — backend uses this to delete
           recordId: bookRecord.supabaseId,
           payload: {},
           createdAt: new Date().toISOString(),
@@ -659,7 +671,6 @@ export const BookProvider = ({ children }) => {
           showToastGlobal('Book removed. Cloud sync will complete when you\'re back online.', 'info');
         }
       } else {
-        // Local-only book — Dexie delete is sufficient
         console.log('[Apex] Book was local only — no Supabase delete needed');
       }
 
