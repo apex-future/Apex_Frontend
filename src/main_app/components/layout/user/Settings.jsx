@@ -141,13 +141,13 @@ function Settings({ onLogout }) {
                         desc="Download your bookmarks and reading history"
                         onClick={() => showToastGlobal('Exporting data feature coming soon!', 'info')}
                     />
-                    <ActionRow
+                    {/* <ActionRow
                         icon={<Trash2 size={16} className="text-error" />}
                         label="Clear AI History"
                         desc="Permanently delete all AI chat logs"
                         onClick={() => window.confirm("Are you sure you want to clear all AI history?")}
                         danger={true}
-                    />
+                    /> */}
                     <ActionRow
                         icon={<Trash2 size={16} className="text-error" />}
                         label="Clear App Data"

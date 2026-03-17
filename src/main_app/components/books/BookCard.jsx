@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Heart, Eye, Bookmark } from "lucide-react";
+import { Heart, Eye, Bookmark, Trash } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
 import { BookContext } from '../../context/BookContextInstance';
@@ -15,7 +15,7 @@ const statusStyles = {
 
 export default function BookCard({ book, onClick }) {
     const navigate = useNavigate();
-    const { toggleFavorite, toggleBookmarkedBook } = useContext(BookContext) || {};
+    const { toggleFavorite, toggleBookmarkedBook, deleteBookFromShelves } = useContext(BookContext) || {};
 
     const handleDetailsClick = (e) => {
         e.stopPropagation();
@@ -30,6 +30,11 @@ export default function BookCard({ book, onClick }) {
     const handleBookmarkClick = (e) => {
         e.stopPropagation();
         if (toggleBookmarkedBook) toggleBookmarkedBook(book.id);
+    };
+
+    const handleDeleteClick = (e) => {
+        e.stopPropagation();
+        if (deleteBookFromShelves) deleteBookFromShelves(book.id);
     };
 
     return (
@@ -101,6 +106,13 @@ export default function BookCard({ book, onClick }) {
                             className={`transition-colors ${book.isBookmarked ? 'text-accent-primary' : 'text-gray-400 hover:text-accent-primary'}`}
                         >
                             <Bookmark size={20} fill={book.isBookmarked ? 'currentColor' : 'none'} />
+                        </button>
+                        <button
+                            onClick={handleDeleteClick}
+                            className="text-gray-400 hover:text-red-500 transition-colors ml-1"
+                            title="Delete book"
+                        >
+                            <Trash size={20} />
                         </button>
                     </div>
                 </div>
