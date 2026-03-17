@@ -128,80 +128,62 @@ const PDFReader = ({
   const onPageChangeRef = useRef(onPageChange);
   useEffect(() => { onPageChangeRef.current = onPageChange; }, [onPageChange]);
 
-  // IntersectionObserver to track which page is current in vertical mode
-  useEffect(() => {
+  // Scroll handler for vertical mode — detects which page is at the top
+  const handleVerticalScroll = useCallback(() => {
     if (!isVertical || !numPages) return;
+    if (isJumping.current) return;
 
-    const observerOptions = {
-      root: containerRef.current,
-      rootMargin: '0px 0px -90% 0px', 
-      threshold: [0, 0.01, 0.1, 0.5, 1.0],
-    };
+    const container = containerRef.current;
+    if (!container) return;
 
-    const observerCallback = (entries) => {
-      // Ignore scroll updates if we're in the middle of a jump
-      if (isJumping.current || pendingJump.current !== null) return;
+    const pageElements = container.querySelectorAll('.pdf-page-wrapper');
+    if (!pageElements.length) return;
 
-      const containerRect = containerRef.current?.getBoundingClientRect();
-      if (!containerRect) return;
+    const containerTop = container.getBoundingClientRect().top;
+    let bestPage = -1;
+    let minTopDiff = Infinity;
 
-      const visibleEntries = entries.filter(e => e.isIntersecting);
-      if (visibleEntries.length === 0) return;
-
-      let bestPage = -1;
-      let minTopDiff = Infinity;
-
-      visibleEntries.forEach((entry) => {
-          const rect = entry.target.getBoundingClientRect();
-          const topDiff = Math.abs(rect.top - containerRect.top);
-          if (topDiff < minTopDiff) {
-              minTopDiff = topDiff;
-              bestPage = parseInt(entry.target.dataset.pageIndex, 10);
-          }
-      });
-
-      if (bestPage !== -1 && bestPage !== pageNumber) {
-        lastReportedPage.current = bestPage;
-        onPageChangeRef.current?.(bestPage);
+    pageElements.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      const topDiff = Math.abs(rect.top - containerTop);
+      if (topDiff < minTopDiff) {
+        minTopDiff = topDiff;
+        bestPage = parseInt(el.dataset.pageIndex, 10);
       }
-    };
+    });
 
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-    const pageElements = containerRef.current?.querySelectorAll('.pdf-page-wrapper');
-    pageElements?.forEach((el) => observer.observe(el));
-
-    return () => observer.disconnect();
-  }, [isVertical, numPages, pageRendered, maxPagesToRender, pageNumber]);
+    if (bestPage !== -1 && bestPage !== lastReportedPage.current) {
+      lastReportedPage.current = bestPage;
+      onPageChangeRef.current?.(bestPage);
+    }
+  }, [isVertical, numPages]);
 
   // Handle programmatic scroll for goToPage in vertical mode
   useEffect(() => {
-    if (isVertical && containerRef.current && pendingJump.current !== null) {
-        const targetPageNumber = pendingJump.current;
+    if (!isVertical || !containerRef.current) return;
+    if (pageNumber === lastReportedPage.current) return;
 
-        // If we're jumping to a page not yet rendered, force render all pages immediately
-        if (targetPageNumber > maxPagesToRender) {
-            setMaxPagesToRender(numPages);
-            // The effect will re-run when maxPagesToRender updates
-            return;
-        }
+    const targetPageNumber = pageNumber;
 
-        const targetPage = containerRef.current.querySelector(`[data-page-index="${targetPageNumber}"]`);
-        
-        if (targetPage) {
-            isJumping.current = true;
-            targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
-            // Sync refs and clear pending jump
-            lastReportedPage.current = targetPageNumber;
-            pendingJump.current = null;
+    // If we're jumping to a page not yet rendered, force render all pages immediately
+    if (targetPageNumber > maxPagesToRender) {
+      setMaxPagesToRender(numPages);
+      // The effect will re-run when maxPagesToRender updates
+      return;
+    }
 
-            const timeout = setTimeout(() => {
-                isJumping.current = false;
-            }, 1000); 
-            
-            return () => clearTimeout(timeout);
-        }
+    const targetPage = containerRef.current.querySelector(`[data-page-index="${targetPageNumber}"]`);
+    
+    if (targetPage) {
+      isJumping.current = true;
+      lastReportedPage.current = targetPageNumber;
+      targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      const timeout = setTimeout(() => {
+        isJumping.current = false;
+      }, 1000);
+      
+      return () => clearTimeout(timeout);
     }
   }, [pageNumber, isVertical, maxPagesToRender, numPages]);
 
@@ -339,10 +321,23 @@ const PDFReader = ({
     swipeDuration: 500,
   });
 
+  // Merge our containerRef with the swipeHandlers ref
+  const mergedRef = useCallback((node) => {
+    containerRef.current = node;
+    if (swipeHandlers.ref) {
+      if (typeof swipeHandlers.ref === 'function') {
+        swipeHandlers.ref(node);
+      } else {
+        swipeHandlers.ref.current = node;
+      }
+    }
+  }, [swipeHandlers.ref]);
+
   return (
     <div
-      ref={containerRef}
       {...swipeHandlers}
+      ref={mergedRef}
+      onScroll={isVertical ? handleVerticalScroll : undefined}
       className={`flex-1 flex flex-col items-center h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-auto custom-scrollbar'}`}
       id="pdf-container"
     >
@@ -362,8 +357,8 @@ const PDFReader = ({
             return (
               <div 
                   key={i} 
-                  className="pdf-page-wrapper mx-auto flex flex-col items-center justify-center min-h-full w-full bg-bg-elevated relative" 
-                  style={{ minHeight: isVertical ? '100%' : (pdfWidth * 1.41 * scale) }}
+                  className="pdf-page-wrapper mx-auto flex flex-col items-center w-full bg-bg-elevated relative" 
+                  style={!isVertical ? { minHeight: pdfWidth * 1.41 * scale } : undefined}
                   data-page-index={pageIdx}
               >
                 {shouldRender ? (
@@ -396,7 +391,7 @@ const PDFReader = ({
                   </div>
                 )}
                 {/* Visual Divider - Absolute to ensure it's on top of page content */}
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/60 dark:bg-white/20 z-20 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/50 dark:bg-black/70 z-20 pointer-events-none" />
               </div>
             );
           })
