@@ -17,6 +17,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.7] - 2026-03-17
+### Fixed
+- Book delete now correctly removes highlights, bookmarks and reading progress stored by Supabase UUID bookId
+- Pull sync now writes updated Dexie integer IDs back as local_id after bulkAdd
+- Delete no longer reverts on refresh
+
+---
+
 ## [1.6.6] - 2026-03-17
 ### Fixed
 - Book delete now correctly removes from Dexie (books, highlights, bookmarks, reading_progress)

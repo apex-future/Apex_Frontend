@@ -168,9 +168,10 @@ const syncService = {
             supabaseId: b.id,
             synced: true,
           };
+          // Remove the Supabase UUID 'id' — Dexie will auto-generate integer PK
           delete mapped.id;
 
-          // Restore blob using supabaseId as stable key (or local_id if unpublished)
+          // Restore blob using supabaseId as stable key
           if (existingBlobMap[b.id]) {
             mapped.fileBlob = existingBlobMap[b.id];
           } else if (existingBlobMap[b.local_id]) {
@@ -179,7 +180,22 @@ const syncService = {
 
           return mapped;
         });
-        await db.books.bulkAdd(mappedBooks);
+
+        // bulkAdd returns array of new auto-generated Dexie integer IDs
+        const newDexieIds = await db.books.bulkAdd(mappedBooks, { allKeys: true });
+
+        // Write the new Dexie integer ID back as local_id for each book
+        // This ensures deleteBookFromShelves and other operations use the correct current ID
+        const updates = newDexieIds.map((newId, index) => ({
+          id: newId,
+          local_id: newId.toString(),
+        }));
+
+        for (const update of updates) {
+          await db.books.update(update.id, { local_id: update.local_id });
+        }
+
+        console.log('[Apex Sync] Pull complete — assigned new Dexie IDs to', newDexieIds.length, 'books');
       }
 
       // Reading Progress
