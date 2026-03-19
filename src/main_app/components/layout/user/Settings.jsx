@@ -5,6 +5,10 @@ import { useNavigate } from 'react-router-dom';
 
 import useThemeStore from '../../../store/themeStore';
 import { APP_VERSION } from '../../../constants/version';
+import ConfirmModal from '../../ui/ConfirmModal';
+import db from '../../../db/apex.db';
+import syncService from '../../../services/syncService';
+import apiClient from '../../../services/apiClient';
 
 function Settings({ onLogout }) {
     const navigate = useNavigate();
@@ -23,6 +27,97 @@ function Settings({ onLogout }) {
         autoExplain: false,
         saveHistory: true,
     });
+
+    // State for clear data confirmation modal
+    const [showClearModal, setShowClearModal] = useState(false);
+    const [clearing, setClearing] = useState(false);
+
+    /**
+     * clearDeviceOnly — Wipes all local Dexie data and localStorage
+     * Cloud data is preserved. Pull sync runs after to restore from Supabase.
+     */
+    const handleClearDeviceOnly = async () => {
+      setClearing(true);
+      console.log('[Apex] Clearing device-only data...');
+      try {
+        // Clear all Dexie tables
+        await db.books.clear();
+        await db.highlights.clear();
+        await db.bookmarks.clear();
+        await db.reading_progress.clear();
+        await db.sync_queue.clear();
+        await db.chats.clear();
+
+        // Clear localStorage except auth token
+        const token = localStorage.getItem('apex_token');
+        const cleanedFlag = localStorage.getItem('apex_db_cleaned');
+        localStorage.clear();
+        if (token) localStorage.setItem('apex_token', token);
+        if (cleanedFlag) localStorage.setItem('apex_db_cleaned', cleanedFlag);
+
+        console.log('[Apex] Device data cleared. Pulling from Supabase...');
+
+        // Re-pull from Supabase to restore cloud data
+        if (navigator.onLine) {
+          await syncService.pullAllUserData();
+        }
+
+        showToastGlobal('Device data cleared. Your cloud data has been restored.', 'success');
+      } catch (err) {
+        console.error('[Apex] Failed to clear device data:', err);
+        showToastGlobal('Failed to clear data. Please try again.', 'error');
+      } finally {
+        setClearing(false);
+        setShowClearModal(false);
+      }
+    };
+
+    /**
+     * clearEverything — Wipes ALL data from both device AND Supabase
+     * This is nuclear — books, files in Storage, highlights, bookmarks, progress — all gone.
+     * AI conversations are preserved.
+     */
+    const handleClearEverything = async () => {
+      setClearing(true);
+      console.log('[Apex] Clearing ALL data — device and cloud...');
+      try {
+        // Step 1: Delete all books from Supabase
+        // The backend cascade will handle highlights, bookmarks, reading_progress
+        if (navigator.onLine) {
+          console.log('[Apex] Deleting all books from Supabase...');
+          try {
+            await apiClient.delete('/api/books/all');
+          } catch (err) {
+            console.error('[Apex] Failed to delete books from Supabase:', err);
+            // Continue with local clear even if cloud delete fails
+          }
+        }
+
+        // Step 2: Clear all Dexie tables
+        await db.books.clear();
+        await db.highlights.clear();
+        await db.bookmarks.clear();
+        await db.reading_progress.clear();
+        await db.sync_queue.clear();
+        await db.chats.clear();
+
+        // Step 3: Clear localStorage except auth token
+        const token = localStorage.getItem('apex_token');
+        const cleanedFlag = localStorage.getItem('apex_db_cleaned');
+        localStorage.clear();
+        if (token) localStorage.setItem('apex_token', token);
+        if (cleanedFlag) localStorage.setItem('apex_db_cleaned', cleanedFlag);
+
+        console.log('[Apex] All data cleared successfully');
+        showToastGlobal('All data permanently deleted.', 'success');
+      } catch (err) {
+        console.error('[Apex] Failed to clear all data:', err);
+        showToastGlobal('Failed to clear data. Please try again.', 'error');
+      } finally {
+        setClearing(false);
+        setShowClearModal(false);
+      }
+    };
 
     const handleToggle = (setter, key, value) => {
         setter(prev => ({ ...prev, [key]: value }));
@@ -141,18 +236,18 @@ function Settings({ onLogout }) {
                         desc="Download your bookmarks and reading history"
                         onClick={() => showToastGlobal('Exporting data feature coming soon!', 'info')}
                     />
-                    <ActionRow
+                    {/* <ActionRow
                         icon={<Trash2 size={16} className="text-error" />}
                         label="Clear AI History"
                         desc="Permanently delete all AI chat logs"
                         onClick={() => window.confirm("Are you sure you want to clear all AI history?")}
                         danger={true}
-                    />
+                    /> */}
                     <ActionRow
                         icon={<Trash2 size={16} className="text-error" />}
                         label="Clear App Data"
-                        desc="Erase all books and progress from this browser"
-                        onClick={() => window.confirm("Are you sure you want to completely erase all data? This cannot be undone.")}
+                        desc="Erase books and progress from this device or everywhere"
+                        onClick={() => setShowClearModal(true)}
                         danger={true}
                     />
                 </SettingSection>
@@ -199,6 +294,31 @@ function Settings({ onLogout }) {
                 </SettingSection>
 
             </div>
+
+            {/* Clear app data confirmation modal — two danger options */}
+            <ConfirmModal
+              isOpen={showClearModal}
+              title="Clear App Data"
+              message="Choose what you want to clear. Your AI conversation history will always be preserved."
+              onClose={() => setShowClearModal(false)}
+              actions={[
+                {
+                  label: clearing ? 'Clearing...' : 'Clear Device Only',
+                  variant: 'primary',
+                  onClick: handleClearDeviceOnly,
+                },
+                {
+                  label: clearing ? 'Clearing...' : 'Clear Everything',
+                  variant: 'danger',
+                  onClick: handleClearEverything,
+                },
+                {
+                  label: 'Cancel',
+                  variant: 'ghost',
+                  onClick: () => setShowClearModal(false),
+                },
+              ]}
+            />
         </div>
     );
 }

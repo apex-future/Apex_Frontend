@@ -152,10 +152,9 @@ export const BookProvider = ({ children }) => {
   const addBookToShelf = useCallback(async (fileObject, shelfName = 'Active Reading') => {
     if (!fileObject) return;
 
-    // Duplicate Check: Check if a book with the same title already exists
+    // Duplicate check
     const title = fileObject.name || "New Document";
     const isDuplicate = books.some(b => b.title.toLowerCase() === title.toLowerCase());
-
     if (isDuplicate) {
       setShowDuplicateModal(true);
       return;
@@ -166,25 +165,26 @@ export const BookProvider = ({ children }) => {
     const fileType = fileObject.type || 'application/pdf';
 
     const newBookData = {
-      title: title,
+      title,
       author: "N/A",
-      fileType: fileType,
+      fileType,
       fileSize: fileObject.size,
       fileBlob: arrayBuffer,
       coverImage: null,
       totalPages: 1,
       uploadedAt: new Date().toISOString(),
       lastReadAt: new Date().toISOString(),
-      // App-level fields (not in Dexie index, but stored)
       progress: 0,
       currentPage: 0,
       status: 'new',
-      shelfName: shelfName,
+      shelfName,
       lastAccessed: new Date().toISOString(),
       cover: null,
       isLocal: true,
       isFavorite: false,
       isBookmarked: false,
+      // Flag to show uploading state on the book card
+      isUploading: navigator.onLine,
       metadata: {
         bookmarks: [],
         highlights: [],
@@ -192,89 +192,125 @@ export const BookProvider = ({ children }) => {
       },
     };
 
+    let id;
     try {
-      // First add the book record to get the auto-generated ID
+      // Step 1: Save to Dexie immediately
       const newBookBase = { ...newBookData };
-      delete newBookBase.id; // Ensure no ID conflict
-
-      const id = await db.books.add(newBookBase);
-
-      // Update the record with its own ID as local_id for sync tracking
+      delete newBookBase.id;
+      id = await db.books.add(newBookBase);
       await db.books.update(id, { local_id: id.toString() });
+      console.log('[Apex] Book saved to Dexie with id:', id);
+    } catch (err) {
+      console.error('[Apex] Failed to save book to Dexie:', err);
+      showToastGlobal('Failed to save book. Please try again.', 'error');
+      return;
+    }
 
-      // Upload file to Supabase Storage + create metadata record (direct, not through queue)
-      // Reconstruct a fresh File from the stored ArrayBuffer
-      // The original fileObject stream is consumed after arrayBuffer() is called
-      // Using it directly for upload would send empty/corrupted data
-      const freshBlob = new Blob([arrayBuffer], { type: fileType });
-      const freshFile = new File([freshBlob], fileObject.name, { type: fileType });
+    // Step 2: Add to UI immediately — BEFORE upload
+    // isUploading: true shows a loading indicator on the card
+    const newBook = {
+      ...newBookData,
+      id,
+      file: fileObject,
+    };
 
-      if (navigator.onLine) {
-        try {
-          const result = await syncService.uploadBook(freshFile, title, 'Unknown', id);
-          if (!result) {
-            // Developer log only — never show raw errors to users
-            console.error('[Apex Sync] Book upload to Supabase failed — queued for retry:', title);
+    setShelves(prev => prev.map(shelf =>
+      shelf.shelfName === shelfName
+        ? { ...shelf, books: [newBook, ...shelf.books] }
+        : shelf
+    ));
 
-            // User-facing custom toast — friendly, not alarming
-            showToastGlobal('Book saved offline. It will sync when your connection is stable.', 'warning');
+    console.log('[Apex] Book added to UI optimistically:', title);
 
-            // Queue metadata for sync (file will upload via migrateLocalData when online)
-            await db.sync_queue.add({
-              action: 'upload',
-              tableName: 'books',
-              local_id: id.toString(),
-              payload: {
-                title,
-                author: 'Unknown',
-                file_type: fileType,
-                file_size: fileObject.size,
-                uploaded_at: newBookData.uploadedAt
-              },
-              createdAt: new Date().toISOString(),
-              attempts: 0,
-              status: 'pending'
-            });
-          }
-        } catch (uploadErr) {
-          console.error('[Apex Sync] Upload exception:', uploadErr);
+    // Step 3: Reconstruct fresh File from ArrayBuffer
+    // Original fileObject stream is consumed after arrayBuffer() — cannot reuse
+    const freshBlob = new Blob([arrayBuffer], { type: fileType });
+    const freshFile = new File([freshBlob], fileObject.name, { type: fileType });
+
+    if (navigator.onLine) {
+      // Show persistent uploading toast — dismissed only when upload resolves
+      showToastGlobal('Uploading your book, hang tight...', 'info', 0); // 0 = persistent, no auto-dismiss
+
+      try {
+        console.log('[Apex] Starting Supabase upload for:', title);
+        const result = await syncService.uploadBook(freshFile, title, 'Unknown', id);
+
+        if (result) {
+          console.log('[Apex] Upload successful for:', title, '| supabaseId:', result.id);
+
+          // Update the book in UI to remove uploading state
+          setShelves(prev => prev.map(shelf => ({
+            ...shelf,
+            books: shelf.books.map(b =>
+              b.id === id ? { ...b, isUploading: false, supabaseId: result.id } : b
+            ),
+          })));
+
+          // Dismiss uploading toast and show success
+          showToastGlobal('Book uploaded successfully!', 'success');
+        } else {
+          console.error('[Apex] Upload returned null for:', title);
+
+          // Update UI to remove uploading state even on failure
+          setShelves(prev => prev.map(shelf => ({
+            ...shelf,
+            books: shelf.books.map(b =>
+              b.id === id ? { ...b, isUploading: false } : b
+            ),
+          })));
+
+          // Queue for retry
+          await db.sync_queue.add({
+            action: 'upload',
+            tableName: 'books',
+            local_id: id.toString(),
+            payload: {
+              title,
+              author: 'Unknown',
+              file_type: fileType,
+              file_size: fileObject.size,
+              uploaded_at: newBookData.uploadedAt,
+            },
+            createdAt: new Date().toISOString(),
+            attempts: 0,
+            status: 'pending',
+          });
+
           showToastGlobal('Book saved offline. It will sync when your connection is stable.', 'warning');
         }
-      } else {
-        // Offline — queue metadata for sync (file upload when back online via migrateLocalData)
-        await db.sync_queue.add({
-          action: 'upload',
-          tableName: 'books',
-          local_id: id.toString(),
-          payload: {
-            title,
-            author: "Unknown",
-            file_type: fileType,
-            file_size: fileObject.size,
-            uploaded_at: newBookData.uploadedAt
-          },
-          createdAt: new Date().toISOString(),
-          attempts: 0,
-          status: 'pending'
-        });
+      } catch (uploadErr) {
+        console.error('[Apex] Upload exception for:', title, uploadErr);
+
+        // Update UI to remove uploading state
+        setShelves(prev => prev.map(shelf => ({
+          ...shelf,
+          books: shelf.books.map(b =>
+            b.id === id ? { ...b, isUploading: false } : b
+          ),
+        })));
+
+        showToastGlobal('Book saved offline. It will sync when your connection is stable.', 'warning');
       }
+    } else {
+      // Offline — queue for later, no upload toast
+      console.log('[Apex] Offline — book saved locally, queued for sync');
+      await db.sync_queue.add({
+        action: 'upload',
+        tableName: 'books',
+        local_id: id.toString(),
+        payload: {
+          title,
+          author: 'Unknown',
+          file_type: fileType,
+          file_size: fileObject.size,
+          uploaded_at: newBookData.uploadedAt,
+        },
+        createdAt: new Date().toISOString(),
+        attempts: 0,
+        status: 'pending',
+      });
 
-      // Create in-memory book object with the File for immediate use
-      const newBook = {
-        ...newBookData,
-        id,
-        file: fileObject,
-      };
-
-      setShelves((prevShelves) =>
-        prevShelves.map((shelf) =>
-          shelf.shelfName === shelfName
-            ? { ...shelf, books: [newBook, ...shelf.books] }
-            : shelf
-        )
-      );
-    } catch (error) {
-      console.error("Failed to save book to Dexie:", error);
+      showToastGlobal('Book saved offline. It will sync when your connection is stable.', 'warning');
     }
   }, [books]);
 
@@ -549,40 +585,137 @@ export const BookProvider = ({ children }) => {
     });
   }, []);
 
-  const deleteBookFromShelves = useCallback(async (id) => {
+  const deleteBookFromShelves = useCallback(async (id, bookFallback = null) => {
     const targetId = typeof id === 'string' ? parseInt(id) : id;
 
-    // Get the book record before deleting to capture recordId for sync
-    const bookRecord = await db.books.get(targetId).catch(() => null);
+    console.log('[Apex] deleteBookFromShelves called for bookId:', targetId);
 
-    setShelves((prevShelves) => {
-      const newShelves = prevShelves.map((shelf) => ({
+    try {
+      // Step 1: Get full book record from Dexie
+      // If Dexie returns null (stale ID after pull sync), fall back to in-memory book object
+      let bookRecord = await db.books.get(targetId);
+
+      if (!bookRecord && bookFallback) {
+        console.warn('[Apex] Dexie record not found — using in-memory fallback for bookId:', targetId);
+        // Construct a minimal bookRecord from the in-memory book object
+        // so we still have supabaseId for the Supabase delete queue
+        bookRecord = {
+          id: targetId,
+          supabaseId: bookFallback.supabaseId || bookFallback.recordId || null,
+          local_id: bookFallback.local_id || targetId.toString(),
+          synced: bookFallback.synced || false,
+        };
+      }
+
+      console.log('[Apex] Book record for delete:', {
+        targetId,
+        supabaseId: bookRecord?.supabaseId,
+        synced: bookRecord?.synced,
+        source: bookRecord ? (bookFallback && !await db.books.get(targetId) ? 'fallback' : 'dexie') : 'none',
+      });
+
+      // Step 2: Remove from UI immediately (optimistic)
+      // Always do this regardless of whether bookRecord exists
+      setShelves(prev => prev.map(shelf => ({
         ...shelf,
-        books: shelf.books.filter((book) => book.id !== targetId),
-      }));
+        books: shelf.books.filter(b => b.id !== targetId),
+      })));
 
-      // Queue delete for sync if the book has been synced to Supabase
-      if (bookRecord?.recordId) {
-        db.sync_queue.add({
+      if (!bookRecord) {
+        // No record anywhere — UI removal is all we can do
+        console.warn('[Apex] No book record found anywhere for id:', targetId);
+        showToastGlobal('Book removed.', 'success');
+        return;
+      }
+
+      // Step 3: Delete related records from Dexie by BOTH integer ID and supabaseId
+      console.log('[Apex] Deleting related records from Dexie...');
+
+      // Bookmarks
+      const bookmarksByInt = await db.bookmarks.where('bookId').equals(targetId).toArray();
+      const bookmarksByUuid = bookRecord.supabaseId
+        ? await db.bookmarks.where('bookId').equals(bookRecord.supabaseId).toArray()
+        : [];
+      const allBookmarkIds = [...bookmarksByInt, ...bookmarksByUuid].map(b => b.id);
+      if (allBookmarkIds.length > 0) {
+        await db.bookmarks.bulkDelete(allBookmarkIds);
+        console.log('[Apex] Deleted bookmarks:', allBookmarkIds.length);
+      }
+
+      // Highlights
+      const highlightsByInt = await db.highlights.where('bookId').equals(targetId).toArray();
+      const highlightsByUuid = bookRecord.supabaseId
+        ? await db.highlights.where('bookId').equals(bookRecord.supabaseId).toArray()
+        : [];
+      const allHighlightIds = [...highlightsByInt, ...highlightsByUuid].map(h => h.id);
+      if (allHighlightIds.length > 0) {
+        await db.highlights.bulkDelete(allHighlightIds);
+        console.log('[Apex] Deleted highlights:', allHighlightIds.length);
+      }
+
+      // Reading Progress
+      const progressByInt = await db.reading_progress.where('bookId').equals(targetId).toArray();
+      const progressByUuid = bookRecord.supabaseId
+        ? await db.reading_progress.where('bookId').equals(bookRecord.supabaseId).toArray()
+        : [];
+      const allProgressIds = [...progressByInt, ...progressByUuid].map(p => p.id);
+      if (allProgressIds.length > 0) {
+        await db.reading_progress.bulkDelete(allProgressIds);
+        console.log('[Apex] Deleted reading progress:', allProgressIds.length);
+      }
+
+      // Also try deleting by supabaseId directly in case Dexie integer lookup missed it
+      if (bookRecord.supabaseId) {
+        try {
+          const bookByUuid = await db.books
+            .where('supabaseId').equals(bookRecord.supabaseId)
+            .first();
+          if (bookByUuid && bookByUuid.id !== targetId) {
+            // Found the actual current Dexie record — delete it too
+            console.log('[Apex] Found book by supabaseId with different Dexie id:', bookByUuid.id);
+            await db.books.delete(bookByUuid.id);
+          }
+        } catch (err) {
+          console.warn('[Apex] supabaseId lookup failed:', err);
+        }
+      }
+
+      // Delete the book by integer id
+      await db.books.delete(targetId).catch(() => {});
+      console.log('[Apex] Dexie delete complete for bookId:', targetId);
+
+      // Step 4: Queue Supabase delete if book was synced
+      if (bookRecord.supabaseId) {
+        console.log('[Apex] Queueing Supabase delete for supabaseId:', bookRecord.supabaseId);
+
+        await db.sync_queue.add({
           action: 'delete',
           tableName: 'books',
           local_id: (bookRecord.local_id || targetId).toString(),
-          recordId: bookRecord.recordId,
+          recordId: bookRecord.supabaseId,
           payload: {},
           createdAt: new Date().toISOString(),
           attempts: 0,
-          status: 'pending'
-        }).then(() => syncService.triggerSync?.())
-          .catch(err => console.error('Failed to queue book delete:', err));
+          status: 'pending',
+        });
+
+        if (navigator.onLine) {
+          console.log('[Apex] Online — triggering immediate sync for delete');
+          syncService.triggerSync?.();
+        } else {
+          console.log('[Apex] Offline — delete queued for when back online');
+          showToastGlobal('Book removed. Cloud sync will complete when you\'re back online.', 'info');
+        }
+      } else {
+        console.log('[Apex] Book was local only — no Supabase delete needed');
       }
 
-      // Delete from Dexie
-      db.books.delete(targetId).catch(err => console.error("Failed to delete book:", err));
-      // Also clean up related progress and highlights
-      db.reading_progress.where('bookId').equals(targetId).delete().catch(() => { });
-      db.highlights.where('bookId').equals(targetId).delete().catch(() => { });
-      return newShelves;
-    });
+      showToastGlobal('Book deleted.', 'success');
+
+    } catch (err) {
+      console.error('[Apex] deleteBookFromShelves failed:', err);
+      showToastGlobal('Failed to delete book. Please try again.', 'error');
+    }
   }, []);
 
   const addSavedWord = useCallback(async (bookId, wordObj) => {

@@ -17,6 +17,45 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.9] - 2026-03-17
+### Improved
+- Book appears in library immediately when uploaded (optimistic UI)
+- Persistent "Uploading your book..." toast shows during upload
+- Toast updates to success or warning when upload resolves
+- Book card shows uploading spinner overlay while upload is in progress
+
+---
+
+## [1.6.8] - 2026-03-17
+### Fixed
+- Book delete now uses in-memory book object as fallback when Dexie record has shifted ID after pull sync
+- Supabase delete queue now fires correctly even when Dexie lookup returns null
+- Book delete also searches by supabaseId to catch mismatched Dexie integer IDs
+
+---
+
+## [1.6.7] - 2026-03-17
+### Fixed
+- Book delete now correctly removes highlights, bookmarks and reading progress stored by Supabase UUID bookId
+- Pull sync now writes updated Dexie integer IDs back as local_id after bulkAdd
+- Delete no longer reverts on refresh
+
+---
+
+## [1.6.6] - 2026-03-17
+### Fixed
+- Book delete now correctly removes from Dexie (books, highlights, bookmarks, reading_progress)
+- Book delete now correctly queues Supabase delete using supabaseId instead of recordId
+- Offline deletes queued and synced when back online
+
+### Added
+- Reusable ConfirmModal component
+- Book delete confirmation modal before permanent deletion
+- Clear App Data — two options: device only or everything (cloud + device)
+- DELETE /api/books/all endpoint for bulk cloud delete
+
+---
+
 ## [1.6.5] - 2026-03-13
 
 ### Added

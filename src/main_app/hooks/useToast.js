@@ -30,19 +30,28 @@ export default function useToast() {
 
   const showToast = useCallback((message, type = 'info', duration) => {
     const id = ++_idCounter;
-    const effectiveDuration = duration || (type === 'error' ? 6000 : 4000);
+    // Default duration if not specified (and not 0)
+    const effectiveDuration = duration !== undefined ? duration : (type === 'error' ? 6000 : 4000);
 
-    setToasts(prev => [...prev, { id, message, type, exiting: false }]);
+    setToasts(prev => {
+      // Small hack: if this is a success/warning toast following an upload,
+      // it should replace the persistent "Uploading..." toast
+      const filtered = prev.filter(t => !(t.message.includes('Uploading') && t.type === 'info'));
+      return [...filtered, { id, message, type, exiting: false }];
+    });
 
-    timersRef.current[id] = setTimeout(() => {
-      // Start exit animation
-      setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
-      // Remove after animation
-      setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-        delete timersRef.current[id];
-      }, 300);
-    }, effectiveDuration);
+    // Only auto-dismiss if duration is not 0 (persistent)
+    if (duration !== 0) {
+      timersRef.current[id] = setTimeout(() => {
+        // Start exit animation
+        setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+        // Remove after animation
+        setTimeout(() => {
+          setToasts(prev => prev.filter(t => t.id !== id));
+          delete timersRef.current[id];
+        }, 300);
+      }, effectiveDuration);
+    }
 
     return id;
   }, []);

@@ -121,8 +121,10 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                 key={i}
                 data-page={i}
                 className="thumbnail-container flex flex-col items-center flex-shrink-0 w-[100px]"
-                onClick={() => {
+                onClick={(e) => {
+                    e.stopPropagation();
                     goToPage(i);
+                    handleClose();
                 }}
             >
                 <div 

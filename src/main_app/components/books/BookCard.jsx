@@ -1,7 +1,8 @@
-import React, { useContext } from 'react';
-import { Heart, Eye, Bookmark } from "lucide-react";
+import React, { useContext, useState } from 'react';
+import { Heart, Eye, Bookmark, Trash } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
+import ConfirmModal from '../ui/ConfirmModal';
 import { BookContext } from '../../context/BookContextInstance';
 
 const statusStyles = {
@@ -15,7 +16,10 @@ const statusStyles = {
 
 export default function BookCard({ book, onClick }) {
     const navigate = useNavigate();
-    const { toggleFavorite, toggleBookmarkedBook } = useContext(BookContext) || {};
+    const { toggleFavorite, toggleBookmarkedBook, deleteBookFromShelves } = useContext(BookContext) || {};
+
+    // State for delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const handleDetailsClick = (e) => {
         e.stopPropagation();
@@ -30,6 +34,12 @@ export default function BookCard({ book, onClick }) {
     const handleBookmarkClick = (e) => {
         e.stopPropagation();
         if (toggleBookmarkedBook) toggleBookmarkedBook(book.id);
+    };
+
+    const handleDeleteClick = (e) => {
+        e.stopPropagation();
+        // Show confirmation modal — never delete directly without confirmation
+        setShowDeleteModal(true);
     };
 
     return (
@@ -52,6 +62,14 @@ export default function BookCard({ book, onClick }) {
                             author={book.author}
                             className="w-full h-full group-hover:-rotate-6 transition-transform duration-300"
                         />
+                    )}
+
+                    {/* Uploading overlay — shows while book is being uploaded to Supabase */}
+                    {book.isUploading && (
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center rounded-lg gap-1">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span className="text-white text-[9px] font-bold uppercase tracking-wider">Uploading</span>
+                      </div>
                     )}
 
                     {/* Status Badge */}
@@ -102,9 +120,42 @@ export default function BookCard({ book, onClick }) {
                         >
                             <Bookmark size={20} fill={book.isBookmarked ? 'currentColor' : 'none'} />
                         </button>
+                        <button
+                            onClick={handleDeleteClick}
+                            className="text-gray-400 hover:text-red-500 transition-colors ml-1"
+                            title="Delete book"
+                        >
+                            <Trash size={20} />
+                        </button>
                     </div>
                 </div>
             </div>
+
+            {/* Delete confirmation modal */}
+            <ConfirmModal
+              isOpen={showDeleteModal}
+              hideOverlay={true}
+              title={`Delete "${book.title}"?`}
+              message="This will permanently remove the book and all your highlights, bookmarks, and reading progress. This cannot be undone."
+              onClose={() => setShowDeleteModal(false)}
+              actions={[
+                {
+                  label: 'Delete',
+                  variant: 'danger',
+                  onClick: () => {
+                    console.log('[Apex] User confirmed book delete for bookId:', book.id, '| supabaseId:', book.supabaseId);
+                    // Pass full book object as fallback in case Dexie record has shifted ID after pull sync
+                    if (deleteBookFromShelves) deleteBookFromShelves(book.id, book);
+                    setShowDeleteModal(false);
+                  },
+                },
+                {
+                  label: 'Cancel',
+                  variant: 'ghost',
+                  onClick: () => setShowDeleteModal(false),
+                },
+              ]}
+            />
         </div>
     );
 }
