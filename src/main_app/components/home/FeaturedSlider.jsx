@@ -8,9 +8,9 @@ const FeaturedSlider = ({ lastReadBook }) => {
     const scrollRef = useRef(null);
 
     const slides = [
-        { id: 'exam', component: <ExamReminder /> },
-        { id: 'lastRead', component: <LastReadCard book={lastReadBook} /> }
-    ].filter(s => s.id === 'exam' || lastReadBook); // Only show last read if it exists
+        { id: 'lastRead', component: <LastReadCard book={lastReadBook} /> },
+        { id: 'exam', component: <ExamReminder /> }
+    ].filter(s => (s.id === 'lastRead' && lastReadBook) || (s.id === 'exam'));
 
     const handleScroll = (e) => {
         const { scrollLeft, clientWidth } = e.target;
@@ -40,7 +40,7 @@ const FeaturedSlider = ({ lastReadBook }) => {
     });
 
     return (
-        <div className="w-full relative px-0 sm:px-6 md:px-8 lg:px-12 xl:px-16" {...handlers}>
+        <div className="w-full relative px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16" {...handlers}>
             <div 
                 ref={scrollRef}
                 onScroll={handleScroll}

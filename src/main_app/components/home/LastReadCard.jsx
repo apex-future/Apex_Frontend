@@ -12,7 +12,7 @@ const LastReadCard = ({ book }) => {
     return (
         <div 
             onClick={() => navigate(`/reader/${currentBook.id}`)}
-            className="w-full bg-card-glass backdrop-blur-xl rounded-2xl md:rounded-3xl p-5 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-2xl transition-all duration-500 group overflow-hidden cursor-pointer shadow-lg relative min-h-[180px] flex items-center"
+            className="w-full bg-card-glass backdrop-blur-xl rounded-2xl md:rounded-3xl p-7 md:p-10 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-2xl transition-all duration-500 group overflow-hidden cursor-pointer shadow-lg relative min-h-[180px] flex items-center"
         >
             {/* Design elements */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-accent-primary/10 transition-all duration-500" />
