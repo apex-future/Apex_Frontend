@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useSwipeable } from 'react-swipeable';
-import { Loader2 } from 'lucide-react';
 import BookSkeleton from './BookSkeleton';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -96,9 +96,22 @@ const PDFReader = ({
 }) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(windowSize?.width || window.innerWidth);
+  const isDesktop = containerWidth > 1024;
+  const pdfWidth = isDesktop ? Math.min(containerWidth - 120, 1100) : containerWidth;
   const [pageRendered, setPageRendered] = useState(0);
-  const [maxPagesToRender, setMaxPagesToRender] = useState(3);
+  const [renderedPages, setRenderedPages] = useState(new Set());
+  const [displayedPage, setDisplayedPage] = useState(pageNumber);
+  const [isFading, setIsFading] = useState(false);
   const isVertical = scrollOrientation === 'vertical';
+
+  const rowVirtualizer = useVirtualizer({
+    count: numPages || 0,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => Math.round(pdfWidth * 1.41 * scale),
+    overscan: 2,
+  });
+
+  console.log('[PDFReader] virtualizer items in view:', rowVirtualizer.getVirtualItems().length, '/', numPages);
 
   const isJumping = useRef(false);
   const lastReportedPage = useRef(pageNumber);
@@ -111,19 +124,21 @@ const PDFReader = ({
     }
   }, [pageNumber]);
 
-  // Timed lazy loading for vertical mode
+  // Horizontal crossfade on page change
   useEffect(() => {
-    if (!isVertical || !numPages) return;
-    
-    // Reset if book or numPages changes
-    setMaxPagesToRender(3);
+    if (isVertical) return;
+    if (pageNumber === displayedPage) return;
+
+    console.log('[PDFReader] horizontal crossfade from', displayedPage, 'to', pageNumber);
+    setIsFading(true);
 
     const timer = setTimeout(() => {
-      setMaxPagesToRender(numPages);
-    }, 3000); // Load the rest after 3 seconds
+      setDisplayedPage(pageNumber);
+      setIsFading(false);
+    }, 150); // 150ms fade-out, then swap
 
     return () => clearTimeout(timer);
-  }, [isVertical, numPages, fileUrl]);
+  }, [pageNumber, isVertical]);
 
   const onPageChangeRef = useRef(onPageChange);
   useEffect(() => { onPageChangeRef.current = onPageChange; }, [onPageChange]);
@@ -160,32 +175,12 @@ const PDFReader = ({
 
   // Handle programmatic scroll for goToPage in vertical mode
   useEffect(() => {
-    if (!isVertical || !containerRef.current) return;
+    if (!isVertical || !rowVirtualizer || !numPages) return;
     if (pageNumber === lastReportedPage.current) return;
-
-    const targetPageNumber = pageNumber;
-
-    // If we're jumping to a page not yet rendered, force render all pages immediately
-    if (targetPageNumber > maxPagesToRender) {
-      setMaxPagesToRender(numPages);
-      // The effect will re-run when maxPagesToRender updates
-      return;
-    }
-
-    const targetPage = containerRef.current.querySelector(`[data-page-index="${targetPageNumber}"]`);
-    
-    if (targetPage) {
-      isJumping.current = true;
-      lastReportedPage.current = targetPageNumber;
-      targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-      const timeout = setTimeout(() => {
-        isJumping.current = false;
-      }, 1000);
-      
-      return () => clearTimeout(timeout);
-    }
-  }, [pageNumber, isVertical, maxPagesToRender, numPages]);
+    console.log('[PDFReader] jumping to page via virtualizer:', pageNumber);
+    rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start', behavior: 'smooth' });
+    lastReportedPage.current = pageNumber;
+  }, [pageNumber, isVertical, numPages]);
 
   // Called when react-pdf finishes rendering a page
   const handlePageRenderSuccess = useCallback(() => {
@@ -258,13 +253,6 @@ const PDFReader = ({
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-
-  const isDesktop = containerWidth > 1024;
-
-  // Edge-to-edge on mobile, margin on desktop
-  const pdfWidth = isDesktop
-    ? Math.min(containerWidth - 120, 1100)
-    : containerWidth;
 
   const lastEdgeHit = useRef({ left: 0, right: 0 });
 
@@ -349,19 +337,21 @@ const PDFReader = ({
         className="flex flex-col items-center sm:items-start justify-start min-h-full w-full mx-auto"
       >
         {isVertical ? (
-          // Render all pages for vertical flow with lazy loading
-          Array.from({ length: numPages || 0 }, (_, i) => {
-            const pageIdx = i + 1;
-            const shouldRender = pageIdx <= maxPagesToRender;
-            
-            return (
-              <div 
-                  key={i} 
-                  className="pdf-page-wrapper mx-auto flex flex-col items-center w-full bg-bg-elevated relative" 
-                  style={!isVertical ? { minHeight: pdfWidth * 1.41 * scale } : undefined}
+          <div
+            style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const pageIdx = virtualRow.index + 1;
+              return (
+                <div
+                  key={virtualRow.index}
+                  className="pdf-page-wrapper absolute left-0 w-full flex flex-col items-center bg-bg-elevated"
                   data-page-index={pageIdx}
-              >
-                {shouldRender ? (
+                  style={{
+                    top: `${virtualRow.start}px`,
+                    height: `${virtualRow.size}px`,
+                  }}
+                >
                   <Page
                     pageNumber={pageIdx}
                     rotate={rotation}
@@ -370,60 +360,84 @@ const PDFReader = ({
                     renderAnnotationLayer={true}
                     onRenderSuccess={handlePageRenderSuccess}
                     width={pdfWidth}
-                    className="!shadow-none" 
+                    className="!shadow-none"
                     loading={
-                        <div className="flex flex-col items-center justify-center bg-bg-elevated" style={{ width: pdfWidth, height: pdfWidth * 1.41 * scale }}>
-                             <div className="w-full h-full p-8 space-y-4 animate-pulse text-center">
-                                <div className="h-4 w-1/3 bg-bg-subtle rounded-full mx-auto" />
-                                <div className="space-y-4">
-                                    <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                                    <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                                    <div className="h-2 w-2/3 bg-bg-subtle rounded-full mx-auto" />
-                                </div>
-                             </div>
+                      <div
+                        className="flex flex-col items-center justify-center bg-bg-elevated animate-pulse"
+                        style={{ width: pdfWidth, height: Math.round(pdfWidth * 1.41 * scale) }}
+                      >
+                        <div className="w-full h-full p-8 space-y-4">
+                          <div className="h-4 w-1/3 bg-bg-subtle rounded-full mx-auto" />
+                          <div className="space-y-4">
+                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                            <div className="h-2 w-2/3 bg-bg-subtle rounded-full mx-auto" />
+                          </div>
                         </div>
+                      </div>
                     }
                   />
-                ) : (
-                  // Placeholder for lazy loading
-                  <div className="flex flex-col items-center justify-center bg-bg-elevated/20" style={{ width: pdfWidth, height: pdfWidth * 1.41 * scale }}>
-                     <p className="text-text-tertiary text-xs font-black uppercase tracking-widest opacity-20">Page {pageIdx}</p>
-                  </div>
-                )}
-                {/* Visual Divider - Absolute to ensure it's on top of page content */}
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/50 dark:bg-black/70 z-20 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/50 dark:bg-black/70 z-20 pointer-events-none" />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* Pre-render buffer for horizontal mode */
+          [-1, 0, 1].map((offset) => {
+            const bufferPageNum = displayedPage + offset;
+            if (bufferPageNum < 1 || bufferPageNum > numPages) return null;
+            const isActive = offset === 0;
+
+            return (
+              <div
+                key={bufferPageNum}
+                className="rounded-sm bg-bg-elevated mx-auto mb-8 lg:mb-0"
+                style={{
+                  position: isActive ? 'relative' : 'absolute',
+                  opacity: isActive ? (isFading ? 0 : 1) : 0,
+                  pointerEvents: isActive ? 'auto' : 'none',
+                  transition: isActive ? 'opacity 150ms ease-in-out' : 'none',
+                  top: isActive ? 'auto' : 0,
+                  left: isActive ? 'auto' : 0,
+                  width: isActive ? 'auto' : '100%',
+                  zIndex: isActive ? 1 : 0,
+                }}
+              >
+                <Page
+                  pageNumber={bufferPageNum}
+                  rotate={rotation}
+                  scale={scale}
+                  renderTextLayer={true}
+                  renderAnnotationLayer={true}
+                  onRenderSuccess={() => {
+                    console.log('[PDFReader] pre-rendered page:', bufferPageNum);
+                    setRenderedPages(prev => new Set(prev).add(bufferPageNum));
+                    if (isActive) handlePageRenderSuccess();
+                  }}
+                  width={pdfWidth}
+                  className="bg-bg-elevated"
+                  loading={
+                    isActive ? (
+                      <div
+                        className="flex flex-col items-center justify-center bg-bg-elevated animate-pulse"
+                        style={{ width: pdfWidth, height: pdfWidth * 1.41 }}
+                      >
+                        <div className="w-full h-full p-8 space-y-4">
+                          <div className="h-4 w-1/3 bg-bg-subtle rounded-full" />
+                          <div className="space-y-4">
+                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                            <div className="h-2 w-2/3 bg-bg-subtle rounded-full" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : null
+                  }
+                />
               </div>
             );
           })
-        ) : (
-          // Single page for horizontal mode
-          <div
-            className="rounded-sm bg-bg-elevated mx-auto mb-8 lg:mb-0"
-            style={{ transition: 'transform 0.25s ease-out' }}
-          >
-            <Page
-              pageNumber={pageNumber}
-              rotate={rotation}
-              scale={scale}
-              renderTextLayer={true}
-              renderAnnotationLayer={true}
-              onRenderSuccess={handlePageRenderSuccess}
-              width={pdfWidth}
-              className="bg-bg-elevated"
-              loading={
-                  <div className="flex flex-col items-center justify-center bg-bg-elevated" style={{ width: pdfWidth, height: pdfWidth * 1.41 }}>
-                       <div className="w-full h-full p-8 space-y-4 animate-pulse">
-                          <div className="h-4 w-1/3 bg-bg-subtle rounded-full" />
-                          <div className="space-y-4">
-                              <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                              <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                              <div className="h-2 w-2/3 bg-bg-subtle rounded-full" />
-                          </div>
-                       </div>
-                  </div>
-              }
-            />
-          </div>
         )}
       </Document>
     </div>

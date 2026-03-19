@@ -13,6 +13,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Improved
 
+- Replaced timed lazy-loading with true virtualization in vertical PDF reader
+  using @tanstack/react-virtual — only visible pages (±2 overscan) are
+  mounted at any time, eliminating hangs on large documents
+- Fixed horizontal reader blinking on every page turn — adjacent pages are
+  now pre-rendered in a buffer so swipes are instant with no skeleton flash
+- Added 150ms crossfade transition to horizontal page turns for smooth,
+  native-feeling navigation
 - Extracted and centralized email sending logic in backend utilities for better maintainability
 
 ---
