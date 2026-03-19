@@ -24,7 +24,7 @@ const ExamReminder = () => {
     if (isEditing) {
         return (
             <div className="w-full">
-                <div className="bg-card-glass backdrop-blur-xl rounded-3xl p-8 border-2 border-accent-primary/30 shadow-lg animate-in fade-in zoom-in duration-300 min-h-[180px] flex flex-col justify-center">
+                <div className="bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-accent-primary/30 shadow-lg animate-in fade-in zoom-in duration-300 min-h-[180px] flex flex-col justify-center">
                     <div className="flex justify-between items-center mb-4">
                         <div className="flex items-center gap-2">
                             <Calendar className="text-accent-primary" size={20} />
@@ -58,7 +58,7 @@ const ExamReminder = () => {
             <div className="w-full">
                 <button
                     onClick={() => setIsEditing(true)}
-                    className="w-full group bg-card-glass backdrop-blur-xl rounded-3xl p-8 border-2 border-dashed border-border-default hover:border-accent-primary/50 transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 min-h-[180px]"
+                    className="w-full group bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-dashed border-border-default hover:border-accent-primary/50 transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 min-h-[180px]"
                 >
                     <div className="flex items-center gap-4">
                         <div className="size-12 rounded-2xl bg-accent-primary/10 flex items-center justify-center text-accent-primary group-hover:scale-110 transition-transform">
@@ -79,7 +79,7 @@ const ExamReminder = () => {
 
     return (
         <div className="w-full">
-            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-3xl p-8 md:p-12 border-2 border-border-default hover:border-text-tertiary transition-all duration-500 group shadow-md min-h-[180px] flex items-center">
+            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-2xl md:rounded-3xl p-6 md:p-12 border-2 border-border-default hover:border-text-tertiary transition-all duration-500 group shadow-md min-h-[180px] flex items-center">
                 {/* Background Decoration */}
                 <div className="absolute -right-4 -top-4 size-32 bg-accent-primary/5 rounded-full blur-3xl group-hover:bg-accent-primary/10 transition-all" />
                 

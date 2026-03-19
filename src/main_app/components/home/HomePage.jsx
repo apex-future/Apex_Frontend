@@ -1,7 +1,7 @@
 import React, { useContext, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "./Header";
-import ExamReminder from "./ExamReminder";
+import FeaturedSlider from "./FeaturedSlider";
 import AllBooks from "./AllBooks";
 import TopNavBar from "../layout/navigation/TopNavBar";
 import { BookContext } from "../../context/BookContextInstance";
