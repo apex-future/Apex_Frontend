@@ -72,7 +72,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
               const isNotesItem = id === 'notes';
               const isBookmarksItem = id === 'bookmarks';
               const isHighlightsItem = id === 'highlights';
-              
+
               let count = 0;
               if (isNotesItem) count = notes.length;
               if (isBookmarksItem) count = bookmarks.length;

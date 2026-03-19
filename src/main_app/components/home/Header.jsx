@@ -26,7 +26,7 @@ export default function Header({ lastReadBook }) {
                     <p className="text-text-secondary font-medium tracking-tight">What's your pick today?</p>
                 </div>
 
-                <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
+                {/* <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
                 <div
                     onClick={() => lastReadBook && navigate(`/reader/${lastReadBook.id}`)}
                     className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-text-tertiary hover:shadow-md transition-all duration-500 group overflow-hidden ${lastReadBook ? 'cursor-pointer' : ''} shadow-md relative`}
@@ -66,7 +66,7 @@ export default function Header({ lastReadBook }) {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> */}
             </div>
         </div>
     )

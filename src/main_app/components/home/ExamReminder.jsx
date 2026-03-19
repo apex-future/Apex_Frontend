@@ -23,8 +23,8 @@ const ExamReminder = () => {
 
     if (isEditing) {
         return (
-            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
-                <div className="bg-card-glass backdrop-blur-xl rounded-3xl p-6 border-2 border-accent-primary/30 shadow-lg animate-in fade-in zoom-in duration-300">
+            <div className="w-full">
+                <div className="bg-card-glass backdrop-blur-xl rounded-3xl p-8 border-2 border-accent-primary/30 shadow-lg animate-in fade-in zoom-in duration-300 min-h-[180px] flex flex-col justify-center">
                     <div className="flex justify-between items-center mb-4">
                         <div className="flex items-center gap-2">
                             <Calendar className="text-accent-primary" size={20} />
@@ -43,7 +43,7 @@ const ExamReminder = () => {
                         />
                         <button
                             onClick={handleSave}
-                            className="bg-accent-primary hover:bg-accent-hover text-white px-6 py-2 rounded-xl font-bold transition-all"
+                            className="w-full sm:w-auto bg-accent-primary hover:bg-accent-hover text-white px-6 py-2 rounded-xl font-bold transition-all"
                         >
                             Save Reminder
                         </button>
@@ -55,10 +55,10 @@ const ExamReminder = () => {
 
     if (!examDate) {
         return (
-            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+            <div className="w-full">
                 <button
                     onClick={() => setIsEditing(true)}
-                    className="w-full group bg-card-glass backdrop-blur-xl rounded-3xl p-6 border-2 border-dashed border-border-default hover:border-accent-primary/50 transition-all duration-300 flex items-center justify-between"
+                    className="w-full group bg-card-glass backdrop-blur-xl rounded-3xl p-8 border-2 border-dashed border-border-default hover:border-accent-primary/50 transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 min-h-[180px]"
                 >
                     <div className="flex items-center gap-4">
                         <div className="size-12 rounded-2xl bg-accent-primary/10 flex items-center justify-center text-accent-primary group-hover:scale-110 transition-transform">
@@ -69,7 +69,7 @@ const ExamReminder = () => {
                             <p className="text-sm text-text-tertiary">Set your exam date to see a countdown here.</p>
                         </div>
                     </div>
-                    <div className="px-4 py-2 bg-bg-subtle rounded-xl text-sm font-bold text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-all">
+                    <div className="w-full sm:w-auto px-4 py-3 bg-bg-subtle rounded-xl text-sm font-bold text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-all text-center">
                         Set Date
                     </div>
                 </button>
@@ -78,15 +78,15 @@ const ExamReminder = () => {
     }
 
     return (
-        <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
-            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-3xl p-6 border-2 border-border-default hover:border-text-tertiary transition-all duration-500 group shadow-md">
+        <div className="w-full">
+            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-3xl p-8 md:p-12 border-2 border-border-default hover:border-text-tertiary transition-all duration-500 group shadow-md min-h-[180px] flex items-center">
                 {/* Background Decoration */}
                 <div className="absolute -right-4 -top-4 size-32 bg-accent-primary/5 rounded-full blur-3xl group-hover:bg-accent-primary/10 transition-all" />
                 
                 <div className="relative flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <div className="size-14 rounded-2xl bg-accent-primary/10 flex items-center justify-center text-accent-primary shadow-inner">
-                            <Bell size={28} className="animate-bounce-slow" />
+                            <Bell size={36} className="animate-bounce-slow" />
                         </div>
                         <div>
                             <div className="flex items-center gap-2 mb-1">
@@ -106,7 +106,7 @@ const ExamReminder = () => {
 
                     <div className="flex items-center gap-4">
                         <div className="text-center sm:text-right">
-                            <div className="text-3xl sm:text-4xl font-black text-accent-primary leading-none tracking-tighter">
+                            <div className="text-4xl sm:text-5xl font-black text-accent-primary leading-none tracking-tighter">
                                 {daysLeft > 0 ? daysLeft : 0}
                             </div>
                             <div className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em]">

@@ -48,11 +48,11 @@ function HomePage({ setIsMobileOpen }) {
         setSearchQuery={setSearchQuery}
       />
 
-      {/* Only show Header (Last Read) when not searching */}
+      {/* Only show Header and Slider when not searching */}
       {!searchQuery && (
         <>
-          <Header lastReadBook={lastReadBook} />
-          <ExamReminder />
+          <Header />
+          <FeaturedSlider lastReadBook={lastReadBook} />
         </>
       )}
 
