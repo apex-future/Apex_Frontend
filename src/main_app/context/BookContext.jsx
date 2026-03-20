@@ -87,6 +87,27 @@ export const BookProvider = ({ children }) => {
             });
           }
 
+          // Load notes from Dexie notes table
+          // Notes are stored by bookId (integer OR supabaseId string)
+          const allNotes = await db.notes.toArray();
+          const notesByBook = {};
+          for (const n of allNotes) {
+            const key = n.bookId;
+            if (!notesByBook[key]) notesByBook[key] = [];
+            notesByBook[key].push({
+              id: n.id,           // Dexie integer id — used for UI operations
+              dexieId: n.id,
+              supabaseId: n.supabaseId,
+              text: n.text,
+              context: n.context || null,
+              type: n.noteType || 'manual_note',
+              noteType: n.noteType || 'manual_note',
+              createdAt: n.createdAt,
+              updatedAt: n.updatedAt,
+              local_id: n.local_id,
+            });
+          }
+
           const booksWithProgress = hydratedBooks.map(b => {
             // Match by Dexie integer id OR Supabase UUID
             const progress = progressMap[b.id] || progressMap[b.supabaseId];
@@ -108,6 +129,9 @@ export const BookProvider = ({ children }) => {
             const uniqueMetaBookmarks = metadataBookmarks.filter(bm => !existingPages.has(bm.page));
             const mergedBookmarks = [...tableBookmarks, ...uniqueMetaBookmarks].sort((a, c) => a.page - c.page);
 
+            // Merge notes from Dexie notes table
+            const tableNotes = notesByBook[b.id] || notesByBook[b.supabaseId] || [];
+
             return {
               ...b,
               progress: progress?.progressPercentage || b.progress || 0,
@@ -116,6 +140,7 @@ export const BookProvider = ({ children }) => {
                 ...(b.metadata || {}),
                 highlights: mergedHighlights,
                 bookmarks: mergedBookmarks,
+                notes: tableNotes, // ← from Dexie notes table, not metadata
               },
             };
           });
@@ -858,90 +883,105 @@ export const BookProvider = ({ children }) => {
 
   const addNote = useCallback(async (bookId, noteData) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
-    setShelves((prevShelves) => {
-      let updatedBook = null;
-      const newShelves = prevShelves.map((shelf) => ({
-        ...shelf,
-        books: shelf.books.map((book) => {
-          if (book.id !== targetId) return book;
-          const existingNotes = book.metadata?.notes || [];
-          const noteObj = typeof noteData === 'string' ? { text: noteData } : noteData;
+    const noteObj = typeof noteData === 'string'
+      ? { text: noteData, type: 'manual_note' }
+      : noteData;
 
-          updatedBook = {
-            ...book,
-            metadata: {
-              ...(book.metadata || {}),
-              notes: [{
-                id: Date.now().toString(),
-                ...noteObj,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-              }, ...existingNotes],
-            },
-          };
-          return updatedBook;
-        }),
-      }));
-      if (updatedBook) {
-        db.books.update(targetId, { metadata: updatedBook.metadata })
-          .catch(err => console.error('Failed to add note:', err));
-      }
-      return newShelves;
-    });
+    console.log('[Apex] addNote called for bookId:', targetId, '| type:', noteObj.type);
+
+    // Save to Dexie + Supabase via syncService
+    const savedNote = await syncService.saveNote(targetId, noteObj);
+    if (!savedNote) return;
+
+    // Build UI note object
+    const uiNote = {
+      id: savedNote.id,
+      dexieId: savedNote.id,
+      supabaseId: savedNote.supabaseId || null,
+      text: savedNote.text,
+      context: savedNote.context || null,
+      type: savedNote.noteType || 'manual_note',
+      noteType: savedNote.noteType || 'manual_note',
+      createdAt: savedNote.createdAt,
+      updatedAt: savedNote.updatedAt,
+      local_id: savedNote.local_id,
+    };
+
+    // Update UI state immediately
+    setShelves(prev => prev.map(shelf => ({
+      ...shelf,
+      books: shelf.books.map(book => {
+        if (book.id !== targetId) return book;
+        return {
+          ...book,
+          metadata: {
+            ...(book.metadata || {}),
+            notes: [uiNote, ...(book.metadata?.notes || [])],
+          },
+        };
+      }),
+    })));
   }, []);
 
   const updateNote = useCallback(async (bookId, noteId, text) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
-    setShelves((prevShelves) => {
-      let updatedBook = null;
-      const newShelves = prevShelves.map((shelf) => ({
-        ...shelf,
-        books: shelf.books.map((book) => {
-          if (book.id !== targetId) return book;
-          const existingNotes = book.metadata?.notes || [];
-          updatedBook = {
-            ...book,
-            metadata: {
-              ...(book.metadata || {}),
-              notes: existingNotes.map(n => n.id === noteId ? { ...n, text, updatedAt: new Date().toISOString() } : n),
-            },
-          };
-          return updatedBook;
-        }),
-      }));
-      if (updatedBook) {
-        db.books.update(targetId, { metadata: updatedBook.metadata })
-          .catch(err => console.error('Failed to update note:', err));
-      }
-      return newShelves;
-    });
+    const now = new Date().toISOString();
+
+    console.log('[Apex] updateNote called for noteId:', noteId);
+
+    // Find the note record to get supabaseId
+    const noteRecord = await db.notes.get(noteId).catch(() => null);
+
+    // Update via syncService
+    await syncService.updateNote(noteRecord?.supabaseId || null, noteId, text);
+
+    // Update UI state immediately
+    setShelves(prev => prev.map(shelf => ({
+      ...shelf,
+      books: shelf.books.map(book => {
+        if (book.id !== targetId) return book;
+        return {
+          ...book,
+          metadata: {
+            ...(book.metadata || {}),
+            notes: (book.metadata?.notes || []).map(n =>
+              n.id === noteId || n.dexieId === noteId
+                ? { ...n, text, updatedAt: now }
+                : n
+            ),
+          },
+        };
+      }),
+    })));
   }, []);
 
   const deleteNote = useCallback(async (bookId, noteId) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
-    setShelves((prevShelves) => {
-      let updatedBook = null;
-      const newShelves = prevShelves.map((shelf) => ({
-        ...shelf,
-        books: shelf.books.map((book) => {
-          if (book.id !== targetId) return book;
-          const existingNotes = book.metadata?.notes || [];
-          updatedBook = {
-            ...book,
-            metadata: {
-              ...(book.metadata || {}),
-              notes: existingNotes.filter(n => n.id !== noteId),
-            },
-          };
-          return updatedBook;
-        }),
-      }));
-      if (updatedBook) {
-        db.books.update(targetId, { metadata: updatedBook.metadata })
-          .catch(err => console.error('Failed to delete note:', err));
-      }
-      return newShelves;
-    });
+
+    console.log('[Apex] deleteNote called for noteId:', noteId);
+
+    // Find the note record to get supabaseId
+    const noteRecord = await db.notes.get(noteId).catch(() => null);
+
+    // Delete via syncService (handles Dexie + Supabase)
+    await syncService.deleteNote(noteRecord?.supabaseId || null, noteId);
+
+    // Update UI state immediately
+    setShelves(prev => prev.map(shelf => ({
+      ...shelf,
+      books: shelf.books.map(book => {
+        if (book.id !== targetId) return book;
+        return {
+          ...book,
+          metadata: {
+            ...(book.metadata || {}),
+            notes: (book.metadata?.notes || []).filter(n =>
+              n.id !== noteId && n.dexieId !== noteId
+            ),
+          },
+        };
+      }),
+    })));
   }, []);
 
   return (

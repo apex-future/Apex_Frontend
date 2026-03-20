@@ -57,6 +57,7 @@ function App() {
         await db.bookmarks.clear();
         await db.reading_progress.clear();
         await db.sync_queue.clear();
+        await db.notes.clear();
 
         // Delete the legacy ApexBooksDB ghost database
         try {

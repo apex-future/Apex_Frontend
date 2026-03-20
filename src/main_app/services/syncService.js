@@ -234,6 +234,19 @@ const syncService = {
         await db.bookmarks.bulkAdd(mapped);
       }
 
+      // Notes
+      if (response.data.notes && response.data.notes.length > 0) {
+        await db.notes.clear();
+        const mapped = response.data.notes.map(n => ({
+          ...mapSnakeToCamel(n),
+          supabaseId: n.id,
+          synced: true,
+        }));
+        for (const m of mapped) { delete m.id; }
+        await db.notes.bulkAdd(mapped);
+        console.log('[Apex Sync] Notes pulled:', mapped.length);
+      }
+
       // ---- Category B data → Zustand only (no Dexie) ----
       // Dictionary History is Category B — fetched directly from the API when needed
       // AI Conversations (Map to ApexBooksDB)
@@ -548,6 +561,119 @@ const syncService = {
         await apiClient.delete(`/api/bookmarks/${supabaseId}`);
       } catch (error) {
         console.error('Failed to delete bookmark from Supabase:', error);
+      }
+    }
+  },
+
+  // ============================================
+  // DIRECT SAVE — NOTES (Category A)
+  // ============================================
+  saveNote: async function (bookId, noteData) {
+    const localId = generateLocalId();
+    const now = new Date().toISOString();
+
+    // Build Dexie record
+    const dexieRecord = {
+      bookId,
+      local_id: localId,
+      text: noteData.text || '',
+      context: noteData.context || null,
+      noteType: noteData.type || noteData.noteType || 'manual_note',
+      createdAt: now,
+      updatedAt: now,
+      synced: false,
+      supabaseId: null,
+    };
+
+    // Step 1: Save to Dexie immediately
+    const dexieId = await db.notes.add(dexieRecord);
+    console.log('[Apex] Note saved to Dexie:', dexieId);
+
+    // Step 2: If online, resolve Supabase book UUID and save
+    if (navigator.onLine) {
+      const supabaseBookId = await this._resolveBookId(bookId);
+      if (supabaseBookId) {
+        try {
+          const response = await apiClient.post(`/api/books/${supabaseBookId}/notes`, {
+            text: dexieRecord.text,
+            context: dexieRecord.context,
+            note_type: dexieRecord.noteType,
+            local_id: localId,
+          });
+          await db.notes.update(dexieId, {
+            supabaseId: response.data.id,
+            synced: true,
+          });
+          console.log('[Apex] Note saved to Supabase:', response.data.id);
+          return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
+        } catch (err) {
+          console.error('[Apex] Failed to save note to Supabase:', err);
+          await this._queueForSync('upload', 'notes', localId, {
+            book_id: supabaseBookId,
+            text: dexieRecord.text,
+            context: dexieRecord.context,
+            note_type: dexieRecord.noteType,
+          });
+        }
+      } else {
+        // Book not synced yet — queue with dexie book id for later resolution
+        console.warn('[Apex] Book not synced yet — queuing note');
+        await this._queueForSync('upload', 'notes', localId, {
+          _dexie_book_id: bookId,
+          text: dexieRecord.text,
+          context: dexieRecord.context,
+          note_type: dexieRecord.noteType,
+        });
+      }
+    } else {
+      // Offline — queue for later
+      console.log('[Apex] Offline — note queued for sync');
+      await this._queueForSync('upload', 'notes', localId, {
+        _dexie_book_id: bookId,
+        text: dexieRecord.text,
+        context: dexieRecord.context,
+        note_type: dexieRecord.noteType,
+      });
+    }
+
+    return { ...dexieRecord, id: dexieId };
+  },
+
+  updateNote: async function (supabaseId, dexieId, text) {
+    const now = new Date().toISOString();
+
+    // Update Dexie immediately
+    await db.notes.update(dexieId, { text, updatedAt: now, synced: false });
+    console.log('[Apex] Note updated in Dexie:', dexieId);
+
+    // If online and synced, update Supabase
+    if (navigator.onLine && supabaseId) {
+      try {
+        await apiClient.put(`/api/notes/${supabaseId}`, { text, updated_at: now });
+        await db.notes.update(dexieId, { synced: true });
+        console.log('[Apex] Note updated in Supabase:', supabaseId);
+      } catch (err) {
+        console.error('[Apex] Failed to update note in Supabase:', err);
+      }
+    }
+  },
+
+  deleteNote: async function (supabaseId, dexieId) {
+    // Delete from Dexie immediately
+    if (dexieId) {
+      await db.notes.delete(dexieId).catch(err =>
+        console.error('[Apex] Failed to delete note from Dexie:', err)
+      );
+      console.log('[Apex] Note deleted from Dexie:', dexieId);
+    }
+
+    // If online and synced, delete from Supabase
+    if (navigator.onLine && supabaseId) {
+      try {
+        await apiClient.delete(`/api/notes/${supabaseId}`);
+        console.log('[Apex] Note deleted from Supabase:', supabaseId);
+      } catch (err) {
+        console.error('[Apex] Failed to delete note from Supabase:', err);
       }
     }
   },

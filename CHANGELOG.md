@@ -24,6 +24,17 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.7.1] - 2026-03-20
+### Added
+- Notes now synced to Supabase with full offline support
+- New `notes` Dexie table (version 7) — notes no longer stored in book metadata only
+- New `notes` Supabase table with note_type (manual_note / highlight_note)
+- Notes pulled on login and app load via pull/all sync
+- New backend endpoints: POST /api/books/{id}/notes, PUT /api/notes/{id}, DELETE /api/notes/{id}
+- Offline notes queued and synced when back online
+
+---
+
 ## [1.7.0] - 2026-03-20
 ### Fixed
 - Offline book uploads now correctly upload file to Supabase Storage when back online
