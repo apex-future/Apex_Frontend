@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Edit2, X, Bell, GraduationCap } from 'lucide-react';
+import { Calendar, Edit2, X, Bell, AlarmClock } from 'lucide-react';
 import useStudyStore from '../../store/studyStore';
 
 const ExamReminder = () => {
@@ -21,16 +21,30 @@ const ExamReminder = () => {
         setIsEditing(false);
     };
 
+    const CardContainer = ({ children, onClick, className = '' }) => (
+        <div className="w-full">
+            <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Exam Timer</h2>
+            <div 
+                onClick={onClick}
+                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex items-center ${className}`}
+            >
+                {children}
+            </div>
+        </div>
+    );
+
     if (isEditing) {
         return (
-            <div className="w-full">
-                <div className="bg-card-glass backdrop-blur-xl rounded-3xl p-7 md:p-10 border-2 border-accent-primary/30 shadow-lg animate-in fade-in zoom-in duration-300 min-h-[180px] flex flex-col justify-center gap-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <div className="flex items-center gap-2">
-                            <Calendar className="text-accent-primary" size={20} />
-                            <h3 className="text-lg font-bold text-text-primary">Set Exam Date</h3>
+            <CardContainer className="cursor-default">
+                <div className="w-full relative z-10">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="size-10 rounded-xl bg-accent-primary/10 flex items-center justify-center text-accent-primary">
+                                <Calendar size={20} />
+                            </div>
+                            <h3 className="text-xl font-bold text-text-primary tracking-tight">Set Exam Date</h3>
                         </div>
-                        <button onClick={() => setIsEditing(false)} className="text-text-tertiary hover:text-text-primary">
+                        <button onClick={() => setIsEditing(false)} className="p-2 text-text-tertiary hover:text-text-primary transition-colors">
                             <X size={20} />
                         </button>
                     </div>
@@ -39,94 +53,88 @@ const ExamReminder = () => {
                             type="date"
                             value={tempDate}
                             onChange={(e) => setTempDate(e.target.value)}
-                            className="flex-1 bg-bg-subtle border border-border-default rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:border-accent-primary transition-all"
+                            className="flex-1 bg-bg-subtle border border-border-default rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-primary transition-all font-medium"
                         />
                         <button
                             onClick={handleSave}
-                            className="w-full sm:w-auto bg-accent-primary hover:bg-accent-hover text-white px-6 py-2 rounded-xl font-bold transition-all"
+                            className="bg-accent-primary hover:bg-accent-hover text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95"
                         >
                             Save Reminder
                         </button>
                     </div>
                 </div>
-            </div>
+            </CardContainer>
         );
     }
 
     if (!examDate) {
         return (
-            <div className="w-full">
-                <button
-                    onClick={() => setIsEditing(true)}
-                    className="w-full group bg-card-glass backdrop-blur-xl rounded-3xl p-7 md:p-10 border-2 border-dashed border-border-default hover:border-accent-primary/50 transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 min-h-[180px]"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="size-12 rounded-2xl bg-accent-primary/10 flex items-center justify-center text-accent-primary group-hover:scale-110 transition-transform">
-                            <GraduationCap size={24} />
-                        </div>
-                        <div className="text-left">
-                            <h3 className="text-lg font-bold text-text-primary">Track your exam</h3>
-                            <p className="text-sm text-text-tertiary">Set your exam date to see a countdown here.</p>
-                        </div>
+            <CardContainer onClick={() => setIsEditing(true)} className="cursor-pointer border-dashed">
+                {/* Background Icon Asset */}
+                <div className="absolute bottom-2 -right-2 size-44 md:size-52 text-accent-primary/10 -rotate-12 group-hover:text-accent-primary/20 group-hover:scale-100 group-hover:rotate-0 transition-all duration-1000 pointer-events-none ease-in-out">
+                    <AlarmClock size="100%" strokeWidth={1} />
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-8 w-full relative z-10 text-center sm:text-left">
+                    <div>
+                        <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-1 tracking-tight">Track Your Progress</h3>
+                        <p className="text-sm sm:text-base md:text-lg text-text-tertiary font-medium">Set your exam date to see your countdown.</p>
                     </div>
-                    <div className="w-full sm:w-auto px-4 py-3 bg-bg-subtle rounded-xl text-sm font-bold text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-all text-center">
+                    <div className="px-8 py-3 bg-accent-primary rounded-xl text-sm md:text-base font-bold text-white hover:bg-accent-hover transition-all duration-300 shadow-sm">
                         Set Date
                     </div>
-                </button>
-            </div>
+                </div>
+            </CardContainer>
         );
     }
 
     return (
-        <div className="w-full">
-            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-2xl md:rounded-3xl p-7 md:p-12 border-2 border-border-default hover:border-text-tertiary transition-all duration-500 group shadow-md min-h-[180px] flex items-center">
-                {/* Background Decoration */}
-                <div className="absolute -right-4 -top-4 size-32 bg-accent-primary/5 rounded-full blur-3xl group-hover:bg-accent-primary/10 transition-all" />
-                
-                <div className="relative flex flex-col sm:flex-row items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="size-14 rounded-2xl bg-accent-primary/10 flex items-center justify-center text-accent-primary shadow-inner">
-                            <Bell size={36} className="animate-bounce-slow" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-lg font-bold text-text-primary tracking-tight">Exam Countdown</h3>
-                                <button 
-                                    onClick={() => setIsEditing(true)}
-                                    className="p-1 text-text-tertiary hover:text-accent-primary transition-colors"
-                                >
-                                    <Edit2 size={14} />
-                                </button>
-                            </div>
-                            <p className="text-sm text-text-tertiary font-medium">
-                                Exam on <span className="text-text-primary">{new Date(examDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                            </p>
-                        </div>
+        <CardContainer className="cursor-default">
+            {/* Background Decoration */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-accent-primary/10 transition-all duration-500" />
+            
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 w-full relative z-10">
+                <div className="flex items-center gap-4">
+                    <div className="size-14 rounded-2xl bg-accent-primary/10 flex items-center justify-center text-accent-primary shadow-inner">
+                        <Bell size={28} className={daysLeft <= 7 ? 'animate-bounce text-red-500' : 'animate-pulse'} />
                     </div>
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-display text-lg md:text-xl font-bold text-text-primary tracking-tight">Exam Countdown</h3>
+                            <button 
+                                onClick={() => setIsEditing(true)}
+                                className="p-1 text-text-tertiary hover:text-accent-primary transition-colors opacity-0 group-hover:opacity-100 duration-300"
+                            >
+                                <Edit2 size={14} />
+                            </button>
+                        </div>
+                        <p className="text-xs md:text-sm text-text-tertiary font-medium italic">
+                            The big day is on <span className="text-text-secondary font-bold not-italic">{new Date(examDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                        </p>
+                    </div>
+                </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="text-center sm:text-right">
-                            <div className="text-4xl sm:text-5xl font-black text-accent-primary leading-none tracking-tighter">
-                                {daysLeft > 0 ? daysLeft : 0}
-                            </div>
-                            <div className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em]">
-                                Days to go
-                            </div>
-                        </div>
-                        
-                        {/* Progress Bar or Radial could go here, but keeping it sleek */}
-                        <div className="h-12 w-[1px] bg-border-default hidden sm:block" />
-                        
-                        <div className="hidden sm:block">
-                            <div className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest ${daysLeft <= 7 ? 'bg-red-500/10 text-red-500 animate-pulse' : 'bg-green-500/10 text-green-500'}`}>
-                                {daysLeft <= 7 ? 'Critical' : 'On Track'}
-                            </div>
-                        </div>
+                <div className="flex flex-col items-center sm:items-end">
+                    <div className="flex items-baseline gap-1">
+                        <span className="text-3xl md:text-4xl font-black text-accent-primary tabular-nums tracking-tighter">
+                            {daysLeft > 0 ? daysLeft : 0}
+                        </span>
+                        <span className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mb-1">
+                            Days Left
+                        </span>
+                    </div>
+                    <div className={`mt-1 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${
+                        daysLeft <= 7 
+                            ? 'bg-red-500/10 text-red-500 border-red-500/20' 
+                            : 'bg-green-500/10 text-green-500 border-green-500/20'
+                    }`}>
+                        {daysLeft <= 0 ? 'Exam Day!' : daysLeft <= 7 ? 'Critical Focus' : 'Steady Progress'}
                     </div>
                 </div>
             </div>
-        </div>
+        </CardContainer>
     );
 };
 
 export default ExamReminder;
+
