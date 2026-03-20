@@ -71,16 +71,16 @@ const ExamReminder = () => {
         return (
             <CardContainer onClick={() => setIsEditing(true)} className="cursor-pointer border-dashed">
                 {/* Background Icon Asset */}
-                <div className="absolute bottom-2 -right-2 size-44 md:size-52 text-accent-primary/10 -rotate-12 group-hover:text-accent-primary/20 group-hover:scale-100 group-hover:rotate-0 transition-all duration-1000 pointer-events-none ease-in-out">
+                <div className="absolute bottom-2 -left-2 size-44 md:size-52 text-accent-primary/10 rotate-12 group-hover:text-accent-primary/20 group-hover:scale-100 group-hover:rotate-0 transition-all duration-1000 pointer-events-none ease-in-out">
                     <AlarmClock size="100%" strokeWidth={1} />
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-8 w-full relative z-10 text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row lg:flex-col items-center sm:items-start lg:items-start justify-between lg:justify-center gap-8 w-full relative z-10 text-center sm:text-left">
                     <div>
                         <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-1 tracking-tight">Track Your Progress</h3>
                         <p className="text-sm sm:text-base md:text-lg text-text-tertiary font-medium">Set your exam date to see your countdown.</p>
                     </div>
-                    <div className="px-8 py-3 bg-accent-primary rounded-xl text-sm md:text-base font-bold text-white hover:bg-accent-hover transition-all duration-300 shadow-sm">
+                    <div className="px-8 py-3 bg-accent-primary rounded-xl text-sm md:text-base font-bold text-white hover:bg-accent-hover transition-all duration-300 shadow-sm w-full sm:w-auto lg:w-max">
                         Set Date
                     </div>
                 </div>

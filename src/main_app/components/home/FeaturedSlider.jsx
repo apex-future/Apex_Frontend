@@ -3,15 +3,39 @@ import { useSwipeable } from 'react-swipeable';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ExamReminder from './ExamReminder';
 import LastReadCard from './LastReadCard';
+import StreakCard from './StreakCard';
 
 const FeaturedSlider = ({ lastReadBook }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [isLarge, setIsLarge] = useState(window.innerWidth >= 1024);
     const scrollRef = useRef(null);
 
+    // Watch for window resize to handle the grouping switch
+    useEffect(() => {
+        const handleResize = () => setIsLarge(window.innerWidth >= 1024);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Slide definition based on screen size
     const slides = [
         { id: 'lastRead', component: <LastReadCard book={lastReadBook} /> },
-        { id: 'exam', component: <ExamReminder /> }
-    ].filter(s => (s.id === 'lastRead' && lastReadBook) || (s.id === 'exam'));
+        ...(isLarge 
+            ? [{ 
+                id: 'combined', 
+                component: (
+                    <div className="flex gap-4 md:gap-6 w-full">
+                        <div className="flex-1"><ExamReminder /></div>
+                        <div className="flex-1"><StreakCard /></div>
+                    </div>
+                ) 
+              }]
+            : [
+                { id: 'exam', component: <ExamReminder /> },
+                { id: 'streak', component: <StreakCard /> }
+              ]
+        )
+    ].filter(s => (s.id === 'lastRead' && lastReadBook) || (s.id !== 'lastRead'));
 
     const handleScroll = (e) => {
         const { scrollLeft, clientWidth } = e.target;
@@ -25,7 +49,7 @@ const FeaturedSlider = ({ lastReadBook }) => {
 
     const scrollToSlide = (index) => {
         if (scrollRef.current) {
-            const gap = 16; // gap-4 is 1rem (16px)
+            const gap = 16; 
             const slideWidth = scrollRef.current.clientWidth;
             scrollRef.current.scrollTo({
                 left: index * (slideWidth + gap),
@@ -50,29 +74,11 @@ const FeaturedSlider = ({ lastReadBook }) => {
     });
 
     return (
-        <div className="w-full relative px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 group/slider" {...handlers}>
-            {/* Desktop Navigation Arrows */}
-            {slides.length > 1 && (
-                <>
-                    <button 
-                        onClick={() => scrollToSlide(currentIndex - 1)}
-                        className={`absolute left-0 lg:left-4 top-1/2 -translate-y-1/2 z-[100] p-2.5 rounded-full bg-bg-elevated border border-border-default text-text-primary shadow-2xl opacity-40 hover:opacity-100 transition-all duration-300 hover:bg-accent-primary hover:text-white hover:scale-110 hidden md:flex items-center justify-center ${currentIndex === 0 ? 'pointer-events-none !opacity-0' : ''}`}
-                    >
-                        <ChevronLeft size={20} strokeWidth={3} />
-                    </button>
-                    <button 
-                        onClick={() => scrollToSlide(currentIndex + 1)}
-                        className={`absolute right-0 lg:right-4 top-1/2 -translate-y-1/2 z-[100] p-2.5 rounded-full bg-bg-elevated border border-border-default text-text-primary shadow-2xl opacity-40 hover:opacity-100 transition-all duration-300 hover:bg-accent-primary hover:text-white hover:scale-110 hidden md:flex items-center justify-center ${currentIndex === slides.length - 1 ? 'pointer-events-none !opacity-0' : ''}`}
-                    >
-                        <ChevronRight size={20} strokeWidth={3} />
-                    </button>
-                </>
-            )}
-
+        <div className="w-full relative px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 group/slider flex flex-col gap-6" {...handlers}>
             <div 
                 ref={scrollRef}
                 onScroll={handleScroll}
-                className="w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth gap-4 h-full"
+                className="w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth gap-4 h-full pb-2"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
                 {slides.map((slide) => (
@@ -80,22 +86,24 @@ const FeaturedSlider = ({ lastReadBook }) => {
                         key={slide.id} 
                         className="w-full flex-shrink-0 snap-center"
                     >
-                        <div className="w-full">
+                        <div className="w-full h-full">
                             {slide.component}
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* Navigation Dots */}
+            {/* Navigation Indicators (Expanded Pills) */}
             {slides.length > 1 && (
-                <div className="flex justify-center gap-2 mt-4">
+                <div className="flex justify-center gap-3">
                     {slides.map((_, i) => (
                         <button 
                             key={i}
                             onClick={() => scrollToSlide(i)}
-                            className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                                i === currentIndex ? 'w-6 bg-accent-primary' : 'w-1.5 bg-border-default hover:bg-text-tertiary'
+                            className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                                i === currentIndex 
+                                    ? 'w-12 bg-accent-primary animate-pulse-subtle' 
+                                    : 'w-8 bg-border-default hover:bg-text-tertiary hover:w-16'
                             }`}
                             aria-label={`Go to slide ${i + 1}`}
                         />
@@ -107,5 +115,6 @@ const FeaturedSlider = ({ lastReadBook }) => {
 };
 
 export default FeaturedSlider;
+
 
 
