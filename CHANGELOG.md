@@ -24,6 +24,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.7.0] - 2026-03-20
+### Fixed
+- Offline book uploads now correctly upload file to Supabase Storage when back online
+- Books uploaded offline no longer appear with null file_path after sync
+- Generic sync queue now explicitly excludes book items — books only go through uploadBook()
+- Added detailed console logging for offline book upload sync flow
+
+---
+
 ## [1.6.9] - 2026-03-17
 ### Improved
 - Book appears in library immediately when uploaded (optimistic UI)

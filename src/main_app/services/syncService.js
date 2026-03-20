@@ -601,20 +601,38 @@ const syncService = {
           .where('local_id').equals(item.local_id)
           .first();
 
-        console.log('[DEBUG] Book lookup:', item.local_id, '→', localBook?.id, '| hasBlob:', !!localBook?.fileBlob);
+        console.log('[Apex Sync] Processing offline book upload:', {
+          local_id: item.local_id,
+          title: localBook?.title,
+          hasBlob: !!localBook?.fileBlob,
+          attempts: item.attempts,
+        });
 
         if (!localBook?.fileBlob) {
-          console.log('[DEBUG] Skipping — no blob for local_id:', item.local_id);
+          console.warn('[Apex Sync] Skipping book — no fileBlob found for local_id:', item.local_id);
+          // Mark as failed after 3 attempts — blob is gone, can't recover
+          await db.sync_queue.update(item.id, {
+            attempts: (item.attempts || 0) + 1,
+            status: (item.attempts || 0) >= 2 ? 'failed' : 'pending',
+          });
           continue;
         }
 
         const file = new File(
           [localBook.fileBlob],
           localBook.title,
-          { type: localBook.fileType }
+          { type: localBook.fileType || 'application/pdf' }
         );
 
-        const result = await this.uploadBook(file, localBook.title, localBook.author, localBook.id);
+        console.log('[Apex Sync] Uploading offline book to Supabase:', localBook.title);
+        const result = await this.uploadBook(file, localBook.title, localBook.author || 'Unknown', localBook.id);
+
+        console.log('[Apex Sync] Book upload result:', {
+          title: localBook.title,
+          success: !!result,
+          supabaseId: result?.id,
+          filePath: result?.file_path,
+        });
 
         await db.sync_queue.update(item.id, {
           status: result ? 'synced' : 'pending',
@@ -622,9 +640,21 @@ const syncService = {
         });
       }
 
+      // CRITICAL: Books are handled exclusively via uploadBook() above (Path 1)
+      // They must NEVER fall through to the generic /api/sync endpoint (Path 2)
+      // because /api/sync has no file upload capability — it would save file_path as null
+      // Filter out ALL book items from the queue before Path 2 runs
+      console.log('[Apex Sync] Book uploads processed via Path 1 — filtering from generic queue');
+
+      // Path 2: generic sync queue — explicitly excludes books
+      // Books are handled exclusively in Path 1 via uploadBook() with actual file upload
+      // Sending books through this path would result in file_path = null in Supabase
       let queueItems = await db.sync_queue
         .where('status').equals('pending')
+        .filter(item => item.tableName !== 'books') // ← CRITICAL: never process books here
         .toArray();
+
+      console.log('[Apex Sync] Generic queue items to process:', queueItems.length, '(books excluded)');
 
       if (queueItems.length === 0) {
         console.log('Sync: No pending items to push');
