@@ -5,6 +5,7 @@ import AsideNavBar from './components/layout/navigation/AsideNavBar';
 import NavBarProvider from './components/layout/navigation/NavBarContext';
 import { BookProvider } from './context/BookContext';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import notificationService from './services/notificationService';
 // Page level components
 import HomePage from './components/home/HomePage';
 import BottomNavBar from './components/layout/navigation/BottomNavBar';
@@ -44,6 +45,11 @@ function MainApp({ onLogout }) {
 
   React.useEffect(() => {
     updateStreak();
+    // Request notification permission and check for missed days
+    notificationService.requestPermission().then(() => {
+        notificationService.checkAndNotify();
+        notificationService.scheduleNotification();
+    });
   }, [updateStreak]);
 
   return (
