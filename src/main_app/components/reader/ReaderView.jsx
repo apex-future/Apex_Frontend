@@ -10,6 +10,7 @@ import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 import PageSettings from './reading_navigations/reading_layout/PageSettings';
 import BookSkeleton from './BookSkeleton';
 import PageStrip from './PageStrip';
+import ReaderDictionary from './reading_navigations/reading_layout/ReaderDictionary';
 import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
@@ -247,6 +248,7 @@ function ReaderView() {
         },
         scrollOrientation,
         setScrollOrientation,
+        onToggleDictionary: () => setIsDictOpen(prev => !prev),
     };
 
     // Screen handlers
@@ -752,6 +754,7 @@ function ReaderView() {
                     onClose={closePageStrip}
                 />
             )}
+            <ReaderDictionary isOpen={isDictOpen} onClose={() => setIsDictOpen(false)} bookId={book?.id} />
         </div>
     );
 }
