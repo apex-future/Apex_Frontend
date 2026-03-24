@@ -74,8 +74,10 @@ function StreakPage() {
 
           {/* Hero Section */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/30 dark:to-orange-900/20 border-2 border-orange-200/50 dark:border-orange-500/20 p-6 md:p-8 flex flex-col items-center justify-center text-center h-full min-h-[250px] md:min-h-[320px]">
-            {/* Background glow */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_50%_40%,rgba(249,115,22,0.15),transparent)] pointer-events-none" />
+            {/* Background glow — only when streak is active */}
+            {streakCount >= 1 && (
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_50%_40%,rgba(249,115,22,0.15),transparent)] pointer-events-none" />
+            )}
 
             {/* Fire and Number Side-by-Side */}
             <div className="flex items-center justify-center gap-2 sm:gap-4 relative mb-2">
