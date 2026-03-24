@@ -13,72 +13,47 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 /**
- * Scans all text nodes inside `container`, concatenates them, finds `searchText`,
- * then wraps the matching character range across text nodes with <mark> elements.
+ * Scans all text nodes inside `container`, finds `searchText`, and returns an array of Range objects.
  */
-function applyHighlightToDOM(container, searchText, color) {
-  if (!container || !searchText) return;
-
-  // Collect all text nodes via TreeWalker
+function getHighlightRanges(container, searchText) {
+  if (!container || !searchText) return [];
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
   const textNodes = [];
   let node;
   while ((node = walker.nextNode())) {
-    // Skip nodes already inside a <mark> we created
-    if (node.parentElement?.classList?.contains('apex-hl')) continue;
     textNodes.push(node);
   }
-
-  // Build a concatenated string with character offset mapping
   let fullText = '';
-  const nodeMap = []; // { node, start, end }
+  const nodeMap = [];
   for (const tn of textNodes) {
     const start = fullText.length;
     fullText += tn.textContent;
     nodeMap.push({ node: tn, start, end: fullText.length });
   }
 
-  // Find the highlight text (case-insensitive) in the concatenated string
   const lowerFull = fullText.toLowerCase();
   const lowerSearch = searchText.toLowerCase();
   let idx = lowerFull.indexOf(lowerSearch);
+  const ranges = [];
 
   while (idx !== -1) {
     const matchStart = idx;
     const matchEnd = idx + lowerSearch.length;
-
-    // Find which text nodes overlap with [matchStart, matchEnd)
     for (let i = 0; i < nodeMap.length; i++) {
-      const nm = nodeMap[i];
-      if (nm.end <= matchStart || nm.start >= matchEnd) continue;
-
-      // This text node overlaps with the match
-      const overlapStart = Math.max(0, matchStart - nm.start);
-      const overlapEnd = Math.min(nm.node.textContent.length, matchEnd - nm.start);
-
-      try {
-        const range = document.createRange();
-        range.setStart(nm.node, overlapStart);
-        range.setEnd(nm.node, overlapEnd);
-
-        const mark = document.createElement('mark');
-        mark.className = 'apex-hl';
-        mark.style.backgroundColor = color;
-        mark.style.color = 'inherit';
-        mark.style.borderRadius = '2px';
-        mark.style.padding = '0';
-        range.surroundContents(mark);
-
-        // After wrapping, the nodeMap is stale — break and re-search won't work
-        // for the same highlight, but that's fine since we found the match
-      } catch (e) {
-        // If surroundContents fails (cross-element), skip this node portion
-      }
+        const nm = nodeMap[i];
+        if (nm.end <= matchStart || nm.start >= matchEnd) continue;
+        const overlapStart = Math.max(0, matchStart - nm.start);
+        const overlapEnd = Math.min(nm.node.textContent.length, matchEnd - nm.start);
+        try {
+            const range = document.createRange();
+            range.setStart(nm.node, overlapStart);
+            range.setEnd(nm.node, overlapEnd);
+            ranges.push(range);
+        } catch (e) {}
     }
-
-    // Search for next occurrence after this one
     idx = lowerFull.indexOf(lowerSearch, matchEnd);
   }
+  return ranges;
 }
 
 const PDFReader = ({
@@ -190,11 +165,14 @@ const PDFReader = ({
     setPageRendered(prev => prev + 1);
   }, []);
 
-  // Post-render: apply highlights to the text layer DOM
+  // Post-render: apply highlights to the text layer DOM safely without breaking React Node hierarchy
   useEffect(() => {
     if (!highlights || highlights.length === 0) return;
     const container = containerRef.current;
     if (!container) return;
+
+    const collectedRanges = {}; // { "#fef08a": [range1, range2] }
+    const useCSSHighlight = 'highlights' in CSS;
 
     const applyToPage = (pageNum, pageEl) => {
         const pageHighlights = highlights.filter(
@@ -205,33 +183,92 @@ const PDFReader = ({
         const textLayer = pageEl.querySelector('.react-pdf__Page__textContent');
         if (!textLayer) return;
 
-        // Remove any previously applied highlight marks to avoid duplicates
-        textLayer.querySelectorAll('mark.apex-hl').forEach((m) => {
-            const parent = m.parentNode;
-            while (m.firstChild) parent.insertBefore(m.firstChild, m);
-            parent.removeChild(m);
-        });
+        // Clean up old fallback overlays
+        pageEl.querySelectorAll('.apex-fallback-hl-layer').forEach(el => el.remove());
 
-        // Apply each highlight
+        let hlLayer = null;
+        if (!useCSSHighlight) {
+            hlLayer = document.createElement('div');
+            hlLayer.className = 'apex-fallback-hl-layer';
+            // Overlay absolutely on the page wrapper
+            hlLayer.style.position = 'absolute';
+            hlLayer.style.top = '0';
+            hlLayer.style.left = '0';
+            hlLayer.style.width = '100%';
+            hlLayer.style.height = '100%';
+            hlLayer.style.pointerEvents = 'none';
+            hlLayer.style.zIndex = '10'; // Above text layer so multiply blend works well
+            hlLayer.style.mixBlendMode = 'multiply';
+            pageEl.appendChild(hlLayer);
+        }
+
+        const pageRect = pageEl.getBoundingClientRect();
+
         for (const h of pageHighlights) {
             const text = h.text || h.highlightedText || '';
-            if (text) applyHighlightToDOM(textLayer, text, h.color || '#fef08a');
+            const color = h.color || '#fef08a';
+            if (!text) continue;
+
+            const ranges = getHighlightRanges(textLayer, text);
+            if (ranges.length === 0) continue;
+
+            if (useCSSHighlight) {
+                if (!collectedRanges[color]) collectedRanges[color] = [];
+                collectedRanges[color].push(...ranges);
+            } else if (hlLayer) {
+                for (const range of ranges) {
+                    const rects = range.getClientRects();
+                    for (let i = 0; i < rects.length; i++) {
+                        const rect = rects[i];
+                        const div = document.createElement('div');
+                        div.style.position = 'absolute';
+                        div.style.left = `${rect.left - pageRect.left}px`;
+                        div.style.top = `${rect.top - pageRect.top}px`;
+                        div.style.width = `${rect.width}px`;
+                        div.style.height = `${rect.height}px`;
+                        div.style.backgroundColor = color;
+                        div.style.borderRadius = '2px';
+                        hlLayer.appendChild(div);
+                    }
+                }
+            }
         }
     };
 
     const timer = setTimeout(() => {
-        if (isVertical) {
-            container.querySelectorAll('.pdf-page-wrapper').forEach((wrapper) => {
-                const pageNum = parseInt(wrapper.dataset.pageIndex, 10);
-                applyToPage(pageNum, wrapper);
-            });
-        } else {
-            const pageEl = container.querySelector('.react-pdf__Page');
-            if (pageEl) applyToPage(pageNumber, container);
+        if (useCSSHighlight) CSS.highlights.clear();
+
+        container.querySelectorAll('.pdf-page-wrapper').forEach((wrapper) => {
+            const pageNum = parseInt(wrapper.dataset.pageIndex, 10);
+            if (!isNaN(pageNum)) applyToPage(pageNum, wrapper);
+        });
+
+        if (useCSSHighlight) {
+            let styleText = '';
+            for (const [color, ranges] of Object.entries(collectedRanges)) {
+                if (ranges.length === 0) continue;
+                const safeColor = color.replace(/[^a-zA-Z0-9]/g, '');
+                const highlightName = `apex-hl-${safeColor}`;
+                const highlight = new Highlight(...ranges);
+                CSS.highlights.set(highlightName, highlight);
+                styleText += `::highlight(${highlightName}) { background-color: ${color}; color: inherit; }\n`;
+            }
+            let styleEl = document.getElementById('apex-css-highlights');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'apex-css-highlights';
+                document.head.appendChild(styleEl);
+            }
+            if (styleEl.textContent !== styleText) {
+                styleEl.textContent = styleText;
+            }
         }
     }, 400);
 
-    return () => clearTimeout(timer);
+    return () => {
+        clearTimeout(timer);
+        if (useCSSHighlight) CSS.highlights.clear();
+    };
   }, [highlights, pageNumber, pageRendered, isVertical]);
 
   const customTextRenderer = React.useCallback(
@@ -395,7 +432,8 @@ const PDFReader = ({
             return (
               <div
                 key={bufferPageNum}
-                className="rounded-sm bg-bg-elevated mx-auto mb-8 lg:mb-0"
+                className="pdf-page-wrapper rounded-sm bg-bg-elevated mx-auto mb-8 lg:mb-0 relative"
+                data-page-index={bufferPageNum}
                 style={{
                   position: isActive ? 'relative' : 'absolute',
                   opacity: isActive ? (isFading ? 0 : 1) : 0,

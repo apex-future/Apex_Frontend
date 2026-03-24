@@ -99,40 +99,6 @@ function ReaderView() {
     const handleHighlight = (color) => {
         if (!book || !selection.text) return;
 
-        // Apply visual highlight to the DOM immediately
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-            try {
-                const range = sel.getRangeAt(0);
-                const mark = document.createElement('mark');
-                mark.style.backgroundColor = color;
-                mark.style.color = 'inherit';
-                mark.style.borderRadius = '2px';
-                mark.style.padding = '0 1px';
-                mark.dataset.highlightColor = color;
-                mark.className = 'apex-highlight';
-                range.surroundContents(mark);
-            } catch (e) {
-                // surroundContents can fail if selection spans multiple elements
-                // In that case, fall back to extracting and re-wrapping
-                try {
-                    const range = sel.getRangeAt(0);
-                    const fragment = range.extractContents();
-                    const mark = document.createElement('mark');
-                    mark.style.backgroundColor = color;
-                    mark.style.color = 'inherit';
-                    mark.style.borderRadius = '2px';
-                    mark.style.padding = '0 1px';
-                    mark.dataset.highlightColor = color;
-                    mark.className = 'apex-highlight';
-                    mark.appendChild(fragment);
-                    range.insertNode(mark);
-                } catch (innerError) {
-                    console.warn('Could not apply visual highlight:', innerError);
-                }
-            }
-        }
-
         addHighlight(book.id, {
             text: selection.text,
             color,
