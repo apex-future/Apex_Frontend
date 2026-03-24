@@ -803,9 +803,11 @@ export const BookProvider = ({ children }) => {
 
   const addHighlight = useCallback(async (bookId, highlight) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    const highlightId = Date.now();
+
+    // Update UI state immediately
     setShelves((prevShelves) => {
       let updatedBook = null;
-      const highlightId = Date.now();
       const newShelves = prevShelves.map((shelf) => ({
         ...shelf,
         books: shelf.books.map((book) => {
@@ -824,32 +826,63 @@ export const BookProvider = ({ children }) => {
       if (updatedBook) {
         db.books.update(targetId, { metadata: updatedBook.metadata })
           .catch(err => console.error('Failed to save highlight metadata:', err));
-
-        // Direct save via syncService
-        syncService.saveHighlight(targetId, {
-          highlighted_text: highlight.text || highlight.highlightedText || '',
-          color: highlight.color || 'yellow',
-          page_number: highlight.page || highlight.pageNumber || 0,
-          text_position: highlight.position || highlight.textPosition || '',
-          note: highlight.note || null,
-        }).then((savedRecord) => {
-          // Optionally update the in-memory metadata array to have the real ID
-          // so deleting works identically but for now relying on metadata matching is fine
-          // since we use local mapping
-        });
       }
       return newShelves;
     });
+
+    // Direct save via syncService — then patch in-memory highlight with actual IDs
+    try {
+      const savedRecord = await syncService.saveHighlight(targetId, {
+        highlighted_text: highlight.text || highlight.highlightedText || '',
+        color: highlight.color || 'yellow',
+        page_number: highlight.page || highlight.pageNumber || 0,
+        text_position: highlight.position || highlight.textPosition || '',
+        note: highlight.note || null,
+      });
+
+      if (savedRecord) {
+        // Patch the in-memory highlight with the real Dexie ID + supabaseId
+        // so that future removeHighlight calls can find the Dexie record
+        setShelves(prev => prev.map(shelf => ({
+          ...shelf,
+          books: shelf.books.map(book => {
+            if (book.id !== targetId) return book;
+            return {
+              ...book,
+              metadata: {
+                ...(book.metadata || {}),
+                highlights: (book.metadata?.highlights || []).map(h =>
+                  h.id === highlightId
+                    ? { ...h, id: savedRecord.id, dexieId: savedRecord.id, supabaseId: savedRecord.supabaseId || null }
+                    : h
+                ),
+              },
+            };
+          }),
+        })));
+      }
+    } catch (err) {
+      console.error('[Apex] Failed to save highlight via syncService:', err);
+    }
   }, []);
 
   const removeHighlight = useCallback(async (bookId, highlightId) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
 
     // Get highlight record before removing to capture recordId for sync
-    const highlightRecord = await db.highlights
-      .where('local_id').equals(highlightId.toString())
-      .first()
-      .catch(() => null);
+    let highlightRecord = null;
+    if (typeof highlightId === 'number') {
+      highlightRecord = await db.highlights.get(highlightId).catch(() => null);
+    }
+    
+    // Fallback lookups
+    if (!highlightRecord) {
+      if (typeof highlightId === 'string' && highlightId.includes('-')) {
+        highlightRecord = await db.highlights.where('supabaseId').equals(highlightId).first().catch(() => null);
+      } else {
+        highlightRecord = await db.highlights.where('local_id').equals(highlightId.toString()).first().catch(() => null);
+      }
+    }
 
     setShelves((prevShelves) => {
       let updatedBook = null;
@@ -862,7 +895,7 @@ export const BookProvider = ({ children }) => {
             ...book,
             metadata: {
               ...(book.metadata || {}),
-              highlights: existingHighlights.filter(h => h.id !== highlightId),
+              highlights: existingHighlights.filter(h => h.id !== highlightId && h.dexieId !== highlightId),
             },
           };
           return updatedBook;
@@ -875,6 +908,9 @@ export const BookProvider = ({ children }) => {
         // Delete via syncService if we have a record
         if (highlightRecord) {
           syncService.deleteHighlight(highlightRecord.supabaseId, highlightRecord.id);
+        } else if (typeof highlightId === 'number') {
+          // Fallback: forcefully try deleting the dexie integer ID if record lookup failed
+          syncService.deleteHighlight(null, highlightId);
         }
       }
       return newShelves;
