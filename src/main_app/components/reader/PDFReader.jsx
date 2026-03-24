@@ -206,8 +206,11 @@ const PDFReader = ({
 
         for (const h of pageHighlights) {
             const text = h.text || h.highlightedText || '';
-            const color = h.color || '#fef08a';
+            let color = h.color || '#fef08a';
             if (!text) continue;
+
+            // Make solid hex colors partially transparent (approx 40% opacity = '66')
+            const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
 
             const ranges = getHighlightRanges(textLayer, text);
             if (ranges.length === 0) continue;
@@ -226,7 +229,7 @@ const PDFReader = ({
                         div.style.top = `${rect.top - pageRect.top}px`;
                         div.style.width = `${rect.width}px`;
                         div.style.height = `${rect.height}px`;
-                        div.style.backgroundColor = color;
+                        div.style.backgroundColor = displayColor;
                         div.style.borderRadius = '2px';
                         hlLayer.appendChild(div);
                     }
@@ -247,11 +250,12 @@ const PDFReader = ({
             let styleText = '';
             for (const [color, ranges] of Object.entries(collectedRanges)) {
                 if (ranges.length === 0) continue;
+                const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
                 const safeColor = color.replace(/[^a-zA-Z0-9]/g, '');
                 const highlightName = `apex-hl-${safeColor}`;
                 const highlight = new Highlight(...ranges);
                 CSS.highlights.set(highlightName, highlight);
-                styleText += `::highlight(${highlightName}) { background-color: ${color}; color: inherit; }\n`;
+                styleText += `::highlight(${highlightName}) { background-color: ${displayColor}; color: transparent; }\n`;
             }
             let styleEl = document.getElementById('apex-css-highlights');
             if (!styleEl) {
