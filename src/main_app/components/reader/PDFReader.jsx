@@ -172,7 +172,9 @@ const PDFReader = ({
     if (!container) return;
 
     const collectedRanges = {}; // { "#fef08a": [range1, range2] }
-    const useCSSHighlight = 'highlights' in CSS;
+    // Force fallback overlay on mobile — CSS Highlight API doesn't render colors correctly on touch devices
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const useCSSHighlight = !isTouchDevice && 'highlights' in CSS;
 
     const applyToPage = (pageNum, pageEl) => {
         const pageHighlights = highlights.filter(

@@ -353,33 +353,15 @@ function ReaderView() {
         isPinching: false
     });
 
+    // Track last selected text to avoid unnecessary position jitter
+    const lastSelTextRef = useRef('');
+    const selDebounceRef = useRef(null);
+    const showHighlightMenuRef = useRef(showHighlightMenu);
+    useEffect(() => { showHighlightMenuRef.current = showHighlightMenu; }, [showHighlightMenu]);
+
     // Selection monitoring logic
     useEffect(() => {
-        const handleSelectionChange = () => {
-            const activeSel = window.getSelection();
-            const text = activeSel.toString().trim();
-
-            if (text && text.length > 0) {
-                try {
-                    const range = activeSel.getRangeAt(0);
-                    const rect = range.getBoundingClientRect();
-                    setSelection({
-                        text,
-                        x: rect.left + rect.width / 2,
-                        y: rect.top
-                    });
-                    setShowHighlightMenu(true);
-                } catch (e) {
-                    // If selection range is lost or invalid
-                    setShowHighlightMenu(false);
-                }
-            } else {
-                // Only hide if dictionary isn't open
-                if (!isDictOpen) {
-                    setShowHighlightMenu(false);
-                }
-            }
-        };
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
         const getDistance = (touches) => {
             return Math.hypot(
@@ -413,26 +395,43 @@ function ReaderView() {
             }
         };
 
-        // More responsive selection monitoring
-        const handleSelectionUpdate = () => {
+        // Core selection handler — called directly on desktop, debounced on mobile
+        const processSelection = () => {
             const activeSel = window.getSelection();
-            const text = activeSel.toString().trim();
+            const text = activeSel?.toString().trim() || '';
 
             if (text && text.length > 0) {
                 const rect = getSelectionRect(activeSel);
                 if (rect) {
-                    setSelection({
-                        text,
-                        x: rect.left + rect.width / 2,
-                        y: rect.top
-                    });
+                    // Only update position if text content changed or menu isn't shown yet
+                    const textChanged = text !== lastSelTextRef.current;
+                    lastSelTextRef.current = text;
+
+                    if (textChanged || !showHighlightMenuRef.current) {
+                        setSelection({
+                            text,
+                            x: rect.left + rect.width / 2,
+                            y: rect.top
+                        });
+                    }
                     setShowHighlightMenu(true);
                 }
             } else {
+                lastSelTextRef.current = '';
                 // Only hide if dictionary isn't open
                 if (!isDictOpen) {
                     setShowHighlightMenu(false);
                 }
+            }
+        };
+
+        // Debounced handler for mobile to prevent flickering
+        const handleSelectionUpdate = () => {
+            if (isTouchDevice) {
+                clearTimeout(selDebounceRef.current);
+                selDebounceRef.current = setTimeout(processSelection, 150);
+            } else {
+                processSelection();
             }
         };
 
@@ -442,6 +441,7 @@ function ReaderView() {
         document.addEventListener('touchend', handleTouchEnd);
 
         return () => {
+            clearTimeout(selDebounceRef.current);
             document.removeEventListener('selectionchange', handleSelectionUpdate);
             document.removeEventListener('touchstart', handleTouchStart);
             document.removeEventListener('touchmove', handleTouchMove);
@@ -631,7 +631,7 @@ function ReaderView() {
 
     return (
         <div
-            className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden [touch-action:manipulation] [-webkit-touch-callout:none]"
+            className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden"
             onClick={closeNav}
         >
             <ScrollOrientationOverlay visible={showScrollOverlay} orientation={scrollOrientation} />
