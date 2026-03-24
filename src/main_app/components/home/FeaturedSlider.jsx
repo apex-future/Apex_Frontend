@@ -35,7 +35,7 @@ const FeaturedSlider = ({ lastReadBook }) => {
                 { id: 'streak', component: <StreakCard /> }
               ]
         )
-    ].filter(s => (s.id === 'lastRead' && lastReadBook) || (s.id !== 'lastRead'));
+    ];
 
     const handleScroll = (e) => {
         const { scrollLeft, clientWidth } = e.target;

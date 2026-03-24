@@ -4,6 +4,8 @@ import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu, LogOut, Sun, M
 // Import navigation hooks and components from react-router-dom
 import { NavLink, useLocation } from 'react-router-dom';
 import useThemeStore from '../../../store/themeStore';
+import logoLight from "../../../../assets/logo/logo-light-removebg-preview.png";
+import logoDark from "../../../../assets/logo/logo-dark-removebg-preview.png";
 
 /**
  * AsideNavBar Component:
@@ -67,25 +69,42 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
       >
         {/* Sidebar Header: Contains the close button (mobile) or the toggle button (desktop) */}
         <div className={`flex items-center h-16 px-4 border-b border-border-default flex-shrink-0 ${!isExpanded ? 'justify-center' : 'justify-between'}`}>
-          {/* X button for mobile dismissal */}
           {isExpanded && (
-            <button
-              onClick={closeMobileNav}
-              className="md:hidden p-2 hover:bg-bg-subtle rounded-lg transition-colors"
-              aria-label="Close menu"
-            >
-              <X size={20} className="text-text-primary" />
-            </button>
+            <div className="logo-wrapper flex items-center">
+              <img
+                src={logoLight}
+                alt="Apex Logo"
+                className='h-8 w-auto object-contain dark:hidden'
+              />
+              <img
+                src={logoDark}
+                alt="Apex Logo"
+                className='h-8 w-auto object-contain hidden dark:block'
+              />
+            </div>
           )}
 
-          {/* Menu button for desktop expansion/collapse toggle */}
-          <button
-            onClick={toggleNavLink}
-            className="hidden md:flex items-center justify-center p-2 hover:bg-bg-subtle rounded-lg transition-colors"
-            aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            <Menu size={20} className="text-text-primary" />
-          </button>
+          <div className="flex items-center break-keep">
+            {/* X button for mobile dismissal */}
+            {isExpanded && (
+              <button
+                onClick={closeMobileNav}
+                className="md:hidden p-2 hover:bg-bg-subtle rounded-lg transition-colors"
+                aria-label="Close menu"
+              >
+                <X size={20} className="text-text-primary" />
+              </button>
+            )}
+
+            {/* Menu button for desktop expansion/collapse toggle */}
+            <button
+              onClick={toggleNavLink}
+              className="hidden md:flex items-center justify-center p-2 hover:bg-bg-subtle rounded-lg transition-colors"
+              aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            >
+              <Menu size={20} className="text-text-primary" />
+            </button>
+          </div>
         </div>
 
         {/* Navigation Links: flex-1 ensures this section takes up the available vertical space */}

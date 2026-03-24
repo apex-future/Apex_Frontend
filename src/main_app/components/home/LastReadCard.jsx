@@ -5,7 +5,16 @@ import BookCover from '../books/BookCover';
 const LastReadCard = ({ book }) => {
     const navigate = useNavigate();
     
-    if (!book) return null;
+    if (!book) {
+        return (
+            <div className="w-full h-full flex flex-col">
+                <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
+                <div className="bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default h-full min-h-[160px] flex items-center justify-center shadow-md">
+                    <p className="text-text-tertiary font-medium">No recent books</p>
+                </div>
+            </div>
+        );
+    }
 
     const currentBook = book;
 
