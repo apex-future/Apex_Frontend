@@ -61,13 +61,13 @@ const StreakCard = () => {
                                           ? 'bg-orange-500 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)] ring-2 ring-orange-500/30 ring-offset-2 dark:ring-offset-neutral-900 shadow-md scale-110'
                                           : 'bg-orange-500 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
                                         : isToday
-                                        ? 'bg-neutral-900 border-neutral-900 text-white shadow-sm dark:bg-white dark:border-white dark:text-neutral-900'
+                                        ? 'bg-transparent border-orange-500 text-orange-500 shadow-sm ring-2 ring-offset-2 ring-orange-500/20 dark:ring-offset-neutral-900'
                                         : 'bg-bg-subtle border-border-default text-text-tertiary'
                                 }`}>
-                                    {isToday ? (
-                                        <Flame size={14} className="fill-current md:size-18" />
-                                    ) : hasStreak ? (
-                                        <Flame size={12} className="fill-current" />
+                                    {hasStreak ? (
+                                        <Flame size={isToday ? 14 : 12} className="fill-current" />
+                                    ) : isToday ? (
+                                        <div className="size-1 md:size-1.5 bg-orange-500 rounded-full" />
                                     ) : (
                                         <div className="size-1.5 md:size-2 bg-text-tertiary/20 rounded-full" />
                                     )}

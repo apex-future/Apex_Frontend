@@ -189,7 +189,7 @@ function StreakPage() {
                           ? 'bg-orange-500 text-white shadow-[0_0_8px_rgba(249,115,22,0.4)] ring-2 ring-offset-2 ring-orange-400 dark:ring-offset-neutral-900'
                           : 'bg-orange-500 text-white shadow-[0_0_8px_rgba(249,115,22,0.4)]'
                         : isToday
-                          ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-md'
+                          ? 'border-2 border-orange-500 text-orange-500 shadow-sm ring-2 ring-offset-2 ring-orange-500/20 dark:ring-offset-neutral-900'
                           : isFuture
                             ? 'text-text-tertiary/40'
                             : 'text-text-tertiary'
