@@ -101,12 +101,18 @@ function ReaderView() {
     // 1-MINUTE READING TIMER — Streak Trigger
     // ============================================
     const updateStreak = useStudyStore(state => state.updateStreak);
+    const updateStreakRef = useRef(updateStreak);
+    useEffect(() => { updateStreakRef.current = updateStreak; }, [updateStreak]);
     const streakTimerRef = useRef(null);
     const streakFiredTodayRef = useRef(false);
 
+    // Track elapsed time so visibility changes don't reset the full 60s
+    const streakElapsedRef = useRef(0);
+    const streakStartTimeRef = useRef(null);
+
     useEffect(() => {
         // Don't start timer if book isn't loaded yet
-        if (isLoading || !book) return;
+        if (isLoading || !bookId) return;
 
         // Check if streak already fired today — don't double count
         const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
@@ -118,38 +124,50 @@ function ReaderView() {
 
         if (streakFiredTodayRef.current) return;
 
-        console.log('[Apex Streak] Starting 1-minute reading timer...');
+        const STREAK_DURATION = 60 * 1000; // 60 seconds
+        const remainingTime = STREAK_DURATION - streakElapsedRef.current;
 
-        // Start 60-second timer
+        console.log('[Apex Streak] Starting 1-minute reading timer... (' + Math.round(remainingTime / 1000) + 's remaining)');
+        streakStartTimeRef.current = Date.now();
+
+        // Start timer for remaining time
         streakTimerRef.current = setTimeout(() => {
             if (!streakFiredTodayRef.current) {
                 console.log('[Apex Streak] 60 seconds reached — updating streak');
-                updateStreak();
+                updateStreakRef.current();
                 streakFiredTodayRef.current = true;
+                streakElapsedRef.current = STREAK_DURATION;
                 // Mark as fired today in localStorage as backup
                 localStorage.setItem('apex_streak_fired_today',
                     new Date().toLocaleDateString('en-CA')
                 );
             }
-        }, 60 * 1000); // 60 seconds
+        }, remainingTime);
 
-        // Pause timer when tab is hidden
+        // Pause timer when tab is hidden, resume with remaining time
         const handleVisibilityChange = () => {
             if (document.hidden) {
                 console.log('[Apex Streak] Tab hidden — pausing timer');
                 clearTimeout(streakTimerRef.current);
+                // Track how much time has elapsed so far
+                if (streakStartTimeRef.current) {
+                    streakElapsedRef.current += Date.now() - streakStartTimeRef.current;
+                }
             } else if (!streakFiredTodayRef.current) {
-                console.log('[Apex Streak] Tab visible — resuming timer');
+                const remaining = STREAK_DURATION - streakElapsedRef.current;
+                console.log('[Apex Streak] Tab visible — resuming timer (' + Math.round(remaining / 1000) + 's remaining)');
+                streakStartTimeRef.current = Date.now();
                 streakTimerRef.current = setTimeout(() => {
                     if (!streakFiredTodayRef.current) {
                         console.log('[Apex Streak] 60 seconds reached after resume — updating streak');
-                        updateStreak();
+                        updateStreakRef.current();
                         streakFiredTodayRef.current = true;
+                        streakElapsedRef.current = STREAK_DURATION;
                         localStorage.setItem('apex_streak_fired_today',
                             new Date().toLocaleDateString('en-CA')
                         );
                     }
-                }, 60 * 1000);
+                }, remaining);
             }
         };
 
@@ -158,10 +176,15 @@ function ReaderView() {
         return () => {
             // Cleanup on unmount — cancel timer if user leaves before 60 seconds
             clearTimeout(streakTimerRef.current);
+            // Save elapsed time so re-entering the reader continues from where it left off
+            if (streakStartTimeRef.current) {
+                streakElapsedRef.current += Date.now() - streakStartTimeRef.current;
+                streakStartTimeRef.current = null;
+            }
             document.removeEventListener('visibilitychange', handleVisibilityChange);
-            console.log('[Apex Streak] Timer cleaned up');
+            console.log('[Apex Streak] Timer cleaned up (elapsed: ' + Math.round(streakElapsedRef.current / 1000) + 's)');
         };
-    }, [isLoading, book, updateStreak]);
+    }, [isLoading, bookId]);
 
     const handleHighlight = (color) => {
         if (!book || !selection.text) return;
