@@ -56,10 +56,12 @@ const StreakCard = () => {
                                     {day}
                                 </span>
                                 <div className={`size-7 md:size-9 lg:size-8 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
-                                    isToday
+                                    hasStreak
+                                        ? isToday
+                                          ? 'bg-orange-500 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)] ring-2 ring-orange-500/30 ring-offset-2 dark:ring-offset-neutral-900 shadow-md scale-110'
+                                          : 'bg-orange-500 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
+                                        : isToday
                                         ? 'bg-neutral-900 border-neutral-900 text-white shadow-sm dark:bg-white dark:border-white dark:text-neutral-900'
-                                        : hasStreak
-                                        ? 'bg-orange-500 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
                                         : 'bg-bg-subtle border-border-default text-text-tertiary'
                                 }`}>
                                     {isToday ? (

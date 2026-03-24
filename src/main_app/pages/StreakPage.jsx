@@ -184,10 +184,12 @@ function StreakPage() {
                 return (
                   <div
                     key={cell.dateStr}
-                    className={`aspect-square rounded-xl flex items-center justify-center text-[13px] sm:text-sm font-semibold transition-all duration-300 ${isToday
-                        ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-md'
-                        : hasStreak
-                          ? 'bg-orange-500 text-white shadow-[0_0_8px_rgba(249,115,22,0.4)]'
+                    className={`aspect-square rounded-xl flex items-center justify-center text-[13px] sm:text-sm font-semibold transition-all duration-300 ${hasStreak
+                        ? isToday
+                          ? 'bg-orange-500 text-white shadow-[0_0_8px_rgba(249,115,22,0.4)] ring-2 ring-offset-2 ring-orange-400 dark:ring-offset-neutral-900'
+                          : 'bg-orange-500 text-white shadow-[0_0_8px_rgba(249,115,22,0.4)]'
+                        : isToday
+                          ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-md'
                           : isFuture
                             ? 'text-text-tertiary/40'
                             : 'text-text-tertiary'
