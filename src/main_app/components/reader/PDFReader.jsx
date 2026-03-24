@@ -6,8 +6,11 @@ import BookSkeleton from './BookSkeleton';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Configure worker — static path so the service worker can precache it
-pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
+// Configure worker - using Vite's native URL asset handling
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
 /**
  * Scans all text nodes inside `container`, concatenates them, finds `searchText`,

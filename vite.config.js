@@ -12,19 +12,7 @@ export default defineConfig({
     legacy({
       targets: ['defaults', 'not IE 11']
     }),
-    // Copy PDF worker to public/ so it's served as a static asset
-    {
-      name: 'copy-pdf-worker',
-      buildStart() {
-        const workerSrc = resolve(
-          'node_modules/pdfjs-dist/build/pdf.worker.min.mjs'
-        );
-        const destDir = resolve('public');
-        const destFile = resolve('public/pdf.worker.min.mjs');
-        if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
-        copyFileSync(workerSrc, destFile);
-      }
-    },
+
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['pwa-192x192.png', 'pwa-512x512.png'],
