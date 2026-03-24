@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useContext, useCallback, memo } from 'react';
 import useStudyStore from '../../store/studyStore';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
@@ -190,7 +190,7 @@ function ReaderView() {
         if (!book || !selection.text) return;
 
         addHighlight(book.id, {
-            text: selection.text,
+            text: selection.text.replace(/\s+/g, ' ').trim(),
             color,
             page: pageNumber,
             addedAt: new Date().toISOString()
@@ -258,10 +258,18 @@ function ReaderView() {
     // Bookmarks — loaded from book context instead of manually from Dexie to prevent async UI lag
     const bookmarks = book?.metadata?.bookmarks || [];
     const highlights = book?.metadata?.highlights || [];
+    const stableHighlights = useMemo(() => highlights, [highlights]);
 
     const isCurrentPageBookmarked = bookmarks.some(
         bm => bm.pageNumber === pageNumber || bm.page === pageNumber
     );
+
+    const stableOnPageChange = useCallback((n) => {
+        setPageNumber(n);
+        syncProgress(n, numPages);
+    }, [numPages]);
+
+    const MemoizedPDFReader = useMemo(() => memo(PDFReader), []);
 
     // Expose pdfControls object
     const pdfControls = isPdf
@@ -706,7 +714,7 @@ function ReaderView() {
                     {/* PDF Content */}
                     {fileUrl && isPdf && (
                         <div className="flex-1 flex overflow-hidden relative">
-                            <PDFReader
+                            <MemoizedPDFReader
                                 fileUrl={fileUrl}
                                 pageNumber={pageNumber}
                                 scale={scale}
@@ -716,14 +724,11 @@ function ReaderView() {
                                 onPrevPage={previousPage}
                                 numPages={numPages}
                                 goToPage={goToPage}
-                                highlights={book?.metadata?.highlights || []}
+                                highlights={stableHighlights}
                                 locked={locked}
                                 windowSize={windowSize}
                                 scrollOrientation={scrollOrientation}
-                                onPageChange={(n) => {
-                                    setPageNumber(n);
-                                    syncProgress(n, numPages);
-                                }}
+                                onPageChange={stableOnPageChange}
                             />
 
                             <button

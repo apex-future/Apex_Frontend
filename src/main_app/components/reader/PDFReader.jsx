@@ -14,6 +14,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 /**
  * Scans all text nodes inside `container`, finds `searchText`, and returns an array of Range objects.
+ * Adds spaces between text nodes to match browser selection behavior across PDF text spans.
  */
 function getHighlightRanges(container, searchText) {
   if (!container || !searchText) return [];
@@ -23,16 +24,27 @@ function getHighlightRanges(container, searchText) {
   while ((node = walker.nextNode())) {
     textNodes.push(node);
   }
+
+  // Build full text with space separators between nodes
+  // PDF text layer spans are positioned separately; browsers add whitespace between them in selections
   let fullText = '';
   const nodeMap = [];
-  for (const tn of textNodes) {
+  for (let i = 0; i < textNodes.length; i++) {
+    const tn = textNodes[i];
+    // Add a space between nodes if previous doesn't end with space and current doesn't start with one
+    if (i > 0 && fullText.length > 0 && !fullText.endsWith(' ') && !tn.textContent.startsWith(' ')) {
+      fullText += ' ';
+    }
     const start = fullText.length;
     fullText += tn.textContent;
     nodeMap.push({ node: tn, start, end: fullText.length });
   }
 
+  // Normalize whitespace in search text to match the way we built fullText
+  const normalizedSearch = searchText.replace(/\s+/g, ' ').trim();
+
   const lowerFull = fullText.toLowerCase();
-  const lowerSearch = searchText.toLowerCase();
+  const lowerSearch = normalizedSearch.toLowerCase();
   let idx = lowerFull.indexOf(lowerSearch);
   const ranges = [];
 
