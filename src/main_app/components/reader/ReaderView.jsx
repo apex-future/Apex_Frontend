@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
+import useStudyStore from '../../store/studyStore';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
 import db from '../../db/apex.db';
@@ -95,6 +96,72 @@ function ReaderView() {
         setShowPageStrip(false);
         setNavState('first');
     }, []);
+
+    // ============================================
+    // 1-MINUTE READING TIMER — Streak Trigger
+    // ============================================
+    const updateStreak = useStudyStore(state => state.updateStreak);
+    const streakTimerRef = useRef(null);
+    const streakFiredTodayRef = useRef(false);
+
+    useEffect(() => {
+        // Don't start timer if book isn't loaded yet
+        if (isLoading || !book) return;
+
+        // Check if streak already fired today — don't double count
+        const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
+        const lastActive = localStorage.getItem('apex_streak_fired_today');
+        if (lastActive === today) {
+            console.log('[Apex Streak] Already fired today — timer skipped');
+            streakFiredTodayRef.current = true;
+        }
+
+        if (streakFiredTodayRef.current) return;
+
+        console.log('[Apex Streak] Starting 1-minute reading timer...');
+
+        // Start 60-second timer
+        streakTimerRef.current = setTimeout(() => {
+            if (!streakFiredTodayRef.current) {
+                console.log('[Apex Streak] 60 seconds reached — updating streak');
+                updateStreak();
+                streakFiredTodayRef.current = true;
+                // Mark as fired today in localStorage as backup
+                localStorage.setItem('apex_streak_fired_today',
+                    new Date().toLocaleDateString('en-CA')
+                );
+            }
+        }, 60 * 1000); // 60 seconds
+
+        // Pause timer when tab is hidden
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                console.log('[Apex Streak] Tab hidden — pausing timer');
+                clearTimeout(streakTimerRef.current);
+            } else if (!streakFiredTodayRef.current) {
+                console.log('[Apex Streak] Tab visible — resuming timer');
+                streakTimerRef.current = setTimeout(() => {
+                    if (!streakFiredTodayRef.current) {
+                        console.log('[Apex Streak] 60 seconds reached after resume — updating streak');
+                        updateStreak();
+                        streakFiredTodayRef.current = true;
+                        localStorage.setItem('apex_streak_fired_today',
+                            new Date().toLocaleDateString('en-CA')
+                        );
+                    }
+                }, 60 * 1000);
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            // Cleanup on unmount — cancel timer if user leaves before 60 seconds
+            clearTimeout(streakTimerRef.current);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            console.log('[Apex Streak] Timer cleaned up');
+        };
+    }, [isLoading, book, updateStreak]);
 
     const handleHighlight = (color) => {
         if (!book || !selection.text) return;

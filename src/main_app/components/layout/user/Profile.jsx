@@ -1,5 +1,6 @@
 import { ArrowLeft, Settings, Flame, Book, BookOpen, Calendar, TrendingUp } from 'lucide-react'
 import useAuthStore from '../../../store/authStore'
+import useStudyStore from '../../../store/studyStore'
 import { BookContext } from '../../../context/BookContextInstance'
 import { useContext, useMemo } from 'react'
 import dummyProfileImg from "../../../../assets/user_imgs/user_img_1.jpg"
@@ -10,6 +11,7 @@ function Profile() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { books } = useContext(BookContext);
+  const streakCount = useStudyStore(state => state.streakCount);
 
   const stats = useMemo(() => {
     const totalBooks = books.length;
@@ -93,7 +95,7 @@ function Profile() {
           {/* Streak Badge - Glassmorphic with THICK BORDER */}
           <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-2xl p-3 min-w-[70px]">
             <Flame className='text-orange-400' size={24} />
-            <p className='text-white text-xl font-bold'>{stats.streak}</p>
+            <p className='text-white text-xl font-bold'>{streakCount}</p>
             <p className='text-purple-100 text-[10px]'>days</p>
           </div>
         </div>

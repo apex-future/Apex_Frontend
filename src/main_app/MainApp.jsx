@@ -20,10 +20,10 @@ import NotesPage from './components/notes/NotesPage';
 import Settings from './components/layout/user/Settings';
 import DuplicateBookModal from './components/modals/DuplicateBookModal';
 import ImportPage from './pages/ImportPage';
+import StreakPage from './pages/StreakPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
-import useStudyStore from './store/studyStore';
 
 
 function MainApp({ onLogout }) {
@@ -40,11 +40,6 @@ function MainApp({ onLogout }) {
   const location = useLocation();
   const { showDuplicateModal, setShowDuplicateModal } = useContext(BookContext) || {};
   const { resolvedTheme } = useThemeStore();
-  const updateStreak = useStudyStore(state => state.updateStreak);
-
-  React.useEffect(() => {
-    updateStreak();
-  }, [updateStreak]);
 
   return (
     <div className={`flex relative min-h-screen bg-bg-elevated ${resolvedTheme}`}>
@@ -71,6 +66,7 @@ function MainApp({ onLogout }) {
                 <Route path="/ai" element={<ApexAI />} />
                 <Route path="/notes" element={<NotesPage />} />
                 <Route path="/import" element={<ImportPage />} />
+                <Route path="/streak" element={<StreakPage />} />
               </Routes>
             </main>
 

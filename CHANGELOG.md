@@ -24,6 +24,26 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.7.2] - 2026-03-24
+
+### Added
+
+- Streak system — 1-minute reading timer triggers daily streak
+- Full streak history stored locally (Zustand persist) and synced to Supabase
+- Streak page (/streak) with monthly calendar showing active days
+- Calendar shows today in black, streak days in orange, missed days empty
+- Motivational subtitle changes based on streak count
+- StreakBadge always visible in TopNavBar — navigates to /streak
+- PATCH /api/auth/streak endpoint
+- Streak seeded from Supabase on login — respects offline-first priority
+- Streak syncs automatically when device comes back online
+
+### Fixed
+
+- Removed incorrect streak trigger on app mount — streak now only counts after 1 minute of reading
+
+---
+
 ## [1.7.1] - 2026-03-20
 ### Added
 - Notes now synced to Supabase with full offline support
