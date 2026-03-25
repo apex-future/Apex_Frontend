@@ -83,16 +83,29 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
     // User wants "pop up close to the area of highlight"
     const isMobile = window.innerWidth < 640;
 
-    const menuStyle = isMobile
-        ? {
-            top: `${Math.max(80, position.y - 100)}px`,
-            left: `${Math.min(window.innerWidth - 310, Math.max(10, position.x - 150))}px`,
-            width: '300px'
-        }
-        : {
-            top: `${Math.max(10, position.y - 120)}px`,
-            left: `${Math.min(window.innerWidth - 300, Math.max(10, position.x - 100))}px`,
+    let menuStyle = {};
+
+    if (showDict || showNote) {
+        menuStyle = {
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: isMobile ? '340px' : '400px',
+            maxWidth: '90vw',
+            maxHeight: '85vh' // avoid covering edges on small screens
         };
+    } else {
+        menuStyle = isMobile
+            ? {
+                top: `${Math.max(80, position.y - 100)}px`,
+                left: `${Math.min(window.innerWidth - 310, Math.max(10, position.x - 150))}px`,
+                width: '300px'
+            }
+            : {
+                top: `${Math.max(10, position.y - 120)}px`,
+                left: `${Math.min(window.innerWidth - 300, Math.max(10, position.x - 100))}px`,
+            };
+    }
 
     return (
         <div
@@ -257,8 +270,8 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                 )}
             </div>
 
-            {/* Arrow — hide on mobile as it might not align well with dynamic float */}
-            {!isMobile && (
+            {/* Arrow — hide on mobile as it might not align well with dynamic float, and hide when centered */}
+            {!isMobile && !showDict && !showNote && (
                 <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white mx-auto" />
             )}
 
