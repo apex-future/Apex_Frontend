@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, memo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useSwipeable } from 'react-swipeable';
@@ -26,12 +26,10 @@ function getHighlightRanges(container, searchText) {
   }
 
   // Build full text with space separators between nodes
-  // PDF text layer spans are positioned separately; browsers add whitespace between them in selections
   let fullText = '';
   const nodeMap = [];
   for (let i = 0; i < textNodes.length; i++) {
     const tn = textNodes[i];
-    // Add a space between nodes if previous doesn't end with space and current doesn't start with one
     if (i > 0 && fullText.length > 0 && !fullText.endsWith(' ') && !tn.textContent.startsWith(' ')) {
       fullText += ' ';
     }
@@ -40,9 +38,7 @@ function getHighlightRanges(container, searchText) {
     nodeMap.push({ node: tn, start, end: fullText.length });
   }
 
-  // Normalize whitespace in search text to match the way we built fullText
   const normalizedSearch = searchText.replace(/\s+/g, ' ').trim();
-
   const lowerFull = fullText.toLowerCase();
   const lowerSearch = normalizedSearch.toLowerCase();
   let idx = lowerFull.indexOf(lowerSearch);
@@ -67,6 +63,50 @@ function getHighlightRanges(container, searchText) {
   }
   return ranges;
 }
+
+// ─── Memoized page component ───
+// This prevents the virtualizer from unmounting/remounting pages on parent re-renders.
+// The key insight: if pageNumber, rotation, scale, and width haven't changed, the <Page>
+// component keeps its canvas and text layer intact — no blank flash.
+const VirtualPage = memo(({ pageNumber, rotation, scale, width, onRenderSuccess }) => {
+  return (
+    <Page
+      pageNumber={pageNumber}
+      rotate={rotation}
+      scale={scale}
+      renderTextLayer={true}
+      renderAnnotationLayer={true}
+      onRenderSuccess={onRenderSuccess}
+      width={width}
+      className="!shadow-none"
+      loading={
+        <div
+          className="flex flex-col items-center justify-center bg-bg-elevated animate-pulse"
+          style={{ width, height: Math.round(width * 1.41 * scale) }}
+        >
+          <div className="w-full h-full p-8 space-y-4">
+            <div className="h-4 w-1/3 bg-bg-subtle rounded-full mx-auto" />
+            <div className="space-y-4">
+              <div className="h-2 w-full bg-bg-subtle rounded-full" />
+              <div className="h-2 w-full bg-bg-subtle rounded-full" />
+              <div className="h-2 w-2/3 bg-bg-subtle rounded-full mx-auto" />
+            </div>
+          </div>
+        </div>
+      }
+    />
+  );
+}, (prev, next) => {
+  // Only re-render if these specific props change
+  return (
+    prev.pageNumber === next.pageNumber &&
+    prev.rotation === next.rotation &&
+    prev.scale === next.scale &&
+    prev.width === next.width
+  );
+});
+
+VirtualPage.displayName = 'VirtualPage';
 
 const PDFReader = ({
   fileUrl,
@@ -94,14 +134,18 @@ const PDFReader = ({
   const [isFading, setIsFading] = useState(false);
   const isVertical = scrollOrientation === 'vertical';
 
+  // Stable estimateSize callback — prevents virtualizer from reinitializing size cache
+  const estimateSize = useCallback(
+    () => Math.round(pdfWidth * 1.41 * scale),
+    [pdfWidth, scale]
+  );
+
   const rowVirtualizer = useVirtualizer({
     count: numPages || 0,
     getScrollElement: () => containerRef.current,
-    estimateSize: () => Math.round(pdfWidth * 1.41 * scale),
-    overscan: 2,
+    estimateSize,
+    overscan: 3, // Increased from 2 for smoother scrolling
   });
-
-  console.log('[PDFReader] virtualizer items in view:', rowVirtualizer.getVirtualItems().length, '/', numPages);
 
   const isJumping = useRef(false);
   const lastReportedPage = useRef(pageNumber);
@@ -119,13 +163,12 @@ const PDFReader = ({
     if (isVertical) return;
     if (pageNumber === displayedPage) return;
 
-    console.log('[PDFReader] horizontal crossfade from', displayedPage, 'to', pageNumber);
     setIsFading(true);
 
     const timer = setTimeout(() => {
       setDisplayedPage(pageNumber);
       setIsFading(false);
-    }, 150); // 150ms fade-out, then swap
+    }, 150);
 
     return () => clearTimeout(timer);
   }, [pageNumber, isVertical]);
@@ -133,58 +176,70 @@ const PDFReader = ({
   const onPageChangeRef = useRef(onPageChange);
   useEffect(() => { onPageChangeRef.current = onPageChange; }, [onPageChange]);
 
-  // Scroll handler for vertical mode — detects which page is at the top
+  // RAF-throttled scroll handler for vertical mode — detects which page is at the top
+  const rafId = useRef(null);
   const handleVerticalScroll = useCallback(() => {
     if (!isVertical || !numPages) return;
     if (isJumping.current) return;
 
-    const container = containerRef.current;
-    if (!container) return;
+    // Cancel any pending RAF to avoid stacking
+    if (rafId.current) cancelAnimationFrame(rafId.current);
 
-    const pageElements = container.querySelectorAll('.pdf-page-wrapper');
-    if (!pageElements.length) return;
+    rafId.current = requestAnimationFrame(() => {
+      const container = containerRef.current;
+      if (!container) return;
 
-    const containerTop = container.getBoundingClientRect().top;
-    let bestPage = -1;
-    let minTopDiff = Infinity;
+      const pageElements = container.querySelectorAll('.pdf-page-wrapper');
+      if (!pageElements.length) return;
 
-    pageElements.forEach((el) => {
-      const rect = el.getBoundingClientRect();
-      const topDiff = Math.abs(rect.top - containerTop);
-      if (topDiff < minTopDiff) {
-        minTopDiff = topDiff;
-        bestPage = parseInt(el.dataset.pageIndex, 10);
+      const containerTop = container.getBoundingClientRect().top;
+      let bestPage = -1;
+      let minTopDiff = Infinity;
+
+      pageElements.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const topDiff = Math.abs(rect.top - containerTop);
+        if (topDiff < minTopDiff) {
+          minTopDiff = topDiff;
+          bestPage = parseInt(el.dataset.pageIndex, 10);
+        }
+      });
+
+      if (bestPage !== -1 && bestPage !== lastReportedPage.current) {
+        lastReportedPage.current = bestPage;
+        onPageChangeRef.current?.(bestPage);
       }
     });
-
-    if (bestPage !== -1 && bestPage !== lastReportedPage.current) {
-      lastReportedPage.current = bestPage;
-      onPageChangeRef.current?.(bestPage);
-    }
   }, [isVertical, numPages]);
+
+  // Cleanup RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
+  }, []);
 
   // Handle programmatic scroll for goToPage in vertical mode
   useEffect(() => {
     if (!isVertical || !rowVirtualizer || !numPages) return;
     if (pageNumber === lastReportedPage.current) return;
-    console.log('[PDFReader] jumping to page via virtualizer:', pageNumber);
     rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start', behavior: 'smooth' });
     lastReportedPage.current = pageNumber;
   }, [pageNumber, isVertical, numPages]);
 
-  // Called when react-pdf finishes rendering a page
+  // Stable render success handler
   const handlePageRenderSuccess = useCallback(() => {
     setPageRendered(prev => prev + 1);
   }, []);
 
   // Post-render: apply highlights to the text layer DOM safely without breaking React Node hierarchy
+  // Uses requestIdleCallback for non-blocking highlight painting
   useEffect(() => {
     if (!highlights || highlights.length === 0) return;
     const container = containerRef.current;
     if (!container) return;
 
-    const collectedRanges = {}; // { "#fef08a": [range1, range2] }
-    // Force fallback overlay on mobile — CSS Highlight API doesn't render colors correctly on touch devices
+    const collectedRanges = {};
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const useCSSHighlight = !isTouchDevice && 'highlights' in CSS;
 
@@ -204,14 +259,13 @@ const PDFReader = ({
         if (!useCSSHighlight) {
             hlLayer = document.createElement('div');
             hlLayer.className = 'apex-fallback-hl-layer';
-            // Overlay absolutely on the page wrapper
             hlLayer.style.position = 'absolute';
             hlLayer.style.top = '0';
             hlLayer.style.left = '0';
             hlLayer.style.width = '100%';
             hlLayer.style.height = '100%';
             hlLayer.style.pointerEvents = 'none';
-            hlLayer.style.zIndex = '10'; // Above text layer so multiply blend works well
+            hlLayer.style.zIndex = '10';
             hlLayer.style.mixBlendMode = 'multiply';
             pageEl.appendChild(hlLayer);
         }
@@ -223,7 +277,6 @@ const PDFReader = ({
             let color = h.color || '#fef08a';
             if (!text) continue;
 
-            // Make solid hex colors partially transparent (approx 40% opacity = '66')
             const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
 
             const ranges = getHighlightRanges(textLayer, text);
@@ -252,7 +305,11 @@ const PDFReader = ({
         }
     };
 
-    const timer = setTimeout(() => {
+    // Use requestIdleCallback to apply highlights without blocking main thread
+    const scheduleHighlights = typeof requestIdleCallback === 'function' ? requestIdleCallback : (fn) => setTimeout(fn, 100);
+    const cancelHighlights = typeof cancelIdleCallback === 'function' ? cancelIdleCallback : clearTimeout;
+
+    const idleId = scheduleHighlights(() => {
         if (useCSSHighlight) CSS.highlights.clear();
 
         container.querySelectorAll('.pdf-page-wrapper').forEach((wrapper) => {
@@ -281,22 +338,16 @@ const PDFReader = ({
                 styleEl.textContent = styleText;
             }
         }
-    }, 400);
+    });
 
     return () => {
-        clearTimeout(timer);
+        cancelHighlights(idleId);
         if (useCSSHighlight) CSS.highlights.clear();
     };
   }, [highlights, pageNumber, pageRendered, isVertical]);
 
   const customTextRenderer = React.useCallback(
-    ({ str, itemIndex, pageIndex }) => {
-      // Note: react-pdf might not pass pageIndex here easily, but we can infer or filter
-      // For now, we'll keep the existing logic which was single-page focused.
-      // In vertical mode, we might need a more robust way to match highlights to pages.
-      // However, the post-render highlight application (above) is more reliable for multi-span.
-      return str;
-    },
+    ({ str }) => str,
     [highlights, pageNumber]
   );
 
@@ -323,14 +374,11 @@ const PDFReader = ({
         const isAtRightEdge = el.scrollLeft + el.clientWidth >= el.scrollWidth - 20;
         if (!isAtRightEdge) return;
 
-        // Implementation of double-swipe confirmation for zoomed edges
         const now = Date.now();
         if (now - lastEdgeHit.current.right > 2000) {
             lastEdgeHit.current.right = now;
-            // Maybe show a subtle hint here in the future
             return;
         }
-        // If we reach here, it's the second swipe within 2s
         lastEdgeHit.current.right = 0;
       }
     }
@@ -345,13 +393,11 @@ const PDFReader = ({
         const isAtLeftEdge = el.scrollLeft <= 20;
         if (!isAtLeftEdge) return;
 
-        // Implementation of double-swipe confirmation for zoomed edges
         const now = Date.now();
         if (now - lastEdgeHit.current.left > 2000) {
             lastEdgeHit.current.left = now;
             return;
         }
-        // If we reach here, it's the second swipe within 2s
         lastEdgeHit.current.left = 0;
       }
     }
@@ -410,30 +456,12 @@ const PDFReader = ({
                     height: `${virtualRow.size}px`,
                   }}
                 >
-                  <Page
+                  <VirtualPage
                     pageNumber={pageIdx}
-                    rotate={rotation}
+                    rotation={rotation}
                     scale={scale}
-                    renderTextLayer={true}
-                    renderAnnotationLayer={true}
-                    onRenderSuccess={handlePageRenderSuccess}
                     width={pdfWidth}
-                    className="!shadow-none"
-                    loading={
-                      <div
-                        className="flex flex-col items-center justify-center bg-bg-elevated animate-pulse"
-                        style={{ width: pdfWidth, height: Math.round(pdfWidth * 1.41 * scale) }}
-                      >
-                        <div className="w-full h-full p-8 space-y-4">
-                          <div className="h-4 w-1/3 bg-bg-subtle rounded-full mx-auto" />
-                          <div className="space-y-4">
-                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                            <div className="h-2 w-2/3 bg-bg-subtle rounded-full mx-auto" />
-                          </div>
-                        </div>
-                      </div>
-                    }
+                    onRenderSuccess={handlePageRenderSuccess}
                   />
                   <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/50 dark:bg-black/70 z-20 pointer-events-none" />
                 </div>
@@ -470,7 +498,6 @@ const PDFReader = ({
                   renderTextLayer={true}
                   renderAnnotationLayer={true}
                   onRenderSuccess={() => {
-                    console.log('[PDFReader] pre-rendered page:', bufferPageNum);
                     setRenderedPages(prev => new Set(prev).add(bufferPageNum));
                     if (isActive) handlePageRenderSuccess();
                   }}

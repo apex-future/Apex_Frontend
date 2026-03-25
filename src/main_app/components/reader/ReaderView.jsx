@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo, useContext, useCallback, memo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
 import useStudyStore from '../../store/studyStore';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
@@ -264,12 +264,14 @@ function ReaderView() {
         bm => bm.pageNumber === pageNumber || bm.page === pageNumber
     );
 
+    // Ref-stable callback — identity never changes, so PDFReader never re-renders due to this prop
+    const syncProgressRef = useRef(syncProgress);
+    useEffect(() => { syncProgressRef.current = syncProgress; }, [numPages, book]);
+
     const stableOnPageChange = useCallback((n) => {
         setPageNumber(n);
-        syncProgress(n, numPages);
-    }, [numPages]);
-
-    const MemoizedPDFReader = useMemo(() => memo(PDFReader), []);
+        syncProgressRef.current(n, numPages);
+    }, []);
 
     // Expose pdfControls object
     const pdfControls = isPdf
@@ -714,7 +716,7 @@ function ReaderView() {
                     {/* PDF Content */}
                     {fileUrl && isPdf && (
                         <div className="flex-1 flex overflow-hidden relative">
-                            <MemoizedPDFReader
+                            <PDFReader
                                 fileUrl={fileUrl}
                                 pageNumber={pageNumber}
                                 scale={scale}
