@@ -129,7 +129,7 @@ const useStudyStore = create(
 
         // Only seed if Supabase data is more recent than local
         // This prevents overwriting a streak earned offline
-        if (supabaseLastActive && supabaseLastActive > (localLastActive || '')) {
+        if (supabaseStreak > localStreak || (supabaseLastActive && supabaseLastActive > (localLastActive || ''))) {
           console.log('[Apex Streak] Seeding from Supabase — more recent data found');
           set({
             streakCount: current_streak || 0,
