@@ -41,7 +41,8 @@ const useSettingsStore = create(
       updateSetting: (key, value) => {
         console.log('[Apex Settings] Updating:', key, '→', value);
         set({ [key]: value });
-        get()._syncToSupabase();
+        // Defer sync so Zustand persist middleware flushes the new value first
+        queueMicrotask(() => get()._syncToSupabase());
       },
 
       /**
@@ -52,7 +53,7 @@ const useSettingsStore = create(
         const current = get().notifications;
         const updated = { ...current, [key]: value };
         set({ notifications: updated });
-        get()._syncToSupabase();
+        queueMicrotask(() => get()._syncToSupabase());
       },
 
       /**
