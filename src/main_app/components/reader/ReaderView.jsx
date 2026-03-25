@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
 import useStudyStore from '../../store/studyStore';
+import useSettingsStore from '../../store/settingsStore';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
 import db from '../../db/apex.db';
@@ -75,7 +76,8 @@ function ReaderView() {
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
     const [pageSettings, setPageSettings] = useState(false);
-    const [scrollOrientation, setScrollOrientation] = useState('vertical'); // 'vertical' or 'horizontal'
+    const { scrollOrientation: savedOrientation, updateSetting } = useSettingsStore();
+    const [scrollOrientation, setScrollOrientation] = useState(savedOrientation || 'vertical'); // 'vertical' or 'horizontal'
 
     // Deep loading state
     const [isLoading, setIsLoading] = useState(true);
@@ -312,7 +314,10 @@ function ReaderView() {
             setPageSettings(val);
         },
         scrollOrientation,
-        setScrollOrientation,
+        setScrollOrientation: (val) => {
+          setScrollOrientation(val);
+          updateSetting('scrollOrientation', val);
+        },
     };
 
     // Screen handlers

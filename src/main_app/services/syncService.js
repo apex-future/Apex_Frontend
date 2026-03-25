@@ -3,6 +3,7 @@ import { saveChat, clearAllChats } from '../utils/db';
 import apiClient from './apiClient';
 import authService from './authService';
 import useAuthStore from '../store/authStore';
+import useSettingsStore from '../store/settingsStore';
 
 // Helper: generate a local ID
 function generateLocalId() {
@@ -440,6 +441,12 @@ const syncService = {
     }
 
     // If online, resolve UUID and save to Supabase
+    // Check autoSaveProgress setting — skip cloud sync if disabled
+    const { autoSaveProgress } = useSettingsStore.getState();
+    if (!autoSaveProgress) {
+      console.log('[Apex Sync] autoSaveProgress disabled — skipping Supabase sync for progress');
+      return;
+    }
     if (navigator.onLine) {
       const supabaseBookId = await this._resolveBookId(bookId);
       if (supabaseBookId) {

@@ -5,6 +5,24 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.7.3] - 2026-03-25
+
+### Added
+
+- Settings system — all toggles now functional and persisted
+- New settingsStore (Zustand) backing all user preferences
+- Settings synced to Supabase user_settings table
+- Settings seeded from Supabase on login across all devices
+- Page Animation toggle with Smooth Slide and Fade Through options
+- Scroll direction setting available in both in-reader and main Settings page
+- Auto-Explain Highlights — AI opens automatically on text selection when enabled
+- autoSaveProgress — when off, skips Supabase sync for progress (still saves locally)
+- saveChatHistory — when off, AI conversations not persisted
+- PATCH /api/settings endpoint with upsert behavior
+- Settings sync automatically when device comes back online
+
+---
+
 ## [Unreleased]
 
 ### Added

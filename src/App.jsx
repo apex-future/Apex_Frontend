@@ -10,6 +10,7 @@ import db from './main_app/db/apex.db'
 import useAuthStore from './main_app/store/authStore'
 import useStudyStore from './main_app/store/studyStore'
 import useThemeStore from './main_app/store/themeStore'
+import useSettingsStore from './main_app/store/settingsStore'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
 import LandingLoadingScreen from './landing_page/components/LandingLoadingScreen'
 import OnboardingPage from './landing_page/OnboardingPage';
@@ -109,6 +110,18 @@ function App() {
           useStudyStore.getState().seedFromSupabase(user);
           console.log('[Apex Streak] Store seeded from Supabase');
 
+          // Seed settings store from Supabase
+          if (user.settings) {
+            useSettingsStore.getState().seedFromSupabase(user.settings);
+            console.log('[Apex Settings] Store seeded from Supabase');
+
+            // Apply theme from settings
+            const savedTheme = user.settings.theme;
+            if (savedTheme) {
+              useThemeStore.getState().setTheme(savedTheme);
+            }
+          }
+
           // Check if existing user needs onboarding
           if (!user.user_type) {
             setNeedsOnboarding(true);
@@ -148,6 +161,15 @@ function App() {
         console.log('[Apex Streak] Back online — syncing streak to Supabase');
         useStudyStore.getState().syncStreakToSupabase();
       }
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
+  // Sync settings when device comes back online
+  useEffect(() => {
+    const handleOnline = () => {
+      useSettingsStore.getState().syncOnReconnect();
     };
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);

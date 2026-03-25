@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { showToastGlobal } from '../../../hooks/useToast';
-import { ArrowLeft, Moon, Sun, Monitor, Bell, HardDrive, Download, Trash2, HelpCircle, FileText, ExternalLink, Activity, BookOpen, Bot, LogOut, User, UserMinus } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Monitor, Bell, HardDrive, Download, Trash2, HelpCircle, FileText, ExternalLink, Activity, BookOpen, Bot, LogOut, User, UserMinus, Sliders } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import useThemeStore from '../../../store/themeStore';
+import useSettingsStore from '../../../store/settingsStore';
 import { APP_VERSION } from '../../../constants/version';
 import ConfirmModal from '../../ui/ConfirmModal';
 import db from '../../../db/apex.db';
@@ -14,19 +15,25 @@ function Settings({ onLogout }) {
     const navigate = useNavigate();
     // Global state for theme
     const { theme, setTheme } = useThemeStore();
-    const [notifications, setNotifications] = useState({
-        readingReminders: true,
-        streakAlerts: true,
-        studyTips: false,
-    });
-    const [readingPrefs, setReadingPrefs] = useState({
-        autoSave: true,
-        pageAnimation: true,
-    });
-    const [aiPrefs, setAiPrefs] = useState({
-        autoExplain: false,
-        saveHistory: true,
-    });
+
+    // Settings from store
+    const {
+      autoSaveProgress,
+      pageAnimations,
+      saveChatHistory,
+      autoExplain,
+      notifications,
+      scrollOrientation,
+      scrollAnimation,
+      updateSetting,
+      updateNotification,
+    } = useSettingsStore();
+
+    // Theme setter — updates both themeStore AND settingsStore
+    const handleThemeChange = (newTheme) => {
+      setTheme(newTheme);
+      updateSetting('theme', newTheme);
+    };
 
     // State for clear data confirmation modal
     const [showClearModal, setShowClearModal] = useState(false);
@@ -119,9 +126,7 @@ function Settings({ onLogout }) {
       }
     };
 
-    const handleToggle = (setter, key, value) => {
-        setter(prev => ({ ...prev, [key]: value }));
-    };
+
 
     return (
         <div className='w-full min-h-screen bg-bg-primary overflow-y-auto pb-24'>
@@ -150,21 +155,21 @@ function Settings({ onLogout }) {
                         </div>
                         <div className="flex bg-bg-elevated/50 p-1 rounded-xl border border-border-default shadow-inner">
                             <button
-                                onClick={() => setTheme('light')}
+                                onClick={() => handleThemeChange('light')}
                                 className={`p-2 rounded-lg transition-all ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                                 title="Light Theme"
                             >
                                 <Sun size={16} />
                             </button>
                             <button
-                                onClick={() => setTheme('dark')}
+                                onClick={() => handleThemeChange('dark')}
                                 className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                                 title="Dark Theme"
                             >
                                 <Moon size={16} />
                             </button>
                             <button
-                                onClick={() => setTheme('system')}
+                                onClick={() => handleThemeChange('system')}
                                 className={`p-2 rounded-lg transition-all ${theme === 'system' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                                 title="System Default"
                             >
@@ -178,16 +183,102 @@ function Settings({ onLogout }) {
                 <SettingSection title="Reading" icon={<BookOpen size={18} />}>
                     <ToggleRow
                         label="Auto-save Progress"
-                        desc="Automatically save where you left off"
-                        checked={readingPrefs.autoSave}
-                        onChange={(e) => handleToggle(setReadingPrefs, 'autoSave', e.target.checked)}
+                        desc="Automatically save your reading position to the cloud"
+                        checked={autoSaveProgress}
+                        onChange={(e) => updateSetting('autoSaveProgress', e.target.checked)}
                     />
                     <ToggleRow
                         label="Page Animations"
                         desc="Show animations when turning pages"
-                        checked={readingPrefs.pageAnimation}
-                        onChange={(e) => handleToggle(setReadingPrefs, 'pageAnimation', e.target.checked)}
+                        checked={pageAnimations}
+                        onChange={(e) => updateSetting('pageAnimations', e.target.checked)}
                     />
+                </SettingSection>
+
+                {/* Reading Experience */}
+                <SettingSection title="Reading Experience" icon={<Sliders size={18} />}>
+                  {/* Scroll Orientation */}
+                  <div className="p-4 border-b border-border-default">
+                    <p className="text-sm font-medium text-text-primary mb-1">Scroll Direction</p>
+                    <p className="text-xs text-text-tertiary mb-3">How you navigate between pages</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => updateSetting('scrollOrientation', 'vertical')}
+                        className={`flex-1 py-2.5 rounded-xl border-2 text-xs font-bold transition-all ${
+                          scrollOrientation === 'vertical'
+                            ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                            : 'border-border-default text-text-tertiary hover:border-text-tertiary/30'
+                        }`}
+                      >
+                        Up & Down
+                      </button>
+                      <button
+                        onClick={() => updateSetting('scrollOrientation', 'horizontal')}
+                        className={`flex-1 py-2.5 rounded-xl border-2 text-xs font-bold transition-all ${
+                          scrollOrientation === 'horizontal'
+                            ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                            : 'border-border-default text-text-tertiary hover:border-text-tertiary/30'
+                        }`}
+                      >
+                        Left & Right
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Page Animation — only shows full choice if pageAnimations is ON */}
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Page Animation</p>
+                        <p className="text-xs text-text-tertiary mt-0.5">Transition effect when turning pages</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={pageAnimations}
+                          onChange={(e) => updateSetting('pageAnimations', e.target.checked)}
+                        />
+                        <div className="w-11 h-6 bg-border-default peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border-default after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-primary" />
+                      </label>
+                    </div>
+
+                    {/* Animation choice — only visible when pageAnimations is ON */}
+                    {pageAnimations && (
+                      <div className="grid grid-cols-2 gap-2 mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <button
+                          onClick={() => updateSetting('scrollAnimation', 'slide')}
+                          className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 text-xs font-bold transition-all ${
+                            scrollAnimation === 'slide'
+                              ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                              : 'border-border-default text-text-tertiary hover:border-text-tertiary/30'
+                          }`}
+                        >
+                          {/* Smooth Slide icon — two rectangles sliding */}
+                          <div className="relative w-8 h-6 overflow-hidden rounded">
+                            <div className="absolute inset-0 bg-bg-subtle rounded border border-border-default" />
+                            <div className="absolute inset-0 translate-x-1 bg-accent-primary/20 rounded border border-accent-primary/30" />
+                          </div>
+                          Smooth Slide
+                        </button>
+                        <button
+                          onClick={() => updateSetting('scrollAnimation', 'fade')}
+                          className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 text-xs font-bold transition-all ${
+                            scrollAnimation === 'fade'
+                              ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                              : 'border-border-default text-text-tertiary hover:border-text-tertiary/30'
+                          }`}
+                        >
+                          {/* Fade icon — rectangle fading out */}
+                          <div className="relative w-8 h-6">
+                            <div className="absolute inset-0 bg-bg-subtle rounded border border-border-default opacity-40" />
+                            <div className="absolute inset-0 bg-accent-primary/20 rounded border border-accent-primary/30 opacity-80" />
+                          </div>
+                          Fade Through
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </SettingSection>
 
                 {/* AI & Chatbot */}
@@ -195,14 +286,14 @@ function Settings({ onLogout }) {
                     <ToggleRow
                         label="Save Chat History"
                         desc="Keep a record of your AI conversations"
-                        checked={aiPrefs.saveHistory}
-                        onChange={(e) => handleToggle(setAiPrefs, 'saveHistory', e.target.checked)}
+                        checked={saveChatHistory}
+                        onChange={(e) => updateSetting('saveChatHistory', e.target.checked)}
                     />
                     <ToggleRow
                         label="Auto-Explain Highlights"
                         desc="Automatically open AI when text is highlighted"
-                        checked={aiPrefs.autoExplain}
-                        onChange={(e) => handleToggle(setAiPrefs, 'autoExplain', e.target.checked)}
+                        checked={autoExplain}
+                        onChange={(e) => updateSetting('autoExplain', e.target.checked)}
                     />
                 </SettingSection>
 
@@ -212,19 +303,19 @@ function Settings({ onLogout }) {
                         label="Reading Reminders"
                         desc="Get notified to meet your daily reading goals"
                         checked={notifications.readingReminders}
-                        onChange={(e) => handleToggle(setNotifications, 'readingReminders', e.target.checked)}
+                        onChange={(e) => updateNotification('readingReminders', e.target.checked)}
                     />
                     <ToggleRow
                         label="Streak Alerts"
                         desc="Reminders to keep your reading streak alive"
                         checked={notifications.streakAlerts}
-                        onChange={(e) => handleToggle(setNotifications, 'streakAlerts', e.target.checked)}
+                        onChange={(e) => updateNotification('streakAlerts', e.target.checked)}
                     />
                     <ToggleRow
                         label="Study Tips"
                         desc="Occasional learning strategies and tips"
                         checked={notifications.studyTips}
-                        onChange={(e) => handleToggle(setNotifications, 'studyTips', e.target.checked)}
+                        onChange={(e) => updateNotification('studyTips', e.target.checked)}
                     />
                 </SettingSection>
 

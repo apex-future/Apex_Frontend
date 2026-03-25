@@ -3,6 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useSwipeable } from 'react-swipeable';
 import BookSkeleton from './BookSkeleton';
+import useSettingsStore from '../../store/settingsStore';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -133,6 +134,7 @@ const PDFReader = ({
   const [displayedPage, setDisplayedPage] = useState(pageNumber);
   const [isFading, setIsFading] = useState(false);
   const isVertical = scrollOrientation === 'vertical';
+  const { pageAnimations, scrollAnimation } = useSettingsStore();
 
   // Stable estimateSize callback — prevents virtualizer from reinitializing size cache
   const estimateSize = useCallback(
@@ -158,11 +160,18 @@ const PDFReader = ({
     }
   }, [pageNumber]);
 
-  // Horizontal crossfade on page change
+  // Horizontal crossfade/slide on page change
   useEffect(() => {
     if (isVertical) return;
     if (pageNumber === displayedPage) return;
 
+    // No animation — instant switch
+    if (!pageAnimations || scrollAnimation === 'none') {
+      setDisplayedPage(pageNumber);
+      return;
+    }
+
+    // Fade or slide — both use opacity transition, slide also uses translateX
     setIsFading(true);
 
     const timer = setTimeout(() => {
@@ -171,7 +180,7 @@ const PDFReader = ({
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [pageNumber, isVertical]);
+  }, [pageNumber, isVertical, pageAnimations, scrollAnimation]);
 
   const onPageChangeRef = useRef(onPageChange);
   useEffect(() => { onPageChangeRef.current = onPageChange; }, [onPageChange]);
@@ -482,9 +491,21 @@ const PDFReader = ({
                 data-page-index={bufferPageNum}
                 style={{
                   position: isActive ? 'relative' : 'absolute',
-                  opacity: isActive ? (isFading ? 0 : 1) : 0,
+                  opacity: isActive
+                    ? (isFading && pageAnimations ? 0 : 1)
+                    : 0,
                   pointerEvents: isActive ? 'auto' : 'none',
-                  transition: isActive ? 'opacity 150ms ease-in-out' : 'none',
+                  // Slide animation — translateX on exit
+                  transform: isActive && isFading && scrollAnimation === 'slide' && pageAnimations
+                    ? 'translateX(-8px)'
+                    : 'translateX(0)',
+                  transition: isActive && pageAnimations
+                    ? scrollAnimation === 'fade'
+                      ? 'opacity 150ms ease-in-out'
+                      : scrollAnimation === 'slide'
+                      ? 'opacity 100ms ease-in-out, transform 150ms ease-out'
+                      : 'none'
+                    : 'none',
                   top: isActive ? 'auto' : 0,
                   left: isActive ? 'auto' : 0,
                   width: isActive ? 'auto' : '100%',
