@@ -376,6 +376,8 @@ function ReaderView() {
     const showHighlightMenuRef = useRef(showHighlightMenu);
     useEffect(() => { showHighlightMenuRef.current = showHighlightMenu; }, [showHighlightMenu]);
     const isSelectingRef = useRef(false);
+    const [selectionLock, setSelectionLock] = useState(false);
+    const selectionLockRef = useRef(false);
 
     // Selection monitoring logic
     useEffect(() => {
@@ -456,6 +458,21 @@ function ReaderView() {
             }
         };
 
+        const handleSelectionChangeRaw = () => {
+            const hasSelection = window.getSelection()?.toString().trim().length > 0;
+            if (hasSelection && !selectionLockRef.current) {
+                selectionLockRef.current = true;
+                setSelectionLock(true);
+            } else if (!hasSelection && selectionLockRef.current) {
+                // Sticky delay: prevent trailing touchend tap from triggering a swipe navigation
+                setTimeout(() => {
+                    selectionLockRef.current = false;
+                    setSelectionLock(false);
+                }, 200);
+            }
+        };
+
+        document.addEventListener('selectionchange', handleSelectionChangeRaw);
         document.addEventListener('selectionchange', handleSelectionUpdate);
         document.addEventListener('touchstart', handleTouchStart, { passive: false });
         document.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -463,6 +480,7 @@ function ReaderView() {
 
         return () => {
             clearTimeout(selDebounceRef.current);
+            document.removeEventListener('selectionchange', handleSelectionChangeRaw);
             document.removeEventListener('selectionchange', handleSelectionUpdate);
             document.removeEventListener('touchstart', handleTouchStart);
             document.removeEventListener('touchmove', handleTouchMove);
@@ -738,7 +756,7 @@ function ReaderView() {
                                 numPages={numPages}
                                 goToPage={goToPage}
                                 highlights={stableHighlights}
-                                locked={locked}
+                                locked={locked || selectionLock}
                                 windowSize={windowSize}
                                 scrollOrientation={scrollOrientation}
                                 onPageChange={stableOnPageChange}
