@@ -708,8 +708,12 @@ function ReaderView() {
                         onAskAI={() => {
                             setAiModal(true);
                             setShowHighlightMenu(false);
+                            setIsDictOpen(false);
                         }}
-                        onClose={() => setShowHighlightMenu(false)}
+                        onClose={() => {
+                            setShowHighlightMenu(false);
+                            setIsDictOpen(false);
+                        }}
                         bookId={book?.id}
                         onSaveWord={addSavedWord}
                         onHighlight={handleHighlight}
@@ -756,7 +760,7 @@ function ReaderView() {
                                 numPages={numPages}
                                 goToPage={goToPage}
                                 highlights={stableHighlights}
-                                locked={locked || selectionLock}
+                                locked={locked || selectionLock || isDictOpen}
                                 windowSize={windowSize}
                                 scrollOrientation={scrollOrientation}
                                 onPageChange={stableOnPageChange}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff, StickyNote, Save } from 'lucide-react';
 import dictionaryService from '../../services/dictionaryService';
 
-function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote }) {
+function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose }) {
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -15,13 +15,19 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
     const toggleDict = (val) => {
         setShowDict(val);
         setShowNote(false);
-        onDictToggle?.(val || showNote);
+        onDictToggle?.(val);
     };
 
     const toggleNote = (val) => {
         setShowNote(val);
         setShowDict(false);
-        onDictToggle?.(val || showDict);
+        onDictToggle?.(val);
+    };
+
+    const handleCloseModal = () => {
+        // Always close the entire menu and clear selection when dismissing a sub-modal
+        window.getSelection()?.removeAllRanges();
+        onClose?.();
     };
 
     const fetchDefinition = async (searchWord) => {
@@ -162,7 +168,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Dictionary</h3>
-                            <button onClick={() => toggleDict(false)} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
+                            <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
                                 <X size={16} className="text-text-tertiary" />
                             </button>
                         </div>
@@ -235,7 +241,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Add Note</h3>
-                            <button onClick={() => toggleNote(false)} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
+                            <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
                                 <X size={16} className="text-text-tertiary" />
                             </button>
                         </div>
