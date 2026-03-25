@@ -142,9 +142,23 @@ function App() {
           }
         } catch (error) {
           console.error("Auth verification failed:", error);
-          authService.logout();
-          useAuthStore.getState().clearUser();
-          setIsLoggedIn(false);
+          // Only log out if it's a 401 Unauthorized
+          if (error.response?.status === 401) {
+            authService.logout();
+            useAuthStore.getState().clearUser();
+            setIsLoggedIn(false);
+          } else {
+            // Network error or 500 — keep them logged in locally using cached data
+            console.log("[Apex Auth] Network or server error during auth check, proceeding with local session.");
+            
+            // Re-use cached user if available
+            const cachedUser = useAuthStore.getState().user;
+            if (cachedUser && !cachedUser.user_type) {
+              setNeedsOnboarding(true);
+            }
+            
+            setIsLoggedIn(true);
+          }
         }
       }
       setLoading(false);
