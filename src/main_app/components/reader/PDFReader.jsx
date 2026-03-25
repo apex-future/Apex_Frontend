@@ -190,6 +190,8 @@ const PDFReader = ({
   const handleVerticalScroll = useCallback(() => {
     if (!isVertical || !numPages) return;
     if (isJumping.current) return;
+    // Skip scroll processing during active text selection to prevent virtualizer churn
+    if (window.getSelection()?.toString().trim()) return;
 
     // Cancel any pending RAF to avoid stacking
     if (rafId.current) cancelAnimationFrame(rafId.current);
@@ -377,6 +379,8 @@ const PDFReader = ({
   // Swipe handlers — only for horizontal mode
   const handleSwipedLeft = () => {
     if (locked || isVertical) return;
+    // Don't navigate during text selection
+    if (window.getSelection()?.toString().trim()) return;
     if (scale > 1) {
       const el = containerRef.current;
       if (el) {
@@ -396,6 +400,8 @@ const PDFReader = ({
 
   const handleSwipedRight = () => {
     if (locked || isVertical) return;
+    // Don't navigate during text selection
+    if (window.getSelection()?.toString().trim()) return;
     if (scale > 1) {
       const el = containerRef.current;
       if (el) {

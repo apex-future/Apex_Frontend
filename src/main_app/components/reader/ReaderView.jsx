@@ -328,6 +328,8 @@ function ReaderView() {
     }, []);
 
     const closeNav = useCallback(() => {
+        // Don't close nav if user just finished selecting text — prevents re-render flicker
+        if (window.getSelection().toString().trim()) return;
         setNavState('none');
     }, []);
 
@@ -373,6 +375,7 @@ function ReaderView() {
     const selDebounceRef = useRef(null);
     const showHighlightMenuRef = useRef(showHighlightMenu);
     useEffect(() => { showHighlightMenuRef.current = showHighlightMenu; }, [showHighlightMenu]);
+    const isSelectingRef = useRef(false);
 
     // Selection monitoring logic
     useEffect(() => {
@@ -414,6 +417,9 @@ function ReaderView() {
         const processSelection = () => {
             const activeSel = window.getSelection();
             const text = activeSel?.toString().trim() || '';
+
+            // Track active selection state — used to suppress scroll/swipe during selection
+            isSelectingRef.current = text.length > 0;
 
             if (text && text.length > 0) {
                 const rect = getSelectionRect(activeSel);

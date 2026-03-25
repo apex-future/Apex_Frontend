@@ -131,7 +131,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                             className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                         >
                             <Sparkles size={20} className="text-text-secondary group-hover:text-purple-600 transition-colors" />
-                            <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask AI</span>
+                            <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask</span>
                         </button>
 
                         <div className="w-[1px] h-8 bg-bg-subtle" />
