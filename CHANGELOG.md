@@ -21,6 +21,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 - PATCH /api/settings endpoint with upsert behavior
 - Settings sync automatically when device comes back online
 
+### Fixed
+
+- Fixed reader flickering, blank pages, and accidental navigation when selecting text in the PDF reader by preventing virtualizer recalculation and swipe navigation during active selection
+
 ---
 
 ## [Unreleased]
