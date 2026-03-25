@@ -458,11 +458,12 @@ const PDFReader = ({
               return (
                 <div
                   key={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
                   className="pdf-page-wrapper absolute left-0 flex flex-col items-center bg-bg-elevated"
                   data-page-index={pageIdx}
+                  data-index={virtualRow.index}
                   style={{
-                    top: `${virtualRow.start}px`,
-                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
                     width: 'max-content',
                     minWidth: '100%',
                   }}
