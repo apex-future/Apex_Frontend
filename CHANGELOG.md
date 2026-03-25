@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.7.4] - 2026-03-25
+
+### Fixed
+
+- Fixed reader flickering, blank pages, and accidental navigation when selecting text in the PDF reader by preventing virtualizer recalculation and swipe navigation during active selection
+
+---
+
 ## [1.7.3] - 2026-03-25
 
 ### Added
@@ -20,10 +28,6 @@ This project follows [Semantic Versioning](https://semver.org/).
 - saveChatHistory — when off, AI conversations not persisted
 - PATCH /api/settings endpoint with upsert behavior
 - Settings sync automatically when device comes back online
-
-### Fixed
-
-- Fixed reader flickering, blank pages, and accidental navigation when selecting text in the PDF reader by preventing virtualizer recalculation and swipe navigation during active selection
 
 ---
 
