@@ -3,10 +3,10 @@ import StreakBadge from '../../ui/StreakBadge';
 
 function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
     if (onUpload) {
-      onUpload(file);
+      files.forEach((file) => onUpload(file));
       e.target.value = '';
     }
   };
@@ -52,6 +52,7 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
               className="hidden"
               onChange={handleFileChange}
               accept=".pdf,.epub"
+              multiple
             />
             <label
               htmlFor="top-nav-upload"
