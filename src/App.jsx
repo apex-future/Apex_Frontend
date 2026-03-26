@@ -47,48 +47,48 @@ function App() {
   // Version string must be bumped if another cleanup is ever needed
   const CLEAN_SLATE_VERSION = '1.6.3';
 
-  useEffect(() => {
-    const runOneTimeCleanup = async () => {
-      try {
-        const cleaned = localStorage.getItem('apex_db_cleaned');
-        if (cleaned === CLEAN_SLATE_VERSION) return; // already ran on this device
+  // useEffect(() => {
+  //   const runOneTimeCleanup = async () => {
+  //     try {
+  //       const cleaned = localStorage.getItem('apex_db_cleaned');
+  //       if (cleaned === CLEAN_SLATE_VERSION) return; // already ran on this device
 
-        // Clear all local tables that may contain broken data
-        await db.books.clear();
-        await db.highlights.clear();
-        await db.bookmarks.clear();
-        await db.reading_progress.clear();
-        await db.sync_queue.clear();
-        await db.notes.clear();
+  //       // Clear all local tables that may contain broken data
+  //       await db.books.clear();
+  //       await db.highlights.clear();
+  //       await db.bookmarks.clear();
+  //       await db.reading_progress.clear();
+  //       await db.sync_queue.clear();
+  //       await db.notes.clear();
 
-        // Delete the legacy ApexBooksDB ghost database
-        try {
-          await new Promise((resolve, reject) => {
-            const req = indexedDB.deleteDatabase('ApexBooksDB');
-            req.onsuccess = () => {
-              console.log('[Apex] Legacy ApexBooksDB deleted');
-              resolve();
-            };
-            req.onerror = () => reject(req.error);
-            req.onblocked = () => {
-              console.warn('[Apex] ApexBooksDB deletion blocked — will retry next load');
-              resolve(); // Don't block the app
-            };
-          });
-        } catch (err) {
-          console.warn('[Apex] Could not delete ApexBooksDB:', err);
-        }
+  //       // Delete the legacy ApexBooksDB ghost database
+  //       try {
+  //         await new Promise((resolve, reject) => {
+  //           const req = indexedDB.deleteDatabase('ApexBooksDB');
+  //           req.onsuccess = () => {
+  //             console.log('[Apex] Legacy ApexBooksDB deleted');
+  //             resolve();
+  //           };
+  //           req.onerror = () => reject(req.error);
+  //           req.onblocked = () => {
+  //             console.warn('[Apex] ApexBooksDB deletion blocked — will retry next load');
+  //             resolve(); // Don't block the app
+  //           };
+  //         });
+  //       } catch (err) {
+  //         console.warn('[Apex] Could not delete ApexBooksDB:', err);
+  //       }
 
-        // Mark cleanup as done — this device will never run it again
-        localStorage.setItem('apex_db_cleaned', CLEAN_SLATE_VERSION);
-        console.log('[Apex] One-time local database cleanup complete');
-      } catch (err) {
-        console.error('[Apex] One-time cleanup failed:', err);
-      }
-    };
+  //       // Mark cleanup as done — this device will never run it again
+  //       localStorage.setItem('apex_db_cleaned', CLEAN_SLATE_VERSION);
+  //       console.log('[Apex] One-time local database cleanup complete');
+  //     } catch (err) {
+  //       console.error('[Apex] One-time cleanup failed:', err);
+  //     }
+  //   };
 
-    runOneTimeCleanup();
-  }, []);
+  //   runOneTimeCleanup();
+  // }, []);
 
   useEffect(() => {
     // Initialize theme
