@@ -5,6 +5,39 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.7.5] - 2026-03-27
+
+### Added
+
+- Support for multiple file selection during upload in both Top and Bottom navigation bars
+- Automated welcome emails containing app instructions and WhatsApp community links are now sent to users upon successful sign-up
+
+### Improved
+
+- Replaced timed lazy-loading with true virtualization in vertical PDF reader
+  using @tanstack/react-virtual — only visible pages (±2 overscan) are
+  mounted at any time, eliminating hangs on large documents
+- Fixed horizontal reader blinking on every page turn — adjacent pages are
+  now pre-rendered in a buffer so swipes are instant with no skeleton flash
+- Added 150ms crossfade transition to horizontal page turns for smooth,
+  native-feeling navigation
+- Extracted and centralized email sending logic in backend utilities for better maintainability
+
+### Fixed
+
+- Resolved issue where dismissing Dictionary or Add Note sub-modals in `HighlightMenu` wouldn't clear the active text selection or close the entire menu. Added `onClose` callback to handle menu termination.
+- Improved `onDictToggle` logic in `HighlightMenu` to prevent unexpected state falls back.
+
+---
+
+## [Unreleased]
+
+### Added
+
+### Improved
+
+---
+
 ## [1.7.4] - 2026-03-25
 
 ### Fixed
@@ -28,25 +61,6 @@ This project follows [Semantic Versioning](https://semver.org/).
 - saveChatHistory — when off, AI conversations not persisted
 - PATCH /api/settings endpoint with upsert behavior
 - Settings sync automatically when device comes back online
-
----
-
-## [Unreleased]
-
-### Added
-
-- Automated welcome emails containing app instructions and WhatsApp community links are now sent to users upon successful sign-up
-
-### Improved
-
-- Replaced timed lazy-loading with true virtualization in vertical PDF reader
-  using @tanstack/react-virtual — only visible pages (±2 overscan) are
-  mounted at any time, eliminating hangs on large documents
-- Fixed horizontal reader blinking on every page turn — adjacent pages are
-  now pre-rendered in a buffer so swipes are instant with no skeleton flash
-- Added 150ms crossfade transition to horizontal page turns for smooth,
-  native-feeling navigation
-- Extracted and centralized email sending logic in backend utilities for better maintainability
 
 ---
 
