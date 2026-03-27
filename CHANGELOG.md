@@ -27,10 +27,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [1.7.5] - 2026-03-27
 
 ### Added
 
+- Support for multiple file selection during upload in both Top and Bottom navigation bars
 - Automated welcome emails containing app instructions and WhatsApp community links are now sent to users upon successful sign-up
 
 ### Improved
@@ -43,6 +44,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Added 150ms crossfade transition to horizontal page turns for smooth,
   native-feeling navigation
 - Extracted and centralized email sending logic in backend utilities for better maintainability
+
+---
+
+## [Unreleased]
+
+### Added
+
+### Improved
 
 ---
 
