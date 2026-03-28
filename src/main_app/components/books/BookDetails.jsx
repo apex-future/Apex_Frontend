@@ -59,12 +59,12 @@ function BookDetails() {
             <div className="relative flex justify-between items-center py-4 px-2">
                 <button
                     onClick={() => navigate(-1)}
-                    className="p-2 hover:bg-neutral-100 rounded-lg transition-all group"
+                    className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated rounded-lg transition-all group"
                 >
-                    <ArrowLeft size={20} className="text-text-primary group-hover:-translate-x-1 transition-transform" />
+                    <ArrowLeft size={20} className="text-text-primary dark:text-text-primary-dark group-hover:-translate-x-1 transition-transform" />
                 </button>
 
-                <h3 className='text-lg font-semibold text-text-tertiary tracking-tight'>Book Details</h3>
+                <h3 className='text-lg font-semibold text-text-tertiary dark:text-text-tertiary-dark tracking-tight'>Book Details</h3>
 
                 <div className="w-9" />
             </div>
@@ -92,15 +92,15 @@ function BookDetails() {
 
                     <div className="book-main-info flex flex-col gap-6 md:gap-8 md:w-full">
                         <div className="book-title text-center md:text-left">
-                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-display text-text-primary mb-3 tracking-tightest break-all md:break-words leading-premium-tight">
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-display text-text-primary dark:text-text-primary-dark mb-3 tracking-tightest break-all md:break-words leading-premium-tight">
                                 {book.title}
                             </h1>
-                            <p className="text-base sm:text-lg text-text-tertiary font-medium tracking-tight italic">by {book.author || "N/A"}</p>
+                            <p className="text-base sm:text-lg text-text-tertiary dark:text-text-tertiary-dark font-medium tracking-tight italic">by {book.author || "N/A"}</p>
                         </div>
 
                         <div className="max-w-2xl">
-                            <h2 className="text-xs sm:text-sm font-bold text-text-placeholder uppercase tracking-[0.2em] mb-4">About this book</h2>
-                            <div className="bg-card-glass backdrop-blur-md border border-border-default rounded-2xl p-6 sm:p-8 hover:border-text-tertiary/20 hover:shadow-md transition-all duration-500 text-text-secondary leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc mb-8 shadow-sm">
+                            <h2 className="text-xs sm:text-sm font-bold text-text-placeholder dark:text-text-placeholder-dark uppercase tracking-[0.2em] mb-4">About this book</h2>
+                            <div className="bg-card-glass dark:bg-bg-dark-elevated/40 backdrop-blur-md border border-border-default dark:border-border-default-dark rounded-2xl p-6 sm:p-8 hover:border-text-tertiary/20 dark:hover:border-text-tertiary-dark/20 hover:shadow-md transition-all duration-500 text-text-secondary dark:text-text-secondary-dark leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc mb-8 shadow-sm">
                                
                                 {book.description || "No description available for this title."}
 
@@ -148,23 +148,23 @@ function BookDetails() {
                             <div className="book-icons flex flex-wrap justify-center md:justify-start">
                                 <button
                                     onClick={() => toggleFavorite(book.id)}
-                                    className={`p-3 rounded-xl transition-all ${book.isFavorite ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-gray-400 hover:text-red-500 hover:bg-neutral-100'}`}
+                                    className={`p-3 rounded-xl transition-all ${book.isFavorite ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30' : 'text-gray-400 hover:text-red-500 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50'}`}
                                 >
                                     <Heart size={20} fill={book.isFavorite ? 'currentColor' : 'none'} />
                                 </button>
-                                <button className="p-3 text-gray-400 rounded-xl hover:text-success hover:bg-neutral-100 transition-all">
+                                <button className="p-3 text-gray-400 rounded-xl hover:text-success hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50 transition-all">
                                     <CheckCircle2 size={20} />
                                 </button>
                                 <button
                                     onClick={() => toggleBookmarkedBook(book.id)}
-                                    className={`p-3 rounded-xl transition-all ${book.isBookmarked ? 'text-accent-primary bg-accent-subtle hover:bg-accent-primary/20' : 'text-gray-400 hover:text-accent-primary hover:bg-neutral-100'}`}
+                                    className={`p-3 rounded-xl transition-all ${book.isBookmarked ? 'text-accent-primary bg-accent-subtle dark:bg-accent-subtle-dark hover:bg-accent-primary/20' : 'text-gray-400 hover:text-accent-primary hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50'}`}
                                 >
                                     <Bookmark size={20} fill={book.isBookmarked ? 'currentColor' : 'none'} />
                                 </button>
-                                <button className="p-3 text-gray-400 rounded-xl hover:text-blue-500 hover:bg-neutral-100 transition-all">
+                                <button className="p-3 text-gray-400 rounded-xl hover:text-blue-500 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50 transition-all">
                                     <Share2 size={20} />
                                 </button>
-                                <button onClick={handleDelete} className="p-3 text-gray-400 rounded-xl hover:text-error hover:bg-neutral-100 transition-all">
+                                <button onClick={handleDelete} className="p-3 text-gray-400 rounded-xl hover:text-error hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50 transition-all">
                                     <Trash2 size={20} />
                                 </button>
                             </div>
@@ -181,16 +181,16 @@ function BookDetails() {
                     </div>
                 </div>
 
-                <div className="overflow-hidden max-w-[850px] mx-auto w-full bg-card-glass backdrop-blur-xl p-2.5 border border-border-default rounded-[3rem] shadow-md">
-                    <ul className="flex gap-2 overflow-x-auto py-2.5 bg-card-glass/60 backdrop-blur-md px-2.5 rounded-full items-center no-scrollbar border border-border-default/20">
+                <div className="overflow-hidden max-w-[850px] mx-auto w-full bg-card-glass dark:bg-bg-dark-elevated backdrop-blur-xl p-2.5 border border-border-default dark:border-border-default-dark rounded-[3rem] shadow-md">
+                    <ul className="flex gap-2 overflow-x-auto py-2.5 bg-card-glass/60 dark:bg-bg-dark-elevated/60 backdrop-blur-md px-2.5 rounded-full items-center no-scrollbar border border-border-default/20 dark:border-border-default-dark/20">
                         {tabs.map((tab) => (
                             <li
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`text-base font-medium transition-all p-2 px-4 rounded-full cursor-pointer whitespace-nowrap
                                     ${activeTab === tab.id
-                                        ? 'text-accent-primary bg-accent-subtle hover:border border-accent-hover'
-                                        : 'text-text-primary hover:text-text-secondary hover:bg-neutral-50'
+                                        ? 'text-accent-primary dark:text-accent-primary-dark bg-accent-subtle dark:bg-accent-subtle-dark hover:border border-accent-hover dark:border-accent-hover-dark'
+                                        : 'text-text-primary dark:text-text-primary-dark hover:text-text-secondary dark:hover:text-text-secondary-dark hover:bg-neutral-50 dark:hover:bg-bg-dark-elevated'
                                     }`}
                             >
                                 {tab.label}
