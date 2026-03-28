@@ -31,6 +31,69 @@ function createDebounce(fn, delay) {
 
 const syncService = {
   // ============================================
+  // PER-TABLE TIMESTAMP HELPERS
+  // ============================================
+
+  /**
+   * _getLocalTableTimestamp
+   * Reads the locally stored last_modified timestamp for a given table
+   * from app_settings. Returns null if never set (treat as older than everything).
+   */
+  _getLocalTableTimestamp: async function(tableName) {
+    try {
+      const setting = await db.app_settings
+        .where('key').equals(`table_modified_${tableName}`)
+        .first();
+      return setting?.value || null;
+    } catch (err) {
+      console.warn(`[Apex Sync] Failed to read local timestamp for ${tableName}:`, err);
+      return null;
+    }
+  },
+
+  /**
+   * _setLocalTableTimestamp
+   * Stores the current time as the last_modified timestamp for a given table.
+   * Called after every successful local write to that table.
+   */
+  _setLocalTableTimestamp: async function(tableName) {
+    const now = new Date().toISOString();
+    try {
+      const existing = await db.app_settings
+        .where('key').equals(`table_modified_${tableName}`)
+        .first();
+      if (existing) {
+        await db.app_settings.update(existing.id, { value: now });
+      } else {
+        await db.app_settings.add({ key: `table_modified_${tableName}`, value: now });
+      }
+    } catch (err) {
+      console.warn(`[Apex Sync] Failed to set local timestamp for ${tableName}:`, err);
+    }
+  },
+
+  /**
+   * _compareTimestamps
+   * Compares two ISO timestamp strings.
+   * Returns: 'local' | 'cloud' | 'equal'
+   */
+  _compareTimestamps: function(localTs, cloudTs) {
+    // If no local timestamp — local has never been modified, cloud wins
+    if (!localTs) return 'cloud';
+    // If cloud is epoch — no cloud data, local wins
+    if (!cloudTs || cloudTs === '1970-01-01T00:00:00+00:00') return 'local';
+
+    const localTime = new Date(localTs).getTime();
+    const cloudTime = new Date(cloudTs).getTime();
+
+    // 5 second tolerance — clocks can drift slightly
+    const diff = Math.abs(localTime - cloudTime);
+    if (diff < 5000) return 'equal';
+
+    return localTime > cloudTime ? 'local' : 'cloud';
+  },
+
+  // ============================================
   // HELPER: Resolve a Dexie book ID to Supabase UUID
   // ============================================
   _resolveBookId: async function (bookId) {
@@ -77,6 +140,8 @@ const syncService = {
           synced: true,
           filePath: response.data.file_path,
         });
+        await db.books.update(dexieBookId, { last_modified: new Date().toISOString() });
+        await this._setLocalTableTimestamp('books');
         console.log('Book uploaded to Supabase:', response.data.id);
         return response.data;
       }
@@ -132,131 +197,199 @@ const syncService = {
   },
 
   // ============================================
-  // PULL ALL USER DATA (login / app load)
+  // SMART PULL — Per-table timestamp conflict resolution
   // ============================================
   pullAllUserData: async function () {
     try {
-      const response = await apiClient.get('/api/sync/pull/all');
-      if (!response.data) return;
+      console.log('[Apex Sync] Starting smart pull — fetching table timestamps...');
 
-      const { user, books, reading_progress, highlights, bookmarks, ai_conversations } = response.data;
-
-      // Store user in auth store
-      if (user) {
-        const authStore = useAuthStore.getState();
-        authStore.setUser(user);
+      // Step 1: Get cloud timestamps for all Category A tables
+      let cloudTimestamps = {};
+      try {
+        const tsResponse = await apiClient.get('/api/sync/timestamps');
+        cloudTimestamps = tsResponse.data;
+        console.log('[Apex Sync] Cloud timestamps:', cloudTimestamps);
+      } catch (err) {
+        console.error('[Apex Sync] Failed to fetch timestamps — falling back to full pull:', err);
+        // Fall back to pulling all tables if timestamp endpoint fails
+        cloudTimestamps = {
+          books: new Date().toISOString(),
+          reading_progress: new Date().toISOString(),
+          highlights: new Date().toISOString(),
+          bookmarks: new Date().toISOString(),
+          notes: new Date().toISOString(),
+        };
       }
 
-      // ---- Category A data → clear Dexie tables → insert pulled records ----
-      // Books: merge — keep local fileBlob, update metadata from Supabase
-      if (books && books.length > 0) {
+      // Step 2: Compare timestamps per table and decide action
+      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'notes'];
+      const decisions = {};
+
+      for (const table of tables) {
+        const localTs = await this._getLocalTableTimestamp(table);
+        const cloudTs = cloudTimestamps[table];
+        const decision = this._compareTimestamps(localTs, cloudTs);
+        decisions[table] = decision;
+        console.log(`[Apex Sync] Table "${table}": local=${localTs || 'never'} cloud=${cloudTs} → ${decision}`);
+      }
+
+      // Step 3: Fetch only tables where cloud is newer
+      const tablesToPull = tables.filter(t => decisions[t] === 'cloud');
+      console.log('[Apex Sync] Tables to pull from cloud:', tablesToPull);
+
+      let pulledData = {};
+      if (tablesToPull.length > 0) {
+        // Fetch full data only for tables that need pulling
+        // Use pull/all but filter response to only process needed tables
+        const response = await apiClient.get('/api/sync/pull/all');
+        if (!response.data) return;
+
+        pulledData = response.data;
+
+        // Store user in auth store
+        if (pulledData.user) {
+          const authStore = useAuthStore.getState();
+          authStore.setUser(pulledData.user);
+        }
+      }
+
+      // Step 4: Process each table according to its decision
+
+      // ── BOOKS ──
+      if (decisions.books === 'cloud' && pulledData.books?.length > 0) {
+        console.log('[Apex Sync] Pulling books from cloud:', pulledData.books.length);
         const existingBooks = await db.books.toArray();
-        // Build blob map using ONLY supabaseId — the stable identifier that persists across Dexie clears
+
+        // Preserve file blobs — they never come from Supabase
         const existingBlobMap = {};
         for (const eb of existingBooks) {
           if (eb.fileBlob) {
             if (eb.supabaseId) existingBlobMap[eb.supabaseId] = eb.fileBlob;
-            if (eb.localId || eb.local_id) {
-              existingBlobMap[eb.localId || eb.local_id] = eb.fileBlob;
-            }
+            if (eb.local_id) existingBlobMap[eb.local_id] = eb.fileBlob;
           }
         }
 
         await db.books.clear();
-        const mappedBooks = books.map(b => {
+        const mappedBooks = pulledData.books.map(b => {
           const mapped = {
             ...mapSnakeToCamel(b),
             supabaseId: b.id,
             synced: true,
+            last_modified: b.updated_at || b.last_read_at,
           };
-          // Remove the Supabase UUID 'id' — Dexie will auto-generate integer PK
           delete mapped.id;
 
-          // Restore blob using supabaseId as stable key
-          if (existingBlobMap[b.id]) {
-            mapped.fileBlob = existingBlobMap[b.id];
-          } else if (existingBlobMap[b.local_id]) {
-            mapped.fileBlob = existingBlobMap[b.local_id];
-          }
+          // Restore blob
+          if (existingBlobMap[b.id]) mapped.fileBlob = existingBlobMap[b.id];
+          else if (existingBlobMap[b.local_id]) mapped.fileBlob = existingBlobMap[b.local_id];
 
           return mapped;
         });
 
-        // bulkAdd returns array of new auto-generated Dexie integer IDs
         const newDexieIds = await db.books.bulkAdd(mappedBooks, { allKeys: true });
 
-        // Write the new Dexie integer ID back as local_id for each book
-        // This ensures deleteBookFromShelves and other operations use the correct current ID
-        const updates = newDexieIds.map((newId, index) => ({
-          id: newId,
-          local_id: newId.toString(),
-        }));
-
-        for (const update of updates) {
-          await db.books.update(update.id, { local_id: update.local_id });
+        // Write new Dexie integer IDs back as local_id
+        for (const newId of newDexieIds) {
+          await db.books.update(newId, { local_id: newId.toString() });
         }
 
-        console.log('[Apex Sync] Pull complete — assigned new Dexie IDs to', newDexieIds.length, 'books');
+        await this._setLocalTableTimestamp('books');
+        console.log('[Apex Sync] Books pulled and stored:', newDexieIds.length);
+
+      } else if (decisions.books === 'equal') {
+        console.log('[Apex Sync] Books — in sync, skipping');
+      } else if (decisions.books === 'local') {
+        console.log('[Apex Sync] Books — local is newer, pushSync will handle');
       }
 
-      // Reading Progress
-      if (reading_progress && reading_progress.length > 0) {
+      // ── READING PROGRESS ──
+      if (decisions.reading_progress === 'cloud' && pulledData.reading_progress?.length > 0) {
+        console.log('[Apex Sync] Pulling reading_progress from cloud:', pulledData.reading_progress.length);
         await db.reading_progress.clear();
-        const mapped = reading_progress.map(r => ({
+        const mapped = pulledData.reading_progress.map(r => ({
           ...mapSnakeToCamel(r),
           supabaseId: r.id,
           synced: true,
+          last_modified: r.updated_at || r.last_read_at,
         }));
         for (const m of mapped) { delete m.id; }
         await db.reading_progress.bulkAdd(mapped);
+        await this._setLocalTableTimestamp('reading_progress');
+        console.log('[Apex Sync] Reading progress pulled:', mapped.length);
+
+      } else if (decisions.reading_progress === 'equal') {
+        console.log('[Apex Sync] Reading progress — in sync, skipping');
+      } else if (decisions.reading_progress === 'local') {
+        console.log('[Apex Sync] Reading progress — local is newer, pushSync will handle');
       }
 
-      // Highlights
-      if (highlights && highlights.length > 0) {
+      // ── HIGHLIGHTS ──
+      if (decisions.highlights === 'cloud' && pulledData.highlights?.length > 0) {
+        console.log('[Apex Sync] Pulling highlights from cloud:', pulledData.highlights.length);
         await db.highlights.clear();
-        const mapped = highlights.map(h => ({
+        const mapped = pulledData.highlights.map(h => ({
           ...mapSnakeToCamel(h),
           supabaseId: h.id,
           synced: true,
+          last_modified: h.updated_at,
         }));
         for (const m of mapped) { delete m.id; }
         await db.highlights.bulkAdd(mapped);
+        await this._setLocalTableTimestamp('highlights');
+        console.log('[Apex Sync] Highlights pulled:', mapped.length);
+
+      } else if (decisions.highlights === 'equal') {
+        console.log('[Apex Sync] Highlights — in sync, skipping');
+      } else if (decisions.highlights === 'local') {
+        console.log('[Apex Sync] Highlights — local is newer, pushSync will handle');
       }
 
-      // Bookmarks
-      if (bookmarks && bookmarks.length > 0) {
+      // ── BOOKMARKS ──
+      if (decisions.bookmarks === 'cloud' && pulledData.bookmarks?.length > 0) {
+        console.log('[Apex Sync] Pulling bookmarks from cloud:', pulledData.bookmarks.length);
         await db.bookmarks.clear();
-        const mapped = bookmarks.map(b => ({
+        const mapped = pulledData.bookmarks.map(b => ({
           ...mapSnakeToCamel(b),
           supabaseId: b.id,
           synced: true,
+          last_modified: b.updated_at || b.created_at,
         }));
         for (const m of mapped) { delete m.id; }
         await db.bookmarks.bulkAdd(mapped);
+        await this._setLocalTableTimestamp('bookmarks');
+        console.log('[Apex Sync] Bookmarks pulled:', mapped.length);
+
+      } else if (decisions.bookmarks === 'equal') {
+        console.log('[Apex Sync] Bookmarks — in sync, skipping');
+      } else if (decisions.bookmarks === 'local') {
+        console.log('[Apex Sync] Bookmarks — local is newer, pushSync will handle');
       }
 
-      // Notes
-      if (response.data.notes && response.data.notes.length > 0) {
+      // ── NOTES ──
+      if (decisions.notes === 'cloud' && pulledData.notes?.length > 0) {
+        console.log('[Apex Sync] Pulling notes from cloud:', pulledData.notes.length);
         await db.notes.clear();
-        const mapped = response.data.notes.map(n => ({
+        const mapped = pulledData.notes.map(n => ({
           ...mapSnakeToCamel(n),
           supabaseId: n.id,
           synced: true,
+          last_modified: n.updated_at,
         }));
         for (const m of mapped) { delete m.id; }
         await db.notes.bulkAdd(mapped);
+        await this._setLocalTableTimestamp('notes');
         console.log('[Apex Sync] Notes pulled:', mapped.length);
+
+      } else if (decisions.notes === 'equal') {
+        console.log('[Apex Sync] Notes — in sync, skipping');
+      } else if (decisions.notes === 'local') {
+        console.log('[Apex Sync] Notes — local is newer, pushSync will handle');
       }
 
-      // ---- Category B data → Zustand only (no Dexie) ----
-      // Dictionary History is Category B — fetched directly from the API when needed
-      // AI Conversations (Map to ApexBooksDB)
-      if (ai_conversations && ai_conversations.length > 0) {
-        
-        // Wipe local chats before applying the new 1-to-1 Hydration list
+      // ── AI CONVERSATIONS (Category B — always pull, no conflict resolution) ──
+      if (pulledData.ai_conversations?.length > 0) {
         await clearAllChats();
 
-        // Find book titles for scopes
         const bookTitles = {};
         const localBooks = await db.books.toArray();
         for (const b of localBooks) {
@@ -264,39 +397,30 @@ const syncService = {
           if (supabaseId) bookTitles[supabaseId] = b.title;
         }
 
-        // Group Q&A pairs by book_id or 'general'
-        // 1-to-1 Match: Convert every single query row into its own isolated Chat Session
-        for (const row of ai_conversations) {
+        for (const row of pulledData.ai_conversations) {
           const timeMs = new Date(row.created_at).getTime();
           const groupId = row.chat_type === 'general' ? 'general' : row.book_id;
-          
           if (!groupId) continue;
 
-          // Title is extracted directly from the user's question
-          const title = row.query_text 
+          const title = row.query_text
             ? (row.query_text.slice(0, 40) + (row.query_text.length > 40 ? '...' : ''))
             : 'Sync Chat';
-
-          // Assign correct Book title if scoped
           const scope = groupId === 'general' ? 'general' : (bookTitles[groupId] || 'Unknown Book');
-          
-          // Formulate the distinct session
-          const messagesToSave = [
-            { id: timeMs, role: 'user', content: row.query_text },
-            { id: timeMs + 1, role: 'ai', content: row.ai_response }
-          ];
 
           await saveChat({
-            id: timeMs,          // Enforce absolute isolation by making the creation Unix time its ID
+            id: timeMs,
             title,
             scope,
             updatedAt: new Date(timeMs).toISOString(),
-            messages: messagesToSave
+            messages: [
+              { id: timeMs, role: 'user', content: row.query_text },
+              { id: timeMs + 1, role: 'ai', content: row.ai_response }
+            ]
           });
         }
       }
 
-      // Update last_synced_at
+      // Step 5: Update global last_synced_at
       const setting = await db.app_settings.where('key').equals('last_synced_at').first();
       if (setting && setting.id !== undefined) {
         await db.app_settings.update(setting.id, { value: new Date().toISOString() });
@@ -305,9 +429,10 @@ const syncService = {
         await db.app_settings.add({ key: 'last_synced_at', value: new Date().toISOString() });
       }
 
-      console.log('Pull sync complete: all user data hydrated');
+      console.log('[Apex Sync] Smart pull complete. Decisions:', decisions);
+
     } catch (error) {
-      console.error('pullAllUserData failed:', error);
+      console.error('[Apex Sync] pullAllUserData failed:', error);
       throw error;
     }
   },
@@ -331,10 +456,12 @@ const syncService = {
       updatedAt: now,
       synced: false,
       supabaseId: null,
+      last_modified: now,
     };
 
     // Step 1: Save to Dexie immediately
     const dexieId = await db.highlights.add(dexieRecord);
+    await this._setLocalTableTimestamp('highlights');
 
     // Step 2: If online, resolve the Supabase book UUID and save directly
     if (navigator.onLine) {
@@ -431,6 +558,7 @@ const syncService = {
       progressPercentage: progressData.progress_percentage,
       lastReadAt: now,
       synced: false,
+      last_modified: now,
     };
 
     if (existing) {
@@ -439,6 +567,7 @@ const syncService = {
       dexieData.local_id = localId;
       await db.reading_progress.add(dexieData);
     }
+    await this._setLocalTableTimestamp('reading_progress');
 
     // If online, resolve UUID and save to Supabase
     // Check autoSaveProgress setting — skip cloud sync if disabled
@@ -514,9 +643,11 @@ const syncService = {
       createdAt: now,
       synced: false,
       supabaseId: null,
+      last_modified: now,
     };
 
     const dexieId = await db.bookmarks.add(dexieRecord);
+    await this._setLocalTableTimestamp('bookmarks');
 
     if (navigator.onLine) {
       const supabaseBookId = await this._resolveBookId(bookId);
@@ -590,10 +721,12 @@ const syncService = {
       updatedAt: now,
       synced: false,
       supabaseId: null,
+      last_modified: now,
     };
 
     // Step 1: Save to Dexie immediately
     const dexieId = await db.notes.add(dexieRecord);
+    await this._setLocalTableTimestamp('notes');
     console.log('[Apex] Note saved to Dexie:', dexieId);
 
     // Step 2: If online, resolve Supabase book UUID and save
@@ -651,6 +784,7 @@ const syncService = {
 
     // Update Dexie immediately
     await db.notes.update(dexieId, { text, updatedAt: now, synced: false });
+    await this._setLocalTableTimestamp('notes');
     console.log('[Apex] Note updated in Dexie:', dexieId);
 
     // If online and synced, update Supabase

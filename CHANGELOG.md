@@ -3,6 +3,25 @@
 All notable changes to Apex are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+
+## [1.8.0] - 2026-03-28
+### Changed
+- Sync architecture upgraded to per-table timestamp conflict resolution
+- pullAllUserData now compares local vs cloud timestamps before syncing each table
+- Tables only sync when there's an actual difference — equal tables are skipped entirely
+- Local-newer tables skip pull and let pushSync handle the upload direction
+- Eliminates the "cloud always wins" problem — offline changes are now preserved correctly
+- O(1) comparison per table instead of blind clear + bulkAdd on every app load
+
+### Added
+- New GET /api/sync/timestamps endpoint — returns max(updated_at) per table
+- last_modified field added to all Category A Dexie tables (books, reading_progress, highlights, bookmarks, notes)
+- Per-table local timestamps stored in app_settings (table_modified_{tableName})
+- 5-second clock tolerance in timestamp comparison to handle device clock drift
+- Streak breaking now works correctly across devices — local wins when local is newer
+
+---
+
 ## [1.7.5] - 2026-03-27
 
 ### Added
