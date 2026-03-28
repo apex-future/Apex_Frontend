@@ -54,7 +54,7 @@ function HeroSection() {
                                 <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-primary opacity-75'></span>
                                 <span className='relative inline-flex rounded-full h-2 w-2 bg-accent-primary'></span>
                             </span>
-                            Phase 2: Private Beta
+                            MVP Live
                         </span>
                     </div>
                     <div className='text-content max-w-[800px] mx-auto'>

@@ -8,6 +8,7 @@ import authService from './main_app/services/authService'
 import syncService from './main_app/services/syncService'
 import db from './main_app/db/apex.db'
 import useAuthStore from './main_app/store/authStore'
+import useStudyStore from './main_app/store/studyStore'
 import useThemeStore from './main_app/store/themeStore'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
 import LandingLoadingScreen from './landing_page/components/LandingLoadingScreen'
@@ -57,6 +58,7 @@ function App() {
         await db.bookmarks.clear();
         await db.reading_progress.clear();
         await db.sync_queue.clear();
+        await db.notes.clear();
 
         // Delete the legacy ApexBooksDB ghost database
         try {
@@ -102,6 +104,11 @@ function App() {
           // Store user in Zustand immediately
           useAuthStore.getState().setUser(user);
 
+          // Seed streak store from Supabase data on app load
+          // seedFromSupabase only overwrites local if Supabase is more recent
+          useStudyStore.getState().seedFromSupabase(user);
+          console.log('[Apex Streak] Store seeded from Supabase');
+
           // Check if existing user needs onboarding
           if (!user.user_type) {
             setNeedsOnboarding(true);
@@ -131,6 +138,19 @@ function App() {
     };
 
     checkAuth();
+  }, []);
+
+  // Sync offline streak changes when device comes back online
+  useEffect(() => {
+    const handleOnline = () => {
+      const { streakCount, lastActiveDate } = useStudyStore.getState();
+      if (lastActiveDate) {
+        console.log('[Apex Streak] Back online — syncing streak to Supabase');
+        useStudyStore.getState().syncStreakToSupabase();
+      }
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, []);
 
   const handleLogin = async (userData) => {

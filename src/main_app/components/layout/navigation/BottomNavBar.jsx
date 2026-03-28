@@ -40,17 +40,17 @@ function BottomNavBar() {
   return (
     <div
       ref={navRef}
-      className='fixed bottom-8 md:hidden left-1/2 -translate-x-1/2 flex justify-between w-[92%] sm:w-[64%] max-w-[400px] z-[100] min-h-12 border-2 border-border-default bg-white/70 backdrop-blur-xl rounded-full items-center p-2 px-4 shadow-2xl shadow-neutral-400/20'
+      className='fixed bottom-8 md:hidden left-1/2 -translate-x-1/2 flex justify-between w-[92%] sm:w-[64%] max-w-[400px] z-[100] min-h-12 border-2 border-border-default dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full items-center p-2 px-4 shadow-2xl shadow-neutral-400/20 dark:shadow-none'
     >
       <NavLink
         to="/"
-        className={() => `p-2 hover:bg-neutral-100/50 rounded-full transition-all relative flex flex-col items-center group`}
+        className={() => `p-2 hover:bg-neutral-100/50 dark:hover:bg-white/10 rounded-full transition-all relative flex flex-col items-center group`}
       >
         {({ isActive }) => (
           <>
-            <Home size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040]'} />
+            <Home size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040] dark:text-zinc-400'} />
             {isActive && (
-              <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full" />
+              <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
             )}
           </>
         )}
@@ -77,13 +77,13 @@ function BottomNavBar() {
 
       <NavLink
         to="/profile"
-        className={() => `p-2 hover:bg-neutral-100/50 rounded-full transition-all relative flex flex-col items-center group`}
+        className={() => `p-2 hover:bg-neutral-100/50 dark:hover:bg-white/10 rounded-full transition-all relative flex flex-col items-center group`}
       >
         {({ isActive }) => (
           <>
-            <User size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040]'} />
+            <User size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040] dark:text-zinc-400'} />
             {isActive && (
-              <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full" />
+              <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
             )}
           </>
         )}

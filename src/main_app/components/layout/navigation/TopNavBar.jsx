@@ -1,6 +1,4 @@
 import { Menu, Search, Plus } from 'lucide-react'
-import logoLight from "../../../../assets/logo/logo-light-removebg-preview.png";
-import logoDark from "../../../../assets/logo/logo-dark-removebg-preview.png";
 import StreakBadge from '../../ui/StreakBadge';
 
 function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
@@ -43,9 +41,8 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
           </div>
         </form>
 
-        {/* Streak & Upload & Logo Group */}
+        {/* Upload & Streak Group */}
         <div className="flex items-center gap-2 md:gap-3">
-          <StreakBadge />
           
           {/* Upload Button - Responsive */}
           <div className="md:flex hidden items-center h-full">
@@ -65,17 +62,8 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
             </label>
           </div>
 
-          <div className="logo-wrapper h-full">
-            <img
-              src={logoLight}
-              alt="Apex Logo"
-              className='size-10 rounded-full object-cover dark:hidden'
-            />
-            <img
-              src={logoDark}
-              alt="Apex Logo"
-              className='size-10 rounded-full object-cover hidden dark:block'
-            />
+          <div className="streak-wrapper h-full flex items-center">
+            <StreakBadge />
           </div>
         </div>
 

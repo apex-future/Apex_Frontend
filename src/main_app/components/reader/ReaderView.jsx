@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useContext, useCallback, memo } from 'react';
+import useStudyStore from '../../store/studyStore';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
 import db from '../../db/apex.db';
@@ -97,45 +98,100 @@ function ReaderView() {
         setNavState('first');
     }, []);
 
+    // ============================================
+    // 1-MINUTE READING TIMER — Streak Trigger
+    // ============================================
+    const updateStreak = useStudyStore(state => state.updateStreak);
+    const updateStreakRef = useRef(updateStreak);
+    useEffect(() => { updateStreakRef.current = updateStreak; }, [updateStreak]);
+    const streakTimerRef = useRef(null);
+    const streakFiredTodayRef = useRef(false);
+
+    // Track elapsed time so visibility changes don't reset the full 60s
+    const streakElapsedRef = useRef(0);
+    const streakStartTimeRef = useRef(null);
+
+    useEffect(() => {
+        // Don't start timer if book isn't loaded yet
+        if (isLoading || !bookId) return;
+
+        // Check if streak already fired today — don't double count
+        const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
+        const lastActive = localStorage.getItem('apex_streak_fired_today');
+        if (lastActive === today) {
+            console.log('[Apex Streak] Already fired today — timer skipped');
+            streakFiredTodayRef.current = true;
+        }
+
+        if (streakFiredTodayRef.current) return;
+
+        const STREAK_DURATION = 60 * 1000; // 60 seconds
+        const remainingTime = STREAK_DURATION - streakElapsedRef.current;
+
+        console.log('[Apex Streak] Starting 1-minute reading timer... (' + Math.round(remainingTime / 1000) + 's remaining)');
+        streakStartTimeRef.current = Date.now();
+
+        // Start timer for remaining time
+        streakTimerRef.current = setTimeout(() => {
+            if (!streakFiredTodayRef.current) {
+                console.log('[Apex Streak] 60 seconds reached — updating streak');
+                updateStreakRef.current();
+                streakFiredTodayRef.current = true;
+                streakElapsedRef.current = STREAK_DURATION;
+                // Mark as fired today in localStorage as backup
+                localStorage.setItem('apex_streak_fired_today',
+                    new Date().toLocaleDateString('en-CA')
+                );
+            }
+        }, remainingTime);
+
+        // Pause timer when tab is hidden, resume with remaining time
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                console.log('[Apex Streak] Tab hidden — pausing timer');
+                clearTimeout(streakTimerRef.current);
+                // Track how much time has elapsed so far
+                if (streakStartTimeRef.current) {
+                    streakElapsedRef.current += Date.now() - streakStartTimeRef.current;
+                }
+            } else if (!streakFiredTodayRef.current) {
+                const remaining = STREAK_DURATION - streakElapsedRef.current;
+                console.log('[Apex Streak] Tab visible — resuming timer (' + Math.round(remaining / 1000) + 's remaining)');
+                streakStartTimeRef.current = Date.now();
+                streakTimerRef.current = setTimeout(() => {
+                    if (!streakFiredTodayRef.current) {
+                        console.log('[Apex Streak] 60 seconds reached after resume — updating streak');
+                        updateStreakRef.current();
+                        streakFiredTodayRef.current = true;
+                        streakElapsedRef.current = STREAK_DURATION;
+                        localStorage.setItem('apex_streak_fired_today',
+                            new Date().toLocaleDateString('en-CA')
+                        );
+                    }
+                }, remaining);
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            // Cleanup on unmount — cancel timer if user leaves before 60 seconds
+            clearTimeout(streakTimerRef.current);
+            // Save elapsed time so re-entering the reader continues from where it left off
+            if (streakStartTimeRef.current) {
+                streakElapsedRef.current += Date.now() - streakStartTimeRef.current;
+                streakStartTimeRef.current = null;
+            }
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            console.log('[Apex Streak] Timer cleaned up (elapsed: ' + Math.round(streakElapsedRef.current / 1000) + 's)');
+        };
+    }, [isLoading, bookId]);
+
     const handleHighlight = (color) => {
         if (!book || !selection.text) return;
 
-        // Apply visual highlight to the DOM immediately
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-            try {
-                const range = sel.getRangeAt(0);
-                const mark = document.createElement('mark');
-                mark.style.backgroundColor = color;
-                mark.style.color = 'inherit';
-                mark.style.borderRadius = '2px';
-                mark.style.padding = '0 1px';
-                mark.dataset.highlightColor = color;
-                mark.className = 'apex-highlight';
-                range.surroundContents(mark);
-            } catch (e) {
-                // surroundContents can fail if selection spans multiple elements
-                // In that case, fall back to extracting and re-wrapping
-                try {
-                    const range = sel.getRangeAt(0);
-                    const fragment = range.extractContents();
-                    const mark = document.createElement('mark');
-                    mark.style.backgroundColor = color;
-                    mark.style.color = 'inherit';
-                    mark.style.borderRadius = '2px';
-                    mark.style.padding = '0 1px';
-                    mark.dataset.highlightColor = color;
-                    mark.className = 'apex-highlight';
-                    mark.appendChild(fragment);
-                    range.insertNode(mark);
-                } catch (innerError) {
-                    console.warn('Could not apply visual highlight:', innerError);
-                }
-            }
-        }
-
         addHighlight(book.id, {
-            text: selection.text,
+            text: selection.text.replace(/\s+/g, ' ').trim(),
             color,
             page: pageNumber,
             addedAt: new Date().toISOString()
@@ -203,10 +259,18 @@ function ReaderView() {
     // Bookmarks — loaded from book context instead of manually from Dexie to prevent async UI lag
     const bookmarks = book?.metadata?.bookmarks || [];
     const highlights = book?.metadata?.highlights || [];
+    const stableHighlights = useMemo(() => highlights, [highlights]);
 
     const isCurrentPageBookmarked = bookmarks.some(
         bm => bm.pageNumber === pageNumber || bm.page === pageNumber
     );
+
+    const stableOnPageChange = useCallback((n) => {
+        setPageNumber(n);
+        syncProgress(n, numPages);
+    }, [numPages]);
+
+    const MemoizedPDFReader = useMemo(() => memo(PDFReader), []);
 
     // Expose pdfControls object
     const pdfControls = isPdf
@@ -299,33 +363,15 @@ function ReaderView() {
         isPinching: false
     });
 
+    // Track last selected text to avoid unnecessary position jitter
+    const lastSelTextRef = useRef('');
+    const selDebounceRef = useRef(null);
+    const showHighlightMenuRef = useRef(showHighlightMenu);
+    useEffect(() => { showHighlightMenuRef.current = showHighlightMenu; }, [showHighlightMenu]);
+
     // Selection monitoring logic
     useEffect(() => {
-        const handleSelectionChange = () => {
-            const activeSel = window.getSelection();
-            const text = activeSel.toString().trim();
-
-            if (text && text.length > 0) {
-                try {
-                    const range = activeSel.getRangeAt(0);
-                    const rect = range.getBoundingClientRect();
-                    setSelection({
-                        text,
-                        x: rect.left + rect.width / 2,
-                        y: rect.top
-                    });
-                    setShowHighlightMenu(true);
-                } catch (e) {
-                    // If selection range is lost or invalid
-                    setShowHighlightMenu(false);
-                }
-            } else {
-                // Only hide if dictionary isn't open
-                if (!isDictOpen) {
-                    setShowHighlightMenu(false);
-                }
-            }
-        };
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
         const getDistance = (touches) => {
             return Math.hypot(
@@ -359,26 +405,43 @@ function ReaderView() {
             }
         };
 
-        // More responsive selection monitoring
-        const handleSelectionUpdate = () => {
+        // Core selection handler — called directly on desktop, debounced on mobile
+        const processSelection = () => {
             const activeSel = window.getSelection();
-            const text = activeSel.toString().trim();
+            const text = activeSel?.toString().trim() || '';
 
             if (text && text.length > 0) {
                 const rect = getSelectionRect(activeSel);
                 if (rect) {
-                    setSelection({
-                        text,
-                        x: rect.left + rect.width / 2,
-                        y: rect.top
-                    });
+                    // Only update position if text content changed or menu isn't shown yet
+                    const textChanged = text !== lastSelTextRef.current;
+                    lastSelTextRef.current = text;
+
+                    if (textChanged || !showHighlightMenuRef.current) {
+                        setSelection({
+                            text,
+                            x: rect.left + rect.width / 2,
+                            y: rect.top
+                        });
+                    }
                     setShowHighlightMenu(true);
                 }
             } else {
+                lastSelTextRef.current = '';
                 // Only hide if dictionary isn't open
                 if (!isDictOpen) {
                     setShowHighlightMenu(false);
                 }
+            }
+        };
+
+        // Debounced handler for mobile to prevent flickering
+        const handleSelectionUpdate = () => {
+            if (isTouchDevice) {
+                clearTimeout(selDebounceRef.current);
+                selDebounceRef.current = setTimeout(processSelection, 150);
+            } else {
+                processSelection();
             }
         };
 
@@ -388,6 +451,7 @@ function ReaderView() {
         document.addEventListener('touchend', handleTouchEnd);
 
         return () => {
+            clearTimeout(selDebounceRef.current);
             document.removeEventListener('selectionchange', handleSelectionUpdate);
             document.removeEventListener('touchstart', handleTouchStart);
             document.removeEventListener('touchmove', handleTouchMove);
@@ -577,7 +641,7 @@ function ReaderView() {
 
     return (
         <div
-            className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden [touch-action:manipulation] [-webkit-touch-callout:none]"
+            className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden"
             onClick={closeNav}
         >
             <ScrollOrientationOverlay visible={showScrollOverlay} orientation={scrollOrientation} />
@@ -652,7 +716,7 @@ function ReaderView() {
                     {/* PDF Content */}
                     {fileUrl && isPdf && (
                         <div className="flex-1 flex overflow-hidden relative">
-                            <PDFReader
+                            <MemoizedPDFReader
                                 fileUrl={fileUrl}
                                 pageNumber={pageNumber}
                                 scale={scale}
@@ -662,14 +726,11 @@ function ReaderView() {
                                 onPrevPage={previousPage}
                                 numPages={numPages}
                                 goToPage={goToPage}
-                                highlights={book?.metadata?.highlights || []}
+                                highlights={stableHighlights}
                                 locked={locked}
                                 windowSize={windowSize}
                                 scrollOrientation={scrollOrientation}
-                                onPageChange={(n) => {
-                                    setPageNumber(n);
-                                    syncProgress(n, numPages);
-                                }}
+                                onPageChange={stableOnPageChange}
                             />
 
                             <button

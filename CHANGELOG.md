@@ -24,6 +24,46 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.7.2] - 2026-03-24
+
+### Added
+
+- Streak system — 1-minute reading timer triggers daily streak
+- Full streak history stored locally (Zustand persist) and synced to Supabase
+- Streak page (/streak) with monthly calendar showing active days
+- Calendar shows today in black, streak days in orange, missed days empty
+- Motivational subtitle changes based on streak count
+- StreakBadge always visible in TopNavBar — navigates to /streak
+- PATCH /api/auth/streak endpoint
+- Streak seeded from Supabase on login — respects offline-first priority
+- Streak syncs automatically when device comes back online
+
+### Fixed
+
+- Removed incorrect streak trigger on app mount — streak now only counts after 1 minute of reading
+
+---
+
+## [1.7.1] - 2026-03-20
+### Added
+- Notes now synced to Supabase with full offline support
+- New `notes` Dexie table (version 7) — notes no longer stored in book metadata only
+- New `notes` Supabase table with note_type (manual_note / highlight_note)
+- Notes pulled on login and app load via pull/all sync
+- New backend endpoints: POST /api/books/{id}/notes, PUT /api/notes/{id}, DELETE /api/notes/{id}
+- Offline notes queued and synced when back online
+
+---
+
+## [1.7.0] - 2026-03-20
+### Fixed
+- Offline book uploads now correctly upload file to Supabase Storage when back online
+- Books uploaded offline no longer appear with null file_path after sync
+- Generic sync queue now explicitly excludes book items — books only go through uploadBook()
+- Added detailed console logging for offline book upload sync flow
+
+---
+
 ## [1.6.9] - 2026-03-17
 ### Improved
 - Book appears in library immediately when uploaded (optimistic UI)

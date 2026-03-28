@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Edit2, X, Bell, AlarmClock } from 'lucide-react';
+import { Edit2, Bell, AlarmClock } from 'lucide-react';
 import useStudyStore from '../../store/studyStore';
 
 const ExamReminder = () => {
@@ -36,32 +36,22 @@ const ExamReminder = () => {
     if (isEditing) {
         return (
             <CardContainer className="cursor-default">
-                <div className="w-full relative z-10">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-xl bg-accent-primary/10 flex items-center justify-center text-accent-primary">
-                                <Calendar size={20} />
-                            </div>
-                            <h3 className="text-xl font-bold text-text-primary tracking-tight">Set Exam Date</h3>
-                        </div>
-                        <button onClick={() => setIsEditing(false)} className="p-2 text-text-tertiary hover:text-text-primary transition-colors">
-                            <X size={20} />
-                        </button>
+                <div className="w-full relative z-10 flex flex-col items-center justify-center text-center">
+                    <div className="size-16 rounded-2xl bg-accent-primary/10 flex items-center justify-center text-accent-primary mb-4 shadow-sm">
+                        <AlarmClock size={32} strokeWidth={1.5} />
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <input
-                            type="date"
-                            value={tempDate}
-                            onChange={(e) => setTempDate(e.target.value)}
-                            className="flex-1 bg-bg-subtle border border-border-default rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-primary transition-all font-medium"
-                        />
-                        <button
-                            onClick={handleSave}
-                            className="bg-accent-primary hover:bg-accent-hover text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95"
-                        >
-                            Save Reminder
-                        </button>
+                    <div className="space-y-1">
+                        <h3 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">Feature Coming Soon</h3>
+                        <p className="text-sm sm:text-base text-text-tertiary font-medium max-w-[280px] mx-auto">
+                            We're currently polishing the exam tracking experience. Stay tuned!
+                        </p>
                     </div>
+                    <button 
+                        onClick={() => setIsEditing(false)}
+                        className="mt-6 px-6 py-2 bg-text-primary/[0.03] hover:bg-text-primary/[0.08] border border-border-default rounded-xl text-xs sm:text-sm font-bold text-text-secondary transition-all active:scale-95"
+                    >
+                        Go Back
+                    </button>
                 </div>
             </CardContainer>
         );

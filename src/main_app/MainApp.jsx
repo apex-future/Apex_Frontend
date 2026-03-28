@@ -21,6 +21,7 @@ import NotesPage from './components/notes/NotesPage';
 import Settings from './components/layout/user/Settings';
 import DuplicateBookModal from './components/modals/DuplicateBookModal';
 import ImportPage from './pages/ImportPage';
+import StreakPage from './pages/StreakPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
@@ -47,8 +48,8 @@ function MainApp({ onLogout }) {
     updateStreak();
     // Request notification permission and check for missed days
     notificationService.requestPermission().then(() => {
-        notificationService.checkAndNotify();
-        notificationService.scheduleNotification();
+      notificationService.checkAndNotify();
+      notificationService.scheduleNotification();
     });
   }, [updateStreak]);
 
@@ -77,6 +78,7 @@ function MainApp({ onLogout }) {
                 <Route path="/ai" element={<ApexAI />} />
                 <Route path="/notes" element={<NotesPage />} />
                 <Route path="/import" element={<ImportPage />} />
+                <Route path="/streak" element={<StreakPage />} />
               </Routes>
             </main>
 

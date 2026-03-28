@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useSwipeable } from 'react-swipeable';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ExamReminder from './ExamReminder';
 import LastReadCard from './LastReadCard';
@@ -35,12 +34,13 @@ const FeaturedSlider = ({ lastReadBook }) => {
                 { id: 'streak', component: <StreakCard /> }
               ]
         )
-    ].filter(s => (s.id === 'lastRead' && lastReadBook) || (s.id !== 'lastRead'));
+    ];
 
     const handleScroll = (e) => {
         const { scrollLeft, clientWidth } = e.target;
         if (clientWidth > 0) {
-            const index = Math.round(scrollLeft / clientWidth);
+            const gap = 16;
+            const index = Math.round(scrollLeft / (clientWidth + gap));
             if (index !== currentIndex) {
                 setCurrentIndex(index);
             }
@@ -58,23 +58,8 @@ const FeaturedSlider = ({ lastReadBook }) => {
         }
     };
 
-    const handlers = useSwipeable({
-        onSwipedLeft: () => {
-            if (currentIndex < slides.length - 1) {
-                scrollToSlide(currentIndex + 1);
-            }
-        },
-        onSwipedRight: () => {
-            if (currentIndex > 0) {
-                scrollToSlide(currentIndex - 1);
-            }
-        },
-        preventDefaultTouchmoveEvent: true,
-        trackMouse: false
-    });
-
     return (
-        <div className="w-full relative px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 group/slider flex flex-col gap-6" {...handlers}>
+        <div className="w-full relative px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 group/slider flex flex-col gap-6">
             <div 
                 ref={scrollRef}
                 onScroll={handleScroll}
@@ -84,7 +69,7 @@ const FeaturedSlider = ({ lastReadBook }) => {
                 {slides.map((slide) => (
                     <div 
                         key={slide.id} 
-                        className="w-full flex-shrink-0 snap-center"
+                        className="w-full flex-shrink-0 snap-center snap-always"
                     >
                         <div className="w-full h-full">
                             {slide.component}
