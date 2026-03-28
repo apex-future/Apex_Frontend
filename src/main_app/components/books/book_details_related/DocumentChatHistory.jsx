@@ -66,20 +66,20 @@ function DocumentChatHistory({ book }) {
     return (
         <div className='grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500'>
             {chatHistory.map((chat) => (
-                <div key={chat.id} className='flex items-start gap-4 p-4 bg-white border border-border-default rounded-xl hover:shadow-sm transition-all cursor-pointer group'>
-                    <div className="p-2 bg-accent-subtle rounded-lg text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-colors flex-shrink-0">
+                <div key={chat.id} className='flex items-start gap-4 p-4 bg-white dark:bg-bg-dark-elevated border border-border-default dark:border-border-default-dark rounded-xl hover:shadow-sm transition-all cursor-pointer group'>
+                    <div className="p-2 bg-accent-subtle dark:bg-accent-subtle-dark rounded-lg text-accent-primary dark:text-accent-primary-dark group-hover:bg-accent-primary group-hover:text-white transition-colors flex-shrink-0">
                         <MessageSquare size={20} />
                     </div>
                     <div className="flex flex-col gap-1 min-w-0 flex-1">
-                        <h2 className='text-text-primary font-semibold group-hover:text-accent-primary transition-colors truncate'>
+                        <h2 className='text-text-primary dark:text-text-primary-dark font-semibold group-hover:text-accent-primary transition-colors truncate'>
                             {chat.title || 'New Chat'}
                         </h2>
-                        <p className='text-text-tertiary text-sm line-clamp-2'>{getLastMessage(chat)}</p>
+                        <p className='text-text-tertiary dark:text-text-tertiary-dark text-sm line-clamp-2'>{getLastMessage(chat)}</p>
                         <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs text-text-placeholder">
+                            <span className="text-xs text-text-placeholder dark:text-text-placeholder-dark">
                                 {formatDate(chat.updatedAt)}
                             </span>
-                            <span className="text-xs text-text-placeholder">
+                            <span className="text-xs text-text-placeholder dark:text-text-placeholder-dark">
                                 {getMessageCount(chat)} messages
                             </span>
                         </div>

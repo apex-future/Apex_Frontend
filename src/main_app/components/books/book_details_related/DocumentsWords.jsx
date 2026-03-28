@@ -28,31 +28,31 @@ function DocumentsWords({ book }) {
     return (
         <div className='grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500'>
             {words.map((wordItem, index) => (
-                <div key={index} className='flex items-center gap-4 p-4 bg-white border border-border-default rounded-xl hover:shadow-md transition-all group'>
-                     <div className="p-2 bg-accent-subtle rounded-lg text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-colors flex-shrink-0">
+                <div key={index} className='flex items-center gap-4 p-4 bg-white dark:bg-bg-dark-elevated border border-border-default dark:border-border-default-dark rounded-xl hover:shadow-md transition-all group'>
+                     <div className="p-2 bg-accent-subtle dark:bg-accent-subtle-dark rounded-lg text-accent-primary dark:text-accent-primary-dark group-hover:bg-accent-primary group-hover:text-white transition-colors flex-shrink-0">
                         <BookA size={20} />
                     </div>
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                            <h2 className='text-text-primary font-semibold group-hover:text-accent-primary transition-colors capitalize'>
+                            <h2 className='text-text-primary dark:text-text-primary-dark font-semibold group-hover:text-accent-primary transition-colors capitalize'>
                                 {wordItem.word}
                             </h2>
                             {wordItem.partOfSpeech && (
-                                <span className="text-[10px] font-bold text-text-placeholder uppercase tracking-wider bg-neutral-100 px-2 py-0.5 rounded-full">
+                                <span className="text-[10px] font-bold text-text-placeholder dark:text-text-placeholder-dark uppercase tracking-wider bg-neutral-100 dark:bg-bg-dark px-2 py-0.5 rounded-full">
                                     {wordItem.partOfSpeech}
                                 </span>
                             )}
                         </div>
-                        <p className='text-text-tertiary text-sm line-clamp-2'>{wordItem.definition}</p>
+                        <p className='text-text-tertiary dark:text-text-tertiary-dark text-sm line-clamp-2'>{wordItem.definition}</p>
                         {wordItem.addedAt && (
-                            <span className="text-xs text-text-placeholder mt-0.5">
+                            <span className="text-xs text-text-placeholder dark:text-text-placeholder-dark mt-0.5">
                                 Saved {formatDate(wordItem.addedAt)}
                             </span>
                         )}
                     </div>
                     <button
                         onClick={() => handleRemove(wordItem.word)}
-                        className="p-2 text-text-placeholder hover:text-error hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        className="p-2 text-text-placeholder dark:text-text-placeholder-dark hover:text-error hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                         title="Remove word"
                     >
                         <Trash2 size={16} />

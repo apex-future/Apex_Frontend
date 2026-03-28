@@ -110,6 +110,10 @@ function App() {
           useStudyStore.getState().seedFromSupabase(user);
           console.log('[Apex Streak] Store seeded from Supabase');
 
+          // Check if streak is broken (lastActiveDate is not today/yesterday)
+          // Resets streakCount to 0 immediately so StreakBadge shows the correct value
+          useStudyStore.getState().checkStreakIntegrity();
+
           // Seed settings store from Supabase
           if (user.settings) {
             useSettingsStore.getState().seedFromSupabase(user.settings);

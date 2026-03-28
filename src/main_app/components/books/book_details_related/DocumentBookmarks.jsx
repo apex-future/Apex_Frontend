@@ -26,29 +26,29 @@ function DocumentBookmarks({ book }) {
             {/* Page Bookmarks List */}
             <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-2 px-1">
-                    <Bookmark size={14} className="text-accent-primary" />
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">Page Bookmarks ({bookmarks.length})</h4>
+                    <Bookmark size={14} className="text-accent-primary dark:text-accent-primary-dark" />
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary dark:text-text-tertiary-dark">Page Bookmarks ({bookmarks.length})</h4>
                 </div>
 
                 {bookmarks.length === 0 ? (
-                    <div className="p-8 text-center bg-neutral-50 rounded-2xl border border-dashed border-border-default">
-                        <p className="text-xs font-semibold text-text-tertiary tracking-tight uppercase">No snapshots saved yet</p>
-                        <p className="text-[10px] text-text-placeholder mt-1">Tap the bookmark icon while reading to save specific pages here.</p>
+                    <div className="p-8 text-center bg-neutral-50 dark:bg-bg-dark-elevated rounded-2xl border border-dashed border-border-default dark:border-border-default-dark">
+                        <p className="text-xs font-semibold text-text-tertiary dark:text-text-tertiary-dark tracking-tight uppercase">No snapshots saved yet</p>
+                        <p className="text-[10px] text-text-placeholder dark:text-text-placeholder-dark mt-1">Tap the bookmark icon while reading to save specific pages here.</p>
                     </div>
                 ) : (
                     <div className='grid grid-cols-1 gap-3'>
                         {bookmarks.map((bookmark, index) => (
-                            <div key={index} className='flex items-start gap-4 p-4 bg-white border border-border-default rounded-xl hover:shadow-md transition-all cursor-pointer group'>
-                                <div className="p-2 bg-accent-subtle rounded-lg text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-colors">
+                            <div key={index} className='flex items-start gap-4 p-4 bg-white dark:bg-bg-dark-elevated border border-border-default dark:border-border-default-dark rounded-xl hover:shadow-md transition-all cursor-pointer group'>
+                                <div className="p-2 bg-accent-subtle dark:bg-accent-subtle-dark rounded-lg text-accent-primary dark:text-accent-primary-dark group-hover:bg-accent-primary group-hover:text-white transition-colors">
                                     <Bookmark size={20} />
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <h2 className='text-text-primary font-semibold group-hover:text-accent-primary transition-colors'>
+                                    <h2 className='text-text-primary dark:text-text-primary-dark font-semibold group-hover:text-accent-primary transition-colors'>
                                         {bookmark.label || `Page ${bookmark.page}`}
                                     </h2>
-                                    <p className='text-text-tertiary text-sm'>Page {bookmark.page}</p>
+                                    <p className='text-text-tertiary dark:text-text-tertiary-dark text-sm'>Page {bookmark.page}</p>
                                     {bookmark.addedAt && (
-                                        <span className="text-xs text-text-placeholder mt-1">
+                                        <span className="text-xs text-text-placeholder dark:text-text-placeholder-dark mt-1">
                                             {formatDate(bookmark.addedAt)}
                                         </span>
                                     )}
