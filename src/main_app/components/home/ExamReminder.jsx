@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
-import { Edit2, Bell, AlarmClock } from 'lucide-react';
+import { Edit2, Bell, AlarmClock, Calendar, BookOpen } from 'lucide-react';
 import useStudyStore from '../../store/studyStore';
+import useSpaceStore from '../../store/spaceStore';
+import { useNavigate } from 'react-router-dom';
 
 const ExamReminder = () => {
     const { examDate, setExamDate } = useStudyStore();
+    const { spaces, updateSpace } = useSpaceStore();
+    const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [tempDate, setTempDate] = useState(examDate || '');
+    
+    const customSpaces = spaces.filter(s => !s.isSystem);
+    const linkedSpace = customSpaces.find(s => s.examDate === examDate) || customSpaces.find(s => s.isLinkedToExam); // Fallback logic based on previous states
 
     const calculateDaysLeft = () => {
         if (!examDate) return null;
@@ -16,8 +23,18 @@ const ExamReminder = () => {
 
     const daysLeft = calculateDaysLeft();
 
+    const [selectedSpaceId, setSelectedSpaceId] = useState(linkedSpace?.id || '');
+
     const handleSave = () => {
         setExamDate(tempDate);
+        // Link to space by setting its examDate or flag
+        customSpaces.forEach(s => {
+          if (s.id === selectedSpaceId) {
+             updateSpace(s.id, { examDate: tempDate, isLinkedToExam: true });
+          } else if (s.isLinkedToExam) {
+             updateSpace(s.id, { isLinkedToExam: false, examDate: null });
+          }
+        });
         setIsEditing(false);
     };
 
@@ -35,22 +52,66 @@ const ExamReminder = () => {
 
     if (isEditing) {
         return (
-            <CardContainer className="cursor-default">
-                <div className="w-full relative z-10 flex flex-col items-center justify-center text-center">
-                    <div className="size-16 rounded-2xl bg-accent-primary/10 flex items-center justify-center text-accent-primary mb-4 shadow-sm">
-                        <AlarmClock size={32} strokeWidth={1.5} />
+            <CardContainer className="cursor-default flex-col !h-auto min-h-64 items-start relative z-10 transition-all">
+                <div className="w-full flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold tracking-tight text-text-primary">Exam Details</h3>
+                    <button onClick={() => setIsEditing(false)} className="text-sm text-text-tertiary">Cancel</button>
+                </div>
+                
+                <div className="w-full space-y-4">
+                    <div>
+                        <label className="block text-xs font-bold text-text-tertiary uppercase mb-1">Set Date</label>
+                        <div className="flex bg-white dark:bg-zinc-900 border border-border-default rounded-xl px-4 py-3 shadow-inner text-sm items-center gap-3">
+                            <Calendar size={18} className="text-accent-primary" />
+                            <input 
+                                type="date"
+                                value={tempDate}
+                                onChange={(e) => setTempDate(e.target.value)}
+                                className="w-full bg-transparent outline-none text-text-primary font-medium"
+                            />
+                        </div>
                     </div>
-                    <div className="space-y-1">
-                        <h3 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">Feature Coming Soon</h3>
-                        <p className="text-sm sm:text-base text-text-tertiary font-medium max-w-[280px] mx-auto">
-                            We're currently polishing the exam tracking experience. Stay tuned!
-                        </p>
+
+                    <div>
+                        <label className="block text-xs font-bold text-text-tertiary uppercase mb-1">Link to Space</label>
+                        <div className="flex bg-white dark:bg-zinc-900 border border-border-default rounded-xl px-4 py-3 shadow-inner text-sm items-center gap-3">
+                            <BookOpen size={18} className="text-accent-primary" />
+                            <select 
+                                value={selectedSpaceId}
+                                onChange={(e) => setSelectedSpaceId(e.target.value)}
+                                className="w-full bg-transparent outline-none text-text-primary font-medium appearance-none"
+                            >
+                                <option value="">Do not link</option>
+                                {customSpaces.map(sp => (
+                                    <option key={sp.id} value={sp.id}>{sp.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
+
+                    {selectedSpaceId && (
+                        <div 
+                           onClick={() => navigate(`/space/${selectedSpaceId}`)}
+                           className="mt-4 p-4 border border-accent-primary/20 bg-accent-primary/[0.03] rounded-2xl flex items-center justify-between cursor-pointer hover:bg-accent-primary/[0.08] transition-colors"
+                        >
+                            <div>
+                                <h4 className="text-xs font-bold text-accent-primary uppercase tracking-wider mb-1">Linked Space Preview</h4>
+                                <p className="text-sm font-bold text-text-primary">{customSpaces.find(s=>s.id === selectedSpaceId)?.name}</p>
+                            </div>
+                            <div className="text-xs text-text-secondary bg-white dark:bg-zinc-900 px-3 py-1 rounded-full shadow-sm border border-border-default font-semibold">
+                                View Space
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="w-full flex justify-end mt-6">
                     <button 
-                        onClick={() => setIsEditing(false)}
-                        className="mt-6 px-6 py-2 bg-text-primary/[0.03] hover:bg-text-primary/[0.08] border border-border-default rounded-xl text-xs sm:text-sm font-bold text-text-secondary transition-all active:scale-95"
+                        onClick={handleSave}
+                        disabled={!tempDate}
+                        className="px-6 py-2 bg-accent-primary hover:bg-accent-hover text-white rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Go Back
+                        Save Details
                     </button>
                 </div>
             </CardContainer>
@@ -100,6 +161,9 @@ const ExamReminder = () => {
                         </div>
                         <p className="text-xs md:text-sm text-text-tertiary font-medium italic">
                             The big day is on <span className="text-text-secondary font-bold not-italic">{new Date(examDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                            {linkedSpace && (
+                                <span className="block mt-1">Linked space: <span className="font-bold cursor-pointer text-accent-primary hover:underline hover:text-accent-hover" onClick={(e) => { e.stopPropagation(); navigate(`/space/${linkedSpace.id}`); }}>{linkedSpace.name}</span></span>
+                            )}
                         </p>
                     </div>
                 </div>

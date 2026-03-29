@@ -1,28 +1,69 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { shelves as initialShelves } from '../data/shelves';
 import db from '../db/apex.db';
 import syncService from '../services/syncService';
 import { showToastGlobal } from '../hooks/useToast';
-
 import { BookContext } from './BookContextInstance.jsx';
+import useSpaceStore from '../store/spaceStore';
 
 export const BookProvider = ({ children }) => {
-  const [shelves, setShelves] = useState(initialShelves);
+  const { spaces, addBookToSpace, removeBookFromSpace } = useSpaceStore();
+  const [allBooks, setAllBooks] = useState([]);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
-  // Memoize books array to avoid recreating it on every shelf update
-  const books = useMemo(() => {
-    const allBooks = (shelves || []).flatMap((shelf) => shelf.books || []);
-    const uniqueBooks = [];
-    const seen = new Set();
-    for (const book of allBooks) {
-      if (!seen.has(book.id)) {
-        seen.add(book.id);
-        uniqueBooks.push(book);
-      }
-    }
-    return uniqueBooks;
-  }, [shelves]);
+  const shelves = useMemo(() => {
+    const currentSpaceNames = spaces.map(s => s.name);
+    return spaces.map(space => {
+      const spaceBooks = allBooks.filter(b => {
+        if (space.id === 'favorites') return b.isFavorite;
+        if (space.id === 'bookmarks') return b.isBookmarked;
+        if (space.id === 'active-reading') {
+          const isOrphaned = b.shelfName && !currentSpaceNames.includes(b.shelfName);
+          return b.shelfName === 'Active Reading' || !b.shelfName || isOrphaned;
+        }
+        return space.bookIds && (space.bookIds.includes(b.id) || space.bookIds.includes(b.supabaseId));
+      });
+      return { ...space, shelfName: space.name, books: spaceBooks };
+    });
+  }, [spaces, allBooks]);
+
+  const books = allBooks;
+
+  const setShelves = useCallback((updater) => {
+    setAllBooks((prevBooks) => {
+      const currentSpaceNames = spaces.map(s => s.name);
+      const prevShelves = spaces.map(space => {
+        const spaceBooks = prevBooks.filter(b => {
+          if (space.id === 'favorites') return b.isFavorite;
+          if (space.id === 'bookmarks') return b.isBookmarked;
+          if (space.id === 'active-reading') {
+            const isOrphaned = b.shelfName && !currentSpaceNames.includes(b.shelfName);
+            return b.shelfName === 'Active Reading' || !b.shelfName || isOrphaned;
+          }
+          return space.bookIds && (space.bookIds.includes(b.id) || space.bookIds.includes(b.supabaseId));
+        });
+        return { ...space, shelfName: space.name, books: spaceBooks };
+      });
+
+      const nextShelves = typeof updater === 'function' ? updater(prevShelves) : updater;
+
+      const newBooksObj = {};
+      nextShelves.forEach(shelf => {
+        if (shelf.books) {
+          shelf.books.forEach(b => {
+            newBooksObj[b.id] = b;
+          });
+        }
+      });
+
+      prevBooks.forEach(b => {
+        if (!newBooksObj[b.id]) {
+          newBooksObj[b.id] = b;
+        }
+      });
+
+      return Object.values(newBooksObj);
+    });
+  }, [spaces]);
 
   useEffect(() => {
     const loadBooks = async () => {
@@ -145,27 +186,7 @@ export const BookProvider = ({ children }) => {
             };
           });
 
-          setShelves(prevShelves => {
-            const currentShelfNames = prevShelves.map(s => s.shelfName);
-            return prevShelves.map(shelf => {
-              const shelfBooks = booksWithProgress.filter(b => {
-                if (shelf.shelfName === 'Favorites') {
-                  return b.isFavorite;
-                }
-                if (shelf.shelfName === 'Bookmarks') {
-                  return b.isBookmarked;
-                }
-                // If it's the Active Reading shelf, include its own books, 
-                // books with no shelf, and books with a shelf that no longer exists
-                if (shelf.shelfName === 'Active Reading') {
-                  const isOrphaned = b.shelfName && !currentShelfNames.includes(b.shelfName);
-                  return b.shelfName === 'Active Reading' || !b.shelfName || isOrphaned;
-                }
-                return b.shelfName === shelf.shelfName;
-              });
-              return { ...shelf, books: shelfBooks };
-            });
-          });
+          setAllBooks(booksWithProgress);
         }
       } catch (error) {
         console.error("Failed to load books from Dexie:", error);

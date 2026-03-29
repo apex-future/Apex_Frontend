@@ -23,7 +23,7 @@ function Shelf({ shelves }) {
 
         return (
           <div
-            onClick={() => navigate(`/shelf/${shelf.shelfName}`)}
+            onClick={() => navigate(`/space/${shelf.id}`)}
             key={index}
             className='group flex flex-col border-2 border-border-default rounded-3xl bg-neutral-100/40 relative h-64 transition-all duration-500 overflow-hidden cursor-pointer hover:border-accent-primary/30 hover:shadow-xl hover:shadow-accent-primary/5'
           >
@@ -97,7 +97,7 @@ function Shelf({ shelves }) {
             {/* Shelf Info: The "Glass" front panel */}
             <div className="shelf-info absolute inset-x-0 bottom-0 z-10 h-32 rounded-3xl p-6 bg-white/10 dark:bg-card-glass/80 backdrop-blur-xl border-t-2 border-white/40 flex flex-col justify-end transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-neutral-400/20">
               <div className="flex justify-between items-center mb-2">
-                <h5 className="text-[10px] uppercase tracking-[0.2em] text-text-tertiary dark:text-white font-bold">Shelf Collection</h5>
+                <h5 className="text-[10px] uppercase tracking-[0.2em] text-text-tertiary dark:text-white font-bold">Book Space</h5>
                 <span className="text-[12px] font-bold bg-accent-subtle px-3 py-1 rounded-full text-black/80 dark:text-white/80 shadow-sm">
                   {actualBooksCount} {actualBooksCount === 1 ? 'Book' : 'Books'}
                 </span>

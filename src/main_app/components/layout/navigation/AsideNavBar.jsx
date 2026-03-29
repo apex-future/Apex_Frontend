@@ -31,7 +31,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
   // navItems: Configuration array for the links to be displayed in the primary navigation list
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
-    { icon: Book, label: 'Book Shelf', path: '/bookshelf' },
+    { icon: Book, label: 'Book Spaces', path: '/spaces' },
     { icon: WholeWord, label: 'Dictionary', path: '/dictionary' },
     { icon: Sparkle, label: 'ApexAI', path: '/ai' },
     { icon: Pen, label: 'Notes', path: '/notes' },

@@ -1,5 +1,6 @@
-import React, { useContext, useState, useMemo } from 'react';
+import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useSpaceStore from '../../store/spaceStore';
 import Header from "./Header";
 import FeaturedSlider from "./FeaturedSlider";
 import AllBooks from "./AllBooks";
@@ -8,8 +9,13 @@ import { BookContext } from "../../context/BookContextInstance";
 
 function HomePage({ setIsMobileOpen }) {
   const { books, addBookToShelf, handleBookClick } = useContext(BookContext);
+  const { setActiveSpace } = useSpaceStore();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setActiveSpace(null);
+  }, [setActiveSpace]);
 
   const handleBookNavigate = (id) => {
     handleBookClick(id); // update timestamp

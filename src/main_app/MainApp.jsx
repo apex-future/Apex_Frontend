@@ -12,8 +12,8 @@ import BottomNavBar from './components/layout/navigation/BottomNavBar';
 import Profile from './components/layout/user/Profile';
 import ReaderView from './components/reader/ReaderView';
 
-import BookShelf from './components/layout/book_shelf/BookShelf';
-import ShelfDetail from './components/layout/book_shelf/ShelfDetail';
+import BookSpaces from './components/layout/spaces/BookSpaces';
+import SpaceDetail from './components/layout/spaces/SpaceDetail';
 import BookDetails from './components/books/BookDetails';
 import Dictionary from './components/dictionary/Dictionary';
 import ApexAI from './components/ai/ApexAI';
@@ -71,8 +71,8 @@ function MainApp({ onLogout }) {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/settings" element={<Settings onLogout={onLogout} />} />
                 <Route path="/reader/:bookId" element={<ReaderView />} />
-                <Route path="/bookshelf" element={<BookShelf />} />
-                <Route path="/shelf/:shelfName" element={<ShelfDetail />} />
+                <Route path="/spaces" element={<BookSpaces />} />
+                <Route path="/space/:spaceId" element={<SpaceDetail />} />
                 <Route path="/book/:bookId" element={<BookDetails />} />
                 <Route path="/dictionary" element={<Dictionary />} />
                 <Route path="/ai" element={<ApexAI />} />

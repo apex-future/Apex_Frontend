@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
 import useStudyStore from '../../store/studyStore';
+import useSpaceStore from '../../store/spaceStore';
 import useSettingsStore from '../../store/settingsStore';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
@@ -101,11 +102,14 @@ function ReaderView() {
     }, []);
 
     // ============================================
-    // 1-MINUTE READING TIMER — Streak Trigger
+    // 1-MINUTE READING TIMER — Streak & Space Tracking
     // ============================================
+    const { activeSpaceId, logSpaceActivity } = useSpaceStore();
     const updateStreak = useStudyStore(state => state.updateStreak);
     const updateStreakRef = useRef(updateStreak);
+    const logSpaceActivityRef = useRef(logSpaceActivity);
     useEffect(() => { updateStreakRef.current = updateStreak; }, [updateStreak]);
+    useEffect(() => { logSpaceActivityRef.current = logSpaceActivity; }, [logSpaceActivity]);
     const streakTimerRef = useRef(null);
     const streakFiredTodayRef = useRef(false);
 
@@ -133,59 +137,47 @@ function ReaderView() {
         console.log('[Apex Streak] Starting 1-minute reading timer... (' + Math.round(remainingTime / 1000) + 's remaining)');
         streakStartTimeRef.current = Date.now();
 
-        // Start timer for remaining time
-        streakTimerRef.current = setTimeout(() => {
+        streakTimerRef.current = setInterval(() => {
+            console.log('[Apex Reader] 60 seconds passed - logging activity');
+            
+            // Log space activity unconditionally every 60 seconds
+            if (activeSpaceId) {
+                logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
+            }
+
+            // Fire daily streak ONCE per day
             if (!streakFiredTodayRef.current) {
-                console.log('[Apex Streak] 60 seconds reached — updating streak');
                 updateStreakRef.current();
                 streakFiredTodayRef.current = true;
-                streakElapsedRef.current = STREAK_DURATION;
-                // Mark as fired today in localStorage as backup
-                localStorage.setItem('apex_streak_fired_today',
-                    new Date().toLocaleDateString('en-CA')
-                );
+                localStorage.setItem('apex_streak_fired_today', new Date().toLocaleDateString('en-CA'));
             }
-        }, remainingTime);
+        }, STREAK_DURATION);
 
-        // Pause timer when tab is hidden, resume with remaining time
         const handleVisibilityChange = () => {
             if (document.hidden) {
-                console.log('[Apex Streak] Tab hidden — pausing timer');
-                clearTimeout(streakTimerRef.current);
-                // Track how much time has elapsed so far
-                if (streakStartTimeRef.current) {
-                    streakElapsedRef.current += Date.now() - streakStartTimeRef.current;
-                }
-            } else if (!streakFiredTodayRef.current) {
-                const remaining = STREAK_DURATION - streakElapsedRef.current;
-                console.log('[Apex Streak] Tab visible — resuming timer (' + Math.round(remaining / 1000) + 's remaining)');
-                streakStartTimeRef.current = Date.now();
-                streakTimerRef.current = setTimeout(() => {
+                console.log('[Apex Reader] Tab hidden — pausing timer');
+                clearInterval(streakTimerRef.current);
+            } else {
+                console.log('[Apex Reader] Tab visible — resuming timer');
+                // Restart interval
+                streakTimerRef.current = setInterval(() => {
+                    console.log('[Apex Reader] 60 seconds passed - logging activity');
+                    if (activeSpaceId) logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
                     if (!streakFiredTodayRef.current) {
-                        console.log('[Apex Streak] 60 seconds reached after resume — updating streak');
                         updateStreakRef.current();
                         streakFiredTodayRef.current = true;
-                        streakElapsedRef.current = STREAK_DURATION;
-                        localStorage.setItem('apex_streak_fired_today',
-                            new Date().toLocaleDateString('en-CA')
-                        );
+                        localStorage.setItem('apex_streak_fired_today', new Date().toLocaleDateString('en-CA'));
                     }
-                }, remaining);
+                }, STREAK_DURATION);
             }
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
         return () => {
-            // Cleanup on unmount — cancel timer if user leaves before 60 seconds
-            clearTimeout(streakTimerRef.current);
-            // Save elapsed time so re-entering the reader continues from where it left off
-            if (streakStartTimeRef.current) {
-                streakElapsedRef.current += Date.now() - streakStartTimeRef.current;
-                streakStartTimeRef.current = null;
-            }
+            clearInterval(streakTimerRef.current);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
-            console.log('[Apex Streak] Timer cleaned up (elapsed: ' + Math.round(streakElapsedRef.current / 1000) + 's)');
+            console.log('[Apex Reader] Timer cleaned up');
         };
     }, [isLoading, bookId]);
 
