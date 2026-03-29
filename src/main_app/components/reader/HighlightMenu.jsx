@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff, StickyNote, Save } from 'lucide-react';
 import dictionaryService from '../../services/dictionaryService';
 
-function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote }) {
+function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose }) {
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -15,13 +15,19 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
     const toggleDict = (val) => {
         setShowDict(val);
         setShowNote(false);
-        onDictToggle?.(val || showNote);
+        onDictToggle?.(val);
     };
 
     const toggleNote = (val) => {
         setShowNote(val);
         setShowDict(false);
-        onDictToggle?.(val || showDict);
+        onDictToggle?.(val);
+    };
+
+    const handleCloseModal = () => {
+        // Always close the entire menu and clear selection when dismissing a sub-modal
+        window.getSelection()?.removeAllRanges();
+        onClose?.();
     };
 
     const fetchDefinition = async (searchWord) => {
@@ -83,16 +89,29 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
     // User wants "pop up close to the area of highlight"
     const isMobile = window.innerWidth < 640;
 
-    const menuStyle = isMobile
-        ? {
-            top: `${Math.max(80, position.y - 100)}px`,
-            left: `${Math.min(window.innerWidth - 310, Math.max(10, position.x - 150))}px`,
-            width: '300px'
-        }
-        : {
-            top: `${Math.max(10, position.y - 120)}px`,
-            left: `${Math.min(window.innerWidth - 300, Math.max(10, position.x - 100))}px`,
+    let menuStyle = {};
+
+    if (showDict || showNote) {
+        menuStyle = {
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: isMobile ? '340px' : '400px',
+            maxWidth: '90vw',
+            maxHeight: '85vh' // avoid covering edges on small screens
         };
+    } else {
+        menuStyle = isMobile
+            ? {
+                top: `${Math.max(80, position.y - 100)}px`,
+                left: `${Math.min(window.innerWidth - 310, Math.max(10, position.x - 150))}px`,
+                width: '300px'
+            }
+            : {
+                top: `${Math.max(10, position.y - 120)}px`,
+                left: `${Math.min(window.innerWidth - 300, Math.max(10, position.x - 100))}px`,
+            };
+    }
 
     return (
         <div
@@ -118,7 +137,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                             className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                         >
                             <Sparkles size={20} className="text-text-secondary group-hover:text-purple-600 transition-colors" />
-                            <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask AI</span>
+                            <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask</span>
                         </button>
 
                         <div className="w-[1px] h-8 bg-bg-subtle" />
@@ -149,7 +168,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Dictionary</h3>
-                            <button onClick={() => toggleDict(false)} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
+                            <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
                                 <X size={16} className="text-text-tertiary" />
                             </button>
                         </div>
@@ -222,7 +241,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Add Note</h3>
-                            <button onClick={() => toggleNote(false)} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
+                            <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
                                 <X size={16} className="text-text-tertiary" />
                             </button>
                         </div>
@@ -257,8 +276,8 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                 )}
             </div>
 
-            {/* Arrow — hide on mobile as it might not align well with dynamic float */}
-            {!isMobile && (
+            {/* Arrow — hide on mobile as it might not align well with dynamic float, and hide when centered */}
+            {!isMobile && !showDict && !showNote && (
                 <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white mx-auto" />
             )}
 

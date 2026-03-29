@@ -10,6 +10,7 @@ import db from './main_app/db/apex.db'
 import useAuthStore from './main_app/store/authStore'
 import useStudyStore from './main_app/store/studyStore'
 import useThemeStore from './main_app/store/themeStore'
+import useSettingsStore from './main_app/store/settingsStore'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
 import LandingLoadingScreen from './landing_page/components/LandingLoadingScreen'
 import OnboardingPage from './landing_page/OnboardingPage';
@@ -46,48 +47,48 @@ function App() {
   // Version string must be bumped if another cleanup is ever needed
   const CLEAN_SLATE_VERSION = '1.6.3';
 
-  useEffect(() => {
-    const runOneTimeCleanup = async () => {
-      try {
-        const cleaned = localStorage.getItem('apex_db_cleaned');
-        if (cleaned === CLEAN_SLATE_VERSION) return; // already ran on this device
+  // useEffect(() => {
+  //   const runOneTimeCleanup = async () => {
+  //     try {
+  //       const cleaned = localStorage.getItem('apex_db_cleaned');
+  //       if (cleaned === CLEAN_SLATE_VERSION) return; // already ran on this device
 
-        // Clear all local tables that may contain broken data
-        await db.books.clear();
-        await db.highlights.clear();
-        await db.bookmarks.clear();
-        await db.reading_progress.clear();
-        await db.sync_queue.clear();
-        await db.notes.clear();
+  //       // Clear all local tables that may contain broken data
+  //       await db.books.clear();
+  //       await db.highlights.clear();
+  //       await db.bookmarks.clear();
+  //       await db.reading_progress.clear();
+  //       await db.sync_queue.clear();
+  //       await db.notes.clear();
 
-        // Delete the legacy ApexBooksDB ghost database
-        try {
-          await new Promise((resolve, reject) => {
-            const req = indexedDB.deleteDatabase('ApexBooksDB');
-            req.onsuccess = () => {
-              console.log('[Apex] Legacy ApexBooksDB deleted');
-              resolve();
-            };
-            req.onerror = () => reject(req.error);
-            req.onblocked = () => {
-              console.warn('[Apex] ApexBooksDB deletion blocked — will retry next load');
-              resolve(); // Don't block the app
-            };
-          });
-        } catch (err) {
-          console.warn('[Apex] Could not delete ApexBooksDB:', err);
-        }
+  //       // Delete the legacy ApexBooksDB ghost database
+  //       try {
+  //         await new Promise((resolve, reject) => {
+  //           const req = indexedDB.deleteDatabase('ApexBooksDB');
+  //           req.onsuccess = () => {
+  //             console.log('[Apex] Legacy ApexBooksDB deleted');
+  //             resolve();
+  //           };
+  //           req.onerror = () => reject(req.error);
+  //           req.onblocked = () => {
+  //             console.warn('[Apex] ApexBooksDB deletion blocked — will retry next load');
+  //             resolve(); // Don't block the app
+  //           };
+  //         });
+  //       } catch (err) {
+  //         console.warn('[Apex] Could not delete ApexBooksDB:', err);
+  //       }
 
-        // Mark cleanup as done — this device will never run it again
-        localStorage.setItem('apex_db_cleaned', CLEAN_SLATE_VERSION);
-        console.log('[Apex] One-time local database cleanup complete');
-      } catch (err) {
-        console.error('[Apex] One-time cleanup failed:', err);
-      }
-    };
+  //       // Mark cleanup as done — this device will never run it again
+  //       localStorage.setItem('apex_db_cleaned', CLEAN_SLATE_VERSION);
+  //       console.log('[Apex] One-time local database cleanup complete');
+  //     } catch (err) {
+  //       console.error('[Apex] One-time cleanup failed:', err);
+  //     }
+  //   };
 
-    runOneTimeCleanup();
-  }, []);
+  //   runOneTimeCleanup();
+  // }, []);
 
   useEffect(() => {
     // Initialize theme
@@ -109,6 +110,22 @@ function App() {
           useStudyStore.getState().seedFromSupabase(user);
           console.log('[Apex Streak] Store seeded from Supabase');
 
+          // Check if streak is broken (lastActiveDate is not today/yesterday)
+          // Resets streakCount to 0 immediately so StreakBadge shows the correct value
+          useStudyStore.getState().checkStreakIntegrity();
+
+          // Seed settings store from Supabase
+          if (user.settings) {
+            useSettingsStore.getState().seedFromSupabase(user.settings);
+            console.log('[Apex Settings] Store seeded from Supabase');
+
+            // Apply theme from settings
+            const savedTheme = user.settings.theme;
+            if (savedTheme) {
+              useThemeStore.getState().setTheme(savedTheme);
+            }
+          }
+
           // Check if existing user needs onboarding
           if (!user.user_type) {
             setNeedsOnboarding(true);
@@ -129,9 +146,23 @@ function App() {
           }
         } catch (error) {
           console.error("Auth verification failed:", error);
-          authService.logout();
-          useAuthStore.getState().clearUser();
-          setIsLoggedIn(false);
+          // Only log out if it's a 401 Unauthorized
+          if (error.response?.status === 401) {
+            authService.logout();
+            useAuthStore.getState().clearUser();
+            setIsLoggedIn(false);
+          } else {
+            // Network error or 500 — keep them logged in locally using cached data
+            console.log("[Apex Auth] Network or server error during auth check, proceeding with local session.");
+            
+            // Re-use cached user if available
+            const cachedUser = useAuthStore.getState().user;
+            if (cachedUser && !cachedUser.user_type) {
+              setNeedsOnboarding(true);
+            }
+            
+            setIsLoggedIn(true);
+          }
         }
       }
       setLoading(false);
@@ -148,6 +179,15 @@ function App() {
         console.log('[Apex Streak] Back online — syncing streak to Supabase');
         useStudyStore.getState().syncStreakToSupabase();
       }
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
+  // Sync settings when device comes back online
+  useEffect(() => {
+    const handleOnline = () => {
+      useSettingsStore.getState().syncOnReconnect();
     };
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);

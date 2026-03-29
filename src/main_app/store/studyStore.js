@@ -92,6 +92,51 @@ const useStudyStore = create(
       },
 
       /**
+       * checkStreakIntegrity — called on app open AFTER seedFromSupabase
+       * Detects if the streak is broken (lastActiveDate is not today or yesterday)
+       * Resets streakCount to 0 immediately so the UI reflects the break
+       * Does NOT touch longestStreak or streakHistory — those are historical records
+       */
+      checkStreakIntegrity: () => {
+        const today = get()._getTodayString();
+        const lastActive = get().lastActiveDate;
+        const currentStreak = get().streakCount;
+
+        // No streak to check
+        if (!lastActive || currentStreak === 0) {
+          console.log('[Apex Streak] No active streak to validate');
+          return;
+        }
+
+        // Already read today — streak is valid
+        if (lastActive === today) {
+          console.log('[Apex Streak] Integrity check: active today — streak valid');
+          return;
+        }
+
+        // Check if lastActive was yesterday
+        const last = new Date(lastActive + 'T00:00:00');
+        const todayDate = new Date(today + 'T00:00:00');
+        const diffMs = todayDate.getTime() - last.getTime();
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          // Yesterday — streak is still alive, user just hasn't read today yet
+          console.log('[Apex Streak] Integrity check: last active yesterday — streak alive, waiting for today\'s read');
+          return;
+        }
+
+        // Streak is broken — reset to 0 (not 1, because user hasn't read today)
+        console.log('[Apex Streak] Integrity check: streak BROKEN (last active', diffDays, 'days ago) — resetting to 0');
+        set({ streakCount: 0 });
+
+        // Sync the reset to Supabase
+        if (navigator.onLine) {
+          get().syncStreakToSupabase();
+        }
+      },
+
+      /**
        * syncStreakToSupabase — patches streak data to backend
        * Called after updateStreak if online
        * Also called by online event listener in App.jsx
@@ -125,14 +170,16 @@ const useStudyStore = create(
         } = supabaseData;
 
         const localLastActive = get().lastActiveDate;
+        const localStreak = get().streakCount;
         const supabaseLastActive = last_active_date;
+        const supabaseStreak = current_streak || 0;
 
         // Only seed if Supabase data is more recent than local
         // This prevents overwriting a streak earned offline
-        if (supabaseLastActive && supabaseLastActive > (localLastActive || '')) {
+        if (supabaseStreak > localStreak || (supabaseLastActive && supabaseLastActive > (localLastActive || ''))) {
           console.log('[Apex Streak] Seeding from Supabase — more recent data found');
           set({
-            streakCount: current_streak || 0,
+            streakCount: supabaseStreak,
             longestStreak: longest_streak || 0,
             lastActiveDate: last_active_date || null,
             streakHistory: streak_history || [],

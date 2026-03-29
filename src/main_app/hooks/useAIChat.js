@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { streamExplain, streamAsk } from '../services/aiService';
 import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
 import db from '../db/apex.db';
+import useSettingsStore from '../store/settingsStore';
 
 /**
  * useAIChat — Custom hook for streaming AI chat interactions with persistence.
@@ -59,6 +60,13 @@ export default function useAIChat(options = {}) {
    */
   const persistChat = useCallback(async (currentSessionId, currentMessages) => {
     if (!currentSessionId || !persist) return;
+
+    // Respect saveChatHistory setting — skip persistence if disabled
+    const { saveChatHistory } = useSettingsStore.getState();
+    if (!saveChatHistory) {
+      console.log('[Apex AI] Chat history saving disabled — skipping persist');
+      return;
+    }
 
     // Determine a title based on the first user message
     const firstUserMsg = currentMessages.find(m => m.role === 'user');

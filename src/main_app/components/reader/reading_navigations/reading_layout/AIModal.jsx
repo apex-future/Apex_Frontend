@@ -115,11 +115,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
 
         <h2 className='text-[11px] flex items-center gap-1.5 font-bold text-text-primary uppercase tracking-[0.2em]'>
           {showHistory ? 'History' : 'Apex Intelligence'}
-          {!showHistory && chatHistory.find(c => c.id === sessionId)?.scope && chatHistory.find(c => c.id === sessionId)?.scope !== 'general' && (
-            <span className='normal-case tracking-normal text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full flex items-center gap-1 border border-slate-200'>
-              <BookOpen size={10} /> {chatHistory.find(c => c.id === sessionId)?.scope}
-            </span>
-          )}
+
         </h2>
 
         <button

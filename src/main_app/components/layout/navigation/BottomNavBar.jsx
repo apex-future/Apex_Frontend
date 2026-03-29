@@ -30,11 +30,13 @@ function BottomNavBar() {
   }, { scope: navRef });
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
-    // Pass the file to the context
-    addBookToShelf(file);
+    // Pass the files to the context
+    files.forEach((file) => {
+      addBookToShelf(file);
+    });
     e.target.value = '';
   };
   return (
@@ -64,6 +66,7 @@ function BottomNavBar() {
           className="hidden"
           onChange={handleFileChange}
           accept=".pdf,.epub"
+          multiple
         />
 
         {/* Connect Button to Input */}

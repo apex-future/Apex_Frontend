@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef, useMemo, useContext, useCallback, memo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
 import useStudyStore from '../../store/studyStore';
+import useSettingsStore from '../../store/settingsStore';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
 import db from '../../db/apex.db';
@@ -76,7 +77,8 @@ function ReaderView() {
     const [aiModal, setAiModal] = useState(false);
     const [leftPanel, setLeftPanel] = useState(false);
     const [pageSettings, setPageSettings] = useState(false);
-    const [scrollOrientation, setScrollOrientation] = useState('vertical'); // 'vertical' or 'horizontal'
+    const { scrollOrientation: savedOrientation, updateSetting } = useSettingsStore();
+    const [scrollOrientation, setScrollOrientation] = useState(savedOrientation || 'vertical'); // 'vertical' or 'horizontal'
 
     // Deep loading state
     const [isLoading, setIsLoading] = useState(true);
@@ -265,12 +267,14 @@ function ReaderView() {
         bm => bm.pageNumber === pageNumber || bm.page === pageNumber
     );
 
+    // Ref-stable callback — identity never changes, so PDFReader never re-renders due to this prop
+    const syncProgressRef = useRef(syncProgress);
+    useEffect(() => { syncProgressRef.current = syncProgress; }, [numPages, book]);
+
     const stableOnPageChange = useCallback((n) => {
         setPageNumber(n);
-        syncProgress(n, numPages);
-    }, [numPages]);
-
-    const MemoizedPDFReader = useMemo(() => memo(PDFReader), []);
+        syncProgressRef.current(n, numPages);
+    }, []);
 
     // Expose pdfControls object
     const pdfControls = isPdf
@@ -311,7 +315,10 @@ function ReaderView() {
             setPageSettings(val);
         },
         scrollOrientation,
-        setScrollOrientation,
+        setScrollOrientation: (val) => {
+          setScrollOrientation(val);
+          updateSetting('scrollOrientation', val);
+        },
         onToggleDictionary: () => setIsDictOpen(prev => !prev),
     };
 
@@ -323,6 +330,8 @@ function ReaderView() {
     }, []);
 
     const closeNav = useCallback(() => {
+        // Don't close nav if user just finished selecting text — prevents re-render flicker
+        if (window.getSelection().toString().trim()) return;
         setNavState('none');
     }, []);
 
@@ -368,6 +377,9 @@ function ReaderView() {
     const selDebounceRef = useRef(null);
     const showHighlightMenuRef = useRef(showHighlightMenu);
     useEffect(() => { showHighlightMenuRef.current = showHighlightMenu; }, [showHighlightMenu]);
+    const isSelectingRef = useRef(false);
+    const [selectionLock, setSelectionLock] = useState(false);
+    const selectionLockRef = useRef(false);
 
     // Selection monitoring logic
     useEffect(() => {
@@ -410,6 +422,9 @@ function ReaderView() {
             const activeSel = window.getSelection();
             const text = activeSel?.toString().trim() || '';
 
+            // Track active selection state — used to suppress scroll/swipe during selection
+            isSelectingRef.current = text.length > 0;
+
             if (text && text.length > 0) {
                 const rect = getSelectionRect(activeSel);
                 if (rect) {
@@ -445,6 +460,21 @@ function ReaderView() {
             }
         };
 
+        const handleSelectionChangeRaw = () => {
+            const hasSelection = window.getSelection()?.toString().trim().length > 0;
+            if (hasSelection && !selectionLockRef.current) {
+                selectionLockRef.current = true;
+                setSelectionLock(true);
+            } else if (!hasSelection && selectionLockRef.current) {
+                // Sticky delay: prevent trailing touchend tap from triggering a swipe navigation
+                setTimeout(() => {
+                    selectionLockRef.current = false;
+                    setSelectionLock(false);
+                }, 200);
+            }
+        };
+
+        document.addEventListener('selectionchange', handleSelectionChangeRaw);
         document.addEventListener('selectionchange', handleSelectionUpdate);
         document.addEventListener('touchstart', handleTouchStart, { passive: false });
         document.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -452,6 +482,7 @@ function ReaderView() {
 
         return () => {
             clearTimeout(selDebounceRef.current);
+            document.removeEventListener('selectionchange', handleSelectionChangeRaw);
             document.removeEventListener('selectionchange', handleSelectionUpdate);
             document.removeEventListener('touchstart', handleTouchStart);
             document.removeEventListener('touchmove', handleTouchMove);
@@ -679,8 +710,12 @@ function ReaderView() {
                         onAskAI={() => {
                             setAiModal(true);
                             setShowHighlightMenu(false);
+                            setIsDictOpen(false);
                         }}
-                        onClose={() => setShowHighlightMenu(false)}
+                        onClose={() => {
+                            setShowHighlightMenu(false);
+                            setIsDictOpen(false);
+                        }}
                         bookId={book?.id}
                         onSaveWord={addSavedWord}
                         onHighlight={handleHighlight}
@@ -716,7 +751,7 @@ function ReaderView() {
                     {/* PDF Content */}
                     {fileUrl && isPdf && (
                         <div className="flex-1 flex overflow-hidden relative">
-                            <MemoizedPDFReader
+                            <PDFReader
                                 fileUrl={fileUrl}
                                 pageNumber={pageNumber}
                                 scale={scale}
@@ -727,7 +762,7 @@ function ReaderView() {
                                 numPages={numPages}
                                 goToPage={goToPage}
                                 highlights={stableHighlights}
-                                locked={locked}
+                                locked={locked || selectionLock || isDictOpen}
                                 windowSize={windowSize}
                                 scrollOrientation={scrollOrientation}
                                 onPageChange={stableOnPageChange}

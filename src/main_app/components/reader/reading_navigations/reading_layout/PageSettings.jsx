@@ -1,9 +1,21 @@
 import React, { useState } from 'react'
 import { X, ChevronLeft, ArrowUpDown, ArrowLeftRight, Settings, Sliders } from 'lucide-react'
+import useSettingsStore from '../../../../store/settingsStore';
 
 function PageSettings({ setPageSettings, readerControls }) {
   const [activeSection, setActiveSection] = useState(null);
   const { scrollOrientation = 'vertical', setScrollOrientation } = readerControls || {};
+
+  const {
+    pageAnimations,
+    scrollAnimation,
+    updateSetting,
+  } = useSettingsStore();
+
+  const handleOrientationChange = (orientation) => {
+    readerControls?.setScrollOrientation?.(orientation);
+    updateSetting('scrollOrientation', orientation);
+  };
 
   const sections = [
     { id: 'orientation', label: 'Scroll Orientation', icon: Sliders }
@@ -41,13 +53,70 @@ function PageSettings({ setPageSettings, readerControls }) {
       {/* ── Body ── */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
           <div className="flex flex-col gap-6">
+
+            {/* Page Animation Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-[11px] font-black text-text-tertiary uppercase tracking-widest">
+                  Page Animation
+                </h3>
+                {/* Toggle */}
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={pageAnimations}
+                    onChange={(e) => updateSetting('pageAnimations', e.target.checked)}
+                  />
+                  <div className="w-9 h-5 bg-border-default rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent-primary" />
+                </label>
+              </div>
+
+              {/* Animation choice boxes — only when pageAnimations is ON */}
+              {pageAnimations && (
+                <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <button
+                    onClick={() => updateSetting('scrollAnimation', 'slide')}
+                    className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 transition-all group ${
+                      scrollAnimation === 'slide'
+                        ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                        : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
+                    }`}
+                  >
+                    {/* Slide icon */}
+                    <div className="relative w-8 h-6 overflow-hidden rounded">
+                      <div className="absolute inset-0 bg-bg-elevated rounded border border-border-default" />
+                      <div className="absolute inset-0 translate-x-1 bg-accent-primary/20 rounded border border-accent-primary/40" />
+                    </div>
+                    <span className="text-[10px] font-bold tracking-tight">Smooth Slide</span>
+                  </button>
+
+                  <button
+                    onClick={() => updateSetting('scrollAnimation', 'fade')}
+                    className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 transition-all group ${
+                      scrollAnimation === 'fade'
+                        ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                        : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
+                    }`}
+                  >
+                    {/* Fade icon */}
+                    <div className="relative w-8 h-6">
+                      <div className="absolute inset-0 bg-bg-elevated rounded border border-border-default opacity-40" />
+                      <div className="absolute inset-0 bg-accent-primary/20 rounded border border-accent-primary/40 opacity-80" />
+                    </div>
+                    <span className="text-[10px] font-bold tracking-tight">Fade Through</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Scroll Orientation Section */}
             <div className="space-y-4">
               <h3 className="text-[11px] font-black text-text-tertiary uppercase tracking-widest px-1">Scroll Orientation</h3>
               
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => setScrollOrientation('vertical')}
+                  onClick={() => handleOrientationChange('vertical')}
                   className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all group ${
                     scrollOrientation === 'vertical'
                       ? 'border-accent-primary bg-accent-primary/5 text-accent-primary shadow-sm'
@@ -63,7 +132,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                 </button>
 
                 <button
-                  onClick={() => setScrollOrientation('horizontal')}
+                  onClick={() => handleOrientationChange('horizontal')}
                   className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all group ${
                     scrollOrientation === 'horizontal'
                       ? 'border-accent-primary bg-accent-primary/5 text-accent-primary shadow-sm'

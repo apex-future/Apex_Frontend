@@ -3,12 +3,30 @@
 All notable changes to Apex are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+
+## [1.8.0] - 2026-03-28
+### Changed
+- Sync architecture upgraded to per-table timestamp conflict resolution
+- pullAllUserData now compares local vs cloud timestamps before syncing each table
+- Tables only sync when there's an actual difference — equal tables are skipped entirely
+- Local-newer tables skip pull and let pushSync handle the upload direction
+- Eliminates the "cloud always wins" problem — offline changes are now preserved correctly
+- O(1) comparison per table instead of blind clear + bulkAdd on every app load
+
+### Added
+- New GET /api/sync/timestamps endpoint — returns max(updated_at) per table
+- last_modified field added to all Category A Dexie tables (books, reading_progress, highlights, bookmarks, notes)
+- Per-table local timestamps stored in app_settings (table_modified_{tableName})
+- 5-second clock tolerance in timestamp comparison to handle device clock drift
+- Streak breaking now works correctly across devices — local wins when local is newer
+
 ---
 
-## [Unreleased]
+## [1.7.5] - 2026-03-27
 
 ### Added
 
+- Support for multiple file selection during upload in both Top and Bottom navigation bars
 - Automated welcome emails containing app instructions and WhatsApp community links are now sent to users upon successful sign-up
 
 ### Improved
@@ -22,7 +40,47 @@ This project follows [Semantic Versioning](https://semver.org/).
   native-feeling navigation
 - Extracted and centralized email sending logic in backend utilities for better maintainability
 
+### Fixed
+
+- Resolved issue where dismissing Dictionary or Add Note sub-modals in `HighlightMenu` wouldn't clear the active text selection or close the entire menu. Added `onClose` callback to handle menu termination.
+- Improved `onDictToggle` logic in `HighlightMenu` to prevent unexpected state falls back.
+
 ---
+
+## [Unreleased]
+
+### Added
+
+### Improved
+
+---
+
+## [1.7.4] - 2026-03-25
+
+### Fixed
+
+- Fixed reader flickering, blank pages, and accidental navigation when selecting text in the PDF reader by preventing virtualizer recalculation and swipe navigation during active selection
+
+---
+
+## [1.7.3] - 2026-03-25
+
+### Added
+
+- Settings system — all toggles now functional and persisted
+- New settingsStore (Zustand) backing all user preferences
+- Settings synced to Supabase user_settings table
+- Settings seeded from Supabase on login across all devices
+- Page Animation toggle with Smooth Slide and Fade Through options
+- Scroll direction setting available in both in-reader and main Settings page
+- Auto-Explain Highlights — AI opens automatically on text selection when enabled
+- autoSaveProgress — when off, skips Supabase sync for progress (still saves locally)
+- saveChatHistory — when off, AI conversations not persisted
+- PATCH /api/settings endpoint with upsert behavior
+- Settings sync automatically when device comes back online
+
+---
+
 
 ## [1.7.2] - 2026-03-24
 
