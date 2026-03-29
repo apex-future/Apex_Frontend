@@ -1,8 +1,9 @@
 import React, { useContext, useMemo, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Plus, Clock, FileText } from 'lucide-react'
+import { ArrowLeft, BookOpen, Plus, Clock, FileText, Calendar } from 'lucide-react'
 import { BookContext } from "../../../context/BookContextInstance"
 import useSpaceStore from '../../../store/spaceStore'
+import useStudyStore from '../../../store/studyStore'
 import BookCard from '../../books/BookCard'
 
 /**
@@ -12,9 +13,12 @@ import BookCard from '../../books/BookCard'
 function SpaceDetail() {
   const { spaceId } = useParams();
   const navigate = useNavigate();
-  const { shelves, books } = useContext(BookContext);
-  const { addBookToSpace, setActiveSpace } = useSpaceStore();
+  const { shelves, books, handleBookClick } = useContext(BookContext);
+  const { addBookToSpace, setActiveSpace, updateSpace } = useSpaceStore();
+  const { examDate: globalExamDate, setExamDate: setGlobalExamDate } = useStudyStore();
   const [isAddingBooks, setIsAddingBooks] = useState(false);
+  const [isEditingExam, setIsEditingExam] = useState(false);
+  const [tempExamDate, setTempExamDate] = useState('');
 
   useEffect(() => {
     setActiveSpace(spaceId);
@@ -51,9 +55,20 @@ function SpaceDetail() {
           <ArrowLeft size={20} />
         </button>
 
-        <div className="text-center">
+        <div className="text-center flex flex-col items-center">
           <h3 className='text-lg font-semibold text-text-primary'>{selectedShelf.name}</h3>
-          <p className="text-xs text-text-tertiary">{selectedShelf.books?.length || 0} {selectedShelf.books?.length === 1 ? 'book' : 'books'}</p>
+          <div className="flex items-center gap-3 mt-1">
+             <p className="text-xs text-text-tertiary">{selectedShelf.books?.length || 0} {selectedShelf.books?.length === 1 ? 'book' : 'books'}</p>
+             {!selectedShelf.isSystem && (
+                 <div 
+                   onClick={() => { setIsEditingExam(true); setTempExamDate(selectedShelf.examDate || globalExamDate || ''); }}
+                   className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-accent-primary/10 text-accent-primary px-2 py-0.5 rounded cursor-pointer hover:bg-accent-primary/20 transition-colors"
+                 >
+                   <Calendar size={10} />
+                   {selectedShelf.examDate ? `${new Date(selectedShelf.examDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Link Exam'}
+                 </div>
+             )}
+          </div>
         </div>
 
         {!selectedShelf.isSystem ? (
@@ -68,6 +83,41 @@ function SpaceDetail() {
           <div className="w-9" />
         )}
       </div>
+
+      {/* Edit Exam Date Inline UI */}
+      {isEditingExam && (
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+            <div className="p-4 bg-white dark:bg-zinc-900 border border-border-default rounded-2xl shadow-sm flex items-center justify-between gap-4">
+               <div className="flex flex-col flex-1">
+                  <span className="text-xs font-bold text-text-tertiary uppercase mb-1">Set Exam Date for {selectedShelf.name}</span>
+                  <input 
+                     type="date" 
+                     value={tempExamDate}
+                     onChange={(e) => setTempExamDate(e.target.value)}
+                     className="bg-neutral-100 dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-primary"
+                  />
+               </div>
+               <div className="flex gap-2">
+                  <button 
+                     onClick={() => setIsEditingExam(false)}
+                     className="px-4 py-2 text-sm font-semibold text-text-secondary hover:bg-neutral-100 dark:hover:bg-zinc-800 rounded-xl"
+                  >
+                     Cancel
+                  </button>
+                  <button 
+                     onClick={() => {
+                        updateSpace(selectedShelf.id, { examDate: tempExamDate, isLinkedToExam: true });
+                        setGlobalExamDate(tempExamDate); // Also sync globally for dashboard
+                        setIsEditingExam(false);
+                     }}
+                     className="px-4 py-2 text-sm font-bold bg-accent-primary text-white rounded-xl hover:bg-accent-pressed"
+                  >
+                     Save Link
+                  </button>
+               </div>
+            </div>
+         </div>
+      )}
 
       {/* Activity Summary Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
@@ -118,7 +168,14 @@ function SpaceDetail() {
         {selectedShelf.books?.length > 0 ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-6 lg:gap-8 transition-all duration-300">
             {selectedShelf.books.map((book) => (
-              <BookCard key={book.id} book={book} />
+              <BookCard 
+                key={book.id} 
+                book={book} 
+                onClick={(id) => {
+                   if (handleBookClick) handleBookClick(id);
+                   navigate(`/reader/${id}`);
+                }}
+              />
             ))}
           </div>
         ) : (
