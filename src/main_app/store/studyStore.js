@@ -13,6 +13,7 @@ const useStudyStore = create(
 
       // Exam state (reserved for version 2)
       examDate: null,
+      examName: '',
 
       /**
        * getTodayString — returns today as 'YYYY-MM-DD'
@@ -190,12 +191,14 @@ const useStudyStore = create(
       },
 
       setExamDate: (date) => set({ examDate: date }),
+      setExamName: (name) => set({ examName: name }),
       resetStudyData: () => set({
         streakCount: 0,
         longestStreak: 0,
         lastActiveDate: null,
         streakHistory: [],
         examDate: null,
+        examName: '',
       }),
     }),
     {
