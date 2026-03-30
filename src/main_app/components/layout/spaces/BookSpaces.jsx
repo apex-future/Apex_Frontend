@@ -3,6 +3,7 @@ import { ArrowLeft, Plus, X, Calendar, Check, BookOpen, Quote } from 'lucide-rea
 import { useNavigate } from 'react-router-dom'
 import { BookContext } from "../../../context/BookContextInstance"
 import Shelf from './Shelf'
+import BookCover from '../../books/BookCover'
 import useSpaceStore from '../../../store/spaceStore'
 import useStudyStore from '../../../store/studyStore'
 
@@ -124,13 +125,13 @@ function BookShelf() {
                           onClick={() => setSelectedBooks(prev => isSelected ? prev.filter(id => id !== book.id) : [...prev, book.id])}
                           className={`flex-shrink-0 w-24 relative cursor-pointer transition-all duration-300 hover:scale-105 rounded-lg border-2 bg-white dark:bg-zinc-800 ${isSelected ? 'border-accent-primary shadow-md shadow-accent-primary/20' : 'border-transparent shadow-sm'}`}
                         >
-                          {book.cover ? (
-                             <img src={book.cover} alt={book.title} className="w-full h-32 object-cover rounded shadow-sm border border-neutral-100 dark:border-zinc-700" />
-                          ) : (
-                             <div className="w-full h-32 bg-neutral-200 dark:bg-zinc-700 rounded flex items-center justify-center p-2 text-center text-xs font-medium text-text-secondary border border-neutral-100 dark:border-zinc-600">
-                               {book.title}
-                             </div>
-                          )}
+                          <div className="w-full h-32 rounded shadow-sm border border-neutral-100 dark:border-zinc-700 overflow-hidden relative">
+                            {book.cover ? (
+                               <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
+                            ) : (
+                               <BookCover title={book.title} author={book.author} className="w-full h-full" />
+                            )}
+                          </div>
                           
                           {isSelected && (
                             <div className="absolute -top-2 -right-2 bg-accent-primary text-white rounded-full p-1 shadow-md scale-in-center">

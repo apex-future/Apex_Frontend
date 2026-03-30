@@ -175,6 +175,7 @@ export const BookProvider = ({ children }) => {
 
             return {
               ...b,
+              isUploading: false,
               progress: progress?.progressPercentage || b.progress || 0,
               currentPage: progress?.currentPage || b.currentPage || 1,
               metadata: {

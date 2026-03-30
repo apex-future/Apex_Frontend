@@ -5,6 +5,7 @@ import { BookContext } from "../../../context/BookContextInstance"
 import useSpaceStore from '../../../store/spaceStore'
 import useStudyStore from '../../../store/studyStore'
 import BookCard from '../../books/BookCard'
+import BookCover from '../../books/BookCover'
 
 /**
  * ShelfDetail Page:
@@ -152,7 +153,13 @@ function SpaceDetail() {
                  addBookToSpace(selectedShelf.id, book.id);
                  setIsAddingBooks(false);
               }}>
-                <img src={book.cover} alt={book.title} className="w-full h-40 object-cover rounded shadow border border-white/10" />
+                <div className="w-full h-40 rounded shadow border border-border-default overflow-hidden relative">
+                   {book.cover ? (
+                      <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
+                   ) : (
+                      <BookCover title={book.title} author={book.author} className="w-full h-full" />
+                   )}
+                </div>
                 <p className="text-xs font-semibold mt-2 truncate">{book.title}</p>
               </div>
             ))}
