@@ -60,7 +60,7 @@ const ExamReminder = () => {
     // ==========================================
     // VIEW 1: No Exam Set
     // ==========================================
-    if (!examDate) {
+    if (!examDate && !isEditing) {
         return (
             <CardContainer onClick={() => setIsEditing(true)} className="border-dashed">
                 <div className="absolute bottom-2 -left-2 size-44 text-accent-primary/10 rotate-12 group-hover:rotate-0 group-hover:text-accent-primary/20 transition-all duration-1000 pointer-events-none">
@@ -144,16 +144,16 @@ const ExamReminder = () => {
                           <label className="text-xs font-bold text-text-tertiary uppercase block mb-1">Date</label>
                           <div className="flex bg-white dark:bg-zinc-900 border border-border-default rounded-xl px-4 py-3 items-center gap-3">
                               <Calendar size={18} className="text-accent-primary" />
-                              <input type="date" value={tempDate} onChange={e=>setTempDate(e.target.value)} className="w-full bg-transparent outline-none text-sm font-medium" />
+                              <input type="date" value={tempDate} onChange={e=>setTempDate(e.target.value)} className={`w-full bg-transparent outline-none text-sm font-medium ${!tempDate ? 'text-gray-400 dark:text-gray-500' : 'text-current'}`} />
                           </div>
                       </div>
                       <div>
                           <label className="text-xs font-bold text-text-tertiary uppercase block mb-1">Link Space</label>
                           <div className="flex bg-white dark:bg-zinc-900 border border-border-default rounded-xl px-4 py-3 items-center gap-3">
                               <BookOpen size={18} className="text-accent-primary" />
-                              <select value={selectedSpaceId} onChange={e=>setSelectedSpaceId(e.target.value)} className="w-full bg-transparent outline-none text-sm font-medium appearance-none">
-                                  <option value="">Do not link</option>
-                                  {customSpaces.map(sp => <option key={sp.id} value={sp.id}>{sp.name}</option>)}
+                              <select value={selectedSpaceId} onChange={e=>setSelectedSpaceId(e.target.value)} className={`w-full bg-transparent outline-none text-sm font-medium appearance-none ${!selectedSpaceId ? 'text-gray-400 dark:text-gray-500' : 'text-current'}`}>
+                                  <option value="" className="text-black dark:text-white">Do not link</option>
+                                  {customSpaces.map(sp => <option key={sp.id} value={sp.id} className="text-black dark:text-white">{sp.name}</option>)}
                               </select>
                           </div>
                       </div>
