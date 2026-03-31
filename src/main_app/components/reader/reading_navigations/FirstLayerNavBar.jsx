@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Settings } from 'lucide-react'
+import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Settings, WholeWord } from 'lucide-react'
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
@@ -15,6 +15,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
     isBookmarked = false,
     onToggleBookmark,
     onProgressBarClick,
+    onToggleDictionary,
     setPageSettings,
     setLeftPanel: internalSetLeftPanel, // renamed to avoid conflict if any
   } = readerControls || {};
@@ -61,8 +62,16 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
             <Settings size={18} strokeWidth={2} />
           </button>
         </div>
-
         <div className='flex items-center gap-3'>
+          {/* Dictionary search button */}
+          <button
+            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
+            onClick={(e) => { e.stopPropagation(); onToggleDictionary?.(); }}
+            title="Dictionary Search"
+          >
+            <WholeWord strokeWidth={2} size={18} />
+          </button>
+
           {/* Page Bookmark button — purple fill when bookmarked */}
           <button
             className={`w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 ${

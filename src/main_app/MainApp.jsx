@@ -5,6 +5,7 @@ import AsideNavBar from './components/layout/navigation/AsideNavBar';
 import NavBarProvider from './components/layout/navigation/NavBarContext';
 import { BookProvider } from './context/BookContext';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import notificationService from './services/notificationService';
 // Page level components
 import HomePage from './components/home/HomePage';
 import BottomNavBar from './components/layout/navigation/BottomNavBar';
@@ -24,6 +25,7 @@ import StreakPage from './pages/StreakPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
+import useStudyStore from './store/studyStore';
 
 
 function MainApp({ onLogout }) {
@@ -40,6 +42,16 @@ function MainApp({ onLogout }) {
   const location = useLocation();
   const { showDuplicateModal, setShowDuplicateModal } = useContext(BookContext) || {};
   const { resolvedTheme } = useThemeStore();
+  const updateStreak = useStudyStore(state => state.updateStreak);
+
+  React.useEffect(() => {
+    updateStreak();
+    // Request notification permission and check for missed days
+    notificationService.requestPermission().then(() => {
+      notificationService.checkAndNotify();
+      notificationService.scheduleNotification();
+    });
+  }, [updateStreak]);
 
   return (
     <div className={`flex relative min-h-screen bg-bg-elevated ${resolvedTheme}`}>

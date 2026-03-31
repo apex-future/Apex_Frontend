@@ -12,6 +12,7 @@ import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 import PageSettings from './reading_navigations/reading_layout/PageSettings';
 import BookSkeleton from './BookSkeleton';
 import PageStrip from './PageStrip';
+import ReaderDictionary from './reading_navigations/reading_layout/ReaderDictionary';
 import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
@@ -318,6 +319,7 @@ function ReaderView() {
           setScrollOrientation(val);
           updateSetting('scrollOrientation', val);
         },
+        onToggleDictionary: () => setIsDictOpen(prev => !prev),
     };
 
     // Screen handlers
@@ -766,23 +768,27 @@ function ReaderView() {
                                 onPageChange={stableOnPageChange}
                             />
 
-                            <button
-                                onClick={(e) => { e.stopPropagation(); previousPage(); }}
-                                disabled={pageNumber <= 1}
-                                className="md:flex hidden absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
-                                title="Previous page"
-                            >
-                                <ChevronLeft size={28} strokeWidth={2.5} className="-ml-1" />
-                            </button>
+                            {scrollOrientation !== 'vertical' && (
+                                <>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); previousPage(); }}
+                                        disabled={pageNumber <= 1}
+                                        className="md:flex hidden absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                                        title="Previous page"
+                                    >
+                                        <ChevronLeft size={28} strokeWidth={2.5} className="-ml-1" />
+                                    </button>
 
-                            <button
-                                onClick={(e) => { e.stopPropagation(); nextPage(); }}
-                                disabled={pageNumber >= (numPages || 1)}
-                                className="md:flex hidden absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
-                                title="Next page"
-                            >
-                                <ChevronRight size={28} strokeWidth={2.5} className="ml-1" />
-                            </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); nextPage(); }}
+                                        disabled={pageNumber >= (numPages || 1)}
+                                        className="md:flex hidden absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                                        title="Next page"
+                                    >
+                                        <ChevronRight size={28} strokeWidth={2.5} className="ml-1" />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     )}
 
@@ -848,6 +854,7 @@ function ReaderView() {
                     onClose={closePageStrip}
                 />
             )}
+            <ReaderDictionary isOpen={isDictOpen} onClose={() => setIsDictOpen(false)} bookId={book?.id} />
         </div>
     );
 }
