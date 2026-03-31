@@ -50,7 +50,7 @@ const ExamReminder = () => {
             <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>{examName || 'Exam Timer'}</h2>
             <div 
                 onClick={onClick}
-                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 flex items-center cursor-pointer ${className}`}
+                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex items-center cursor-pointer ${className}`}
             >
                 {children}
             </div>
@@ -63,7 +63,7 @@ const ExamReminder = () => {
     if (!examDate) {
         return (
             <CardContainer onClick={() => setIsEditing(true)} className="border-dashed">
-                <div className="absolute bottom-2 -left-2 size-44 text-accent-primary/10 rotate-12 group-hover:text-accent-primary/20 transition-all duration-1000 pointer-events-none">
+                <div className="absolute bottom-2 -left-2 size-44 text-accent-primary/10 rotate-12 group-hover:rotate-0 group-hover:text-accent-primary/20 transition-all duration-1000 pointer-events-none">
                     <AlarmClock size="100%" strokeWidth={1} />
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full relative z-10 text-center sm:text-left gap-4">
