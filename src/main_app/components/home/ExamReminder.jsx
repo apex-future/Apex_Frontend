@@ -50,7 +50,7 @@ const ExamReminder = () => {
             <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>{examName || 'Exam Timer'}</h2>
             <div 
                 onClick={onClick}
-                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 flex items-center cursor-pointer ${className}`}
+                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex items-center cursor-pointer ${className}`}
             >
                 {children}
             </div>
