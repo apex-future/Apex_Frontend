@@ -223,8 +223,7 @@ export const BookProvider = ({ children }) => {
       const newBookBase = { ...newBookData };
       delete newBookBase.id;
       id = await db.books.add(newBookBase);
-      await db.books.update(id, { local_id: id.toString(), last_modified: new Date().toISOString() });
-      await syncService._setLocalTableTimestamp('books');
+      await db.books.update(id, { local_id: id.toString() });
       console.log('[Apex] Book saved to Dexie with id:', id);
     } catch (err) {
       console.error('[Apex] Failed to save book to Dexie:', err);
@@ -402,7 +401,6 @@ export const BookProvider = ({ children }) => {
         const now = new Date().toISOString();
         // Update in Dexie books table
         db.books.update(id, { progress, currentPage, totalPages, lastReadAt: now })
-          .then(() => syncService._setLocalTableTimestamp('reading_progress'))
           .catch(err => console.error("Failed to update progress in Dexie:", err));
 
         // Use direct save via syncService (this is debounced inside syncService)
