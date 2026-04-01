@@ -11,7 +11,7 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
     }
   };
   return (
-    <nav className='w-full p-2'>
+    <nav className='sticky top-0 z-40 w-full p-2 py-4 bg-bg-elevated/80 backdrop-blur-md border-border-subtle'>
       <div className="nav-wrapper flex justify-between w-full p-0 md:p-1 items-center gap-3">
 
         {/* Mobile Menu Button - Only visible on mobile */}

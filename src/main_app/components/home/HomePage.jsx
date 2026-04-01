@@ -46,7 +46,7 @@ function HomePage({ setIsMobileOpen }) {
   const lastReadBook = sortedByDate.length > 0 ? sortedByDate[0] : null;
 
   return (
-    <div className="min-h-screen pt-4 flex flex-col gap-6 lg:gap-8">
+    <div className="min-h-screen flex flex-col gap-6 lg:gap-8">
       <TopNavBar
         setIsMobileOpen={setIsMobileOpen}
         onUpload={onUpload}
