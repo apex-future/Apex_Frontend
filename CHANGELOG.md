@@ -4,6 +4,14 @@ All notable changes to Apex are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
 
+## [1.8.3] - 2026-04-02
+### Fixed
+- App no longer shows infinite loading screen on mobile when sync crashes
+- Moved `setHydrating(false)` into `finally` blocks in both `checkAuth` and `handleLogin`
+- Sync errors are still logged to console — local data loads correctly regardless of sync outcome
+
+---
+
 ## [1.8.2] - 2026-03-28
 ### Fixed
 - Streak sync is now clock-agnostic — server validates all dates before saving
