@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Edit2, Bell, AlarmClock, Calendar, BookOpen, X, Trophy, Target, Type } from 'lucide-react';
 import useStudyStore from '../../store/studyStore';
 import useSpaceStore from '../../store/spaceStore';
+import useQuizStore from '../../store/quizStore';
 import { useNavigate } from 'react-router-dom';
 
 const ExamReminder = () => {
@@ -19,6 +20,9 @@ const ExamReminder = () => {
     
     const customSpaces = spaces.filter(s => !s.isSystem);
     const linkedSpace = customSpaces.find(s => s.examDate === examDate) || customSpaces.find(s => s.isLinkedToExam); // Fallback logic based on previous states
+    
+    const { getAggregatedStatsForSpace } = useQuizStore();
+    const linkedSpaceStats = linkedSpace ? getAggregatedStatsForSpace(linkedSpace.id) : null;
 
     const calculateDaysLeft = () => {
         if (!examDate) return null;
@@ -84,7 +88,9 @@ const ExamReminder = () => {
     // ==========================================
     // Generate motivational message
     let motivationalMessage = `Keep your momentum going! You have ${daysLeft} days left to prepare.`;
-    if (linkedSpace && linkedSpace.activitySummaries?.timeSpent > 0) {
+    if (linkedSpace && linkedSpace.activitySummaries?.timeSpent > 0 && linkedSpaceStats) {
+        motivationalMessage = `You've invested ${linkedSpace.activitySummaries.timeSpent} mins and scored an avg of ${linkedSpaceStats.averageScore}% on practice quizzes! Keep pushing, coach!`;
+    } else if (linkedSpace && linkedSpace.activitySummaries?.timeSpent > 0) {
         motivationalMessage = `You've invested ${linkedSpace.activitySummaries.timeSpent} mins preparing for ${examName || linkedSpace.name}. Keep pushing, coach!`;
     } else if (linkedSpace) {
         motivationalMessage = `Your study space for ${examName || linkedSpace.name} is ready. Time to dive into those books!`;
@@ -209,6 +215,10 @@ const ExamReminder = () => {
                                             <div>
                                                 <span className="block text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Time Studied</span>
                                                 <span className="font-bold text-text-primary">{linkedSpace.activitySummaries?.timeSpent || 0}m</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Avg Score</span>
+                                                <span className="font-bold text-text-primary">{linkedSpaceStats?.averageScore ? `${linkedSpaceStats.averageScore}%` : 'N/A'}</span>
                                             </div>
                                         </div>
                                     </div>

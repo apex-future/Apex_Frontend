@@ -6,6 +6,8 @@ import useSpaceStore from '../../../store/spaceStore'
 import useStudyStore from '../../../store/studyStore'
 import BookCard from '../../books/BookCard'
 import BookCover from '../../books/BookCover'
+import useQuizStore from '../../../store/quizStore'
+import { Trophy } from 'lucide-react'
 
 /**
  * ShelfDetail Page:
@@ -17,6 +19,8 @@ function SpaceDetail() {
   const { shelves, books, handleBookClick } = useContext(BookContext);
   const { addBookToSpace, setActiveSpace, updateSpace } = useSpaceStore();
   const { examDate: globalExamDate, setExamDate: setGlobalExamDate } = useStudyStore();
+  const { getAggregatedStatsForSpace } = useQuizStore();
+  const spaceQuizStats = getAggregatedStatsForSpace(spaceId);
   const [isAddingBooks, setIsAddingBooks] = useState(false);
   const [isEditingExam, setIsEditingExam] = useState(false);
   const [tempExamDate, setTempExamDate] = useState('');
@@ -120,9 +124,9 @@ function SpaceDetail() {
          </div>
       )}
 
-      {/* Activity Summary Section */}
+       {/* Activity Summary Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-         <div className="bg-card-glass backdrop-blur-md border border-border-default rounded-3xl p-6 flex justify-between items-center shadow-sm">
+         <div className="bg-card-glass backdrop-blur-md border border-border-default rounded-3xl p-6 flex flex-wrap gap-8 justify-between lg:justify-start lg:gap-16 items-center shadow-sm">
             <div>
               <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-wider mb-1">Total Time Spent</h2>
               <div className="flex items-center gap-2">
@@ -135,6 +139,13 @@ function SpaceDetail() {
               <div className="flex items-center gap-2">
                  <FileText size={20} className="text-accent-primary" />
                  <span className="text-2xl font-black text-text-primary">{selectedShelf.activitySummaries?.pagesRead || 0}</span>
+              </div>
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-wider mb-1">Avg Quiz Score</h2>
+              <div className="flex items-center gap-2">
+                 <Trophy size={20} className="text-accent-primary" />
+                 <span className="text-2xl font-black text-text-primary">{spaceQuizStats ? `${spaceQuizStats.averageScore}%` : 'N/A'}</span>
               </div>
             </div>
          </div>

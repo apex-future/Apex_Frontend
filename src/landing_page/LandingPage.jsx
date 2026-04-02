@@ -54,7 +54,8 @@ function LandingPage({ onLogin, deferredPrompt }) {
       </div>
     </>
   )
-}
+}   
+
 
 
 export default LandingPage

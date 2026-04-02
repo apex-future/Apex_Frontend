@@ -10,6 +10,8 @@ import DocumentNotes from './book_details_related/DocumentNotes';
 import DocumentsWords from './book_details_related/DocumentsWords';
 import DocumentsReviews from './book_details_related/DocumentsReviews';
 import DocumentsAdvanced from './book_details_related/DocumentsAdvanced';
+import DocumentQuizzes from './book_details_related/DocumentQuizzes';
+import DocumentAnalytics from './book_details_related/DocumentAnalytics';
 
 function BookDetails() {
     const { bookId } = useParams();
@@ -20,6 +22,8 @@ function BookDetails() {
 
     const tabs = [
         { id: 'chat', label: 'Chat', component: DocumentChatHistory },
+        { id: 'quiz', label: 'Quizzes', component: DocumentQuizzes },
+        { id: 'analytics', label: 'Analytics', component: DocumentAnalytics },
         { id: 'bookmarks', label: 'Bookmarks', component: DocumentBookmarks },
         { id: 'notes', label: 'Notes', component: DocumentNotes },
         { id: 'words', label: 'Words', component: DocumentsWords },
