@@ -86,7 +86,7 @@ function ReaderView() {
     const [loadingMessage, setLoadingMessage] = useState("Setting up file");
     const [downloadError, setDownloadError] = useState(false);
 
-    const [selection, setSelection] = useState({ text: '', x: 0, y: 0 });
+    const [selection, setSelection] = useState({ text: '', x: 0, y: 0, startOffset: null });
     const [showHighlightMenu, setShowHighlightMenu] = useState(false);
     const [isDictOpen, setIsDictOpen] = useState(false);
     const [showPageStrip, setShowPageStrip] = useState(false);
@@ -188,6 +188,7 @@ function ReaderView() {
             text: selection.text.replace(/\s+/g, ' ').trim(),
             color,
             page: pageNumber,
+            startOffset: selection.startOffset,
             addedAt: new Date().toISOString()
         });
         setShowHighlightMenu(false);
@@ -424,11 +425,33 @@ function ReaderView() {
                     const textChanged = text !== lastSelTextRef.current;
                     lastSelTextRef.current = text;
 
+                    let foundOffset = -1;
+                    try {
+                        const pageWrapper = activeSel.anchorNode?.parentElement?.closest('.pdf-page-wrapper');
+                        if (pageWrapper) {
+                            const textLayer = pageWrapper.querySelector('.react-pdf__Page__textContent');
+                            if (textLayer) {
+                                const walker = document.createTreeWalker(textLayer, NodeFilter.SHOW_TEXT, null);
+                                let node;
+                                let fullText = '';
+                                while ((node = walker.nextNode())) {
+                                    if (fullText.length > 0 && !fullText.endsWith(' ') && !node.textContent.startsWith(' ')) fullText += ' ';
+                                    if (node === activeSel.anchorNode || node.parentNode === activeSel.anchorNode) {
+                                        foundOffset = fullText.length + activeSel.anchorOffset;
+                                        break;
+                                    }
+                                    fullText += node.textContent;
+                                }
+                            }
+                        }
+                    } catch (e) {}
+
                     if (textChanged || !showHighlightMenuRef.current) {
                         setSelection({
                             text,
                             x: rect.left + rect.width / 2,
-                            y: rect.top
+                            y: rect.top,
+                            startOffset: foundOffset !== -1 ? foundOffset : null
                         });
                     }
                     setShowHighlightMenu(true);

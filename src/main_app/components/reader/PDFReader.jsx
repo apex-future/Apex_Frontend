@@ -17,7 +17,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
  * Scans all text nodes inside `container`, finds `searchText`, and returns an array of Range objects.
  * Adds spaces between text nodes to match browser selection behavior across PDF text spans.
  */
-function getHighlightRanges(container, searchText) {
+function getHighlightRanges(container, searchText, targetStartOffset) {
   if (!container || !searchText) return [];
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
   const textNodes = [];
@@ -45,23 +45,43 @@ function getHighlightRanges(container, searchText) {
   let idx = lowerFull.indexOf(lowerSearch);
   const ranges = [];
 
-  while (idx !== -1) {
-    const matchStart = idx;
-    const matchEnd = idx + lowerSearch.length;
-    for (let i = 0; i < nodeMap.length; i++) {
-        const nm = nodeMap[i];
-        if (nm.end <= matchStart || nm.start >= matchEnd) continue;
-        const overlapStart = Math.max(0, matchStart - nm.start);
-        const overlapEnd = Math.min(nm.node.textContent.length, matchEnd - nm.start);
-        try {
-            const range = document.createRange();
-            range.setStart(nm.node, overlapStart);
-            range.setEnd(nm.node, overlapEnd);
-            ranges.push(range);
-        } catch (e) {}
-    }
-    idx = lowerFull.indexOf(lowerSearch, matchEnd);
+  const addRangeForMatch = (matchStart) => {
+      const matchEnd = matchStart + lowerSearch.length;
+      for (let i = 0; i < nodeMap.length; i++) {
+          const nm = nodeMap[i];
+          if (nm.end <= matchStart || nm.start >= matchEnd) continue;
+          const overlapStart = Math.max(0, matchStart - nm.start);
+          const overlapEnd = Math.min(nm.node.textContent.length, matchEnd - nm.start);
+          try {
+              const range = document.createRange();
+              range.setStart(nm.node, overlapStart);
+              range.setEnd(nm.node, overlapEnd);
+              ranges.push(range);
+          } catch (e) {}
+      }
+  };
+
+  if (targetStartOffset != null) {
+      let bestIdx = -1;
+      let minDiff = Infinity;
+      while (idx !== -1) {
+          const diff = Math.abs(idx - targetStartOffset);
+          if (diff < minDiff) {
+              minDiff = diff;
+              bestIdx = idx;
+          }
+          idx = lowerFull.indexOf(lowerSearch, idx + lowerSearch.length);
+      }
+      if (bestIdx !== -1) {
+          addRangeForMatch(bestIdx);
+      }
+  } else {
+      while (idx !== -1) {
+          addRangeForMatch(idx);
+          idx = lowerFull.indexOf(lowerSearch, idx + lowerSearch.length);
+      }
   }
+
   return ranges;
 }
 
@@ -290,7 +310,7 @@ const PDFReader = ({
 
             const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
 
-            const ranges = getHighlightRanges(textLayer, text);
+            const ranges = getHighlightRanges(textLayer, text, h.startOffset);
             if (ranges.length === 0) continue;
 
             if (useCSSHighlight) {

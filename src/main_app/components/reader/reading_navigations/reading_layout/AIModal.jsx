@@ -89,10 +89,12 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
   }, [chatHistory]);
 
   return (
-    <aside
-      className='flex flex-col absolute inset-0 z-[200] bg-bg-subtle md:relative md:inset-auto md:w-96 md:h-full md:border-l border-border-default md:shrink-0 shadow-2xl md:shadow-none animate-in slide-in-from-right duration-300 font-sans'
-      onClick={(e) => e.stopPropagation()}
-    >
+    <>
+      <div className="fixed inset-0 bg-black/40 z-[190] md:hidden animate-in fade-in" onClick={() => setAiModal(false)} />
+      <aside
+        className='flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-bg-subtle rounded-t-3xl h-[85vh] md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-l border-border-default md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-none animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans'
+        onClick={(e) => e.stopPropagation()}
+      >
       {/* ── Header ── */}
       <div className='flex items-center justify-between px-4 py-4 border-b border-border-default bg-bg-elevated z-10 flex-shrink-0'>
         <div className='flex items-center gap-2'>
@@ -345,6 +347,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
           }
       `}} />
     </aside>
+    </>
   )
 }
 
