@@ -99,7 +99,7 @@ const VirtualPage = memo(({ pageNumber, rotation, scale, width, onRenderSuccess 
       renderAnnotationLayer={true}
       onRenderSuccess={onRenderSuccess}
       width={width}
-      className="!shadow-none"
+      className="!shadow-none !w-full flex justify-center [&_.react-pdf__Page__canvas]:!w-full [&_.react-pdf__Page__canvas]:!h-auto [&_.react-pdf__Page__textContent]:!w-full"
       loading={
         <div
           className="flex flex-col items-center justify-center bg-bg-elevated animate-pulse"
@@ -148,7 +148,7 @@ const PDFReader = ({
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(windowSize?.width || window.innerWidth);
   const isDesktop = containerWidth > 1024;
-  const pdfWidth = isDesktop ? Math.min(containerWidth - 120, 1100) : containerWidth;
+  const pdfWidth = isDesktop ? Math.min(containerWidth - 120, 1100) : (windowSize?.width || window.innerWidth);
   const [pageRendered, setPageRendered] = useState(0);
   const [renderedPages, setRenderedPages] = useState(new Set());
   const [displayedPage, setDisplayedPage] = useState(pageNumber);
@@ -485,13 +485,12 @@ const PDFReader = ({
                 <div
                   key={virtualRow.index}
                   ref={rowVirtualizer.measureElement}
-                  className="pdf-page-wrapper absolute left-0 flex flex-col items-center bg-bg-elevated"
+                  className="pdf-page-wrapper absolute left-0 flex flex-col items-center bg-bg-elevated w-full"
                   data-page-index={pageIdx}
                   data-index={virtualRow.index}
                   style={{
                     transform: `translateY(${virtualRow.start}px)`,
-                    width: 'max-content',
-                    minWidth: '100%',
+                    width: '100%',
                   }}
                 >
                   <VirtualPage
