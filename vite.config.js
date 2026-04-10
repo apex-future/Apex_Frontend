@@ -84,17 +84,9 @@ export default defineConfig({
             },
           },
           {
-            // Network-first for API calls (future backend)
-            urlPattern: /^https?:\/\/.*\/api\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 24 * 60 * 60, // 1 day
-              },
-            },
+            // Network-only for API calls — never cache; let failures propagate cleanly
+            urlPattern: /\/api\/.*/i,
+            handler: 'NetworkOnly',
           },
           {
             // Network-first for navigation requests with offline fallback
