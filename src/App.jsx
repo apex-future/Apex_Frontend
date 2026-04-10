@@ -140,13 +140,13 @@ function App() {
               await syncService.pullAllUserData();
               await syncService.pushSync();
             } catch (err) {
-              console.error('Pull sync failed, continuing with local data:', err);
+              console.error('Pull sync failed, continuing with local data:', err.message);
             } finally {
               setHydrating(false);
             }
           }
         } catch (error) {
-          console.error("Auth verification failed:", error);
+          console.error("Auth verification failed:", error.message);
           // Only log out if it's a 401 Unauthorized
           if (error.response?.status === 401) {
             authService.logout();
@@ -214,7 +214,7 @@ function App() {
         // Also migrate any pre-account local data
         await syncService.migrateLocalData();
       } catch (err) {
-        console.error('Post-login sync failed:', err);
+        console.error('Post-login sync failed:', err.message);
       } finally {
         setHydrating(false);
       }
