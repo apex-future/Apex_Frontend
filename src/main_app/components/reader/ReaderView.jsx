@@ -89,6 +89,7 @@ function ReaderView() {
     const [selection, setSelection] = useState({ text: '', x: 0, y: 0, startOffset: null });
     const [showHighlightMenu, setShowHighlightMenu] = useState(false);
     const [isDictOpen, setIsDictOpen] = useState(false);
+    const [isReaderDictOpen, setIsReaderDictOpen] = useState(false);
     const [showPageStrip, setShowPageStrip] = useState(false);
 
     const openPageStrip = useCallback(() => {
@@ -312,7 +313,7 @@ function ReaderView() {
           setScrollOrientation(val);
           updateSetting('scrollOrientation', val);
         },
-        onToggleDictionary: () => setIsDictOpen(prev => !prev),
+        onToggleDictionary: () => setIsReaderDictOpen(prev => !prev),
     };
 
     // Screen handlers
@@ -777,7 +778,7 @@ function ReaderView() {
                                 numPages={numPages}
                                 goToPage={goToPage}
                                 highlights={stableHighlights}
-                                locked={locked || selectionLock || isDictOpen}
+                                locked={locked || selectionLock || isDictOpen || isReaderDictOpen}
                                 windowSize={windowSize}
                                 scrollOrientation={scrollOrientation}
                                 onPageChange={stableOnPageChange}
@@ -869,7 +870,7 @@ function ReaderView() {
                     onClose={closePageStrip}
                 />
             )}
-            <ReaderDictionary isOpen={isDictOpen} onClose={() => setIsDictOpen(false)} bookId={book?.id} />
+            <ReaderDictionary isOpen={isReaderDictOpen} onClose={() => setIsReaderDictOpen(false)} bookId={book?.id} />
         </div>
     );
 }

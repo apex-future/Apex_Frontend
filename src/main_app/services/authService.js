@@ -30,7 +30,7 @@ const authService = {
     try {
       await apiClient.post('/api/auth/logout');
     } catch (e) {
-      console.error('Logout API error:', e);
+      console.error('Logout API error:', e.message);
     } finally {
       localStorage.removeItem('apex_token');
     }
