@@ -33,8 +33,11 @@ export const BookProvider = ({ children }) => {
           // Reconstruct File objects from stored ArrayBuffers
           const hydratedBooks = storedBooks.map(b => {
             if (b.fileBlob && !b.file) {
-              const blob = new Blob([b.fileBlob], { type: b.fileType || 'application/pdf' });
-              const file = new File([blob], b.title + (b.fileType === 'application/epub+zip' ? '.epub' : '.pdf'), { type: b.fileType || 'application/pdf' });
+              const fileExt = b.fileType === 'application/epub+zip' ? '.epub' : 
+                          b.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' : 
+                          b.fileType === 'application/msword' ? '.doc' : 
+                          '.pdf';
+              const file = new File([blob], b.title + fileExt, { type: b.fileType || 'application/pdf' });
               return { ...b, file };
             }
             return b;
@@ -363,7 +366,10 @@ export const BookProvider = ({ children }) => {
       }
 
       // Reconstruct the File object for the UI
-      const fileExt = book.fileType === 'application/epub+zip' ? '.epub' : '.pdf';
+      const fileExt = book.fileType === 'application/epub+zip' ? '.epub' : 
+                   book.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' : 
+                   book.fileType === 'application/msword' ? '.doc' : 
+                   '.pdf';
       const fileName = book.title + fileExt;
       const fileType = blob.type || book.fileType || 'application/pdf';
       const file = new File([blob], fileName, { type: fileType });
