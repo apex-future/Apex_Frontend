@@ -4,6 +4,15 @@ All notable changes to Apex are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
 
+## [1.8.4] - 2026-04-10
+### Security
+- JWT payload now whitelisted — password_hash and full user row removed from token
+- JWT sub field changed from email to UUID for stability and security
+- get_current_user now looks up by UUID instead of email
+- Backward compatible — old email-based tokens still work until they expire
+
+---
+
 ## [1.8.3] - 2026-04-02
 ### Fixed
 - App no longer shows infinite loading screen on mobile when sync crashes
