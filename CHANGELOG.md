@@ -4,6 +4,49 @@ All notable changes to Apex are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
 
+## [1.8.4] - 2026-04-10
+### Security
+- JWT payload now whitelisted — password_hash and full user row removed from token
+- JWT sub field changed from email to UUID for stability and security
+- get_current_user now looks up by UUID instead of email
+- Backward compatible — old email-based tokens still work until they expire
+
+---
+
+## [1.8.3] - 2026-04-02
+### Fixed
+- App no longer shows infinite loading screen on mobile when sync crashes
+- Moved `setHydrating(false)` into `finally` blocks in both `checkAuth` and `handleLogin`
+- Sync errors are still logged to console — local data loads correctly regardless of sync outcome
+
+---
+
+## [1.8.2] - 2026-03-28
+### Fixed
+- Streak sync is now clock-agnostic — server validates all dates before saving
+- Devices with wrong clocks can no longer corrupt streak data in Supabase
+- Future dates in streak_history are sanitized before saving to Supabase
+- Client store self-corrects if server rejects or adjusts its date
+- 1-day tolerance applied for legitimate timezone differences
+
+---
+
+## [1.8.1] - 2026-03-28
+### Fixed
+- Sync algorithm is now completely immune to device clock skew
+- Replaced client-clock-based timestamp comparison with server-anchor approach
+- last_synced_at is now always server-generated — client clock never participates in sync decisions
+- Devices with wrong clocks can no longer corrupt Supabase data by pushing stale local state
+- Streak data is now safe from clock-skewed devices overwriting cloud records
+- Push happens before pull when both are needed — local changes preserved before cloud overwrites
+
+### Changed
+- _getLocalTableTimestamp and _setLocalTableTimestamp removed — sync queue used for local change detection instead
+- _compareTimestamps removed — replaced by _tableNeedsSync using server anchor
+- GET /api/sync/timestamps now returns server_time field alongside table timestamps
+
+---
+
 ## [1.8.0] - 2026-03-28
 ### Changed
 - Sync architecture upgraded to per-table timestamp conflict resolution

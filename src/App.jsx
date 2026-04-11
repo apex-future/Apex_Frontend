@@ -140,9 +140,8 @@ function App() {
               await syncService.pullAllUserData();
               await syncService.pushSync();
             } catch (err) {
-              console.error('Pull sync failed, continuing with local data:', err.message);
+              console.error('Pull sync failed, continuing with local data:', err);
             }
-            setHydrating(false);
           }
         } catch (error) {
           console.error("Auth verification failed:", error.message);
@@ -213,9 +212,8 @@ function App() {
         // Also migrate any pre-account local data
         await syncService.migrateLocalData();
       } catch (err) {
-        console.error('Post-login sync failed:', err.message);
+        console.error('Post-login sync failed:', err);
       }
-      setHydrating(false);
     }
   };
 
