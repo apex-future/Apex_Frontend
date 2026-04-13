@@ -40,7 +40,7 @@ const useStudyStore = create(
 
         // Already counted today — do nothing
         if (lastActive === today) {
-          console.log('[Apex Streak] Already active today — skipping');
+          if (import.meta.env.DEV) console.log('[Apex Streak] Already active today — skipping');
           return;
         }
 
@@ -49,7 +49,7 @@ const useStudyStore = create(
         if (!lastActive) {
           // First ever streak
           newStreak = 1;
-          console.log('[Apex Streak] First streak day!');
+          if (import.meta.env.DEV) console.log('[Apex Streak] First streak day!');
         } else {
           // Check if yesterday
           const last = new Date(lastActive);
@@ -60,11 +60,11 @@ const useStudyStore = create(
           if (diffDays === 1) {
             // Consecutive day — increment
             newStreak = currentStreak + 1;
-            console.log('[Apex Streak] Consecutive day — streak:', newStreak);
+            if (import.meta.env.DEV) console.log('[Apex Streak] Consecutive day — streak:', newStreak);
           } else {
             // Streak broken — reset to 1
             newStreak = 1;
-            console.log('[Apex Streak] Streak broken after', diffDays, 'days — resetting to 1');
+            if (import.meta.env.DEV) console.log('[Apex Streak] Streak broken after', diffDays, 'days — resetting to 1');
           }
         }
 
@@ -82,7 +82,7 @@ const useStudyStore = create(
           streakHistory: newHistory,
         });
 
-        console.log('[Apex Streak] Updated:', { newStreak, newLongest, today });
+        if (import.meta.env.DEV) console.log('[Apex Streak] Updated:', { newStreak, newLongest, today });
 
         // Sync to Supabase if online
         if (navigator.onLine) {
@@ -104,13 +104,13 @@ const useStudyStore = create(
 
         // No streak to check
         if (!lastActive || currentStreak === 0) {
-          console.log('[Apex Streak] No active streak to validate');
+          if (import.meta.env.DEV) console.log('[Apex Streak] No active streak to validate');
           return;
         }
 
         // Already read today — streak is valid
         if (lastActive === today) {
-          console.log('[Apex Streak] Integrity check: active today — streak valid');
+          if (import.meta.env.DEV) console.log('[Apex Streak] Integrity check: active today — streak valid');
           return;
         }
 
@@ -122,12 +122,12 @@ const useStudyStore = create(
 
         if (diffDays === 1) {
           // Yesterday — streak is still alive, user just hasn't read today yet
-          console.log('[Apex Streak] Integrity check: last active yesterday — streak alive, waiting for today\'s read');
+          if (import.meta.env.DEV) console.log('[Apex Streak] Integrity check: last active yesterday — streak alive, waiting for today\'s read');
           return;
         }
 
         // Streak is broken — reset to 0 (not 1, because user hasn't read today)
-        console.log('[Apex Streak] Integrity check: streak BROKEN (last active', diffDays, 'days ago) — resetting to 0');
+        if (import.meta.env.DEV) console.log('[Apex Streak] Integrity check: streak BROKEN (last active', diffDays, 'days ago) — resetting to 0');
         set({ streakCount: 0 });
 
         // Sync the reset to Supabase
@@ -154,7 +154,7 @@ const useStudyStore = create(
           // Server returns its validated date — correct local store if it was wrong
           if (response.data?.last_active_date &&
               response.data.last_active_date !== lastActiveDate) {
-            console.log('[Apex Streak] Server corrected last_active_date:',
+            if (import.meta.env.DEV) console.log('[Apex Streak] Server corrected last_active_date:',
               lastActiveDate, '→', response.data.last_active_date);
             set({ lastActiveDate: response.data.last_active_date });
           }
@@ -168,15 +168,15 @@ const useStudyStore = create(
               return daysAhead <= 1; // Remove anything more than 1 day in the future
             });
             if (sanitized.length !== streakHistory.length) {
-              console.log('[Apex Streak] Removed', streakHistory.length - sanitized.length,
+              if (import.meta.env.DEV) console.log('[Apex Streak] Removed', streakHistory.length - sanitized.length,
                 'future dates from local streak history');
               set({ streakHistory: sanitized });
             }
           }
 
-          console.log('[Apex Streak] Synced to Supabase successfully');
+          if (import.meta.env.DEV) console.log('[Apex Streak] Synced to Supabase successfully');
         } catch (err) {
-          console.error('[Apex Streak] Failed to sync to Supabase:', err);
+          if (import.meta.env.DEV) console.error('[Apex Streak] Failed to sync to Supabase:', err);
         }
       },
 
@@ -200,7 +200,7 @@ const useStudyStore = create(
         // Only seed if Supabase data is more recent than local
         // This prevents overwriting a streak earned offline
         if (supabaseStreak > localStreak || (supabaseLastActive && supabaseLastActive > (localLastActive || ''))) {
-          console.log('[Apex Streak] Seeding from Supabase — more recent data found');
+          if (import.meta.env.DEV) console.log('[Apex Streak] Seeding from Supabase — more recent data found');
           set({
             streakCount: supabaseStreak,
             longestStreak: longest_streak || 0,
@@ -208,7 +208,7 @@ const useStudyStore = create(
             streakHistory: streak_history || [],
           });
         } else {
-          console.log('[Apex Streak] Local streak data is more recent — keeping local');
+          if (import.meta.env.DEV) console.log('[Apex Streak] Local streak data is more recent — keeping local');
         }
       },
 

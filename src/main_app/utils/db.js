@@ -24,7 +24,7 @@ export const saveChat = async (chat) => {
     }
     return true;
   } catch (err) {
-    console.error('[Apex] Failed to save chat:', err);
+    if (import.meta.env.DEV) console.error('[Apex] Failed to save chat:', err);
     return false;
   }
 };
@@ -33,7 +33,7 @@ export const getAllChats = async () => {
   try {
     return await db.chats.toArray();
   } catch (err) {
-    console.error('[Apex] Failed to get chats:', err);
+    if (import.meta.env.DEV) console.error('[Apex] Failed to get chats:', err);
     return [];
   }
 };
@@ -43,7 +43,7 @@ export const deleteChat = async (id) => {
     await db.chats.delete(id);
     return true;
   } catch (err) {
-    console.error('[Apex] Failed to delete chat:', err);
+    if (import.meta.env.DEV) console.error('[Apex] Failed to delete chat:', err);
     return false;
   }
 };
@@ -53,7 +53,7 @@ export const clearAllChats = async () => {
     await db.chats.clear();
     return true;
   } catch (err) {
-    console.error('[Apex] Failed to clear chats:', err);
+    if (import.meta.env.DEV) console.error('[Apex] Failed to clear chats:', err);
     return false;
   }
 };

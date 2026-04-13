@@ -44,7 +44,7 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
 
   if (!response.ok) {
     const errorMsg = `Explain request failed: ${response.status}`;
-    console.error(errorMsg);
+    if (import.meta.env.DEV) console.error(errorMsg);
     throw new Error(errorMsg);
   }
 
@@ -73,7 +73,7 @@ export async function streamAsk({ message, bookTitle, bookId, chatType, conversa
 
   if (!response.ok) {
     const errorMsg = `Ask request failed: ${response.status}`;
-    console.error(errorMsg);
+    if (import.meta.env.DEV) console.error(errorMsg);
     throw new Error(errorMsg);
   }
 
@@ -95,7 +95,7 @@ export async function summarizeHighlights({ highlights, bookTitle }) {
 
   if (!response.ok) {
     const errorMsg = `Summarize request failed: ${response.status}`;
-    console.error(errorMsg);
+    if (import.meta.env.DEV) console.error(errorMsg);
     throw new Error(errorMsg);
   }
 
