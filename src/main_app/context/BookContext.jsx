@@ -74,8 +74,11 @@ export const BookProvider = ({ children }) => {
           // Reconstruct File objects from stored ArrayBuffers
           const hydratedBooks = storedBooks.map(b => {
             if (b.fileBlob && !b.file) {
-              const blob = new Blob([b.fileBlob], { type: b.fileType || 'application/pdf' });
-              const file = new File([blob], b.title + (b.fileType === 'application/epub+zip' ? '.epub' : '.pdf'), { type: b.fileType || 'application/pdf' });
+              const fileExt = b.fileType === 'application/epub+zip' ? '.epub' : 
+                          b.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' : 
+                          b.fileType === 'application/msword' ? '.doc' : 
+                          '.pdf';
+              const file = new File([blob], b.title + fileExt, { type: b.fileType || 'application/pdf' });
               return { ...b, file };
             }
             return b;
@@ -245,8 +248,7 @@ export const BookProvider = ({ children }) => {
       const newBookBase = { ...newBookData };
       delete newBookBase.id;
       id = await db.books.add(newBookBase);
-      await db.books.update(id, { local_id: id.toString(), last_modified: new Date().toISOString() });
-      await syncService._setLocalTableTimestamp('books');
+      await db.books.update(id, { local_id: id.toString() });
       console.log('[Apex] Book saved to Dexie with id:', id);
     } catch (err) {
       console.error('[Apex] Failed to save book to Dexie:', err);
@@ -386,7 +388,10 @@ export const BookProvider = ({ children }) => {
       }
 
       // Reconstruct the File object for the UI
-      const fileExt = book.fileType === 'application/epub+zip' ? '.epub' : '.pdf';
+      const fileExt = book.fileType === 'application/epub+zip' ? '.epub' : 
+                   book.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' : 
+                   book.fileType === 'application/msword' ? '.doc' : 
+                   '.pdf';
       const fileName = book.title + fileExt;
       const fileType = blob.type || book.fileType || 'application/pdf';
       const file = new File([blob], fileName, { type: fileType });
@@ -424,7 +429,6 @@ export const BookProvider = ({ children }) => {
         const now = new Date().toISOString();
         // Update in Dexie books table
         db.books.update(id, { progress, currentPage, totalPages, lastReadAt: now })
-          .then(() => syncService._setLocalTableTimestamp('reading_progress'))
           .catch(err => console.error("Failed to update progress in Dexie:", err));
 
         // Use direct save via syncService (this is debounced inside syncService)

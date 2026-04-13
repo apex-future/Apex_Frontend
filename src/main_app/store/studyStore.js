@@ -145,16 +145,39 @@ const useStudyStore = create(
       syncStreakToSupabase: async () => {
         try {
           const { streakCount, longestStreak, lastActiveDate, streakHistory } = get();
-          await apiClient.patch('/api/auth/streak', {
+          const response = await apiClient.patch('/api/auth/streak', {
             current_streak: streakCount,
             longest_streak: longestStreak,
             last_active_date: lastActiveDate,
             streak_history: streakHistory,
           });
+
+          // Server returns its validated date — correct local store if it was wrong
+          if (response.data?.last_active_date &&
+              response.data.last_active_date !== lastActiveDate) {
+            console.log('[Apex Streak] Server corrected last_active_date:',
+              lastActiveDate, '→', response.data.last_active_date);
+            set({ lastActiveDate: response.data.last_active_date });
+          }
+
+          // Also correct any future dates from streak_history using server_date
+          if (response.data?.server_date && streakHistory.length > 0) {
+            const serverDate = new Date(response.data.server_date);
+            const sanitized = streakHistory.filter(entry => {
+              const entryDate = new Date(entry);
+              const daysAhead = (entryDate - serverDate) / (1000 * 60 * 60 * 24);
+              return daysAhead <= 1; // Remove anything more than 1 day in the future
+            });
+            if (sanitized.length !== streakHistory.length) {
+              console.log('[Apex Streak] Removed', streakHistory.length - sanitized.length,
+                'future dates from local streak history');
+              set({ streakHistory: sanitized });
+            }
+          }
+
           console.log('[Apex Streak] Synced to Supabase successfully');
         } catch (err) {
           console.error('[Apex Streak] Failed to sync to Supabase:', err);
-          // Fail silently — local data is preserved, will retry next time
         }
       },
 

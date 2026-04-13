@@ -31,66 +31,95 @@ function createDebounce(fn, delay) {
 
 const syncService = {
   // ============================================
-  // PER-TABLE TIMESTAMP HELPERS
+  // CLOCK-AGNOSTIC SYNC HELPERS
+  // Server anchor replaces client clock entirely
   // ============================================
 
   /**
-   * _getLocalTableTimestamp
-   * Reads the locally stored last_modified timestamp for a given table
-   * from app_settings. Returns null if never set (treat as older than everything).
+   * _getLastSyncedAt
+   * Returns the server-generated timestamp of the last successful sync.
+   * This is the anchor — NOT the client clock.
+   * Returns null if never synced (first time on this device).
    */
-  _getLocalTableTimestamp: async function(tableName) {
+  _getLastSyncedAt: async function() {
     try {
       const setting = await db.app_settings
-        .where('key').equals(`table_modified_${tableName}`)
+        .where('key').equals('last_synced_at')
         .first();
       return setting?.value || null;
     } catch (err) {
-      console.warn(`[Apex Sync] Failed to read local timestamp for ${tableName}:`, err);
+      console.warn('[Apex Sync] Failed to read last_synced_at:', err);
       return null;
     }
   },
 
   /**
-   * _setLocalTableTimestamp
-   * Stores the current time as the last_modified timestamp for a given table.
-   * Called after every successful local write to that table.
+   * _setLastSyncedAt
+   * Stores the SERVER-provided sync time after a successful sync.
+   * NEVER uses new Date() — always uses the timestamp returned by the server.
+   * This prevents client clock drift from affecting future sync decisions.
    */
-  _setLocalTableTimestamp: async function(tableName) {
-    const now = new Date().toISOString();
+  _setLastSyncedAt: async function(serverTime) {
     try {
       const existing = await db.app_settings
-        .where('key').equals(`table_modified_${tableName}`)
+        .where('key').equals('last_synced_at')
         .first();
       if (existing) {
-        await db.app_settings.update(existing.id, { value: now });
+        await db.app_settings.update(existing.id, { value: serverTime });
       } else {
-        await db.app_settings.add({ key: `table_modified_${tableName}`, value: now });
+        await db.app_settings.add({ key: 'last_synced_at', value: serverTime });
       }
+      console.log('[Apex Sync] Last synced at updated to server time:', serverTime);
     } catch (err) {
-      console.warn(`[Apex Sync] Failed to set local timestamp for ${tableName}:`, err);
+      console.warn('[Apex Sync] Failed to set last_synced_at:', err);
     }
   },
 
   /**
-   * _compareTimestamps
-   * Compares two ISO timestamp strings.
-   * Returns: 'local' | 'cloud' | 'equal'
+   * _hasLocalChanges
+   * Checks if there are any pending items in the sync queue for a given table.
+   * This is how we know "local is ahead" — pending unsynced changes exist.
+   * No clock comparison involved.
    */
-  _compareTimestamps: function(localTs, cloudTs) {
-    // If no local timestamp — local has never been modified, cloud wins
-    if (!localTs) return 'cloud';
-    // If cloud is epoch — no cloud data, local wins
-    if (!cloudTs || cloudTs === '1970-01-01T00:00:00+00:00') return 'local';
+  _hasLocalChanges: async function(tableName) {
+    try {
+      const count = await db.sync_queue
+        .where('status').equals('pending')
+        .filter(item => item.tableName === tableName)
+        .count();
+      return count > 0;
+    } catch (err) {
+      console.warn(`[Apex Sync] Failed to check local changes for ${tableName}:`, err);
+      return false;
+    }
+  },
 
-    const localTime = new Date(localTs).getTime();
-    const cloudTime = new Date(cloudTs).getTime();
+  /**
+   * _tableNeedsSync
+   * Core sync decision function — clock agnostic.
+   *
+   * Logic:
+   *   cloudUpdatedAt > lastSyncedAt → cloud has new data since our last sync → pull
+   *   hasPendingItems → we have local changes not yet pushed → push
+   *   both → push first (preserve local), then pull
+   *   neither → skip
+   *
+   * Returns: 'pull' | 'push' | 'both' | 'skip'
+   */
+  _tableNeedsSync: async function(tableName, cloudUpdatedAt, lastSyncedAt) {
+    const hasPending = await this._hasLocalChanges(tableName);
 
-    // 5 second tolerance — clocks can drift slightly
-    const diff = Math.abs(localTime - cloudTime);
-    if (diff < 5000) return 'equal';
+    // Cloud has data newer than our last sync
+    const cloudIsAhead = cloudUpdatedAt && lastSyncedAt
+      ? new Date(cloudUpdatedAt) > new Date(lastSyncedAt)
+      : cloudUpdatedAt !== null; // If never synced, cloud always wins
 
-    return localTime > cloudTime ? 'local' : 'cloud';
+    console.log(`[Apex Sync] "${tableName}": cloudUpdatedAt=${cloudUpdatedAt} lastSyncedAt=${lastSyncedAt} cloudIsAhead=${cloudIsAhead} hasPending=${hasPending}`);
+
+    if (cloudIsAhead && hasPending) return 'both';
+    if (cloudIsAhead) return 'pull';
+    if (hasPending) return 'push';
+    return 'skip';
   },
 
   // ============================================
@@ -140,8 +169,6 @@ const syncService = {
           synced: true,
           filePath: response.data.file_path,
         });
-        await db.books.update(dexieBookId, { last_modified: new Date().toISOString() });
-        await this._setLocalTableTimestamp('books');
         console.log('Book uploaded to Supabase:', response.data.id);
         return response.data;
       }
@@ -201,235 +228,206 @@ const syncService = {
   // ============================================
   pullAllUserData: async function () {
     try {
-      console.log('[Apex Sync] Starting smart pull — fetching table timestamps...');
+      console.log('[Apex Sync] Starting clock-agnostic sync...');
 
-      // Step 1: Get cloud timestamps for all Category A tables
+      // Step 1: Get cloud timestamps AND server time from backend
+      // Server time is the anchor — we never use client clock
       let cloudTimestamps = {};
+      let serverTime = null;
+
       try {
         const tsResponse = await apiClient.get('/api/sync/timestamps');
         cloudTimestamps = tsResponse.data;
-        console.log('[Apex Sync] Cloud timestamps:', cloudTimestamps);
+        serverTime = tsResponse.data.server_time;
+        console.log('[Apex Sync] Cloud timestamps received:', cloudTimestamps);
+        console.log('[Apex Sync] Server time anchor:', serverTime);
       } catch (err) {
-        console.error('[Apex Sync] Failed to fetch timestamps — falling back to full pull:', err);
-        // Fall back to pulling all tables if timestamp endpoint fails
+        console.error('[Apex Sync] Failed to fetch timestamps — doing full pull:', err);
+        // Fallback: pull everything if timestamp endpoint fails
         cloudTimestamps = {
           books: new Date().toISOString(),
           reading_progress: new Date().toISOString(),
           highlights: new Date().toISOString(),
           bookmarks: new Date().toISOString(),
           notes: new Date().toISOString(),
+          server_time: new Date().toISOString(),
         };
+        serverTime = new Date().toISOString();
       }
 
-      // Step 2: Compare timestamps per table and decide action
+      // Step 2: Get last successful sync timestamp (server-generated, stored locally)
+      const lastSyncedAt = await this._getLastSyncedAt();
+      console.log('[Apex Sync] Last synced at:', lastSyncedAt || 'never (first sync on this device)');
+
+      // Step 3: Decide action per table — no client clock involved
       const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'notes'];
       const decisions = {};
 
       for (const table of tables) {
-        const localTs = await this._getLocalTableTimestamp(table);
-        const cloudTs = cloudTimestamps[table];
-        const decision = this._compareTimestamps(localTs, cloudTs);
-        decisions[table] = decision;
-        console.log(`[Apex Sync] Table "${table}": local=${localTs || 'never'} cloud=${cloudTs} → ${decision}`);
+        decisions[table] = await this._tableNeedsSync(
+          table,
+          cloudTimestamps[table],
+          lastSyncedAt
+        );
       }
 
-      // Step 3: Fetch only tables where cloud is newer
-      const tablesToPull = tables.filter(t => decisions[t] === 'cloud');
-      console.log('[Apex Sync] Tables to pull from cloud:', tablesToPull);
+      console.log('[Apex Sync] Sync decisions:', decisions);
 
-      let pulledData = {};
-      if (tablesToPull.length > 0) {
-        // Fetch full data only for tables that need pulling
-        // Use pull/all but filter response to only process needed tables
+      // Step 4: Push local changes FIRST for tables that need it
+      // This preserves local work before cloud data overwrites anything
+      const tablesNeedingPush = tables.filter(t =>
+        decisions[t] === 'push' || decisions[t] === 'both'
+      );
+
+      if (tablesNeedingPush.length > 0) {
+        console.log('[Apex Sync] Pushing local changes first for:', tablesNeedingPush);
+        await this.pushSync();
+      }
+
+      // Step 5: Pull tables that need it from cloud
+      const tablesToPull = tables.filter(t =>
+        decisions[t] === 'pull' || decisions[t] === 'both'
+      );
+
+      if (tablesToPull.length === 0 && !decisions.ai_conversations) {
+        console.log('[Apex Sync] All tables in sync — nothing to pull');
+      } else {
+        // Fetch full data from Supabase
         const response = await apiClient.get('/api/sync/pull/all');
         if (!response.data) return;
 
-        pulledData = response.data;
+        const pulledData = response.data;
 
         // Store user in auth store
         if (pulledData.user) {
-          const authStore = useAuthStore.getState();
-          authStore.setUser(pulledData.user);
+          useAuthStore.getState().setUser(pulledData.user);
         }
-      }
 
-      // Step 4: Process each table according to its decision
+        // ── BOOKS ──
+        if (tablesToPull.includes('books') && pulledData.books?.length > 0) {
+          console.log('[Apex Sync] Pulling books:', pulledData.books.length);
+          const existingBooks = await db.books.toArray();
 
-      // ── BOOKS ──
-      if (decisions.books === 'cloud' && pulledData.books?.length > 0) {
-        console.log('[Apex Sync] Pulling books from cloud:', pulledData.books.length);
-        const existingBooks = await db.books.toArray();
-
-        // Preserve file blobs — they never come from Supabase
-        const existingBlobMap = {};
-        for (const eb of existingBooks) {
-          if (eb.fileBlob) {
-            if (eb.supabaseId) existingBlobMap[eb.supabaseId] = eb.fileBlob;
-            if (eb.local_id) existingBlobMap[eb.local_id] = eb.fileBlob;
+          // Always preserve file blobs — they never come from Supabase
+          const existingBlobMap = {};
+          for (const eb of existingBooks) {
+            if (eb.fileBlob) {
+              if (eb.supabaseId) existingBlobMap[eb.supabaseId] = eb.fileBlob;
+              if (eb.local_id) existingBlobMap[eb.local_id] = eb.fileBlob;
+            }
           }
+
+          await db.books.clear();
+          const mappedBooks = pulledData.books.map(b => {
+            const mapped = {
+              ...mapSnakeToCamel(b),
+              supabaseId: b.id,
+              synced: true,
+            };
+            delete mapped.id;
+            if (existingBlobMap[b.id]) mapped.fileBlob = existingBlobMap[b.id];
+            else if (existingBlobMap[b.local_id]) mapped.fileBlob = existingBlobMap[b.local_id];
+            return mapped;
+          });
+
+          const newDexieIds = await db.books.bulkAdd(mappedBooks, { allKeys: true });
+          for (const newId of newDexieIds) {
+            await db.books.update(newId, { local_id: newId.toString() });
+          }
+          console.log('[Apex Sync] Books pulled and stored:', newDexieIds.length);
         }
 
-        await db.books.clear();
-        const mappedBooks = pulledData.books.map(b => {
-          const mapped = {
+        // ── READING PROGRESS ──
+        if (tablesToPull.includes('reading_progress') && pulledData.reading_progress?.length > 0) {
+          console.log('[Apex Sync] Pulling reading_progress:', pulledData.reading_progress.length);
+          await db.reading_progress.clear();
+          const mapped = pulledData.reading_progress.map(r => ({
+            ...mapSnakeToCamel(r),
+            supabaseId: r.id,
+            synced: true,
+          }));
+          for (const m of mapped) { delete m.id; }
+          await db.reading_progress.bulkAdd(mapped);
+        }
+
+        // ── HIGHLIGHTS ──
+        if (tablesToPull.includes('highlights') && pulledData.highlights?.length > 0) {
+          console.log('[Apex Sync] Pulling highlights:', pulledData.highlights.length);
+          await db.highlights.clear();
+          const mapped = pulledData.highlights.map(h => ({
+            ...mapSnakeToCamel(h),
+            supabaseId: h.id,
+            synced: true,
+          }));
+          for (const m of mapped) { delete m.id; }
+          await db.highlights.bulkAdd(mapped);
+        }
+
+        // ── BOOKMARKS ──
+        if (tablesToPull.includes('bookmarks') && pulledData.bookmarks?.length > 0) {
+          console.log('[Apex Sync] Pulling bookmarks:', pulledData.bookmarks.length);
+          await db.bookmarks.clear();
+          const mapped = pulledData.bookmarks.map(b => ({
             ...mapSnakeToCamel(b),
             supabaseId: b.id,
             synced: true,
-            last_modified: b.updated_at || b.last_read_at,
-          };
-          delete mapped.id;
-
-          // Restore blob
-          if (existingBlobMap[b.id]) mapped.fileBlob = existingBlobMap[b.id];
-          else if (existingBlobMap[b.local_id]) mapped.fileBlob = existingBlobMap[b.local_id];
-
-          return mapped;
-        });
-
-        const newDexieIds = await db.books.bulkAdd(mappedBooks, { allKeys: true });
-
-        // Write new Dexie integer IDs back as local_id
-        for (const newId of newDexieIds) {
-          await db.books.update(newId, { local_id: newId.toString() });
+          }));
+          for (const m of mapped) { delete m.id; }
+          await db.bookmarks.bulkAdd(mapped);
         }
 
-        await this._setLocalTableTimestamp('books');
-        console.log('[Apex Sync] Books pulled and stored:', newDexieIds.length);
-
-      } else if (decisions.books === 'equal') {
-        console.log('[Apex Sync] Books — in sync, skipping');
-      } else if (decisions.books === 'local') {
-        console.log('[Apex Sync] Books — local is newer, pushSync will handle');
-      }
-
-      // ── READING PROGRESS ──
-      if (decisions.reading_progress === 'cloud' && pulledData.reading_progress?.length > 0) {
-        console.log('[Apex Sync] Pulling reading_progress from cloud:', pulledData.reading_progress.length);
-        await db.reading_progress.clear();
-        const mapped = pulledData.reading_progress.map(r => ({
-          ...mapSnakeToCamel(r),
-          supabaseId: r.id,
-          synced: true,
-          last_modified: r.updated_at || r.last_read_at,
-        }));
-        for (const m of mapped) { delete m.id; }
-        await db.reading_progress.bulkAdd(mapped);
-        await this._setLocalTableTimestamp('reading_progress');
-        console.log('[Apex Sync] Reading progress pulled:', mapped.length);
-
-      } else if (decisions.reading_progress === 'equal') {
-        console.log('[Apex Sync] Reading progress — in sync, skipping');
-      } else if (decisions.reading_progress === 'local') {
-        console.log('[Apex Sync] Reading progress — local is newer, pushSync will handle');
-      }
-
-      // ── HIGHLIGHTS ──
-      if (decisions.highlights === 'cloud' && pulledData.highlights?.length > 0) {
-        console.log('[Apex Sync] Pulling highlights from cloud:', pulledData.highlights.length);
-        await db.highlights.clear();
-        const mapped = pulledData.highlights.map(h => ({
-          ...mapSnakeToCamel(h),
-          supabaseId: h.id,
-          synced: true,
-          last_modified: h.updated_at,
-        }));
-        for (const m of mapped) { delete m.id; }
-        await db.highlights.bulkAdd(mapped);
-        await this._setLocalTableTimestamp('highlights');
-        console.log('[Apex Sync] Highlights pulled:', mapped.length);
-
-      } else if (decisions.highlights === 'equal') {
-        console.log('[Apex Sync] Highlights — in sync, skipping');
-      } else if (decisions.highlights === 'local') {
-        console.log('[Apex Sync] Highlights — local is newer, pushSync will handle');
-      }
-
-      // ── BOOKMARKS ──
-      if (decisions.bookmarks === 'cloud' && pulledData.bookmarks?.length > 0) {
-        console.log('[Apex Sync] Pulling bookmarks from cloud:', pulledData.bookmarks.length);
-        await db.bookmarks.clear();
-        const mapped = pulledData.bookmarks.map(b => ({
-          ...mapSnakeToCamel(b),
-          supabaseId: b.id,
-          synced: true,
-          last_modified: b.updated_at || b.created_at,
-        }));
-        for (const m of mapped) { delete m.id; }
-        await db.bookmarks.bulkAdd(mapped);
-        await this._setLocalTableTimestamp('bookmarks');
-        console.log('[Apex Sync] Bookmarks pulled:', mapped.length);
-
-      } else if (decisions.bookmarks === 'equal') {
-        console.log('[Apex Sync] Bookmarks — in sync, skipping');
-      } else if (decisions.bookmarks === 'local') {
-        console.log('[Apex Sync] Bookmarks — local is newer, pushSync will handle');
-      }
-
-      // ── NOTES ──
-      if (decisions.notes === 'cloud' && pulledData.notes?.length > 0) {
-        console.log('[Apex Sync] Pulling notes from cloud:', pulledData.notes.length);
-        await db.notes.clear();
-        const mapped = pulledData.notes.map(n => ({
-          ...mapSnakeToCamel(n),
-          supabaseId: n.id,
-          synced: true,
-          last_modified: n.updated_at,
-        }));
-        for (const m of mapped) { delete m.id; }
-        await db.notes.bulkAdd(mapped);
-        await this._setLocalTableTimestamp('notes');
-        console.log('[Apex Sync] Notes pulled:', mapped.length);
-
-      } else if (decisions.notes === 'equal') {
-        console.log('[Apex Sync] Notes — in sync, skipping');
-      } else if (decisions.notes === 'local') {
-        console.log('[Apex Sync] Notes — local is newer, pushSync will handle');
-      }
-
-      // ── AI CONVERSATIONS (Category B — always pull, no conflict resolution) ──
-      if (pulledData.ai_conversations?.length > 0) {
-        await clearAllChats();
-
-        const bookTitles = {};
-        const localBooks = await db.books.toArray();
-        for (const b of localBooks) {
-          const supabaseId = b.supabaseId || (b.synced ? b.id?.toString() : null);
-          if (supabaseId) bookTitles[supabaseId] = b.title;
+        // ── NOTES ──
+        if (tablesToPull.includes('notes') && pulledData.notes?.length > 0) {
+          console.log('[Apex Sync] Pulling notes:', pulledData.notes.length);
+          await db.notes.clear();
+          const mapped = pulledData.notes.map(n => ({
+            ...mapSnakeToCamel(n),
+            supabaseId: n.id,
+            synced: true,
+          }));
+          for (const m of mapped) { delete m.id; }
+          await db.notes.bulkAdd(mapped);
         }
 
-        for (const row of pulledData.ai_conversations) {
-          const timeMs = new Date(row.created_at).getTime();
-          const groupId = row.chat_type === 'general' ? 'general' : row.book_id;
-          if (!groupId) continue;
-
-          const title = row.query_text
-            ? (row.query_text.slice(0, 40) + (row.query_text.length > 40 ? '...' : ''))
-            : 'Sync Chat';
-          const scope = groupId === 'general' ? 'general' : (bookTitles[groupId] || 'Unknown Book');
-
-          await saveChat({
-            id: timeMs,
-            title,
-            scope,
-            updatedAt: new Date(timeMs).toISOString(),
-            messages: [
-              { id: timeMs, role: 'user', content: row.query_text },
-              { id: timeMs + 1, role: 'ai', content: row.ai_response }
-            ]
-          });
+        // ── AI CONVERSATIONS (Category B — always pull, no conflict resolution) ──
+        if (pulledData.ai_conversations?.length > 0) {
+          await clearAllChats();
+          const bookTitles = {};
+          const localBooks = await db.books.toArray();
+          for (const b of localBooks) {
+            const supabaseId = b.supabaseId || (b.synced ? b.id?.toString() : null);
+            if (supabaseId) bookTitles[supabaseId] = b.title;
+          }
+          for (const row of pulledData.ai_conversations) {
+            const timeMs = new Date(row.created_at).getTime();
+            const groupId = row.chat_type === 'general' ? 'general' : row.book_id;
+            if (!groupId) continue;
+            const title = row.query_text
+              ? (row.query_text.slice(0, 40) + (row.query_text.length > 40 ? '...' : ''))
+              : 'Sync Chat';
+            const scope = groupId === 'general' ? 'general' : (bookTitles[groupId] || 'Unknown Book');
+            await saveChat({
+              id: timeMs,
+              title,
+              scope,
+              updatedAt: new Date(timeMs).toISOString(),
+              messages: [
+                { id: timeMs, role: 'user', content: row.query_text },
+                { id: timeMs + 1, role: 'ai', content: row.ai_response }
+              ]
+            });
+          }
         }
       }
 
-      // Step 5: Update global last_synced_at
-      const setting = await db.app_settings.where('key').equals('last_synced_at').first();
-      if (setting && setting.id !== undefined) {
-        await db.app_settings.update(setting.id, { value: new Date().toISOString() });
-      } else {
-        if (setting) await db.app_settings.where('key').equals('last_synced_at').delete();
-        await db.app_settings.add({ key: 'last_synced_at', value: new Date().toISOString() });
+      // Step 6: Store SERVER time as last_synced_at anchor
+      // CRITICAL — use serverTime from the response, NEVER new Date()
+      // This is what makes the algorithm clock-agnostic
+      if (serverTime) {
+        await this._setLastSyncedAt(serverTime);
       }
 
-      console.log('[Apex Sync] Smart pull complete. Decisions:', decisions);
+      console.log('[Apex Sync] Sync complete. Decisions were:', decisions);
 
     } catch (error) {
       console.error('[Apex Sync] pullAllUserData failed:', error);
@@ -456,12 +454,10 @@ const syncService = {
       updatedAt: now,
       synced: false,
       supabaseId: null,
-      last_modified: now,
     };
 
     // Step 1: Save to Dexie immediately
     const dexieId = await db.highlights.add(dexieRecord);
-    await this._setLocalTableTimestamp('highlights');
 
     // Step 2: If online, resolve the Supabase book UUID and save directly
     if (navigator.onLine) {
@@ -558,7 +554,6 @@ const syncService = {
       progressPercentage: progressData.progress_percentage,
       lastReadAt: now,
       synced: false,
-      last_modified: now,
     };
 
     if (existing) {
@@ -567,7 +562,6 @@ const syncService = {
       dexieData.local_id = localId;
       await db.reading_progress.add(dexieData);
     }
-    await this._setLocalTableTimestamp('reading_progress');
 
     // If online, resolve UUID and save to Supabase
     // Check autoSaveProgress setting — skip cloud sync if disabled
@@ -643,11 +637,9 @@ const syncService = {
       createdAt: now,
       synced: false,
       supabaseId: null,
-      last_modified: now,
     };
 
     const dexieId = await db.bookmarks.add(dexieRecord);
-    await this._setLocalTableTimestamp('bookmarks');
 
     if (navigator.onLine) {
       const supabaseBookId = await this._resolveBookId(bookId);
@@ -721,12 +713,10 @@ const syncService = {
       updatedAt: now,
       synced: false,
       supabaseId: null,
-      last_modified: now,
     };
 
     // Step 1: Save to Dexie immediately
     const dexieId = await db.notes.add(dexieRecord);
-    await this._setLocalTableTimestamp('notes');
     console.log('[Apex] Note saved to Dexie:', dexieId);
 
     // Step 2: If online, resolve Supabase book UUID and save
@@ -784,7 +774,6 @@ const syncService = {
 
     // Update Dexie immediately
     await db.notes.update(dexieId, { text, updatedAt: now, synced: false });
-    await this._setLocalTableTimestamp('notes');
     console.log('[Apex] Note updated in Dexie:', dexieId);
 
     // If online and synced, update Supabase
