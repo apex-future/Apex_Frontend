@@ -39,6 +39,7 @@ function ReaderView() {
 
     const [fileUrl, setFileUrl] = useState(null);
     const [textContent, setTextContent] = useState("");
+    const [htmlContent, setHtmlContent] = useState("");
 
     // Responsive window size hook
     const [windowSize, setWindowSize] = useState({
@@ -58,6 +59,8 @@ function ReaderView() {
     // Find the book and determine type
     const book = useMemo(() => books.find(b => b.id.toString() === bookId), [books, bookId]);
     const isPdf = useMemo(() => book?.file?.type === 'application/pdf' || book?.file?.name.toLowerCase().endsWith('.pdf'), [book]);
+    const isDocx = useMemo(() => book?.file?.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || book?.file?.name.toLowerCase().endsWith('.docx'), [book]);
+    const isDoc = useMemo(() => book?.file?.type === 'application/msword' || book?.file?.name.toLowerCase().endsWith('.doc'), [book]);
 
     // --- Lifted PDF Controls State ---
     const [pageNumber, setPageNumber] = useState(book?.currentPage || 1);
@@ -544,6 +547,7 @@ function ReaderView() {
                 Promise.resolve().then(() => {
                     setFileUrl(url);
                     setTextContent("");
+                    setHtmlContent("");
                 });
                 return () => URL.revokeObjectURL(url);
             } else if (isTypeText) {
@@ -551,12 +555,32 @@ function ReaderView() {
                 reader.onload = (e) => {
                     setTextContent(e.target.result);
                     setFileUrl(null);
+                    setHtmlContent("");
                 };
                 reader.readAsText(file);
+            } else if (isDocx || isDoc) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const arrayBuffer = e.target.result;
+                    try {
+                        // Use mammoth from CDN for DOCX conversion
+                        const mammoth = await import('https://esm.sh/mammoth@1.8.0');
+                        const result = await mammoth.convertToHtml({ arrayBuffer });
+                        setHtmlContent(result.value);
+                        setTextContent("");
+                        setFileUrl(null);
+                    } catch (err) {
+                        console.error("Failed to convert docx:", err);
+                        // Fallback to text if possible
+                        const textResult = await mammoth.extractRawText({ arrayBuffer });
+                        setTextContent(textResult.value);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [bookId, book?.file, navigate]);
+    }, [bookId, book?.file, navigate, isDocx, isDoc]);
 
     // Loading Sequence Animation
     const [showMenuBriefly, setShowMenuBriefly] = useState(false);
@@ -826,7 +850,9 @@ function ReaderView() {
                                     transition: 'transform 0.2s ease-out'
                                 }}
                             >
-                                {textContent ? (
+                                {htmlContent ? (
+                                    <div className="docx-content animate-in fade-in duration-1000" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+                                ) : textContent ? (
                                     <div className="whitespace-pre-wrap animate-in fade-in duration-1000">{textContent}</div>
                                 ) : book?.file ? (
                                     <div className="text-center py-40 flex flex-col items-center">

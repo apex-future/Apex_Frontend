@@ -15,8 +15,12 @@ export default function ImportPage() {
           const file = await fileHandle.getFile();
           const arrayBuffer = await file.arrayBuffer();
 
-          const title = file.name.replace(/\.(pdf|epub)$/i, '');
-          const fileType = file.type || (file.name.endsWith('.epub') ? 'application/epub+zip' : 'application/pdf');
+          const title = file.name.replace(/\.(pdf|epub|docx|doc)$/i, '');
+          const fileType = file.type || 
+            (file.name.endsWith('.epub') ? 'application/epub+zip' : 
+             file.name.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 
+             file.name.endsWith('.doc') ? 'application/msword' : 
+             'application/pdf');
 
           const bookId = await db.books.add({
             title,
