@@ -1,44 +1,63 @@
-import React, { useState } from 'react';
-import { Edit2, Bell, AlarmClock, Calendar, BookOpen, X, Trophy, Target, Type } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Edit2, Bell, AlarmClock, Calendar, BookOpen, X, Trophy, Target, Type, Trash2, Pause, Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import useStudyStore from '../../store/studyStore';
 import useSpaceStore from '../../store/spaceStore';
 import useQuizStore from '../../store/quizStore';
 import { useNavigate } from 'react-router-dom';
 
 const ExamReminder = () => {
-    const { examDate, setExamDate, examName, setExamName } = useStudyStore();
+    const { exams, examDate, setExamDate, examName, setExamName, addExam, updateExam, deleteExam, togglePauseExam } = useStudyStore();
     const { spaces, updateSpace } = useSpaceStore();
     const navigate = useNavigate();
     
+    // Combine multi exams array with legacy fallback
+    const examsList = exams?.length > 0 ? exams : (examDate ? [{ id: 'legacy', name: examName, date: examDate, isPaused: false }] : []);
+    
     // States
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const activeExam = examsList[currentIndex] || null;
     const [isEditing, setIsEditing] = useState(false);
-    const [showDetails, setShowDetails] = useState(false);
     
     // Form temps
-    const [tempDate, setTempDate] = useState(examDate || '');
-    const [tempName, setTempName] = useState(examName || '');
+    const [tempDate, setTempDate] = useState('');
+    const [tempName, setTempName] = useState('');
+    
+    useEffect(() => {
+        if (activeExam) {
+            setTempDate(activeExam.date || '');
+            setTempName(activeExam.name || '');
+        }
+    }, [activeExam]);
     
     const customSpaces = spaces.filter(s => !s.isSystem);
-    const linkedSpace = customSpaces.find(s => s.examDate === examDate) || customSpaces.find(s => s.isLinkedToExam); // Fallback logic based on previous states
+    const linkedSpace = customSpaces.find(s => s.examDate === activeExam?.date) || customSpaces.find(s => s.isLinkedToExam);
     
     const { getAggregatedStatsForSpace } = useQuizStore();
     const linkedSpaceStats = linkedSpace ? getAggregatedStatsForSpace(linkedSpace.id) : null;
 
     const calculateDaysLeft = () => {
-        if (!examDate) return null;
-        const diff = new Date(examDate) - new Date();
-        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-        return days;
+        if (!activeExam?.date) return null;
+        const diff = new Date(activeExam.date) - new Date();
+        return Math.ceil(diff / (1000 * 60 * 60 * 24));
     };
 
     const daysLeft = calculateDaysLeft();
 
     const [selectedSpaceId, setSelectedSpaceId] = useState(linkedSpace?.id || '');
 
+    const nextExam = (e) => { e.stopPropagation(); setCurrentIndex(s => (s + 1) % examsList.length); };
+    const prevExam = (e) => { e.stopPropagation(); setCurrentIndex(s => (s - 1 + examsList.length) % examsList.length); };
+
     const handleSave = () => {
-        setExamDate(tempDate);
-        setExamName(tempName);
-        // Link to space by setting its examDate or flag
+        if (activeExam?.id === 'legacy') {
+            setExamDate(tempDate);
+            setExamName(tempName);
+        } else if (activeExam?.id) {
+            updateExam(activeExam.id, { name: tempName, date: tempDate });
+        } else {
+            addExam({ name: tempName, date: tempDate });
+        }
+        
         customSpaces.forEach(s => {
           if (s.id === selectedSpaceId) {
              updateSpace(s.id, { examDate: tempDate, isLinkedToExam: true });
@@ -50,11 +69,14 @@ const ExamReminder = () => {
     };
 
     const CardContainer = ({ children, onClick, className = '' }) => (
-        <div className="w-full">
-            <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>{examName || 'Exam Timer'}</h2>
+        <div className="w-full relative">
+            <div className="flex justify-between items-center mb-4 px-2">
+                <h2 className='text-lg sm:text-xl font-semibold text-text-primary tracking-tight'>{activeExam?.name || 'Exam Timer'}</h2>
+                {examsList.length > 1 && <span className="text-xs font-bold text-text-tertiary">{currentIndex + 1} of {examsList.length}</span>}
+            </div>
             <div 
                 onClick={onClick}
-                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex items-center cursor-pointer ${className}`}
+                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex items-center cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-60 grayscale-[0.5]' : ''}`}
             >
                 {children}
             </div>
@@ -64,7 +86,7 @@ const ExamReminder = () => {
     // ==========================================
     // VIEW 1: No Exam Set
     // ==========================================
-    if (!examDate && !isEditing) {
+    if (!activeExam && !isEditing) {
         return (
             <CardContainer onClick={() => setIsEditing(true)} className="border-dashed">
                 <div className="absolute bottom-2 -left-2 size-44 text-accent-primary/10 rotate-12 group-hover:rotate-0 group-hover:text-accent-primary/20 transition-all duration-1000 pointer-events-none">
@@ -84,24 +106,49 @@ const ExamReminder = () => {
     }
 
     // ==========================================
-    // VIEW 2: Dashboard Widget (Motivational)
+    // VIEW 2: Dashboard Widget (with Carousel & Actions)
     // ==========================================
-    // Generate motivational message
     let motivationalMessage = `Keep your momentum going! You have ${daysLeft} days left to prepare.`;
-    if (linkedSpace && linkedSpace.activitySummaries?.timeSpent > 0 && linkedSpaceStats) {
+    if (activeExam?.isPaused) {
+        motivationalMessage = `This exam reminder is paused. Resume when you're ready!`;
+    } else if (linkedSpace && linkedSpace.activitySummaries?.timeSpent > 0 && linkedSpaceStats) {
         motivationalMessage = `You've invested ${linkedSpace.activitySummaries.timeSpent} mins and scored an avg of ${linkedSpaceStats.averageScore}% on practice quizzes! Keep pushing, coach!`;
     } else if (linkedSpace && linkedSpace.activitySummaries?.timeSpent > 0) {
-        motivationalMessage = `You've invested ${linkedSpace.activitySummaries.timeSpent} mins preparing for ${examName || linkedSpace.name}. Keep pushing, coach!`;
+        motivationalMessage = `You've invested ${linkedSpace.activitySummaries.timeSpent} mins preparing for ${activeExam?.name || linkedSpace.name}. Keep pushing, coach!`;
     } else if (linkedSpace) {
-        motivationalMessage = `Your study space for ${examName || linkedSpace.name} is ready. Time to dive into those books!`;
+        motivationalMessage = `Your study space for ${activeExam?.name || linkedSpace.name} is ready. Time to dive into those books!`;
     }
 
     const unexpandedWidget = (
-        <CardContainer onClick={() => setShowDetails(true)} className="group cursor-pointer border-accent-primary/10 hover:border-accent-primary/30 active:scale-[0.98]">
-            {/* Background decoration */}
+        <CardContainer onClick={() => navigate('/exams')} className="group cursor-pointer border-accent-primary/10 hover:border-accent-primary/30 active:scale-[0.98]">
             <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 rounded-full -mr-16 -mt-16 blur-xl group-hover:bg-accent-primary/10 transition-all" />
             
-            <div className="flex items-center justify-between w-full relative z-10">
+            {/* Action Buttons Top Right (Visible on hover) */}
+            <div className="absolute top-4 right-4 z-30 flex gap-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full px-3 py-2 shadow-sm border border-border-default/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="hover:text-accent-primary text-text-tertiary transition-colors" title="Edit">
+                    <Edit2 size={16}/>
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); if (activeExam?.id && activeExam.id !== 'legacy') togglePauseExam(activeExam.id); }} className="hover:text-accent-primary text-text-tertiary transition-colors" title={activeExam?.isPaused ? "Resume" : "Pause"}>
+                    {activeExam?.isPaused ? <Play size={16}/> : <Pause size={16}/>}
+                </button>
+                <button onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if (activeExam?.id && activeExam.id !== 'legacy') { deleteExam(activeExam.id); setCurrentIndex(0); } 
+                    else { setExamDate(null); setExamName(''); } 
+                }} className="hover:text-red-500 text-text-tertiary transition-colors" title="Delete">
+                    <Trash2 size={16}/>
+                </button>
+            </div>
+
+            {/* Carousel Navigation Chevrons */}
+            {examsList.length > 1 && (
+                <>
+                   <button onClick={prevExam} className="absolute left-2 lg:left-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-black/5 dark:bg-white/5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-text-secondary transition-colors"><ChevronLeft size={24}/></button>
+                   <button onClick={nextExam} className="absolute right-2 lg:right-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-black/5 dark:bg-white/5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-text-secondary transition-colors"><ChevronRight size={24}/></button>
+                </>
+            )}
+
+            <div className="flex items-center justify-between w-full relative z-10 px-8 sm:px-12 md:px-16 lg:px-8">
                 <div className="flex-1 pr-4">
                      <div className="flex items-center gap-2 mb-2">
                         <Trophy size={18} className="text-accent-primary" />
@@ -121,9 +168,9 @@ const ExamReminder = () => {
                     <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-2">Days Left</span>
                     
                     <div className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
-                        daysLeft <= 7 ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-accent-primary/10 text-accent-primary border-accent-primary/20'
+                        activeExam?.isPaused ? 'bg-neutral-500/10 text-neutral-500 border-neutral-500/20' : daysLeft <= 7 ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-accent-primary/10 text-accent-primary border-accent-primary/20'
                     }`}>
-                        {daysLeft <= 0 ? 'Exam Day' : daysLeft <= 7 ? 'Urgent' : 'On Track'}
+                        {activeExam?.isPaused ? 'Paused' : daysLeft <= 0 ? 'Exam Day' : daysLeft <= 7 ? 'Urgent' : 'On Track'}
                     </div>
                 </div>
             </div>
@@ -131,13 +178,13 @@ const ExamReminder = () => {
     );
 
     // ==========================================
-    // MODAL RENDERS (Detail View & Edit View)
+    // MODAL RENDERS (Edit View)
     // ==========================================
     return (
         <>
             {!isEditing ? unexpandedWidget : (
                <div className="w-full">
-                  <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Exam Details</h2>
+                  <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Edit Exam Details</h2>
                   <div className="bg-card-glass backdrop-blur-xl border border-border-default p-6 rounded-3xl flex flex-col gap-4">
                       <div>
                           <label className="text-xs font-bold text-text-tertiary uppercase block mb-1">Exam Name</label>
@@ -164,84 +211,14 @@ const ExamReminder = () => {
                           </div>
                       </div>
                       <div className="flex justify-end gap-3 mt-4">
-                          <button onClick={() => { setIsEditing(false); setShowDetails(false); }} className="px-5 py-2 font-semibold text-text-secondary bg-neutral-100 dark:bg-zinc-800 rounded-xl">Cancel</button>
+                          <button onClick={() => setIsEditing(false)} className="px-5 py-2 font-semibold text-text-secondary bg-neutral-100 dark:bg-zinc-800 rounded-xl">Cancel</button>
                           <button onClick={handleSave} disabled={!tempDate} className="px-5 py-2 font-bold text-white bg-accent-primary rounded-xl disabled:opacity-50">Save Exam</button>
                       </div>
                   </div>
                </div>
-            )}
-
-            {/* DETAIL MODAL OVERLAY */}
-            {showDetails && !isEditing && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowDetails(false)}>
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
-                         <div className="p-6 border-b border-border-default flex justify-between items-center bg-accent-primary/5">
-                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-accent-primary/10 rounded-xl text-accent-primary">
-                                    <Target size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-text-primary tracking-tight">{examName || 'Upcoming Exam'}</h3>
-                                    <p className="text-sm font-semibold text-text-tertiary">{new Date(examDate).toLocaleDateString()}</p>
-                                </div>
-                             </div>
-                             <button onClick={() => setShowDetails(false)} className="p-2 text-text-secondary hover:bg-neutral-100 dark:hover:bg-zinc-800 rounded-full transition-colors"><X size={20}/></button>
-                         </div>
-
-                         <div className="p-6 flex flex-col gap-6">
-                            <div className="flex justify-between items-center p-4 bg-neutral-50 dark:bg-zinc-800/50 rounded-2xl border border-border-default">
-                               <div className="flex flex-col">
-                                   <span className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-1">Countdown</span>
-                                   <span className="text-3xl font-black text-text-primary">{daysLeft > 0 ? daysLeft : 0} <span className="text-base text-text-tertiary font-bold">days</span></span>
-                               </div>
-                               <div className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider ${daysLeft <= 7 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'}`}>
-                                   {daysLeft <= 0 ? 'Exam Day' : daysLeft <= 7 ? 'Urgent' : 'On Track'}
-                               </div>
-                            </div>
-
-                            {linkedSpace ? (
-                                <div>
-                                    <h4 className="text-sm font-bold text-text-primary mb-3">Linked Study Space</h4>
-                                    <div className="border border-border-default rounded-2xl p-4 flex flex-col gap-3">
-                                        <div className="flex justify-between items-center">
-                                            <span className="font-bold text-lg text-text-primary">{linkedSpace.name}</span>
-                                            <button onClick={() => navigate(`/space/${linkedSpace.id}`)} className="text-xs font-bold text-white bg-accent-primary px-3 py-1.5 rounded-lg hover:bg-accent-hover">Enter Space</button>
-                                        </div>
-                                        <div className="flex gap-4 border-t border-border-default pt-3 mt-1">
-                                            <div>
-                                                <span className="block text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Books</span>
-                                                <span className="font-bold text-text-primary">{linkedSpace.books?.length || 0}</span>
-                                            </div>
-                                            <div>
-                                                <span className="block text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Time Studied</span>
-                                                <span className="font-bold text-text-primary">{linkedSpace.activitySummaries?.timeSpent || 0}m</span>
-                                            </div>
-                                            <div>
-                                                <span className="block text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Avg Score</span>
-                                                <span className="font-bold text-text-primary">{linkedSpaceStats?.averageScore ? `${linkedSpaceStats.averageScore}%` : 'N/A'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="p-4 border border-border-default border-dashed rounded-2xl text-center">
-                                    <p className="text-sm text-text-tertiary italic mb-2">No study space linked to this exam.</p>
-                                    <button onClick={() => { setShowDetails(false); setIsEditing(true); }} className="text-xs font-bold text-accent-primary hover:underline">Link a Space now</button>
-                                </div>
-                            )}
-                         </div>
-
-                         <div className="p-4 bg-neutral-50 dark:bg-zinc-800/80 border-t border-border-default flex justify-end">
-                             <button onClick={() => { setShowDetails(false); setIsEditing(true); }} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-text-secondary hover:bg-neutral-200 dark:hover:bg-zinc-700 rounded-xl transition-colors">
-                                 <Edit2 size={16} /> Edit Configuration
-                             </button>
-                         </div>
-                    </div>
-                </div>
             )}
         </>
     );
 };
 
 export default ExamReminder;
-

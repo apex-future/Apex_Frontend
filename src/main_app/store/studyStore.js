@@ -15,6 +15,14 @@ const useStudyStore = create(
       examDate: null,
       examName: '',
 
+      // Multi-exam state
+      exams: [],
+
+      addExam: (exam) => set((state) => ({ exams: [...state.exams, { ...exam, id: crypto.randomUUID(), createdAt: new Date().toISOString(), isPaused: false }] })),
+      updateExam: (id, updates) => set((state) => ({ exams: state.exams.map(e => e.id === id ? { ...e, ...updates } : e) })),
+      deleteExam: (id) => set((state) => ({ exams: state.exams.filter(e => e.id !== id) })),
+      togglePauseExam: (id) => set((state) => ({ exams: state.exams.map(e => e.id === id ? { ...e, isPaused: !e.isPaused } : e) })),
+
       /**
        * getTodayString — returns today as 'YYYY-MM-DD'
        * Uses local date to avoid timezone issues
