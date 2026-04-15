@@ -26,13 +26,13 @@ const dictionaryService = {
     try {
       const cached = await db.dictionary_cache.get(cleanWord);
       if (cached && cached.definition) {
-        console.log(`Dictionary cache hit for "${cleanWord}"`);
+        if (import.meta.env.DEV) console.log(`Dictionary cache hit for "${cleanWord}"`);
         // Fire-and-forget: save to history
         this.saveToHistory(cleanWord, cached.definition, lookupType, bookId);
         return cached.definition;
       }
     } catch (err) {
-      console.warn('Dexie cache check failed:', err);
+      if (import.meta.env.DEV) console.warn('Dexie cache check failed:', err);
     }
 
     // Step 2: Check if online
@@ -62,7 +62,7 @@ const dictionaryService = {
           cachedAt: new Date().toISOString(),
         });
       } catch (cacheErr) {
-        console.warn('Failed to save to Dexie cache:', cacheErr);
+        if (import.meta.env.DEV) console.warn('Failed to save to Dexie cache:', cacheErr);
       }
 
       // Step 5: Fire-and-forget: save to history
@@ -100,7 +100,7 @@ const dictionaryService = {
 
     // Fire and forget — don't await
     apiClient.post('/api/dictionary/history', historyPayload).catch(err => {
-      console.warn('Failed to save dictionary history (non-critical):', err.message);
+      if (import.meta.env.DEV) console.warn('Failed to save dictionary history (non-critical):', err.message);
     });
   },
 
@@ -123,7 +123,7 @@ const dictionaryService = {
       const response = await apiClient.get('/api/dictionary/history/list', { params });
       return response.data || [];
     } catch (err) {
-      console.warn('Failed to fetch dictionary history:', err.message);
+      if (import.meta.env.DEV) console.warn('Failed to fetch dictionary history:', err.message);
       return [];
     }
   },

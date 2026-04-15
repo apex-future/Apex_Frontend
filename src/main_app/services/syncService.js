@@ -48,7 +48,7 @@ const syncService = {
         .first();
       return setting?.value || null;
     } catch (err) {
-      console.warn('[Apex Sync] Failed to read last_synced_at:', err);
+      if (import.meta.env.DEV) console.warn('[Apex Sync] Failed to read last_synced_at:', err);
       return null;
     }
   },
@@ -69,9 +69,9 @@ const syncService = {
       } else {
         await db.app_settings.add({ key: 'last_synced_at', value: serverTime });
       }
-      console.log('[Apex Sync] Last synced at updated to server time:', serverTime);
+      if (import.meta.env.DEV) console.log('[Apex Sync] Last synced at updated to server time:', serverTime);
     } catch (err) {
-      console.warn('[Apex Sync] Failed to set last_synced_at:', err);
+      if (import.meta.env.DEV) console.warn('[Apex Sync] Failed to set last_synced_at:', err);
     }
   },
 
@@ -89,7 +89,7 @@ const syncService = {
         .count();
       return count > 0;
     } catch (err) {
-      console.warn(`[Apex Sync] Failed to check local changes for ${tableName}:`, err);
+      if (import.meta.env.DEV) console.warn(`[Apex Sync] Failed to check local changes for ${tableName}:`, err);
       return false;
     }
   },
@@ -114,7 +114,7 @@ const syncService = {
       ? new Date(cloudUpdatedAt) > new Date(lastSyncedAt)
       : cloudUpdatedAt !== null; // If never synced, cloud always wins
 
-    console.log(`[Apex Sync] "${tableName}": cloudUpdatedAt=${cloudUpdatedAt} lastSyncedAt=${lastSyncedAt} cloudIsAhead=${cloudIsAhead} hasPending=${hasPending}`);
+    if (import.meta.env.DEV) console.log(`[Apex Sync] "${tableName}": cloudUpdatedAt=${cloudUpdatedAt} lastSyncedAt=${lastSyncedAt} cloudIsAhead=${cloudIsAhead} hasPending=${hasPending}`);
 
     if (cloudIsAhead && hasPending) return 'both';
     if (cloudIsAhead) return 'pull';
@@ -140,7 +140,7 @@ const syncService = {
         if (byLocalId?.supabaseId) return byLocalId.supabaseId;
       }
     } catch (err) {
-      console.warn('Failed to resolve book ID:', err);
+      if (import.meta.env.DEV) console.warn('Failed to resolve book ID:', err);
     }
     return null; // Book hasn't synced to Supabase yet
   },
@@ -169,11 +169,11 @@ const syncService = {
           synced: true,
           filePath: response.data.file_path,
         });
-        console.log('Book uploaded to Supabase:', response.data.id);
+        if (import.meta.env.DEV) console.log('Book uploaded to Supabase:', response.data.id);
         return response.data;
       }
     } catch (error) {
-      console.error('Failed to upload book to Supabase:', error);
+      if (import.meta.env.DEV) console.error('Failed to upload book to Supabase:', error);
     }
     return null;
   },
@@ -183,7 +183,7 @@ const syncService = {
   // ============================================
   downloadBookFile: async function (supabaseBookId, dexieBookId) {
     if (!navigator.onLine) {
-      console.error('[Apex Sync] Cannot download book file — device is offline');
+      if (import.meta.env.DEV) console.error('[Apex Sync] Cannot download book file — device is offline');
       return null;
     }
 
@@ -191,14 +191,14 @@ const syncService = {
       // 1. Get signed URL from backend
       const response = await apiClient.get(`/api/books/${supabaseBookId}/file`);
       if (!response.data || !response.data.url) {
-        console.error('[Apex Sync] Signed URL fetch returned empty for book:', supabaseBookId);
+        if (import.meta.env.DEV) console.error('[Apex Sync] Signed URL fetch returned empty for book:', supabaseBookId);
         return null;
       }
 
       // 2. Fetch the actual file blob
       const fileResponse = await fetch(response.data.url);
       if (!fileResponse.ok) {
-        console.error('[Apex Sync] File download failed with status', fileResponse.status, 'for book:', supabaseBookId);
+        if (import.meta.env.DEV) console.error('[Apex Sync] File download failed with status', fileResponse.status, 'for book:', supabaseBookId);
         return null;
       }
 
@@ -212,13 +212,13 @@ const syncService = {
       });
 
       if (updateCount === 0) {
-        console.error('[Apex Sync] Dexie update returned 0 — book record may not exist for id:', dexieBookId);
+        if (import.meta.env.DEV) console.error('[Apex Sync] Dexie update returned 0 — book record may not exist for id:', dexieBookId);
       } else {
-        console.log(`[Apex Sync] Downloaded and cached file for book ${supabaseBookId}`);
+        if (import.meta.env.DEV) console.log(`[Apex Sync] Downloaded and cached file for book ${supabaseBookId}`);
       }
       return blob;
     } catch (error) {
-      console.error('[Apex Sync] Failed to download book file:', { supabaseBookId, dexieBookId, error });
+      if (import.meta.env.DEV) console.error('[Apex Sync] Failed to download book file:', { supabaseBookId, dexieBookId, error });
     }
     return null;
   },
@@ -228,7 +228,7 @@ const syncService = {
   // ============================================
   pullAllUserData: async function () {
     try {
-      console.log('[Apex Sync] Starting clock-agnostic sync...');
+      if (import.meta.env.DEV) console.log('[Apex Sync] Starting clock-agnostic sync...');
 
       // Step 1: Get cloud timestamps AND server time from backend
       // Server time is the anchor — we never use client clock
@@ -239,10 +239,10 @@ const syncService = {
         const tsResponse = await apiClient.get('/api/sync/timestamps');
         cloudTimestamps = tsResponse.data;
         serverTime = tsResponse.data.server_time;
-        console.log('[Apex Sync] Cloud timestamps received:', cloudTimestamps);
-        console.log('[Apex Sync] Server time anchor:', serverTime);
+        if (import.meta.env.DEV) console.log('[Apex Sync] Cloud timestamps received:', cloudTimestamps);
+        if (import.meta.env.DEV) console.log('[Apex Sync] Server time anchor:', serverTime);
       } catch (err) {
-        console.error('[Apex Sync] Failed to fetch timestamps — doing full pull:', err);
+        if (import.meta.env.DEV) console.error('[Apex Sync] Failed to fetch timestamps — doing full pull:', err);
         // Fallback: pull everything if timestamp endpoint fails
         cloudTimestamps = {
           books: new Date().toISOString(),
@@ -257,7 +257,7 @@ const syncService = {
 
       // Step 2: Get last successful sync timestamp (server-generated, stored locally)
       const lastSyncedAt = await this._getLastSyncedAt();
-      console.log('[Apex Sync] Last synced at:', lastSyncedAt || 'never (first sync on this device)');
+      if (import.meta.env.DEV) console.log('[Apex Sync] Last synced at:', lastSyncedAt || 'never (first sync on this device)');
 
       // Step 3: Decide action per table — no client clock involved
       const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'notes'];
@@ -271,7 +271,7 @@ const syncService = {
         );
       }
 
-      console.log('[Apex Sync] Sync decisions:', decisions);
+      if (import.meta.env.DEV) console.log('[Apex Sync] Sync decisions:', decisions);
 
       // Step 4: Push local changes FIRST for tables that need it
       // This preserves local work before cloud data overwrites anything
@@ -280,7 +280,7 @@ const syncService = {
       );
 
       if (tablesNeedingPush.length > 0) {
-        console.log('[Apex Sync] Pushing local changes first for:', tablesNeedingPush);
+        if (import.meta.env.DEV) console.log('[Apex Sync] Pushing local changes first for:', tablesNeedingPush);
         await this.pushSync();
       }
 
@@ -290,7 +290,7 @@ const syncService = {
       );
 
       if (tablesToPull.length === 0 && !decisions.ai_conversations) {
-        console.log('[Apex Sync] All tables in sync — nothing to pull');
+        if (import.meta.env.DEV) console.log('[Apex Sync] All tables in sync — nothing to pull');
       } else {
         // Fetch full data from Supabase
         const response = await apiClient.get('/api/sync/pull/all');
@@ -305,7 +305,7 @@ const syncService = {
 
         // ── BOOKS ──
         if (tablesToPull.includes('books') && pulledData.books?.length > 0) {
-          console.log('[Apex Sync] Pulling books:', pulledData.books.length);
+          if (import.meta.env.DEV) console.log('[Apex Sync] Pulling books:', pulledData.books.length);
           const existingBooks = await db.books.toArray();
 
           // Always preserve file blobs — they never come from Supabase
@@ -334,12 +334,12 @@ const syncService = {
           for (const newId of newDexieIds) {
             await db.books.update(newId, { local_id: newId.toString() });
           }
-          console.log('[Apex Sync] Books pulled and stored:', newDexieIds.length);
+          if (import.meta.env.DEV) console.log('[Apex Sync] Books pulled and stored:', newDexieIds.length);
         }
 
         // ── READING PROGRESS ──
         if (tablesToPull.includes('reading_progress') && pulledData.reading_progress?.length > 0) {
-          console.log('[Apex Sync] Pulling reading_progress:', pulledData.reading_progress.length);
+          if (import.meta.env.DEV) console.log('[Apex Sync] Pulling reading_progress:', pulledData.reading_progress.length);
           await db.reading_progress.clear();
           const mapped = pulledData.reading_progress.map(r => ({
             ...mapSnakeToCamel(r),
@@ -352,7 +352,7 @@ const syncService = {
 
         // ── HIGHLIGHTS ──
         if (tablesToPull.includes('highlights') && pulledData.highlights?.length > 0) {
-          console.log('[Apex Sync] Pulling highlights:', pulledData.highlights.length);
+          if (import.meta.env.DEV) console.log('[Apex Sync] Pulling highlights:', pulledData.highlights.length);
           await db.highlights.clear();
           const mapped = pulledData.highlights.map(h => ({
             ...mapSnakeToCamel(h),
@@ -365,7 +365,7 @@ const syncService = {
 
         // ── BOOKMARKS ──
         if (tablesToPull.includes('bookmarks') && pulledData.bookmarks?.length > 0) {
-          console.log('[Apex Sync] Pulling bookmarks:', pulledData.bookmarks.length);
+          if (import.meta.env.DEV) console.log('[Apex Sync] Pulling bookmarks:', pulledData.bookmarks.length);
           await db.bookmarks.clear();
           const mapped = pulledData.bookmarks.map(b => ({
             ...mapSnakeToCamel(b),
@@ -378,7 +378,7 @@ const syncService = {
 
         // ── NOTES ──
         if (tablesToPull.includes('notes') && pulledData.notes?.length > 0) {
-          console.log('[Apex Sync] Pulling notes:', pulledData.notes.length);
+          if (import.meta.env.DEV) console.log('[Apex Sync] Pulling notes:', pulledData.notes.length);
           await db.notes.clear();
           const mapped = pulledData.notes.map(n => ({
             ...mapSnakeToCamel(n),
@@ -427,10 +427,10 @@ const syncService = {
         await this._setLastSyncedAt(serverTime);
       }
 
-      console.log('[Apex Sync] Sync complete. Decisions were:', decisions);
+      if (import.meta.env.DEV) console.log('[Apex Sync] Sync complete. Decisions were:', decisions);
 
     } catch (error) {
-      console.error('[Apex Sync] pullAllUserData failed:', error);
+      if (import.meta.env.DEV) console.error('[Apex Sync] pullAllUserData failed:', error);
       throw error;
     }
   },
@@ -479,7 +479,7 @@ const syncService = {
           this._triggerDebouncedFlush();
           return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
         } catch (error) {
-          console.error('Failed to save highlight to Supabase:', error);
+          if (import.meta.env.DEV) console.error('Failed to save highlight to Supabase:', error);
           await this._queueForSync('upload', 'highlights', localId, {
             book_id: supabaseBookId,
             highlighted_text: dexieRecord.highlightedText,
@@ -491,7 +491,7 @@ const syncService = {
         }
       } else {
         // Book hasn't synced yet — queue for later
-        console.warn('Book not synced to Supabase yet, queuing highlight');
+        if (import.meta.env.DEV) console.warn('Book not synced to Supabase yet, queuing highlight');
         await this._queueForSync('upload', 'highlights', localId, {
           _dexie_book_id: bookId, // Will need to resolve later
           highlighted_text: dexieRecord.highlightedText,
@@ -520,7 +520,7 @@ const syncService = {
       try {
         await apiClient.put(`/api/highlights/${supabaseId}`, updateData);
       } catch (error) {
-        console.error('Failed to update highlight on Supabase:', error);
+        if (import.meta.env.DEV) console.error('Failed to update highlight on Supabase:', error);
       }
     }
   },
@@ -533,7 +533,7 @@ const syncService = {
       try {
         await apiClient.delete(`/api/highlights/${supabaseId}`);
       } catch (error) {
-        console.error('Failed to delete highlight from Supabase:', error);
+        if (import.meta.env.DEV) console.error('Failed to delete highlight from Supabase:', error);
       }
     }
   },
@@ -567,7 +567,7 @@ const syncService = {
     // Check autoSaveProgress setting — skip cloud sync if disabled
     const { autoSaveProgress } = useSettingsStore.getState();
     if (!autoSaveProgress) {
-      console.log('[Apex Sync] autoSaveProgress disabled — skipping Supabase sync for progress');
+      if (import.meta.env.DEV) console.log('[Apex Sync] autoSaveProgress disabled — skipping Supabase sync for progress');
       return;
     }
     if (navigator.onLine) {
@@ -590,7 +590,7 @@ const syncService = {
           }
           this._triggerDebouncedFlush();
         } catch (error) {
-          console.error('Failed to save progress to Supabase:', error);
+          if (import.meta.env.DEV) console.error('Failed to save progress to Supabase:', error);
           await this._queueForSync('upload', 'reading_progress', existing?.local_id || localId, {
             book_id: supabaseBookId,
             current_page: progressData.current_page,
@@ -657,7 +657,7 @@ const syncService = {
           this._triggerDebouncedFlush();
           return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
         } catch (error) {
-          console.error('Failed to save bookmark to Supabase:', error);
+          if (import.meta.env.DEV) console.error('Failed to save bookmark to Supabase:', error);
           await this._queueForSync('upload', 'bookmarks', localId, {
             book_id: supabaseBookId,
             page_number: dexieRecord.pageNumber,
@@ -690,7 +690,7 @@ const syncService = {
       try {
         await apiClient.delete(`/api/bookmarks/${supabaseId}`);
       } catch (error) {
-        console.error('Failed to delete bookmark from Supabase:', error);
+        if (import.meta.env.DEV) console.error('Failed to delete bookmark from Supabase:', error);
       }
     }
   },
@@ -717,7 +717,7 @@ const syncService = {
 
     // Step 1: Save to Dexie immediately
     const dexieId = await db.notes.add(dexieRecord);
-    console.log('[Apex] Note saved to Dexie:', dexieId);
+    if (import.meta.env.DEV) console.log('[Apex] Note saved to Dexie:', dexieId);
 
     // Step 2: If online, resolve Supabase book UUID and save
     if (navigator.onLine) {
@@ -734,10 +734,10 @@ const syncService = {
             supabaseId: response.data.id,
             synced: true,
           });
-          console.log('[Apex] Note saved to Supabase:', response.data.id);
+          if (import.meta.env.DEV) console.log('[Apex] Note saved to Supabase:', response.data.id);
           return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
         } catch (err) {
-          console.error('[Apex] Failed to save note to Supabase:', err);
+          if (import.meta.env.DEV) console.error('[Apex] Failed to save note to Supabase:', err);
           await this._queueForSync('upload', 'notes', localId, {
             book_id: supabaseBookId,
             text: dexieRecord.text,
@@ -747,7 +747,7 @@ const syncService = {
         }
       } else {
         // Book not synced yet — queue with dexie book id for later resolution
-        console.warn('[Apex] Book not synced yet — queuing note');
+        if (import.meta.env.DEV) console.warn('[Apex] Book not synced yet — queuing note');
         await this._queueForSync('upload', 'notes', localId, {
           _dexie_book_id: bookId,
           text: dexieRecord.text,
@@ -757,7 +757,7 @@ const syncService = {
       }
     } else {
       // Offline — queue for later
-      console.log('[Apex] Offline — note queued for sync');
+      if (import.meta.env.DEV) console.log('[Apex] Offline — note queued for sync');
       await this._queueForSync('upload', 'notes', localId, {
         _dexie_book_id: bookId,
         text: dexieRecord.text,
@@ -774,16 +774,16 @@ const syncService = {
 
     // Update Dexie immediately
     await db.notes.update(dexieId, { text, updatedAt: now, synced: false });
-    console.log('[Apex] Note updated in Dexie:', dexieId);
+    if (import.meta.env.DEV) console.log('[Apex] Note updated in Dexie:', dexieId);
 
     // If online and synced, update Supabase
     if (navigator.onLine && supabaseId) {
       try {
         await apiClient.put(`/api/notes/${supabaseId}`, { text, updated_at: now });
         await db.notes.update(dexieId, { synced: true });
-        console.log('[Apex] Note updated in Supabase:', supabaseId);
+        if (import.meta.env.DEV) console.log('[Apex] Note updated in Supabase:', supabaseId);
       } catch (err) {
-        console.error('[Apex] Failed to update note in Supabase:', err);
+        if (import.meta.env.DEV) console.error('[Apex] Failed to update note in Supabase:', err);
       }
     }
   },
@@ -792,18 +792,18 @@ const syncService = {
     // Delete from Dexie immediately
     if (dexieId) {
       await db.notes.delete(dexieId).catch(err =>
-        console.error('[Apex] Failed to delete note from Dexie:', err)
+        { if (import.meta.env.DEV) console.error('[Apex] Failed to delete note from Dexie:', err); }
       );
-      console.log('[Apex] Note deleted from Dexie:', dexieId);
+      if (import.meta.env.DEV) console.log('[Apex] Note deleted from Dexie:', dexieId);
     }
 
     // If online and synced, delete from Supabase
     if (navigator.onLine && supabaseId) {
       try {
         await apiClient.delete(`/api/notes/${supabaseId}`);
-        console.log('[Apex] Note deleted from Supabase:', supabaseId);
+        if (import.meta.env.DEV) console.log('[Apex] Note deleted from Supabase:', supabaseId);
       } catch (err) {
-        console.error('[Apex] Failed to delete note from Supabase:', err);
+        if (import.meta.env.DEV) console.error('[Apex] Failed to delete note from Supabase:', err);
       }
     }
   },
@@ -857,7 +857,7 @@ const syncService = {
           .where('local_id').equals(item.local_id)
           .first();
 
-        console.log('[Apex Sync] Processing offline book upload:', {
+        if (import.meta.env.DEV) console.log('[Apex Sync] Processing offline book upload:', {
           local_id: item.local_id,
           title: localBook?.title,
           hasBlob: !!localBook?.fileBlob,
@@ -865,7 +865,7 @@ const syncService = {
         });
 
         if (!localBook?.fileBlob) {
-          console.warn('[Apex Sync] Skipping book — no fileBlob found for local_id:', item.local_id);
+          if (import.meta.env.DEV) console.warn('[Apex Sync] Skipping book — no fileBlob found for local_id:', item.local_id);
           // Mark as failed after 3 attempts — blob is gone, can't recover
           await db.sync_queue.update(item.id, {
             attempts: (item.attempts || 0) + 1,
@@ -880,10 +880,10 @@ const syncService = {
           { type: localBook.fileType || 'application/pdf' }
         );
 
-        console.log('[Apex Sync] Uploading offline book to Supabase:', localBook.title);
+        if (import.meta.env.DEV) console.log('[Apex Sync] Uploading offline book to Supabase:', localBook.title);
         const result = await this.uploadBook(file, localBook.title, localBook.author || 'Unknown', localBook.id);
 
-        console.log('[Apex Sync] Book upload result:', {
+        if (import.meta.env.DEV) console.log('[Apex Sync] Book upload result:', {
           title: localBook.title,
           success: !!result,
           supabaseId: result?.id,
@@ -900,7 +900,7 @@ const syncService = {
       // They must NEVER fall through to the generic /api/sync endpoint (Path 2)
       // because /api/sync has no file upload capability — it would save file_path as null
       // Filter out ALL book items from the queue before Path 2 runs
-      console.log('[Apex Sync] Book uploads processed via Path 1 — filtering from generic queue');
+      if (import.meta.env.DEV) console.log('[Apex Sync] Book uploads processed via Path 1 — filtering from generic queue');
 
       // Path 2: generic sync queue — explicitly excludes books
       // Books are handled exclusively in Path 1 via uploadBook() with actual file upload
@@ -910,10 +910,10 @@ const syncService = {
         .filter(item => item.tableName !== 'books') // ← CRITICAL: never process books here
         .toArray();
 
-      console.log('[Apex Sync] Generic queue items to process:', queueItems.length, '(books excluded)');
+      if (import.meta.env.DEV) console.log('[Apex Sync] Generic queue items to process:', queueItems.length, '(books excluded)');
 
       if (queueItems.length === 0) {
-        console.log('Sync: No pending items to push');
+        if (import.meta.env.DEV) console.log('Sync: No pending items to push');
         return;
       }
 
@@ -928,7 +928,7 @@ const syncService = {
             await db.sync_queue.update(item.id, { payload: item.payload });
           } else {
             // Book still not synced — skip this item for now
-            console.warn(`Sync: Skipping ${item.tableName} — book not synced yet`);
+            if (import.meta.env.DEV) console.warn(`Sync: Skipping ${item.tableName} — book not synced yet`);
             continue;
           }
         }
@@ -938,11 +938,11 @@ const syncService = {
       queueItems = queueItems.filter(item => !item.payload?._dexie_book_id);
 
       if (queueItems.length === 0) {
-        console.log('Sync: All pending items waiting for book sync');
+        if (import.meta.env.DEV) console.log('Sync: All pending items waiting for book sync');
         return;
       }
 
-      console.log(`Sync: Pushing ${queueItems.length} pending items...`);
+      if (import.meta.env.DEV) console.log(`Sync: Pushing ${queueItems.length} pending items...`);
 
       // Process in batches of 50
       const batchSize = 50;
@@ -991,7 +991,7 @@ const syncService = {
                   });
                 }
               } catch (err) {
-                console.warn(`Sync: Could not update local record for ${tableName}:`, err);
+                if (import.meta.env.DEV) console.warn(`Sync: Could not update local record for ${tableName}:`, err);
               }
 
               if (item.local_queue_id) {
@@ -1013,14 +1013,14 @@ const syncService = {
             }
 
             if (synced.length > 0) {
-              console.log(`Sync: Successfully pushed ${synced.length} items`);
+              if (import.meta.env.DEV) console.log(`Sync: Successfully pushed ${synced.length} items`);
             }
             if (failed.length > 0) {
-              console.warn(`Sync: ${failed.length} items failed`, failed);
+              if (import.meta.env.DEV) console.warn(`Sync: ${failed.length} items failed`, failed);
             }
           }
         } catch (batchError) {
-          console.error(`Sync: Batch failed:`, batchError);
+          if (import.meta.env.DEV) console.error(`Sync: Batch failed:`, batchError);
         }
       }
 
@@ -1035,10 +1035,10 @@ const syncService = {
           await db.sync_queue.delete(item.id);
         }
       } catch (cleanupErr) {
-        console.warn('Sync queue cleanup failed:', cleanupErr);
+        if (import.meta.env.DEV) console.warn('Sync queue cleanup failed:', cleanupErr);
       }
     } catch (error) {
-      console.error('Push sync failed:', error);
+      if (import.meta.env.DEV) console.error('Push sync failed:', error);
     }
   },
 
@@ -1061,7 +1061,7 @@ const syncService = {
     );
 
     window.addEventListener('online', () => {
-      console.log('Device online, flushing sync queue...');
+      if (import.meta.env.DEV) console.log('Device online, flushing sync queue...');
       this.pushSync();
     });
 
@@ -1085,7 +1085,7 @@ const syncService = {
           
         }
       } catch (error) {
-        console.error('Auth verification failed:', error);
+        if (import.meta.env.DEV) console.error('Auth verification failed:', error);
         authStore.clearUser();
       }
     } else {
@@ -1102,11 +1102,11 @@ const syncService = {
       const unsyncedBooks = allBooks.filter(b => !b.recordId && !b.supabaseId);
 
       if (unsyncedBooks.length === 0) {
-        console.log('Migration: No local data to migrate');
+        if (import.meta.env.DEV) console.log('Migration: No local data to migrate');
         return;
       }
 
-      console.log(`Migration: Found ${unsyncedBooks.length} local books to migrate`);
+      if (import.meta.env.DEV) console.log(`Migration: Found ${unsyncedBooks.length} local books to migrate`);
       let queuedCount = 0;
 
       for (const book of unsyncedBooks) {
@@ -1140,13 +1140,13 @@ const syncService = {
         }
       }
 
-      console.log(`Migration: Queued ${queuedCount} records for sync`);
+      if (import.meta.env.DEV) console.log(`Migration: Queued ${queuedCount} records for sync`);
 
       if (queuedCount > 0 && navigator.onLine) {
         await this.pushSync();
       }
     } catch (error) {
-      console.error('Migration failed:', error);
+      if (import.meta.env.DEV) console.error('Migration failed:', error);
     }
   }
 };

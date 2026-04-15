@@ -39,7 +39,7 @@ const useSettingsStore = create(
        * Persists locally immediately, syncs to Supabase if online
        */
       updateSetting: (key, value) => {
-        console.log('[Apex Settings] Updating:', key, '→', value);
+        if (import.meta.env.DEV) console.log('[Apex Settings] Updating:', key, '→', value);
         set({ [key]: value });
         // Defer sync so Zustand persist middleware flushes the new value first
         queueMicrotask(() => get()._syncToSupabase());
@@ -49,7 +49,7 @@ const useSettingsStore = create(
        * updateNotification — updates a single notification preference
        */
       updateNotification: (key, value) => {
-        console.log('[Apex Settings] Notification update:', key, '→', value);
+        if (import.meta.env.DEV) console.log('[Apex Settings] Notification update:', key, '→', value);
         const current = get().notifications;
         const updated = { ...current, [key]: value };
         set({ notifications: updated });
@@ -63,7 +63,7 @@ const useSettingsStore = create(
        */
       _syncToSupabase: async () => {
         if (!navigator.onLine) {
-          console.log('[Apex Settings] Offline — settings saved locally, will sync when online');
+          if (import.meta.env.DEV) console.log('[Apex Settings] Offline — settings saved locally, will sync when online');
           return;
         }
         try {
@@ -83,9 +83,9 @@ const useSettingsStore = create(
             scroll_orientation: scrollOrientation,
             scroll_animation: scrollAnimation,
           });
-          console.log('[Apex Settings] Synced to Supabase');
+          if (import.meta.env.DEV) console.log('[Apex Settings] Synced to Supabase');
         } catch (err) {
-          console.error('[Apex Settings] Failed to sync to Supabase:', err);
+          if (import.meta.env.DEV) console.error('[Apex Settings] Failed to sync to Supabase:', err);
         }
       },
 
@@ -95,7 +95,7 @@ const useSettingsStore = create(
        */
       seedFromSupabase: (data) => {
         if (!data) return;
-        console.log('[Apex Settings] Seeding from Supabase');
+        if (import.meta.env.DEV) console.log('[Apex Settings] Seeding from Supabase');
         set({
           theme: data.theme || 'system',
           autoSaveProgress: data.auto_save_progress ?? true,
@@ -117,7 +117,7 @@ const useSettingsStore = create(
        * Pushes any offline setting changes to Supabase
        */
       syncOnReconnect: () => {
-        console.log('[Apex Settings] Back online — syncing settings');
+        if (import.meta.env.DEV) console.log('[Apex Settings] Back online — syncing settings');
         get()._syncToSupabase();
       },
     }),
