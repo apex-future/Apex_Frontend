@@ -76,7 +76,7 @@ const ExamReminder = () => {
             </div>
             <div 
                 onClick={onClick}
-                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex items-center cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-60 grayscale-[0.5]' : ''}`}
+                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-4 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex items-center cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-60 grayscale-[0.5]' : ''}`}
             >
                 {children}
             </div>
@@ -123,8 +123,8 @@ const ExamReminder = () => {
         <CardContainer onClick={() => navigate('/exams')} className="group cursor-pointer border-accent-primary/10 hover:border-accent-primary/30 active:scale-[0.98]">
             <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 rounded-full -mr-16 -mt-16 blur-xl group-hover:bg-accent-primary/10 transition-all" />
             
-            {/* Action Buttons Top Right (Visible on hover) */}
-            <div className="absolute top-4 right-4 z-30 flex gap-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full px-3 py-2 shadow-sm border border-border-default/50 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Action Buttons Top Right (Visible on mobile, hover on desktop) */}
+            <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-30 flex gap-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full px-3 py-2 shadow-sm border border-border-default/50 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                 <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="hover:text-accent-primary text-text-tertiary transition-colors" title="Edit">
                     <Edit2 size={16}/>
                 </button>
@@ -148,18 +148,18 @@ const ExamReminder = () => {
                 </>
             )}
 
-            <div className="flex items-center justify-between w-full relative z-10 px-8 sm:px-12 md:px-16 lg:px-8">
-                <div className="flex-1 pr-4">
-                     <div className="flex items-center gap-2 mb-2">
+            <div className="flex flex-col md:flex-row items-center justify-between w-full gap-4 md:gap-0 relative z-10 px-6 sm:px-12 md:px-16 lg:px-8 py-4">
+                <div className="flex-1 text-center md:text-left pr-0 md:pr-4">
+                     <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
                         <Trophy size={18} className="text-accent-primary" />
                         <span className="text-sm font-bold tracking-widest uppercase text-accent-primary">Coach Check-in</span>
                      </div>
-                     <h3 className="text-lg md:text-xl font-bold text-text-primary tracking-tight leading-tight mb-2">
+                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-text-primary tracking-tight leading-tight mb-2">
                         {motivationalMessage}
                      </h3>
                 </div>
 
-                <div className="flex flex-col items-center justify-center pl-4 border-l border-border-default">
+                <div className="flex flex-col items-center justify-center pt-4 md:pt-0 pl-0 md:pl-4 border-t md:border-t-0 md:border-l border-border-default w-full md:w-auto">
                     <div className="flex items-baseline gap-1">
                         <span className="text-3xl md:text-4xl font-black text-text-primary tabular-nums tracking-tighter">
                             {daysLeft > 0 ? daysLeft : 0}
