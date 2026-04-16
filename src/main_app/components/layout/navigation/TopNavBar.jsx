@@ -51,7 +51,7 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
               id="top-nav-upload"
               className="hidden"
               onChange={handleFileChange}
-              accept=".pdf,.epub"
+              accept=".pdf,.epub,.docx,.doc"
               multiple
             />
             <label
