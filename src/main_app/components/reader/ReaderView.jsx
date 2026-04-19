@@ -39,20 +39,7 @@ function ReaderView() {
     const [textContent, setTextContent] = useState("");
     const [htmlContent, setHtmlContent] = useState("");
 
-    // Responsive window size hook
-    const [windowSize, setWindowSize] = useState({
-        width: window.innerWidth,
-        height: window.innerHeight
-    });
 
-    useEffect(() => {
-        const handleResize = () => setWindowSize({
-            width: window.innerWidth,
-            height: window.innerHeight
-        });
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     // Find the book and determine type
     const book = useMemo(() => books.find(b => b.id.toString() === bookId), [books, bookId]);
@@ -87,7 +74,7 @@ function ReaderView() {
     const [loadingMessage, setLoadingMessage] = useState("Setting up file");
     const [downloadError, setDownloadError] = useState(false);
 
-    const [selection, setSelection] = useState({ text: '', x: 0, y: 0 });
+    const selectionRef = useRef({ text: '', x: 0, y: 0 });
     const [showHighlightMenu, setShowHighlightMenu] = useState(false);
     const [isDictOpen, setIsDictOpen] = useState(false);
     const [showPageStrip, setShowPageStrip] = useState(false);
@@ -192,10 +179,10 @@ function ReaderView() {
     }, [isLoading, bookId]);
 
     const handleHighlight = (color) => {
-        if (!book || !selection.text) return;
+        if (!book || !selectionRef.current.text) return;
 
         addHighlight(book.id, {
-            text: selection.text.replace(/\s+/g, ' ').trim(),
+            text: selectionRef.current.text.replace(/\s+/g, ' ').trim(),
             color,
             page: pageNumber,
             addedAt: new Date().toISOString()
@@ -271,7 +258,7 @@ function ReaderView() {
 
     // Ref-stable callback — identity never changes, so PDFReader never re-renders due to this prop
     const syncProgressRef = useRef(syncProgress);
-    useEffect(() => { syncProgressRef.current = syncProgress; }, [numPages, book]);
+    useEffect(() => { syncProgressRef.current = syncProgress; }, [syncProgress]);
 
     const stableOnPageChange = useCallback((n) => {
         setPageNumber(n);
@@ -434,11 +421,12 @@ function ReaderView() {
                     lastSelTextRef.current = text;
 
                     if (textChanged || !showHighlightMenuRef.current) {
-                        setSelection({
+                        selectionRef.current = {
                             text,
                             x: rect.left + rect.width / 2,
                             y: rect.top
-                        });
+                        };
+                        console.log('[Apex Performance] Selection captured via Ref');
                     }
                     setShowHighlightMenu(true);
                 }
@@ -727,8 +715,8 @@ function ReaderView() {
                 {/* Highlight Menu */}
                 {showHighlightMenu && (
                     <HighlightMenu
-                        selection={selection.text}
-                        position={{ x: selection.x, y: selection.y }}
+                        selection={selectionRef.current.text}
+                        position={{ x: selectionRef.current.x, y: selectionRef.current.y }}
                         onAskAI={() => {
                             setAiModal(true);
                             setShowHighlightMenu(false);
@@ -785,7 +773,7 @@ function ReaderView() {
                                 goToPage={goToPage}
                                 highlights={stableHighlights}
                                 locked={locked || selectionLock || isDictOpen}
-                                windowSize={windowSize}
+
                                 scrollOrientation={scrollOrientation}
                                 onPageChange={stableOnPageChange}
                             />
@@ -857,7 +845,7 @@ function ReaderView() {
                     <AIModal
                         setAiModal={setAiModal}
                         bookTitle={book?.title || book?.file?.name}
-                        selectedText={selection.text}
+                        selectedText={selectionRef.current.text}
                         bookId={book?.id?.toString()}
                     />
                 )}

@@ -119,18 +119,17 @@ const PDFReader = ({
   onPrevPage,
   numPages,
   goToPage,
-  windowSize,
   highlights = [],
   locked = false,
   scrollOrientation = 'vertical',
   onPageChange,
 }) => {
   const containerRef = useRef(null);
-  const [containerWidth, setContainerWidth] = useState(windowSize?.width || window.innerWidth);
+  const [containerWidth, setContainerWidth] = useState(window.innerWidth);
   const isDesktop = containerWidth > 1024;
   const pdfWidth = isDesktop ? Math.min(containerWidth - 120, 1100) : containerWidth;
   const [pageRendered, setPageRendered] = useState(0);
-  const [renderedPages, setRenderedPages] = useState(new Set());
+  const renderedPagesRef = useRef(new Set());
   const [displayedPage, setDisplayedPage] = useState(pageNumber);
   const [isFading, setIsFading] = useState(false);
   const isVertical = scrollOrientation === 'vertical';
@@ -355,11 +354,11 @@ const PDFReader = ({
         cancelHighlights(idleId);
         if (useCSSHighlight) CSS.highlights.clear();
     };
-  }, [highlights, pageNumber, pageRendered, isVertical]);
+  }, [highlights, pageNumber, isVertical]);
 
   const customTextRenderer = React.useCallback(
     ({ str }) => str,
-    [highlights, pageNumber]
+    []
   );
 
   useEffect(() => {
@@ -528,7 +527,7 @@ const PDFReader = ({
                   renderTextLayer={true}
                   renderAnnotationLayer={true}
                   onRenderSuccess={() => {
-                    setRenderedPages(prev => new Set(prev).add(bufferPageNum));
+                    renderedPagesRef.current.add(bufferPageNum);
                     if (isActive) handlePageRenderSuccess();
                   }}
                   width={pdfWidth}
