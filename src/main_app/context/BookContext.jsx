@@ -37,7 +37,7 @@ export const BookProvider = ({ children }) => {
                           b.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' : 
                           b.fileType === 'application/msword' ? '.doc' : 
                           '.pdf';
-              const file = new File([blob], b.title + fileExt, { type: b.fileType || 'application/pdf' });
+              const file = new File([b.fileBlob], b.title + fileExt, { type: b.fileType || 'application/pdf' });
               return { ...b, file };
             }
             return b;
