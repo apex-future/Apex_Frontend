@@ -323,6 +323,11 @@ function SignupPage({ onLogin }) {
                     </>
                   )}
                 </button>
+
+                <p className="text-white/40 text-xs text-center mt-3">
+                  By creating an account, you agree to our{' '}
+                  <Link to="/privacy" className="underline text-white/60 hover:text-white/80 transition-colors">Privacy Policy</Link>.
+                </p>
               </div>
             )}
           </div>
