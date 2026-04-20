@@ -929,7 +929,7 @@ function ReaderView() {
                     onClose={closePageStrip}
                 />
             )}
-            <ReaderDictionary isOpen={isReaderDictOpen} onClose={() => setIsReaderDictOpen(false)} bookId={book?.id} />
+            <ReaderDictionary isOpen={isReaderDictOpen} onClose={() => setIsReaderDictOpen(false)} bookId={book?.id} initialWord={selectionRef.current?.text} />
         </div>
     );
 }

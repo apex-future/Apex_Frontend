@@ -2,11 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Search, X, Volume2, Loader2, Book, WifiOff } from 'lucide-react';
 import dictionaryService from '../../../../services/dictionaryService';
 
-function ReaderDictionary({ isOpen, onClose, bookId }) {
+function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
     const [word, setWord] = useState('');
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (isOpen && initialWord?.trim()) {
+            setWord(initialWord.trim());
+            fetchDefinition(initialWord.trim());
+        }
+    }, [isOpen, initialWord]);
 
     const fetchDefinition = async (searchWord) => {
         if (!searchWord.trim()) return;
