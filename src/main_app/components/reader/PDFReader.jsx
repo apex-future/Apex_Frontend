@@ -99,7 +99,7 @@ const VirtualPage = memo(({ pageNumber, rotation, scale, width, onRenderSuccess 
       renderAnnotationLayer={true}
       onRenderSuccess={onRenderSuccess}
       width={width}
-      className="!shadow-none !w-full flex justify-center [&_.react-pdf__Page__canvas]:!w-full [&_.react-pdf__Page__canvas]:!h-auto [&_.react-pdf__Page__textContent]:!w-full"
+      className="!shadow-none"
       loading={
         <div
           className="flex flex-col items-center justify-center bg-bg-elevated animate-pulse"
