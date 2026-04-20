@@ -179,7 +179,7 @@ function ReaderView() {
             text: selectionRef.current.text.replace(/\s+/g, ' ').trim(),
             color,
             page: pageNumber,
-            startOffset: selection.startOffset,
+            startOffset: selectionRef.current.startOffset,
             addedAt: new Date().toISOString()
         });
         setShowHighlightMenu(false);
@@ -441,6 +441,11 @@ function ReaderView() {
                         selectionRef.current = {
                             text,
                             x: rect.left + rect.width / 2,
+<<<<<<<<< Temporary merge branch 1
+                            y: rect.top,
+                            startOffset: foundOffset !== -1 ? foundOffset : null
+                        });
+=========
                             y: rect.top
                         };
                         console.log('[Apex Performance] Selection captured via Ref');
