@@ -315,21 +315,19 @@ function SignupPage({ onLogin }) {
               Already have an account? <Link to="/login" className="text-white hover:underline font-bold">Sign in</Link>
             </p>
           </div>
-        </div>
-      </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-4px); }
-          75% { transform: translateX(4px); }
-        }
-        .animate-shake {
-          animation: shake 0.4s ease-in-out;
-        }
-      `}} />
-    </div>
-  );
-}
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes shake {
+              0%, 100% { transform: translateX(0); }
+              25% { transform: translateX(-4px); }
+              75% { transform: translateX(4px); }
+            }
+            .animate-shake {
+              animation: shake 0.4s ease-in-out;
+            }
+          `}} />
+        </div>
+      );
+    }
 
 export default SignupPage;
