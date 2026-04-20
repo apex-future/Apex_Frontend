@@ -4,6 +4,7 @@ import useStudyStore from '../../store/studyStore';
 import useSpaceStore from '../../store/spaceStore';
 import { useNavigate } from 'react-router-dom';
 import { showToastGlobal } from '../../hooks/useToast';
+import examBgPattern from '../../../assets/exam-bg-pattern.png';
 
 const ExamReminder = () => {
     const { exams, examDate, setExamDate, examName, setExamName, addExam, updateExam, deleteExam, togglePauseExam } = useStudyStore();
@@ -83,6 +84,11 @@ const ExamReminder = () => {
                 onClick={onClick}
                 className={`bg-card-glass backdrop-blur-xl rounded-3xl p-4 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex items-center cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-60 grayscale-[0.5]' : ''}`}
             >
+                {/* Background pattern */}
+                <div 
+                    className="absolute inset-0 opacity-[0.2] dark:opacity-[0.2] pointer-events-none"
+                    style={{ backgroundImage: `url(${examBgPattern})`, backgroundSize: '400px', backgroundRepeat: 'repeat' }}
+                />
                 {children}
             </div>
         </div>
