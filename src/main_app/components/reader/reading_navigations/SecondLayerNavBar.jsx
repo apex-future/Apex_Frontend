@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react'
-import { Menu, RotateCcw, Sparkles, ZoomIn, ZoomOut } from 'lucide-react'
+import { Menu, RotateCcw, Sparkles, ZoomIn, ZoomOut, BrainCircuit } from 'lucide-react'
 import { gsap } from 'gsap'
 
-function SecondLayerNavBar({ visible, setAiModal, setLeftPanel, pdfControls }) {
+function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pdfControls }) {
   const navRef = useRef(null);
 
   useEffect(() => {
@@ -73,11 +73,19 @@ function SecondLayerNavBar({ visible, setAiModal, setLeftPanel, pdfControls }) {
           </button>
         </div>
 
-        {/* Right: Sparkles — opens AI panel */}
-        <div className='right-side'>
+        {/* Right: Sparkles & Quiz — opens AI and Quiz panels */}
+        <div className='flex gap-2 right-side items-center'>
+          <button
+            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            onClick={(e) => { e.stopPropagation(); setQuizModal(prev => !prev); }}
+            title="Quiz Generation Settings"
+          >
+            <BrainCircuit strokeWidth={2} size={18} />
+          </button>
           <button
             className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setAiModal(prev => !prev); }}
+            title="AI Tools"
           >
             <Sparkles strokeWidth={2} size={18} />
           </button>
