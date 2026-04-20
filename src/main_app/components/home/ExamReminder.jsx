@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Edit2, Bell, AlarmClock, Calendar, BookOpen, X, Trophy, Target, Type, Trash2, Pause, Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import useStudyStore from '../../store/studyStore';
 import useSpaceStore from '../../store/spaceStore';
-import useQuizStore from '../../store/quizStore';
 import { useNavigate } from 'react-router-dom';
+import { showToastGlobal } from '../../hooks/useToast';
 
 const ExamReminder = () => {
     const { exams, examDate, setExamDate, examName, setExamName, addExam, updateExam, deleteExam, togglePauseExam } = useStudyStore();
@@ -31,9 +31,6 @@ const ExamReminder = () => {
     
     const customSpaces = spaces.filter(s => !s.isSystem);
     const linkedSpace = customSpaces.find(s => s.examDate === activeExam?.date) || customSpaces.find(s => s.isLinkedToExam);
-    
-    const { getAggregatedStatsForSpace } = useQuizStore();
-    const linkedSpaceStats = linkedSpace ? getAggregatedStatsForSpace(linkedSpace.id) : null;
 
     const calculateDaysLeft = () => {
         if (!activeExam?.date) return null;
@@ -49,6 +46,8 @@ const ExamReminder = () => {
     const prevExam = (e) => { e.stopPropagation(); setCurrentIndex(s => (s - 1 + examsList.length) % examsList.length); };
 
     const handleSave = () => {
+        const isNew = !activeExam || activeExam.id === 'legacy';
+        
         if (activeExam?.id === 'legacy') {
             setExamDate(tempDate);
             setExamName(tempName);
@@ -66,6 +65,12 @@ const ExamReminder = () => {
           }
         });
         setIsEditing(false);
+        
+        if (isNew) {
+             const spName = selectedSpaceId ? customSpaces.find(s => s.id === selectedSpaceId)?.name : '';
+             const finalName = tempName || spName || 'your exam';
+             showToastGlobal(`Your study space for ${finalName} is ready. Time to dive into those books!`, 'success');
+        }
     };
 
     const CardContainer = ({ children, onClick, className = '' }) => (
@@ -108,38 +113,11 @@ const ExamReminder = () => {
     // ==========================================
     // VIEW 2: Dashboard Widget (with Carousel & Actions)
     // ==========================================
-    let motivationalMessage = `Keep your momentum going! You have ${daysLeft} days left to prepare.`;
-    if (activeExam?.isPaused) {
-        motivationalMessage = `This exam reminder is paused. Resume when you're ready!`;
-    } else if (linkedSpace && linkedSpace.activitySummaries?.timeSpent > 0 && linkedSpaceStats) {
-        motivationalMessage = `You've invested ${linkedSpace.activitySummaries.timeSpent} mins and scored an avg of ${linkedSpaceStats.averageScore}% on practice quizzes! Keep pushing, coach!`;
-    } else if (linkedSpace && linkedSpace.activitySummaries?.timeSpent > 0) {
-        motivationalMessage = `You've invested ${linkedSpace.activitySummaries.timeSpent} mins preparing for ${activeExam?.name || linkedSpace.name}. Keep pushing, coach!`;
-    } else if (linkedSpace) {
-        motivationalMessage = `Your study space for ${activeExam?.name || linkedSpace.name} is ready. Time to dive into those books!`;
-    }
 
     const unexpandedWidget = (
         <CardContainer onClick={() => navigate('/exams')} className="group cursor-pointer border-accent-primary/10 hover:border-accent-primary/30 active:scale-[0.98]">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 rounded-full -mr-16 -mt-16 blur-xl group-hover:bg-accent-primary/10 transition-all" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 rounded-full -mr-16 -mt-16 blur-xl group-hover:bg-accent-primary/10 transition-all pointer-events-none" />
             
-            {/* Action Buttons Top Right (Visible on mobile, hover on desktop) */}
-            <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-30 flex gap-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full px-3 py-2 shadow-sm border border-border-default/50 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="hover:text-accent-primary text-text-tertiary transition-colors" title="Edit">
-                    <Edit2 size={16}/>
-                </button>
-                <button onClick={(e) => { e.stopPropagation(); if (activeExam?.id && activeExam.id !== 'legacy') togglePauseExam(activeExam.id); }} className="hover:text-accent-primary text-text-tertiary transition-colors" title={activeExam?.isPaused ? "Resume" : "Pause"}>
-                    {activeExam?.isPaused ? <Play size={16}/> : <Pause size={16}/>}
-                </button>
-                <button onClick={(e) => { 
-                    e.stopPropagation(); 
-                    if (activeExam?.id && activeExam.id !== 'legacy') { deleteExam(activeExam.id); setCurrentIndex(0); } 
-                    else { setExamDate(null); setExamName(''); } 
-                }} className="hover:text-red-500 text-text-tertiary transition-colors" title="Delete">
-                    <Trash2 size={16}/>
-                </button>
-            </div>
-
             {/* Carousel Navigation Chevrons */}
             {examsList.length > 1 && (
                 <>
@@ -148,29 +126,42 @@ const ExamReminder = () => {
                 </>
             )}
 
-            <div className="flex flex-col md:flex-row items-center justify-between w-full gap-4 md:gap-0 relative z-10 px-6 sm:px-12 md:px-16 lg:px-8 py-4">
-                <div className="flex-1 text-center md:text-left pr-0 md:pr-4">
-                     <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                        <Trophy size={18} className="text-accent-primary" />
-                        <span className="text-sm font-bold tracking-widest uppercase text-accent-primary">Coach Check-in</span>
-                     </div>
-                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-text-primary tracking-tight leading-tight mb-2">
-                        {motivationalMessage}
-                     </h3>
+            <div className="flex flex-col w-full h-full relative z-10 px-6 sm:px-12 md:px-10 py-2 md:py-4">
+                
+                {/* Top Row: Actions (First row, part of document flow, always visible) */}
+                <div className="flex justify-end w-full pb-4">
+                    <div className="flex gap-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full px-3 py-2 shadow-sm border border-border-default/50">
+                        <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="hover:text-accent-primary text-text-tertiary transition-colors" title="Edit">
+                            <Edit2 size={16}/>
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); if (activeExam?.id && activeExam.id !== 'legacy') togglePauseExam(activeExam.id); }} className="hover:text-accent-primary text-text-tertiary transition-colors" title={activeExam?.isPaused ? "Resume" : "Pause"}>
+                            {activeExam?.isPaused ? <Play size={16}/> : <Pause size={16}/>}
+                        </button>
+                        <button onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (activeExam?.id && activeExam.id !== 'legacy') { deleteExam(activeExam.id); setCurrentIndex(0); } 
+                            else { setExamDate(null); setExamName(''); } 
+                        }} className="hover:text-red-500 text-text-tertiary transition-colors" title="Delete">
+                            <Trash2 size={16}/>
+                        </button>
+                    </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center pt-4 md:pt-0 pl-0 md:pl-4 border-t md:border-t-0 md:border-l border-border-default w-full md:w-auto">
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-3xl md:text-4xl font-black text-text-primary tabular-nums tracking-tighter">
-                            {daysLeft > 0 ? daysLeft : 0}
-                        </span>
-                    </div>
-                    <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-2">Days Left</span>
-                    
-                    <div className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
-                        activeExam?.isPaused ? 'bg-neutral-500/10 text-neutral-500 border-neutral-500/20' : daysLeft <= 7 ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-accent-primary/10 text-accent-primary border-accent-primary/20'
-                    }`}>
-                        {activeExam?.isPaused ? 'Paused' : daysLeft <= 0 ? 'Exam Day' : daysLeft <= 7 ? 'Urgent' : 'On Track'}
+                {/* Main Content: Countdown on Left */}
+                <div className="flex items-center w-full flex-1">
+                    <div className="flex flex-col items-start justify-center w-auto">
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-5xl md:text-6xl font-black text-text-primary tabular-nums tracking-tighter">
+                                {daysLeft > 0 ? daysLeft : 0}
+                            </span>
+                        </div>
+                        <span className="text-xs font-bold text-text-tertiary uppercase tracking-widest mt-1 mb-3">Days Left</span>
+                        
+                        <div className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                            activeExam?.isPaused ? 'bg-neutral-500/10 text-neutral-500 border-neutral-500/20' : daysLeft <= 7 ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-accent-primary/10 text-accent-primary border-accent-primary/20'
+                        }`}>
+                            {activeExam?.isPaused ? 'Paused' : daysLeft <= 0 ? 'Exam Day' : daysLeft <= 7 ? 'Urgent' : 'On Track'}
+                        </div>
                     </div>
                 </div>
             </div>

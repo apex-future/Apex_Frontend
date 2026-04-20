@@ -81,7 +81,7 @@ function ReaderView() {
     const [loadingMessage, setLoadingMessage] = useState("Setting up file");
     const [downloadError, setDownloadError] = useState(false);
 
-    const selectionRef = useRef({ text: '', x: 0, y: 0, startOffset: null });
+    const selectionRef = useRef({ text: '', x: 0, y: 0 });
     const [showHighlightMenu, setShowHighlightMenu] = useState(false);
     const [isDictOpen, setIsDictOpen] = useState(false);
     const [isReaderDictOpen, setIsReaderDictOpen] = useState(false);
@@ -446,8 +446,12 @@ function ReaderView() {
                         selectionRef.current = {
                             text,
                             x: rect.left + rect.width / 2,
+<<<<<<<<< Temporary merge branch 1
                             y: rect.top,
                             startOffset: foundOffset !== -1 ? foundOffset : null
+                        });
+=========
+                            y: rect.top
                         };
                         console.log('[Apex Performance] Selection captured via Ref');
                     }

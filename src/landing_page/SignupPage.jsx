@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
 
@@ -306,28 +306,27 @@ function SignupPage({ onLogin }) {
                     </>
                   )}
                 </button>
+
+                <p className="text-gray-500 text-xs text-center mt-3">
+                  By creating an account, you agree to our{' '}
+                  <Link to="/privacy" className="underline text-[#10a37f] hover:text-[#0e8f6f] transition-colors">Privacy Policy</Link>.
+                </p>
               </div>
             )}
           </div>
 
-          <div className="mt-6 pt-6 border-t border-white/20 text-center">
-            <p className="text-white/70 text-sm font-medium">
-              Already have an account? <Link to="/login" className="text-white hover:underline font-bold">Sign in</Link>
-            </p>
-          </div>
-
-          <style dangerouslySetInnerHTML={{ __html: `
-            @keyframes shake {
-              0%, 100% { transform: translateX(0); }
-              25% { transform: translateX(-4px); }
-              75% { transform: translateX(4px); }
-            }
-            .animate-shake {
-              animation: shake 0.4s ease-in-out;
-            }
-          `}} />
-        </div>
-      );
-    }
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
+        }
+        .animate-shake {
+          animation: shake 0.4s ease-in-out;
+        }
+      `}} />
+    </div>
+  );
+}
 
 export default SignupPage;
