@@ -4,6 +4,7 @@ import MainApp from './main_app/MainApp'
 import LandingPage from './landing_page/LandingPage'
 import SignupPage from './landing_page/SignupPage'
 import LoginPage from './landing_page/LoginPage'
+import PrivacyPolicy from './landing_page/PrivacyPolicy'
 import authService from './main_app/services/authService'
 import syncService from './main_app/services/syncService'
 import db from './main_app/db/apex.db'
@@ -244,6 +245,7 @@ function App() {
   return (
     <div className="min-h-screen">
       <Routes>
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         {!isLoggedIn ? (
           <>
             <Route path="/" element={<LandingPage onLogin={handleLogin} deferredPrompt={deferredPrompt} />} />
