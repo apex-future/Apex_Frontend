@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
 
@@ -291,21 +291,40 @@ function SignupPage({ onLogin }) {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleSignup}
-              disabled={!userType || loading}
-              className={`w-full bg-black hover:bg-neutral-800 text-white py-3.5 rounded-[6px] font-medium text-[15px] transition-colors flex items-center justify-center gap-2 mt-4 ${(!userType || loading) ? 'opacity-50 cursor-not-allowed hover:bg-black' : ''}`}
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                'Create Account'
-              )}
-            </button>
+                <button
+                  type="button"
+                  onClick={handleSignup}
+                  disabled={!userType || loading}
+                  className={`group w-full h-14 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-3 active:scale-95 mt-4 ${(!userType || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {loading ? (
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      Create Account
+                      <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+
+                <p className="text-gray-500 text-xs text-center mt-3">
+                  By creating an account, you agree to our{' '}
+                  <Link to="/privacy" className="underline text-[#10a37f] hover:text-[#0e8f6f] transition-colors">Privacy Policy</Link>.
+                </p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
+        }
+        .animate-shake {
+          animation: shake 0.4s ease-in-out;
+        }
+      `}} />
     </div>
   );
 }

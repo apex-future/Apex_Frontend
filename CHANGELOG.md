@@ -4,6 +4,15 @@ All notable changes to Apex are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
 
+## [1.9.0] - 2026-04-19
+### Improved
+- Optimized ReaderView performance by migrating selection state to refs
+- Fixed catastrophic re-render loops in PDFReader virtualizer
+- Stabilized customTextRenderer and highlight effects dependency arrays
+- Removed redundant window resize listeners in favor of ResizeObserver
+
+---
+
 ## [1.8.4] - 2026-04-10
 ### Security
 - JWT payload now whitelisted — password_hash and full user row removed from token

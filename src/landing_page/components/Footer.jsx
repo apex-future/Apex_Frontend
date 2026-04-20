@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { Twitter, Linkedin, Instagram } from 'lucide-react'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -90,7 +91,7 @@ function Footer() {
                 <li><a href="#faq" className="hover:text-accent-primary transition-colors">FAQ</a></li>
                 <li><a href="#help" className="hover:text-accent-primary transition-colors">Help Center</a></li>
                 <li><a href="#contact" className="hover:text-accent-primary transition-colors">Contact Support</a></li>
-                <li><a href="#privacy" className="hover:text-accent-primary transition-colors">Privacy Policy</a></li>
+                <li><Link to="/privacy" className="hover:text-accent-primary transition-colors">Privacy Policy</Link></li>
                 <li><a href="#terms" className="hover:text-accent-primary transition-colors">Terms of Service</a></li>
               </ul>
             </div>
