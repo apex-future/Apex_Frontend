@@ -22,13 +22,13 @@ function BookDetails() {
 
     const tabs = [
         { id: 'chat', label: 'Chat', component: DocumentChatHistory },
-        { id: 'quiz', label: 'Quizzes', component: DocumentQuizzes },
-        { id: 'analytics', label: 'Analytics', component: DocumentAnalytics },
         { id: 'bookmarks', label: 'Bookmarks', component: DocumentBookmarks },
         { id: 'notes', label: 'Notes', component: DocumentNotes },
         { id: 'words', label: 'Words', component: DocumentsWords },
         { id: 'review', label: 'Review', component: DocumentsReviews },
-        { id: 'advanced', label: 'Advanced', component: DocumentsAdvanced }
+        { id: 'advanced', label: 'Advanced', component: DocumentsAdvanced },
+        { id: 'quiz', label: 'Quizzes', component: DocumentQuizzes },
+        { id: 'analytics', label: 'Analytics', component: DocumentAnalytics }
     ];
 
     const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || tabs[0].component;
