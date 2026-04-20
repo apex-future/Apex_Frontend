@@ -790,7 +790,6 @@ function ReaderView() {
                                 goToPage={goToPage}
                                 highlights={stableHighlights}
                                 locked={locked || selectionLock || isDictOpen || isReaderDictOpen}
-                                windowSize={windowSize}
                                 scrollOrientation={scrollOrientation}
                                 onPageChange={stableOnPageChange}
                             />
