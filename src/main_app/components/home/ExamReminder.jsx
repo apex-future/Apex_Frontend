@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Bell, AlarmClock, Calendar, BookOpen, X, Trophy, Target, Type, Trash2, Pause, Play, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit2, Bell, AlarmClock, Calendar, BookOpen, X, Trophy, Target, Type, Trash2, Pause, Play, ChevronLeft, ChevronRight, Link, Sparkles } from 'lucide-react';
 import useStudyStore from '../../store/studyStore';
 import useSpaceStore from '../../store/spaceStore';
 import { useNavigate } from 'react-router-dom';
@@ -41,6 +41,32 @@ const ExamReminder = () => {
 
     const daysLeft = calculateDaysLeft();
 
+    const isPaused = activeExam?.isPaused;
+    const isExamDay = daysLeft !== null && daysLeft <= 0;
+    const isUrgent = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
+
+    let moodColor = 'bg-accent-primary';
+    let moodTextColor = 'text-accent-primary';
+    let moodBgColor = 'bg-accent-primary/10';
+    let moodBorderColor = 'border-accent-primary/20';
+    let moodLabel = 'On Track';
+
+    if (isPaused) {
+        moodColor = 'bg-neutral-500';
+        moodTextColor = 'text-neutral-500';
+        moodBgColor = 'bg-neutral-500/10';
+        moodBorderColor = 'border-neutral-500/20';
+        moodLabel = 'Paused';
+    } else if (isExamDay) {
+        moodLabel = 'Exam Day';
+    } else if (isUrgent) {
+        moodColor = 'bg-red-500';
+        moodTextColor = 'text-red-500';
+        moodBgColor = 'bg-red-500/10';
+        moodBorderColor = 'border-red-500/20';
+        moodLabel = 'Urgent';
+    }
+
     const [selectedSpaceId, setSelectedSpaceId] = useState(linkedSpace?.id || '');
 
     const nextExam = (e) => { e.stopPropagation(); setCurrentIndex(s => (s + 1) % examsList.length); };
@@ -76,17 +102,13 @@ const ExamReminder = () => {
 
     const CardContainer = ({ children, onClick, className = '' }) => (
         <div className="w-full relative">
-            <div className="flex justify-between items-center mb-4 px-2">
-                <h2 className='text-lg sm:text-xl font-semibold text-text-primary tracking-tight'>{activeExam?.name || 'Exam Timer'}</h2>
-                {examsList.length > 1 && <span className="text-xs font-bold text-text-tertiary">{currentIndex + 1} of {examsList.length}</span>}
-            </div>
             <div 
                 onClick={onClick}
-                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-4 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex items-center cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-60 grayscale-[0.5]' : ''}`}
+                className={`bg-card-glass backdrop-blur-xl rounded-[20px] p-3 sm:p-4 border border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-sm relative h-48 xs:h-60 sm:h-64 flex flex-col cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-60 grayscale-[0.5]' : ''}`}
             >
                 {/* Background pattern */}
                 <div 
-                    className="absolute inset-0 opacity-[0.2] dark:opacity-[0.2] pointer-events-none"
+                    className="absolute inset-0 opacity-[0.1] dark:opacity-[0.05] pointer-events-none"
                     style={{ backgroundImage: `url(${examBgPattern})`, backgroundSize: '400px', backgroundRepeat: 'repeat' }}
                 />
                 {children}
@@ -99,20 +121,25 @@ const ExamReminder = () => {
     // ==========================================
     if (!activeExam && !isEditing) {
         return (
-            <CardContainer onClick={() => setIsEditing(true)} className="border-dashed">
-                <div className="absolute bottom-2 -left-2 size-44 text-accent-primary/10 rotate-12 group-hover:rotate-0 group-hover:text-accent-primary/20 transition-all duration-1000 pointer-events-none">
-                    <AlarmClock size="100%" strokeWidth={1} />
+            <div className="w-full">
+                <div className="flex justify-between items-center mb-4 px-2">
+                    <h2 className='text-lg sm:text-xl font-semibold text-text-primary tracking-tight'>Exam Reminder</h2>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center justify-between w-full relative z-10 text-center sm:text-left gap-4">
-                    <div>
-                        <h3 className="text-xl md:text-2xl font-bold text-text-primary tracking-tight mb-1">Track Your Progress</h3>
-                        <p className="text-sm text-text-tertiary font-medium">Set your exam date to start coaching.</p>
+                <CardContainer onClick={() => setIsEditing(true)} className="border-dashed !p-6 sm:!p-8">
+                    <div className="absolute bottom-2 -left-2 size-44 text-accent-primary/10 rotate-12 group-hover:rotate-0 group-hover:text-accent-primary/20 transition-all duration-1000 pointer-events-none">
+                        <AlarmClock size="100%" strokeWidth={1} />
                     </div>
-                    <div className="px-6 py-2 bg-accent-primary rounded-xl text-sm font-bold text-white hover:bg-accent-hover transition-all">
-                        Set Date
+                    <div className="flex flex-col sm:flex-row items-center justify-between w-full relative z-10 text-center sm:text-left gap-4">
+                        <div>
+                            <h3 className="text-xl md:text-2xl font-bold text-text-primary tracking-tight mb-1">Track Your Progress</h3>
+                            <p className="text-sm text-text-tertiary font-medium">Set your exam date to start coaching.</p>
+                        </div>
+                        <div className="px-6 py-2 bg-accent-primary rounded-xl text-sm font-bold text-white hover:bg-accent-hover transition-all">
+                            Set Date
+                        </div>
                     </div>
-                </div>
-            </CardContainer>
+                </CardContainer>
+            </div>
         );
     }
 
@@ -121,22 +148,35 @@ const ExamReminder = () => {
     // ==========================================
 
     const unexpandedWidget = (
-        <CardContainer onClick={() => navigate('/exams')} className="group cursor-pointer border-accent-primary/10 hover:border-accent-primary/30 active:scale-[0.98]">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 rounded-full -mr-16 -mt-16 blur-xl group-hover:bg-accent-primary/10 transition-all pointer-events-none" />
+        <CardContainer onClick={() => navigate('/exams')} className="group cursor-pointer border-accent-primary/20 hover:border-accent-primary/40 active:scale-[0.98]">
+            {/* Background Glow Emitting from Middle */}
+            <div className={`absolute top-1/2 left-1/2 w-48 sm:w-64 h-48 sm:h-64 -translate-x-1/2 -translate-y-1/2 rounded-full ${moodColor} opacity-10 dark:opacity-[0.15] blur-[50px] sm:blur-[70px] pointer-events-none transition-colors duration-1000 group-hover:opacity-20 dark:group-hover:opacity-25`} />
             
             {/* Carousel Navigation Chevrons */}
             {examsList.length > 1 && (
                 <>
-                   <button onClick={prevExam} className="absolute left-2 lg:left-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-black/5 dark:bg-white/5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-text-secondary transition-colors"><ChevronLeft size={24}/></button>
-                   <button onClick={nextExam} className="absolute right-2 lg:right-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-black/5 dark:bg-white/5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-text-secondary transition-colors"><ChevronRight size={24}/></button>
+                   <button onClick={prevExam} className="absolute left-1 top-1/2 -translate-y-1/2 z-20 p-1.5 bg-black/5 dark:bg-white/5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-text-secondary transition-colors"><ChevronLeft size={16}/></button>
+                   <button onClick={nextExam} className="absolute right-1 top-1/2 -translate-y-1/2 z-20 p-1.5 bg-black/5 dark:bg-white/5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-text-secondary transition-colors"><ChevronRight size={16}/></button>
                 </>
             )}
 
-            <div className="flex flex-col w-full h-full relative z-10 px-6 sm:px-12 md:px-10 py-2 md:py-4">
+            <div className={`flex flex-col w-full h-full relative z-10 ${examsList.length > 1 ? 'px-6' : 'px-2'} py-2`}>
                 
-                {/* Top Row: Actions (First row, part of document flow, always visible) */}
-                <div className="flex justify-end w-full pb-4">
-                    <div className="flex gap-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full px-3 py-2 shadow-sm border border-border-default/50">
+                {/* First Row: Exam Name, Middle Tag, Actions */}
+                <div className="flex justify-between items-center w-full mb-3">
+                    <div className="flex items-center gap-2 flex-1">
+                        <h2 className='text-sm sm:text-base font-bold text-text-primary tracking-tight truncate max-w-[100px] sm:max-w-[150px]'>{activeExam?.name || 'Exam Timer'}</h2>
+                        {examsList.length > 1 && <span className="text-[10px] font-bold text-text-tertiary bg-text-tertiary/10 px-2 py-0.5 rounded-full hidden sm:inline-block">{currentIndex + 1} of {examsList.length}</span>}
+                    </div>
+
+                    <div className="flex justify-center flex-1">
+                        <div className={`px-2.5 py-0.5 md:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5 ${moodBgColor} ${moodTextColor} ${moodBorderColor} backdrop-blur-sm`}>
+                            <div className={`size-1.5 sm:size-2 rounded-full ${moodColor} animate-pulse shadow-sm`} />
+                            {moodLabel}
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2 sm:gap-3 flex-1 justify-end">
                         <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="hover:text-accent-primary text-text-tertiary transition-colors" title="Edit">
                             <Edit2 size={16}/>
                         </button>
@@ -153,22 +193,35 @@ const ExamReminder = () => {
                     </div>
                 </div>
 
-                {/* Main Content: Countdown on Left */}
-                <div className="flex items-center w-full flex-1">
-                    <div className="flex flex-col items-start justify-center w-auto">
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-5xl md:text-6xl font-black text-text-primary tabular-nums tracking-tighter">
-                                {daysLeft > 0 ? daysLeft : 0}
-                            </span>
-                        </div>
-                        <span className="text-xs font-bold text-text-tertiary uppercase tracking-widest mt-1 mb-3">Days Left</span>
-                        
-                        <div className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                            activeExam?.isPaused ? 'bg-neutral-500/10 text-neutral-500 border-neutral-500/20' : daysLeft <= 7 ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-accent-primary/10 text-accent-primary border-accent-primary/20'
-                        }`}>
-                            {activeExam?.isPaused ? 'Paused' : daysLeft <= 0 ? 'Exam Day' : daysLeft <= 7 ? 'Urgent' : 'On Track'}
-                        </div>
+                {/* Second Row: Countdown */}
+                <div className="flex items-center gap-3 w-full mb-3 mt-1">
+                    <span className="text-5xl sm:text-6xl font-black text-text-primary tabular-nums tracking-tighter leading-none relative z-10">
+                        {daysLeft !== null && daysLeft > 0 ? daysLeft : 0}
+                    </span>
+                    <div className="flex flex-col pb-1">
+                        <span className="text-sm font-bold text-text-secondary tracking-tight">
+                            days left to your d-day
+                        </span>
                     </div>
+                </div>
+
+                {/* Third Row: Linked Book Space */}
+                {linkedSpace ? (
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-text-tertiary mt-1">
+                        <Link size={14} className="text-accent-primary" />
+                        <span>{linkedSpace.name}</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-text-tertiary mt-1">
+                        <Link size={14} className="opacity-50" />
+                        <span className="opacity-70">No linked study space</span>
+                    </div>
+                )}
+
+                {/* Fourth Row: Engagement Text */}
+                <div className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mt-3">
+                    <Sparkles size={14} className="text-accent-primary flex-shrink-0" />
+                    <span>Keep the pace &middot; 34% to your study goal, <span className="text-accent-primary font-semibold hover:underline cursor-pointer">learn more</span></span>
                 </div>
             </div>
         </CardContainer>
@@ -178,7 +231,12 @@ const ExamReminder = () => {
     // MODAL RENDERS (Edit View)
     // ==========================================
     return (
-        <>
+        <div className="w-full">
+            {!isEditing && (
+                <div className="flex justify-between items-center mb-4 px-2">
+                    <h2 className='text-lg sm:text-xl font-semibold text-text-primary tracking-tight'>Exam Reminder</h2>
+                </div>
+            )}
             {!isEditing ? unexpandedWidget : (
                <div className="w-full">
                   <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Edit Exam Details</h2>
@@ -214,7 +272,7 @@ const ExamReminder = () => {
                   </div>
                </div>
             )}
-        </>
+        </div>
     );
 };
 
