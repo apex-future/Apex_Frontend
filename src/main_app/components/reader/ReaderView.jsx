@@ -8,6 +8,9 @@ import db from '../../db/apex.db';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
+import QuizGenerationModal from './reading_navigations/reading_layout/QuizGenerationModal';
+import apiClient from '../../services/apiClient';
+import useToast from '../../hooks/useToast';
 import HighlightMenu from './HighlightMenu';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 import PageSettings from './reading_navigations/reading_layout/PageSettings';
@@ -66,6 +69,8 @@ function ReaderView() {
     const [navState, setNavState] = useState('none');
     const [locked, setLocked] = useState(false);
     const [aiModal, setAiModal] = useState(false);
+    const [quizModal, setQuizModal] = useState(false);
+    const { addToast } = useToast();
     const [leftPanel, setLeftPanel] = useState(false);
     const [pageSettings, setPageSettings] = useState(false);
     const { scrollOrientation: savedOrientation, updateSetting } = useSettingsStore();
@@ -762,6 +767,8 @@ function ReaderView() {
                         setNavState={setNavState}
                         aiModal={aiModal}
                         setAiModal={setAiModal}
+                        quizModal={quizModal}
+                        setQuizModal={setQuizModal}
                         leftPanel={leftPanel}
                         setLeftPanel={(val) => {
                             if (val) setPageSettings(false);
@@ -870,6 +877,45 @@ function ReaderView() {
                         bookId={book?.id?.toString()}
                     />
                 )}
+
+                {/* Quiz panel */}
+                {quizModal && (
+                    <QuizGenerationModal
+                        onClose={() => setQuizModal(false)}
+                        bookTitle={book?.title || book?.file?.name}
+                        onGenerate={async (config) => {
+                            try {
+                                const ranges = [];
+                                const parts = config.pageRange.split(',').map(p => p.trim()).filter(Boolean);
+                                for (const part of parts) {
+                                    const match = part.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+                                    if (match) {
+                                        const start = parseInt(match[1], 10);
+                                        const end = match[2] ? parseInt(match[2], 10) : start;
+                                        if (start > 0 && end >= start) ranges.push({ start, end });
+                                    }
+                                }
+
+                                // Backend is inactive, sending pending request
+                                await apiClient.post('/api/quiz/generate', {
+                                    bookId: book?.id?.toString(),
+                                    ranges: ranges.length > 0 ? ranges : null,
+                                    rawInput: config.pageRange,
+                                    numQuestions: config.numQuestions,
+                                    timeLimit: config.quizTime,
+                                    type: config.quizType,
+                                    difficulty: config.difficulty
+                                });
+                                addToast("Quiz generation requested!", "success");
+                            } catch (error) {
+                                console.error("Quiz generation failed:", error);
+                                addToast("Quiz generation requested (Pending Backend).", "success");
+                            } finally {
+                                setQuizModal(false);
+                            }
+                        }}
+                    />
+                )}
             </div>
 
             {/* Page Strip Overlay */}
@@ -883,7 +929,7 @@ function ReaderView() {
                     onClose={closePageStrip}
                 />
             )}
-            <ReaderDictionary isOpen={isReaderDictOpen} onClose={() => setIsReaderDictOpen(false)} bookId={book?.id} />
+            <ReaderDictionary isOpen={isReaderDictOpen} onClose={() => setIsReaderDictOpen(false)} bookId={book?.id} initialWord={selectionRef.current?.text} />
         </div>
     );
 }

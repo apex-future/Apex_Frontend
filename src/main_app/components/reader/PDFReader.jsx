@@ -472,7 +472,7 @@ const PDFReader = ({
         onLoadSuccess={onDocumentLoad}
         onLoadError={(err) => console.error('PDF load error:', err)}
         loading={<BookSkeleton message="Rendering document..." />}
-        className="flex flex-col items-center sm:items-start justify-start min-h-full w-full mx-auto"
+        className="flex flex-col items-center justify-center min-h-full w-full mx-auto"
       >
         {isVertical ? (
           <div

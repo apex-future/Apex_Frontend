@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Target, Timer, Trophy, CheckCircle2, ChevronRight, BookOpen, Clock, Loader2, Sparkles, AlertCircle, X } from 'lucide-react';
 import useQuizStore from '../../../store/quizStore';
 import useSpaceStore from '../../../store/spaceStore';
+import QuizGenerationModal from '../../reader/reading_navigations/reading_layout/QuizGenerationModal';
 
 function DocumentQuizzes({ book }) {
     const { quizHistory, addQuizAttempt } = useQuizStore();
@@ -24,33 +25,40 @@ function DocumentQuizzes({ book }) {
     // Filter attempts for this book
     const attempts = quizHistory.filter(q => String(q.bookId) === String(book.id)).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    // MOCK DATA for generated quiz
-    const mockQuestions = Array.from({ length: numQuestions }, (_, i) => {
-        if (quizType === 'essay') {
-            return {
-                id: i,
-                question: `Sample ${difficulty} AI essay prompt ${i + 1} from "${book.title}". Please explain your reasoning in detail.`,
-                type: 'essay'
-            };
-        } else {
-            return {
-                id: i,
-                question: `Sample ${difficulty} AI knowledge check ${i + 1} from "${book.title}"?`,
-                options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                correctAnswer: Math.floor(Math.random() * 4),
-                type: 'mcq'
-            };
-        }
-    });
-
     const [activeQuiz, setActiveQuiz] = useState([]);
 
-    const handleStartGeneration = () => {
+    const handleStartGeneration = async (config) => {
+        // Save config
+        setNumQuestions(config.numQuestions);
+        setQuizTime(config.quizTime);
+        setQuizType(config.quizType);
+        setDifficulty(config.difficulty);
+
         setIsSetupModalOpen(false);
         setViewState('loading');
+        
+        // MOCK DATA for generated quiz based on config
+        const newMockQuestions = Array.from({ length: config.numQuestions }, (_, i) => {
+            if (config.quizType === 'essay') {
+                return {
+                    id: i,
+                    question: `Sample ${config.difficulty} AI essay prompt ${i + 1} from "${book.title}". Please explain your reasoning in detail.`,
+                    type: 'essay'
+                };
+            } else {
+                return {
+                    id: i,
+                    question: `Sample ${config.difficulty} AI knowledge check ${i + 1} from "${book.title}"?`,
+                    options: ['Option A', 'Option B', 'Option C', 'Option D'],
+                    correctAnswer: Math.floor(Math.random() * 4),
+                    type: 'mcq'
+                };
+            }
+        });
+
         // Fake generation delay
         setTimeout(() => {
-            setActiveQuiz(mockQuestions);
+            setActiveQuiz(newMockQuestions);
             setStartTime(Date.now());
             setCurrentQuestionIdx(0);
             setSelectedAnswers({});
@@ -278,98 +286,11 @@ function DocumentQuizzes({ book }) {
 
             {/* POP-UP SETUP MODAL */}
             {isSetupModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsSetupModalOpen(false)}>
-                    <div className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                        
-                        <div className="p-6 border-b border-border-default flex justify-between items-center bg-accent-primary/5">
-                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-accent-primary/10 rounded-xl text-accent-primary">
-                                    <Sparkles size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-text-primary tracking-tight">AI Quiz Generator</h3>
-                                    <p className="text-xs font-semibold text-text-tertiary">Customizing for: {book.title}</p>
-                                </div>
-                             </div>
-                             <button onClick={() => setIsSetupModalOpen(false)} className="p-2 text-text-secondary hover:bg-neutral-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
-                                 <X size={20}/>
-                             </button>
-                         </div>
-
-                        <div className="p-6 space-y-6">
-                            {/* Num Questions */}
-                            <div>
-                                <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider block mb-2">Number of Questions</label>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {[5, 10, 15, 20].map(n => (
-                                        <button 
-                                            key={n} 
-                                            onClick={() => setNumQuestions(n)} 
-                                            className={`py-2 rounded-xl text-sm font-bold border ${numQuestions === n ? 'border-accent-primary bg-accent-primary/10 text-accent-primary shadow-sm' : 'border-border-default text-text-secondary hover:bg-neutral-50 dark:hover:bg-zinc-800'}`}
-                                        >
-                                            {n}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            
-                            {/* Time */}
-                            <div>
-                                <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider block mb-2">Time Limit</label>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {['5m', '10m', '15m', 'None'].map(t => (
-                                        <button 
-                                            key={t} 
-                                            onClick={() => setQuizTime(t)} 
-                                            className={`py-2 rounded-xl text-sm font-bold border ${quizTime === t ? 'border-amber-500 bg-amber-500/10 text-amber-600 shadow-sm' : 'border-border-default text-text-secondary hover:bg-neutral-50 dark:hover:bg-zinc-800'}`}
-                                        >
-                                            {t}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Type */}
-                            <div>
-                                <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider block mb-2">Question Type</label>
-                                <div className="flex gap-2">
-                                    {['mcq', 'essay'].map((t) => (
-                                        <button 
-                                            key={t} 
-                                            onClick={() => setQuizType(t)} 
-                                            className={`flex-1 py-3 rounded-xl text-sm font-bold border ${quizType === t ? 'border-blue-500 bg-blue-500/10 text-blue-600 shadow-sm' : 'border-border-default text-text-secondary hover:bg-neutral-50 dark:hover:bg-zinc-800'}`}
-                                        >
-                                            {t === 'mcq' ? 'Multiple Choice' : 'Short Essay'}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Difficulty */}
-                            <div>
-                                <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider block mb-2">Difficulty Level</label>
-                                <div className="flex gap-2">
-                                    {['beginner', 'intermediate', 'advanced'].map(d => (
-                                        <button 
-                                            key={d} 
-                                            onClick={() => setDifficulty(d)} 
-                                            className={`flex-1 py-2 rounded-xl text-xs font-bold border capitalize ${difficulty === d ? 'border-purple-500 bg-purple-500/10 text-purple-600 shadow-sm' : 'border-border-default text-text-secondary hover:bg-neutral-50 dark:hover:bg-zinc-800'}`}
-                                        >
-                                            {d}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-4 bg-neutral-50 dark:bg-zinc-800/80 border-t border-border-default flex justify-end gap-3">
-                            <button onClick={() => setIsSetupModalOpen(false)} className="px-5 py-2 font-semibold text-text-secondary hover:bg-neutral-200 dark:hover:bg-zinc-700 rounded-xl transition-colors">Cancel</button>
-                            <button onClick={handleStartGeneration} className="px-8 py-2 font-bold text-white bg-accent-primary hover:bg-accent-hover rounded-xl shadow-lg shadow-accent-primary/20 transition-all flex items-center gap-2">
-                                <Sparkles size={16} /> Begin Extraction
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <QuizGenerationModal
+                    onClose={() => setIsSetupModalOpen(false)}
+                    onGenerate={handleStartGeneration}
+                    bookTitle={book.title}
+                />
             )}
         </div>
     );
