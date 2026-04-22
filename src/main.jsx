@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 
+console.log('[Apex SW] Navigation strategy: NetworkFirst — stale deploy fix active');
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
