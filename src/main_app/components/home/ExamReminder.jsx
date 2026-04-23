@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, AlarmClock, Calendar, BookOpen, X, Type, Trash2, Pause, Play, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Edit2, AlarmClock, Calendar, BookOpen, X, Type, Trash2, Pause, Play, ChevronLeft, ChevronRight, Plus, Link, Sparkles, Trophy, Target, Zap, Bell } from 'lucide-react';
 import useStudyStore from '../../store/studyStore';
 import useSpaceStore from '../../store/spaceStore';
 import { useNavigate } from 'react-router-dom';
 import { showToastGlobal } from '../../hooks/useToast';
+import examBgPattern from '../../../assets/exam-bg-pattern.png';
 
 const ExamReminder = () => {
     const { exams, examDate, setExamDate, examName, setExamName, addExam, updateExam, deleteExam, togglePauseExam } = useStudyStore();
@@ -24,6 +25,7 @@ const ExamReminder = () => {
     const [selectedSpaceId, setSelectedSpaceId] = useState('');
 
     const customSpaces = spaces.filter(s => !s.isSystem);
+    const linkedSpace = customSpaces.find(s => s.id === selectedSpaceId);
 
     useEffect(() => {
         if (activeExam) {
@@ -45,6 +47,31 @@ const ExamReminder = () => {
     };
 
     const daysLeft = calculateDaysLeft();
+    const isPaused = activeExam?.isPaused;
+    const isExamDay = daysLeft !== null && daysLeft <= 0;
+    const isUrgent = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
+
+    let moodColor = 'bg-accent-primary';
+    let moodTextColor = 'text-accent-primary';
+    let moodBgColor = 'bg-accent-primary/10';
+    let moodBorderColor = 'border-accent-primary/20';
+    let moodLabel = 'On Track';
+
+    if (isPaused) {
+        moodColor = 'bg-neutral-500';
+        moodTextColor = 'text-neutral-500';
+        moodBgColor = 'bg-neutral-500/10';
+        moodBorderColor = 'border-neutral-500/20';
+        moodLabel = 'Paused';
+    } else if (isExamDay) {
+        moodLabel = 'Exam Day';
+    } else if (isUrgent) {
+        moodColor = 'bg-red-500';
+        moodTextColor = 'text-red-500';
+        moodBgColor = 'bg-red-500/10';
+        moodBorderColor = 'border-red-500/20';
+        moodLabel = 'Urgent';
+    }
 
     const nextExam = (e) => { e.stopPropagation(); setCurrentIndex(s => (s + 1) % examsList.length); };
     const prevExam = (e) => { e.stopPropagation(); setCurrentIndex(s => (s - 1 + examsList.length) % examsList.length); };
@@ -110,6 +137,11 @@ const ExamReminder = () => {
                 onClick={onClick}
                 className={`bg-card-glass backdrop-blur-xl rounded-[2.5rem] p-6 lg:p-10 border-2 border-border-default hover:border-accent-primary/30 transition-all duration-500 group overflow-hidden shadow-xl shadow-black/5 relative min-h-[16rem] flex items-center cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-70 grayscale-[0.3]' : ''}`}
             >
+                {/* Background pattern */}
+                <div 
+                    className="absolute inset-0 opacity-[0.1] dark:opacity-[0.05] pointer-events-none"
+                    style={{ backgroundImage: `url(${examBgPattern})`, backgroundSize: '400px', backgroundRepeat: 'repeat' }}
+                />
                 {children}
             </div>
         </div>
@@ -154,7 +186,7 @@ const ExamReminder = () => {
                 )}
 
                 <div className="flex flex-col w-full h-full relative z-10">
-                    <div className="flex justify-between items-start w-full mb-auto">
+                    <div className="flex justify-between items-start w-full mb-auto gap-4">
                         <div className="flex flex-col">
                             <div className="flex items-baseline gap-2">
                                 <span className={`text-7xl lg:text-8xl font-black tabular-nums tracking-tighter leading-none ${activeExam?.isPaused ? 'text-text-tertiary opacity-40' : 'text-text-primary'}`}>
@@ -162,17 +194,25 @@ const ExamReminder = () => {
                                 </span>
                                 <span className="text-xs font-black text-text-tertiary uppercase tracking-widest">Days Left</span>
                             </div>
-                            <p className="text-xs font-bold text-text-tertiary mt-2 flex items-center gap-2">
-                                <Calendar size={14} className="text-accent-primary" />
-                                {new Date(activeExam?.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
-                            </p>
+                            
+                            <div className="flex flex-col gap-1.5 mt-4">
+                                <p className="text-xs font-bold text-text-tertiary flex items-center gap-2">
+                                    <Calendar size={14} className="text-accent-primary" />
+                                    {new Date(activeExam?.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                                </p>
+                                {linkedSpace && (
+                                    <p className="text-xs font-bold text-text-tertiary flex items-center gap-2">
+                                        <Link size={14} className="text-accent-primary" />
+                                        <span>Linked to {linkedSpace.name}</span>
+                                    </p>
+                                )}
+                            </div>
                         </div>
                         
                         <div className="flex flex-col items-end gap-3 translate-y-1">
-                            <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm ${
-                                activeExam?.isPaused ? 'bg-neutral-500/10 text-neutral-500 border-neutral-500/20' : daysLeft <= 7 ? 'bg-red-500/10 text-red-500 border-red-500/20 animate-pulse' : 'bg-accent-primary/10 text-accent-primary border-accent-primary/20'
-                            }`}>
-                                {activeExam?.isPaused ? 'Paused' : daysLeft <= 0 ? 'Exam Day' : daysLeft <= 7 ? 'Urgent' : 'On Track'}
+                            <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm flex items-center gap-2 ${moodBgColor} ${moodTextColor} ${moodBorderColor}`}>
+                                <div className={`size-1.5 rounded-full ${moodColor} ${!isPaused ? 'animate-pulse' : ''}`} />
+                                {moodLabel}
                             </div>
 
                             <div className="flex gap-2 bg-white/40 dark:bg-zinc-800/40 backdrop-blur-xl rounded-[1.25rem] p-1.5 border border-white/10 opacity-0 group-hover:opacity-100 transition-all shadow-lg">

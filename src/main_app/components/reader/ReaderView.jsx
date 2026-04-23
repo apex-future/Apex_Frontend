@@ -36,7 +36,7 @@ const ScrollOrientationOverlay = ({ visible, orientation }) => {
 };
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addNote, updateNote, deleteNote } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addNote, updateNote, deleteNote, toggleFavorite, toggleBookmarkedBook } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
