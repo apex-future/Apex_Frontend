@@ -4,6 +4,14 @@ All notable changes to Apex are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
 
+## [1.9.1] - 2026-04-22
+### Fixed
+- index.html no longer cached at Vercel CDN edge — users see new deploys immediately
+- Service Worker now uses NetworkFirst for HTML navigation — eliminates stale app shell on reload
+- /assets/* set to immutable cache — performance improvement for returning users
+
+---
+
 ## [1.9.0] - 2026-04-19
 ### Improved
 - Optimized ReaderView performance by migrating selection state to refs
