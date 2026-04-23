@@ -50,7 +50,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
 
     let fullPrompt = displayContent;
     if (activeContext) {
-      fullPrompt = `I'm asking about this text: "${activeContext}"\n\nMy question: ${displayContent}`;
+      fullPrompt = `I am asking about the following text context:\n\n<context>\n${activeContext}\n</context>\n\nMy Question: ${displayContent}`;
     }
 
     sendMessage(fullPrompt, bookTitle, displayContent);

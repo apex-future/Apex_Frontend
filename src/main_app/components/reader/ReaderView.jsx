@@ -5,6 +5,7 @@ import useSettingsStore from '../../store/settingsStore';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
 import db from '../../db/apex.db';
+import DOMPurify from 'dompurify';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
@@ -559,7 +560,7 @@ function ReaderView() {
                         // Use mammoth from CDN for DOCX conversion
                         const mammoth = await import('https://esm.sh/mammoth@1.8.0');
                         const result = await mammoth.convertToHtml({ arrayBuffer });
-                        setHtmlContent(result.value);
+                        setHtmlContent(DOMPurify.sanitize(result.value));
                         setTextContent("");
                         setFileUrl(null);
                     } catch (err) {
