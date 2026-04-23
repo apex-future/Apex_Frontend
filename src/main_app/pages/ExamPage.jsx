@@ -35,7 +35,7 @@ const ExamPage = () => {
                         <div key={exam.id} className={`bg-card-glass backdrop-blur-xl border-2 ${exam.isPaused ? 'border-border-default opacity-60' : 'border-accent-primary/20'} rounded-3xl p-6 relative`}>
                             <h3 className="text-xl font-bold text-text-primary mb-2">{exam.name || 'Upcoming Exam'}</h3>
                             <p className="text-sm text-text-tertiary mb-6">{new Date(exam.date).toLocaleDateString()}</p>
-                            
+
                             <div className="flex items-end justify-between">
                                 <div>
                                     <span className="block text-xs font-bold text-text-tertiary uppercase tracking-widest mb-1">Time Left</span>
@@ -49,7 +49,7 @@ const ExamPage = () => {
                     )
                 })}
 
-                <button 
+                <button
                     onClick={() => {
                         const name = prompt("Enter Exam Name:");
                         const date = prompt("Enter Exam Date (YYYY-MM-DD):");

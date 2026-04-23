@@ -24,12 +24,12 @@ const notificationService = {
 
     const lastNotified = localStorage.getItem('apex_last_notified');
     const now = new Date();
-    
+
     if (lastNotified) {
       const lastNotifiedDate = new Date(lastNotified);
       const diffSinceNotify = now.getTime() - lastNotifiedDate.getTime();
       const hoursSinceNotify = diffSinceNotify / (1000 * 60 * 60);
-      
+
       // Don't notify more than once every 24 hours
       if (hoursSinceNotify < 24) return;
     }
@@ -55,7 +55,7 @@ const notificationService = {
       "Your books are waiting for you. Let's make some progress today! 🚀",
       "A chapter a day keeps the knowledge stay! Open Apex to read now. 📖"
     ];
-    
+
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];
 
     const options = {
@@ -84,20 +84,20 @@ const notificationService = {
 
     try {
       const registration = await navigator.serviceWorker.ready;
-      
+
       // Check if Notification Triggers are supported
       if ('showTrigger' in Notification.prototype && typeof TimestampTrigger !== 'undefined') {
         const messages = [
-            "Ready to dive back into your books? 📚",
-            "Don't lose your streak! Time for some reading? ✨",
-            "Your books are waiting for you. Let's make some progress today! 🚀",
-            "A chapter a day keeps the knowledge stay! Open Apex to read now. 📖"
+          "Ready to dive back into your books? 📚",
+          "Don't lose your streak! Time for some reading? ✨",
+          "Your books are waiting for you. Let's make some progress today! 🚀",
+          "A chapter a day keeps the knowledge stay! Open Apex to read now. 📖"
         ];
         const randomMessage = messages[Math.floor(Math.random() * messages.length)];
 
         // Schedule for 24 hours from now
         const triggerTime = Date.now() + 24 * 60 * 60 * 1000;
-        
+
         await registration.showNotification('Apex Reading Reminder', {
           body: randomMessage,
           icon: '/pwa-192x192.png',
@@ -105,7 +105,7 @@ const notificationService = {
           tag: 'daily-reminder-scheduled',
           showTrigger: new TimestampTrigger(triggerTime),
         });
-        
+
         console.log('[Apex Notification] Scheduled for:', new Date(triggerTime).toLocaleString());
       }
     } catch (err) {

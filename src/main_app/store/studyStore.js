@@ -162,7 +162,7 @@ const useStudyStore = create(
 
           // Server returns its validated date — correct local store if it was wrong
           if (response.data?.last_active_date &&
-              response.data.last_active_date !== lastActiveDate) {
+            response.data.last_active_date !== lastActiveDate) {
             if (import.meta.env.DEV) console.log('[Apex Streak] Server corrected last_active_date:',
               lastActiveDate, '→', response.data.last_active_date);
             set({ lastActiveDate: response.data.last_active_date });

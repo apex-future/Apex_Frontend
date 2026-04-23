@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // Import Lucide icons for visual representation in the navigation
-import { Sparkle, Home, X, Book, Pen, Star, Cog, WholeWord, Menu, LogOut, Sun, Moon, Monitor, User } from 'lucide-react';
+import { Sparkle, Home, X, Book, Pen, Cog, WholeWord, Menu, LogOut, Sun, Moon, Monitor, User } from 'lucide-react';
 // Import navigation hooks and components from react-router-dom
 import { NavLink, useLocation } from 'react-router-dom';
 import useThemeStore from '../../../store/themeStore';
@@ -175,25 +175,25 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
             <li className="flex justify-center mb-2 px-1">
               <div className={`flex ${isExpanded ? 'flex-row' : 'flex-col'} bg-bg-elevated/50 p-1 rounded-xl border border-border-default shadow-inner gap-1 transition-all duration-300 w-fit justify-center items-center`}>
                 <button
-                    onClick={() => setTheme('light')}
-                    className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
-                    title="Light Theme"
+                  onClick={() => setTheme('light')}
+                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                  title="Light Theme"
                 >
-                    <Sun size={16} />
+                  <Sun size={16} />
                 </button>
                 <button
-                    onClick={() => setTheme('dark')}
-                    className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'dark' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
-                    title="Dark Theme"
+                  onClick={() => setTheme('dark')}
+                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'dark' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                  title="Dark Theme"
                 >
-                    <Moon size={16} />
+                  <Moon size={16} />
                 </button>
                 <button
-                    onClick={() => setTheme('system')}
-                    className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'system' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
-                    title="System Default"
+                  onClick={() => setTheme('system')}
+                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'system' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                  title="System Default"
                 >
-                    <Monitor size={16} />
+                  <Monitor size={16} />
                 </button>
               </div>
             </li>
