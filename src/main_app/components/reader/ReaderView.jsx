@@ -194,37 +194,37 @@ function ReaderView() {
     };
 
     // --- PDF Control Handlers ---
-    function nextPage() {
+    const nextPage = useCallback(() => {
         setPageNumber(prev => {
             const next = Math.min(prev + 1, numPages || prev);
             syncProgress(next, numPages);
             return next;
         });
-    }
+    }, [numPages]);
 
-    function previousPage() {
+    const previousPage = useCallback(() => {
         setPageNumber(prev => {
             const next = Math.max(prev - 1, 1);
             syncProgress(next, numPages);
             return next;
         });
-    }
+    }, [numPages]);
 
-    function zoomIn() {
+    const zoomIn = useCallback(() => {
         setScale(prev => Math.min(prev + 0.1, 2.5));
-    }
+    }, []);
 
-    function zoomOut() {
+    const zoomOut = useCallback(() => {
         setScale(prev => Math.max(prev - 0.1, 0.5));
-    }
+    }, []);
 
-    function rotate() {
+    const rotate = useCallback(() => {
         setRotation(prev => (prev + 90) % 360);
-    }
+    }, []);
 
-    function resetZoom() {
+    const resetZoom = useCallback(() => {
         setScale(1.0);
-    }
+    }, []);
 
     function handleDocumentLoad({ numPages: total }) {
         setNumPages(total);
@@ -311,6 +311,69 @@ function ReaderView() {
         },
         onToggleDictionary: () => setIsReaderDictOpen(prev => !prev),
     };
+
+    // --- Accessibility Keyboard Shortcuts ---
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+            
+            switch (e.key) {
+                case 'ArrowRight':
+                case 'PageDown':
+                    e.preventDefault();
+                    nextPage();
+                    break;
+                case 'ArrowLeft':
+                case 'PageUp':
+                    e.preventDefault();
+                    previousPage();
+                    break;
+                case '=':
+                case '+':
+                    e.preventDefault();
+                    zoomIn();
+                    break;
+                case '-':
+                    e.preventDefault();
+                    zoomOut();
+                    break;
+                case '0':
+                    e.preventDefault();
+                    resetZoom();
+                    break;
+                case 'r':
+                case 'R':
+                    e.preventDefault();
+                    rotate();
+                    break;
+                case 'f':
+                case 'F':
+                    e.preventDefault();
+                    setNavState(prev => prev === 'none' ? 'first' : 'none');
+                    break;
+                case 'd':
+                case 'D':
+                    e.preventDefault();
+                    setIsReaderDictOpen(prev => !prev);
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    setNavState('none');
+                    setPageSettings(false);
+                    setLeftPanel(false);
+                    setIsReaderDictOpen(false);
+                    setShowHighlightMenu(false);
+                    setAiModal(false);
+                    setQuizModal(false);
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [nextPage, previousPage, zoomIn, zoomOut, rotate, resetZoom]);
 
     // Screen handlers
     const toggleNav = useCallback(() => {

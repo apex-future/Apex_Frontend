@@ -125,9 +125,12 @@ function SignupPage({ onLogin }) {
         {step === 1 ? (
           <form className="w-full" onSubmit={handleNext}>
             <div className="mb-4 relative">
+              <label htmlFor="fullName" className="sr-only">Full Name</label>
               <input 
+                id="fullName"
                 type="text" 
                 placeholder="Full Name"
+                aria-label="Full Name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full px-4 py-3.5 border border-[#D1D5DB] rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#10a37f] focus:border-transparent text-base transition-colors"
@@ -136,9 +139,12 @@ function SignupPage({ onLogin }) {
             </div>
             
             <div className="mb-4 relative">
+              <label htmlFor="email" className="sr-only">Email address</label>
               <input 
+                id="email"
                 type="email" 
                 placeholder="Email address"
+                aria-label="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value.toLowerCase())}
                 className="w-full px-4 py-3.5 border border-[#D1D5DB] rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#10a37f] focus:border-transparent text-base transition-colors"
@@ -147,9 +153,12 @@ function SignupPage({ onLogin }) {
             </div>
 
             <div className="mb-4 relative">
+              <label htmlFor="password" className="sr-only">Password</label>
               <input 
+                id="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
+                aria-label="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3.5 border border-[#D1D5DB] rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#10a37f] focus:border-transparent text-base transition-colors pr-12"
@@ -157,6 +166,8 @@ function SignupPage({ onLogin }) {
               />
               <button
                 type="button"
+                aria-label="Toggle password visibility"
+                aria-pressed={showPassword}
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
               >
@@ -207,10 +218,10 @@ function SignupPage({ onLogin }) {
             </button>
 
             <div className="space-y-2.5">
-              <label className="text-sm font-semibold text-gray-800">
-                What describes you best? <span className="text-red-500">*</span>
+              <label id="userTypeLabel" className="text-sm font-semibold text-gray-800">
+                What describes you best? <span className="text-red-500" aria-hidden="true">*</span>
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" role="group" aria-labelledby="userTypeLabel">
                 {[
                   { value: 'student', label: 'Student' },
                   { value: 'casual_reader', label: 'Casual Reader' },
@@ -228,10 +239,10 @@ function SignupPage({ onLogin }) {
 
             {showStudyingFor && (
               <div className="space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <label className="text-sm font-semibold text-gray-800">
+                <label id="studyingForLabel" className="text-sm font-semibold text-gray-800">
                   What are you studying for? <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2" role="group" aria-labelledby="studyingForLabel">
                   {['JAMB', 'WAEC', 'University Exams', 'Professional Cert', 'Not studying for anything right now'].map((item) => (
                     <Pill
                       key={item}

@@ -15,6 +15,7 @@ import useSettingsStore from './main_app/store/settingsStore'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
 import LandingLoadingScreen from './landing_page/components/LandingLoadingScreen'
 import OnboardingPage from './landing_page/OnboardingPage';
+import AccessibilityPage from './landing_page/AccessibilityPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
@@ -246,6 +247,7 @@ function App() {
     <div className="min-h-screen">
       <Routes>
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/accessibility" element={<AccessibilityPage />} />
         {!isLoggedIn ? (
           <>
             <Route path="/" element={<LandingPage onLogin={handleLogin} deferredPrompt={deferredPrompt} />} />

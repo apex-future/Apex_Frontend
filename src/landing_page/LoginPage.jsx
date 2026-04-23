@@ -50,9 +50,12 @@ function LoginPage({ onLogin }) {
           )}
 
           <div className="mb-4 relative">
+            <label htmlFor="email" className="sr-only">Email address</label>
             <input 
+              id="email"
               type="email" 
               placeholder="Email address"
+              aria-label="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value.toLowerCase())}
               className="w-full px-4 py-3.5 border border-[#D1D5DB] rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#10a37f] focus:border-transparent text-base transition-colors"
@@ -61,9 +64,12 @@ function LoginPage({ onLogin }) {
           </div>
 
           <div className="mb-4 relative">
+            <label htmlFor="password" className="sr-only">Password</label>
             <input 
+              id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Password"
+              aria-label="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3.5 border border-[#D1D5DB] rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#10a37f] focus:border-transparent text-base transition-colors pr-12"
@@ -71,6 +77,8 @@ function LoginPage({ onLogin }) {
             />
             <button
               type="button"
+              aria-label="Toggle password visibility"
+              aria-pressed={showPassword}
               onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >

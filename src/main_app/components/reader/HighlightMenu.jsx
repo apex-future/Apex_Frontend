@@ -118,6 +118,9 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
             className={`fixed z-[300] animate-in fade-in duration-200 pointer-events-auto ${isMobile ? 'zoom-in-95' : 'zoom-in'}`}
             style={menuStyle}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Text action menu"
         >
             <div className="bg-bg-elevated border border-border-default shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
                 {!showDict && !showNote ? (

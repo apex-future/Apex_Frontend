@@ -93,6 +93,7 @@ function Footer() {
                 <li><a href="#contact" className="hover:text-accent-primary transition-colors">Contact Support</a></li>
                 <li><Link to="/privacy" className="hover:text-accent-primary transition-colors">Privacy Policy</Link></li>
                 <li><a href="#terms" className="hover:text-accent-primary transition-colors">Terms of Service</a></li>
+                <li><Link to="/accessibility" className="hover:text-accent-primary transition-colors">Accessibility</Link></li>
               </ul>
             </div>
 
