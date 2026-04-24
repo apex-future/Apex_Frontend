@@ -92,7 +92,7 @@ function ApexAI() {
 
             {/* ── Main Chat Area ── */}
             <main className='flex-1 flex flex-col relative min-w-0 bg-bg-elevated overflow-hidden'>
-                <div className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-screen">
+                <div className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-multiply dark:mix-blend-screen">
                     <Orb hoverIntensity={0.5} rotateOnHover={true} hue={280} forceHoverState={true} />
                 </div>
                 {/* Header */}
@@ -142,7 +142,7 @@ function ApexAI() {
                                 <div className='w-20 h-20 bg-gradient-to-br from-purple-50 to-purple-100 text-accent-primary rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-accent-subtle ring-4 ring-bg-elevated'>
                                     <Sparkle size={40} fill="currentColor" />
                                 </div>
-                                <h2 className='text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-text-primary font-serif italic'>Welcome to Cleo</h2>
+                                <h2 className='text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-text-primary font-serif italic'>Ask Cleo</h2>
                                 <p className='text-text-tertiary max-w-sm mx-auto text-base leading-relaxed'>Stay Focused. Learn Faster</p>
 
                                 <div className='grid grid-cols-1 md:grid-cols-2 gap-3 mt-12 w-full max-w-2xl'>

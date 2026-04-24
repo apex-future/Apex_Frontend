@@ -98,7 +98,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
         className='flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-bg-subtle rounded-t-3xl h-[85vh] md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-l border-border-default md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-none animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden'
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-screen">
+        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-multiply dark:mix-blend-screen">
           <Orb hoverIntensity={0.5} rotateOnHover={true} hue={280} forceHoverState={true} />
         </div>
       {/* ── Header ── */}
