@@ -106,7 +106,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://apexbackend.pxxl.click',
+      target: 'http://localhost:8000',
         changeOrigin: true,
       }
     }

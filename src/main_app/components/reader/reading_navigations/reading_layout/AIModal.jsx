@@ -149,6 +149,22 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const cleoHeaders = useMemo(() => [
+      `Ready to dig into "${bookTitle}"?`,
+      `"${bookTitle}" — let's get into it.`,
+      `Got questions about "${bookTitle}"? I'm here.`,
+      `I've got "${bookTitle}" open. What do you need?`,
+      `Let's make sense of "${bookTitle}" together.`,
+      `"${bookTitle}" is a good one. What's on your mind?`,
+      `Working through "${bookTitle}"? Ask me anything.`,
+      `I'm with you on "${bookTitle}". Where do you want to start?`,
+  ], [bookTitle]);
+
+  const cleoHeader = useMemo(() => {
+      const seed = (bookId || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      return cleoHeaders[seed % cleoHeaders.length];
+  }, [bookId, cleoHeaders]);
+
   // Group history by date (simplified for modal)
   const groupedHistory = useMemo(() => {
     const groups = { today: [], persistent: [] };
@@ -258,34 +274,20 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
           <>
             {messages.length === 0 ? (
               <div className='flex flex-col items-center justify-center py-8 text-center animate-in fade-in zoom-in duration-700'>
-                {/* Cleo avatar */}
-                <div className='w-16 h-16 bg-gradient-to-br from-purple-50 to-purple-100 text-accent-primary rounded-[2rem] flex items-center justify-center mb-6 shadow-2xl shadow-accent-subtle/50 ring-4 ring-bg-elevated'>
-                    <Sparkle size={32} fill="currentColor" />
-                </div>
-                <h2 className='text-2xl font-extrabold mb-1 tracking-tight text-text-primary font-serif italic'>Cleo</h2>
-                <p className='text-text-tertiary text-xs leading-relaxed max-w-[220px] mx-auto font-medium mb-6'>
-                    Your study companion for <span className='text-accent-primary'>"{bookTitle || 'this book'}"</span>
-                </p>
+             
+                <h2 className='text-2xl font-extrabold mb-6 tracking-tight text-text-primary font-serif italic'>
+                    {cleoHeader}
+                </h2>
 
                 {/* Context Card */}
-                {currentPage && (
+                {resolvedExamName !== 'your exam' && (
                     <div className='w-full max-w-[300px] bg-bg-elevated border border-border-default rounded-2xl p-4 mb-6 text-left shadow-sm'>
                         <p className='text-[9px] font-black text-accent-primary uppercase tracking-[0.2em] mb-3'>Cleo knows</p>
                         <div className='flex flex-col gap-2'>
                             <div className='flex items-center gap-2 text-[11px] text-text-secondary'>
-                                <BookOpen size={12} className='text-accent-primary flex-shrink-0' />
-                                <span className='truncate font-medium'>{bookTitle || 'This book'}</span>
+                                <span className='text-accent-primary flex-shrink-0 text-[10px] font-black'>🎯</span>
+                                <span className='font-medium truncate'>{resolvedExamName}</span>
                             </div>
-                            <div className='flex items-center gap-2 text-[11px] text-text-secondary'>
-                                <span className='text-accent-primary flex-shrink-0 text-[10px] font-black'>PG</span>
-                                <span className='font-medium'>Page {currentPage}{numPages ? ` of ${numPages}` : ''}</span>
-                            </div>
-                            {resolvedExamName !== 'your exam' && (
-                                <div className='flex items-center gap-2 text-[11px] text-text-secondary'>
-                                    <span className='text-accent-primary flex-shrink-0 text-[10px] font-black'>🎯</span>
-                                    <span className='font-medium truncate'>{resolvedExamName}</span>
-                                </div>
-                            )}
                         </div>
                     </div>
                 )}
