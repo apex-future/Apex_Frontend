@@ -50,7 +50,9 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
 
     let fullPrompt = displayContent;
     if (activeContext) {
-      fullPrompt = `I am asking about the following text context:\n\n<context>\n${activeContext}\n</context>\n\nMy Question: ${displayContent}`;
+      // Security: Escape any existing </context> tags in the user-provided context to prevent prompt injection
+      const sanitizedContext = activeContext.replace(/<\/context>/g, '&lt;/context&gt;');
+      fullPrompt = `I am asking about the following text context:\n\n<context>\n${sanitizedContext}\n</context>\n\nMy Question: ${displayContent}`;
     }
 
     sendMessage(fullPrompt, bookTitle, displayContent);
