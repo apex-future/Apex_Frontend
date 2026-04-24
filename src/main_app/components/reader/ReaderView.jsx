@@ -939,6 +939,9 @@ function ReaderView() {
                         bookTitle={book?.title || book?.file?.name}
                         selectedText={selectionRef.current.text}
                         bookId={book?.id?.toString()}
+                        currentPage={pageNumber}
+                        numPages={numPages}
+                        examName={book?.examName || ''}
                     />
                 )}
 

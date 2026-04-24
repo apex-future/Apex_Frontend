@@ -3,10 +3,12 @@ import { X, Send, Sparkle, Info, RotateCcw, Trash2, AlertCircle, Highlighter, Us
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
+import useStudyStore from '../../../../store/studyStore'
+import apiClient from '../../../../services/apiClient'
 import TypingIndicator from '../../../ai/TypingIndicator'
 import Orb from '../../../ui/Orb'
 
-function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
+function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, numPages, examName }) {
   const {
     messages,
     isStreaming,
@@ -20,21 +22,77 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
     retry,
   } = useAIChat({ autoLoad: true, persist: true, scope: bookTitle, bookId });
 
+  // Cleo context state
+  const examNameFromStore = useStudyStore(state => state.examName);
+  const resolvedExamName = examName || examNameFromStore || 'your exam';
+  const [chips, setChips] = useState([
+      "Explain this concept",
+      "How does this relate to my exam?",
+      "Break this down simply"
+  ]);
+  const [chipsLoading, setChipsLoading] = useState(false);
+  const chipsCache = useRef({});
+  const pageTextRef = useRef('');
+
   const [inputValue, setInputValue] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const chatContainerRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Suggestions for the user
-  const suggestions = [
-    "Summarize this page",
-    "Explain the key concept",
-    "Give me examples",
-    "Define technical terms"
-  ];
-
   // State for active context
   const [activeContext, setActiveContext] = useState(selectedText);
+
+  // Extract current page text from PDF text layer and generate chips after 3s
+  useEffect(() => {
+      if (!currentPage) return;
+      const cacheKey = `${bookId}-${currentPage}`;
+
+      // Use cached chips if available
+      if (chipsCache.current[cacheKey]) {
+          setChips(chipsCache.current[cacheKey]);
+          return;
+      }
+
+      // Extract visible page text from DOM
+      const extractPageText = () => {
+          const pageWrappers = document.querySelectorAll('.pdf-page-wrapper');
+          let text = '';
+          pageWrappers.forEach(wrapper => {
+              const pageIdx = parseInt(wrapper.dataset.pageIndex, 10);
+              if (pageIdx === currentPage) {
+                  const textLayer = wrapper.querySelector('.react-pdf__Page__textContent');
+                  if (textLayer) text = textLayer.innerText || textLayer.textContent || '';
+              }
+          });
+          return text.slice(0, 1500);
+      };
+
+      const timer = setTimeout(async () => {
+          const pageText = extractPageText();
+          if (!pageText || pageText.length < 50) return;
+          pageTextRef.current = pageText;
+
+          setChipsLoading(true);
+          try {
+              const response = await apiClient.post('/api/ai/chips', {
+                  page_text: pageText,
+                  book_title: bookTitle,
+                  exam_type: resolvedExamName,
+              });
+              const newChips = response.data?.chips || chips;
+              chipsCache.current[cacheKey] = newChips;
+              setChips(newChips);
+              if (import.meta.env.DEV) console.log('[Apex Cleo] Chips generated for page', currentPage, newChips);
+          } catch (err) {
+              if (import.meta.env.DEV) console.error('[Apex Cleo] Chips generation failed:', err);
+              // Keep fallback chips — do not show error to user
+          } finally {
+              setChipsLoading(false);
+          }
+      }, 3000);
+
+      return () => clearTimeout(timer);
+  }, [currentPage, bookId]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -50,10 +108,22 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
     if (!displayContent || isStreaming) return;
 
     let fullPrompt = displayContent;
+
+    // Inject page context if available
+    const pageContext = pageTextRef.current
+        ? `\n\nCurrent page content:\n<page>\n${pageTextRef.current}\n</page>`
+        : '';
+
+    // Inject exam type
+    const examContext = resolvedExamName !== 'your exam'
+        ? `\n\nStudent is preparing for: ${resolvedExamName}`
+        : '';
+
     if (activeContext) {
-      // Security: Escape any existing </context> tags in the user-provided context to prevent prompt injection
       const sanitizedContext = activeContext.replace(/<\/context>/g, '&lt;/context&gt;');
-      fullPrompt = `I am asking about the following text context:\n\n<context>\n${sanitizedContext}\n</context>\n\nMy Question: ${displayContent}`;
+      fullPrompt = `I am asking about the following highlighted text:\n\n<context>\n${sanitizedContext}\n</context>${pageContext}${examContext}\n\nMy Question: ${displayContent}`;
+    } else {
+      fullPrompt = `${displayContent}${pageContext}${examContext}`;
     }
 
     sendMessage(fullPrompt, bookTitle, displayContent);
@@ -187,26 +257,55 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
           /* ── Messages View ── */
           <>
             {messages.length === 0 ? (
-              <div className='flex flex-col items-center justify-center py-16 text-center animate-in fade-in zoom-in duration-700'>
-                <div className='w-20 h-20 bg-gradient-to-br from-purple-50 to-purple-100 text-accent-primary rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl shadow-accent-subtle/50 ring-4 ring-bg-elevated animate-pulse'>
-                  <Sparkle size={40} fill="currentColor" />
+              <div className='flex flex-col items-center justify-center py-8 text-center animate-in fade-in zoom-in duration-700'>
+                {/* Cleo avatar */}
+                <div className='w-16 h-16 bg-gradient-to-br from-purple-50 to-purple-100 text-accent-primary rounded-[2rem] flex items-center justify-center mb-6 shadow-2xl shadow-accent-subtle/50 ring-4 ring-bg-elevated'>
+                    <Sparkle size={32} fill="currentColor" />
                 </div>
-                <h2 className='text-3xl font-extrabold mb-4 tracking-tight text-text-primary font-serif italic'>Cleo</h2>
-                <p className='text-text-tertiary text-sm leading-relaxed max-w-[240px] mx-auto font-medium'>
-                  Deep context analysis session for <span className='text-accent-primary'>"{bookTitle || 'this book'}"</span>.
+                <h2 className='text-2xl font-extrabold mb-1 tracking-tight text-text-primary font-serif italic'>Cleo</h2>
+                <p className='text-text-tertiary text-xs leading-relaxed max-w-[220px] mx-auto font-medium mb-6'>
+                    Your study companion for <span className='text-accent-primary'>"{bookTitle || 'this book'}"</span>
                 </p>
 
-                <div className='grid grid-cols-1 gap-2.5 mt-12 w-full max-w-[280px]'>
-                  {suggestions.map((text, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSend(text)}
-                      className='w-full px-5 py-4 rounded-2xl bg-bg-elevated border border-border-default text-xs text-text-secondary hover:border-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 transition-all duration-300 text-left font-bold shadow-sm hover:translate-x-1 group'
-                    >
-                      <span className='group-hover:mr-2 transition-all opacity-0 group-hover:opacity-100 text-accent-primary'>→</span>
-                      {text}
-                    </button>
-                  ))}
+                {/* Context Card */}
+                {currentPage && (
+                    <div className='w-full max-w-[300px] bg-bg-elevated border border-border-default rounded-2xl p-4 mb-6 text-left shadow-sm'>
+                        <p className='text-[9px] font-black text-accent-primary uppercase tracking-[0.2em] mb-3'>Cleo knows</p>
+                        <div className='flex flex-col gap-2'>
+                            <div className='flex items-center gap-2 text-[11px] text-text-secondary'>
+                                <BookOpen size={12} className='text-accent-primary flex-shrink-0' />
+                                <span className='truncate font-medium'>{bookTitle || 'This book'}</span>
+                            </div>
+                            <div className='flex items-center gap-2 text-[11px] text-text-secondary'>
+                                <span className='text-accent-primary flex-shrink-0 text-[10px] font-black'>PG</span>
+                                <span className='font-medium'>Page {currentPage}{numPages ? ` of ${numPages}` : ''}</span>
+                            </div>
+                            {resolvedExamName !== 'your exam' && (
+                                <div className='flex items-center gap-2 text-[11px] text-text-secondary'>
+                                    <span className='text-accent-primary flex-shrink-0 text-[10px] font-black'>🎯</span>
+                                    <span className='font-medium truncate'>{resolvedExamName}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Chips */}
+                <div className='flex flex-col gap-2 w-full max-w-[300px]'>
+                    <p className='text-[9px] font-black text-text-tertiary uppercase tracking-[0.2em] text-left mb-1'>
+                        {chipsLoading ? 'Reading this page...' : 'Ask Cleo'}
+                    </p>
+                    {chips.map((chip, i) => (
+                        <button
+                            key={i}
+                            onClick={() => handleSend(chip)}
+                            disabled={chipsLoading}
+                            className='w-full px-4 py-3 rounded-2xl bg-bg-elevated border border-border-default text-xs text-text-secondary hover:border-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 transition-all duration-300 text-left font-bold shadow-sm hover:translate-x-1 group disabled:opacity-40 disabled:cursor-not-allowed'
+                        >
+                            <span className='group-hover:mr-2 transition-all opacity-0 group-hover:opacity-100 text-accent-primary'>→</span>
+                            {chipsLoading ? <span className='animate-pulse'>Generating...</span> : chip}
+                        </button>
+                    ))}
                 </div>
               </div>
             ) : (
@@ -318,7 +417,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
                     handleSend();
                   }
                 }}
-                placeholder={isStreaming ? 'Generating insights...' : 'Ask about this book?'}
+                placeholder={isStreaming ? 'Cleo is thinking...' : currentPage ? `Ask about page ${currentPage}...` : 'Ask Cleo anything...'}
                 disabled={isStreaming}
                 rows={1}
                 className='flex-1 bg-transparent px-4 py-3 focus:outline-none text-[15px] text-text-primary placeholder-slate-400 resize-none max-h-40 custom-scrollbar leading-relaxed'
