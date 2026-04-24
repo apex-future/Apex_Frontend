@@ -122,7 +122,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
         </div>
 
         <h2 className='text-[11px] flex items-center gap-1.5 font-bold text-text-primary uppercase tracking-[0.2em]'>
-          {showHistory ? 'History' : 'Apex Intelligence'}
+          {showHistory ? 'History' : 'Cleo'}
 
         </h2>
 
@@ -191,7 +191,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
                 <div className='w-20 h-20 bg-gradient-to-br from-purple-50 to-purple-100 text-accent-primary rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl shadow-accent-subtle/50 ring-4 ring-bg-elevated animate-pulse'>
                   <Sparkle size={40} fill="currentColor" />
                 </div>
-                <h2 className='text-3xl font-extrabold mb-4 tracking-tight text-text-primary font-serif italic'>Apex Intelligence</h2>
+                <h2 className='text-3xl font-extrabold mb-4 tracking-tight text-text-primary font-serif italic'>Cleo</h2>
                 <p className='text-text-tertiary text-sm leading-relaxed max-w-[240px] mx-auto font-medium'>
                   Deep context analysis session for <span className='text-accent-primary'>"{bookTitle || 'this book'}"</span>.
                 </p>
@@ -220,7 +220,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
                       {msg.role === 'user' ? <User size={14} /> : <Sparkle size={14} fill="currentColor" />}
                     </div>
                     <span className='text-[10px] font-bold text-text-tertiary uppercase tracking-widest'>
-                      {msg.role === 'ai' ? 'Apex AI' : 'You'}
+                      {msg.role === 'ai' ? 'Cleo' : 'You'}
                     </span>
                   </div>
 

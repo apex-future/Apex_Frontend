@@ -107,7 +107,7 @@ function ApexAI() {
                         </button>
                         
                         <h1 className='text-sm font-bold tracking-tight text-slate-900 dark:text-white/80 truncate max-w-[200px] md:max-w-md'>
-                            {chatHistory.find(c => c.id === sessionId)?.title || "Apex AI Companion"}
+                            {chatHistory.find(c => c.id === sessionId)?.title || "Cleo"}
                             {chatHistory.find(c => c.id === sessionId)?.scope && chatHistory.find(c => c.id === sessionId)?.scope !== 'general' && (
                                 <span className='text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-bg-dark-elevated px-2 py-0.5 rounded-full flex items-center gap-1.5 border border-slate-200'>
                                     <BookOpen size={12} /> {chatHistory.find(c => c.id === sessionId)?.scope}
@@ -142,7 +142,7 @@ function ApexAI() {
                                 <div className='w-20 h-20 bg-gradient-to-br from-purple-50 to-purple-100 text-accent-primary rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-accent-subtle ring-4 ring-bg-elevated'>
                                     <Sparkle size={40} fill="currentColor" />
                                 </div>
-                                <h2 className='text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-text-primary font-serif italic'>Welcome to Apex AI</h2>
+                                <h2 className='text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-text-primary font-serif italic'>Welcome to Cleo</h2>
                                 <p className='text-text-tertiary max-w-sm mx-auto text-base leading-relaxed'>Stay Focused. Learn Faster</p>
 
                                 <div className='grid grid-cols-1 md:grid-cols-2 gap-3 mt-12 w-full max-w-2xl'>
@@ -175,7 +175,7 @@ function ApexAI() {
                                             {msg.role === 'user' ? <User size={16} /> : <Sparkle size={16} fill="currentColor" />}
                                         </div>
                                         <span className='text-[11px] font-bold text-text-tertiary uppercase tracking-widest'>
-                                            {msg.role === 'ai' ? 'Apex AI' : 'You'}
+                                            {msg.role === 'ai' ? 'Cleo' : 'You'}
                                         </span>
                                     </div>
 
@@ -254,7 +254,7 @@ function ApexAI() {
                                         handleSend();
                                     }
                                 }}
-                                placeholder={isStreaming ? 'AI is processing...' : 'Ask Apex Intelligence?'}
+                                placeholder={isStreaming ? 'AI is processing...' : 'Ask Cleo?'}
                                 disabled={isStreaming}
                                 rows={1}
                                 className='flex-1 bg-transparent px-4 py-3 focus:outline-none text-[16px] text-text-primary resize-none max-h-52 custom-scrollbar placeholder:text-sm disabled:cursor-not-allowed leading-relaxed'
