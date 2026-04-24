@@ -4,6 +4,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
 import TypingIndicator from '../../../ai/TypingIndicator'
+import Orb from '../../../ui/Orb'
 
 function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
   const {
@@ -94,11 +95,14 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
     <>
       <div className="fixed inset-0 bg-black/40 z-[190] md:hidden animate-in fade-in" onClick={() => setAiModal(false)} />
       <aside
-        className='flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-bg-subtle rounded-t-3xl h-[85vh] md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-l border-border-default md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-none animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans'
+        className='flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-bg-subtle rounded-t-3xl h-[85vh] md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-l border-border-default md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-none animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden'
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-screen">
+          <Orb hoverIntensity={0.5} rotateOnHover={true} hue={280} forceHoverState={true} />
+        </div>
       {/* ── Header ── */}
-      <div className='flex items-center justify-between px-4 py-4 border-b border-border-default bg-bg-elevated z-10 flex-shrink-0'>
+      <div className='flex items-center justify-between px-4 py-4 border-b border-border-default bg-bg-elevated relative z-10 flex-shrink-0'>
         <div className='flex items-center gap-2'>
           <button
             onClick={() => showHistory ? setShowHistory(false) : setAiModal(false)}
@@ -134,7 +138,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
       {/* ── Main Area ── */}
       <div
         ref={chatContainerRef}
-        className='flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-6 relative'
+        className='flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-6 relative z-10'
       >
         {showHistory ? (
           /* ── History View ── */

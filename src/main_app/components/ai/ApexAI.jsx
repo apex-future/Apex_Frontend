@@ -5,6 +5,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../hooks/useAIChat'
 import TypingIndicator from './TypingIndicator'
+import Orb from '../ui/Orb'
 
 function ApexAI() {
     const navigate = useNavigate();
@@ -90,9 +91,12 @@ function ApexAI() {
         <div className='flex h-screen max-h-screen bg-bg-subtle text-text-primary font-sans overflow-hidden'>
 
             {/* ── Main Chat Area ── */}
-            <main className='flex-1 flex flex-col relative min-w-0 bg-bg-elevated'>
+            <main className='flex-1 flex flex-col relative min-w-0 bg-bg-elevated overflow-hidden'>
+                <div className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-screen">
+                    <Orb hoverIntensity={0.5} rotateOnHover={true} hue={280} forceHoverState={true} />
+                </div>
                 {/* Header */}
-                <header className='flex items-center justify-between px-6 py-4 border-b border-border-default bg-card-glass/80 backdrop-blur-md z-10 flex-shrink-0'>
+                <header className='flex items-center justify-between px-6 py-4 border-b border-border-default bg-card-glass/80 backdrop-blur-md relative z-10 flex-shrink-0'>
                     <div className='flex items-center gap-4 flex-1 min-w-0'>
                         <button
                             onClick={() => navigate(-1)}
@@ -131,7 +135,7 @@ function ApexAI() {
                 </header>
 
                 {/* Chat Canvas */}
-                <div className='flex-1 overflow-y-auto px-4 py-8 custom-scrollbar  [background-size:24px_24px]'>
+                <div className='flex-1 overflow-y-auto px-4 py-8 custom-scrollbar relative z-10'>
                     <div className='max-w-4xl mx-auto flex flex-col gap-8'>
                         {messages.length === 0 ? (
                             <div className='flex flex-col items-center justify-center py-24 text-center animate-in fade-in zoom-in duration-700'>
