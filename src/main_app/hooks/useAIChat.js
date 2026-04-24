@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { streamExplain, streamAsk } from '../services/aiService';
 import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
 import db from '../db/apex.db';
@@ -15,7 +15,16 @@ export default function useAIChat(options = {}) {
   const [error, setError] = useState(null);
   const [sessionId, setSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
+  const abortControllerRef = useRef(null);
   
+  const stop = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsStreaming(false);
+  }, []);
+
   const createNewChat = useCallback(() => {
     setMessages([]);
     setSessionId(Date.now());
@@ -171,6 +180,9 @@ export default function useAIChat(options = {}) {
     setMessages(newMessages);
     setIsStreaming(true);
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }));
 
@@ -194,10 +206,14 @@ export default function useAIChat(options = {}) {
         bookId: resolvedBookId,
         chatType: scope === 'general' ? 'general' : 'in_reader',
         conversationHistory: history,
-      });
+      }, controller.signal);
 
       await consumeStream(response, activeSessionId);
     } catch (err) {
+      if (err.name === 'AbortError') {
+        setIsStreaming(false);
+        return;
+      }
       setError(err.message || 'Something went wrong. Please try again.');
       setIsStreaming(false);
     }
@@ -217,6 +233,9 @@ export default function useAIChat(options = {}) {
     
     setMessages(newMessages);
     setIsStreaming(true);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }));
@@ -240,10 +259,14 @@ export default function useAIChat(options = {}) {
         bookId: resolvedBookId,
         chatType: 'in_reader',
         conversationHistory: history,
-      });
+      }, controller.signal);
 
       await consumeStream(response, activeSessionId);
     } catch (err) {
+      if (err.name === 'AbortError') {
+        setIsStreaming(false);
+        return;
+      }
       setError(err.message || 'Something went wrong. Please try again.');
       setIsStreaming(false);
     }
@@ -276,6 +299,7 @@ export default function useAIChat(options = {}) {
     chatHistory,
     sendMessage,
     sendExplain,
+    stop,
     createNewChat,
     switchChat,
     deleteSession,

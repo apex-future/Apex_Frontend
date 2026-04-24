@@ -25,10 +25,11 @@ const getHeaders = (contentType = 'application/json') => {
  * Stream an explanation of highlighted text.
  * Returns a Response object whose body is an SSE stream.
  */
-export async function streamExplain({ selectedText, context, bookTitle, bookId, chatType, conversationHistory = [] }) {
+export async function streamExplain({ selectedText, context, bookTitle, bookId, chatType, conversationHistory = [] }, signal) {
   const response = await fetch(`${API_BASE}/explain`, {
     method: 'POST',
     headers: getHeaders(),
+    signal,
     body: JSON.stringify({
       selected_text: selectedText,
       context: context || null,
@@ -55,10 +56,11 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
  * Stream an AI response to an open-ended question.
  * Returns a Response object whose body is an SSE stream.
  */
-export async function streamAsk({ message, bookTitle, bookId, chatType, conversationHistory = [] }) {
+export async function streamAsk({ message, bookTitle, bookId, chatType, conversationHistory = [] }, signal) {
   const response = await fetch(`${API_BASE}/ask`, {
     method: 'POST',
     headers: getHeaders(),
+    signal,
     body: JSON.stringify({
       message,
       book_title: bookTitle || null,

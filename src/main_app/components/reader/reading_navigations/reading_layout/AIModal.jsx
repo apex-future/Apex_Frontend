@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { X, Send, Sparkle, Info, RotateCcw, Trash2, AlertCircle, Highlighter, User, SquarePen, MessageSquare, History, ArrowLeft, BookOpen } from 'lucide-react'
+import { X, Send, Sparkle, Info, RotateCcw, Trash2, AlertCircle, Highlighter, User, SquarePen, MessageSquare, History, ArrowLeft, BookOpen, Square, Plus } from 'lucide-react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
@@ -16,6 +16,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
     sessionId,
     chatHistory,
     sendMessage,
+    stop,
     createNewChat,
     switchChat,
     deleteSession,
@@ -149,16 +150,19 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const cleoHeaders = useMemo(() => [
-      `Ready to dig into "${bookTitle}"?`,
-      `"${bookTitle}" — let's get into it.`,
-      `Got questions about "${bookTitle}"? I'm here.`,
-      `I've got "${bookTitle}" open. What do you need?`,
-      `Let's make sense of "${bookTitle}" together.`,
-      `"${bookTitle}" is a good one. What's on your mind?`,
-      `Working through "${bookTitle}"? Ask me anything.`,
-      `I'm with you on "${bookTitle}". Where do you want to start?`,
-  ], [bookTitle]);
+  const cleoHeaders = useMemo(() => {
+      const titleSpan = <span className="font-serif italic font-bold text-accent-primary">"{bookTitle}"</span>;
+      return [
+          <>Ready to dig into {titleSpan}  ?</>,
+          <>{titleSpan} — let's get into it.</>,
+          <>Got questions about {titleSpan} ? I'm here.</>,
+          <>I've got {titleSpan} open. What do you need?</>,
+          <>Let's make sense of {titleSpan} together.</>,
+          <>{titleSpan} is a good one. What's on your mind?</>,
+          <>Working through {titleSpan} ? Ask me anything.</>,
+          <>I'm with you on {titleSpan}. Where do you want to start?</>,
+      ];
+  }, [bookTitle]);
 
   const cleoHeader = useMemo(() => {
       const seed = (bookId || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
@@ -273,9 +277,9 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
           /* ── Messages View ── */
           <>
             {messages.length === 0 ? (
-              <div className='flex flex-col items-center justify-center py-8 text-center animate-in fade-in zoom-in duration-700'>
+              <div className='flex-1 flex flex-col items-center justify-center py-8 text-center animate-in fade-in zoom-in duration-700'>
              
-                <h2 className='text-2xl font-extrabold mb-6 tracking-tight text-text-primary font-serif italic'>
+                <h2 className='text-2xl font-extrabold mb-6 tracking-tight text-text-primary font-display'>
                     {cleoHeader}
                 </h2>
 
@@ -401,10 +405,15 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
       {!showHistory && (
         <div className='p-4 relative flex-shrink-0'>
           <form
-            onSubmit={handleSend}
-            className={`flex flex-col gap-3 transition-all duration-300 ${isStreaming ? 'opacity-60' : 'opacity-100'}`}
+            onSubmit={(e) => {
+               e.preventDefault();
+               if (!isStreaming) {
+                   handleSend();
+               }
+            }}
+            className={`flex flex-col transition-all duration-300`}
           >
-            <div className={`relative flex items-end gap-2 bg-bg-subtle border-2 border-border-default p-2 pr-3 focus-within:border-accent-primary focus-within:bg-bg-elevated focus-within:shadow-lg focus-within:shadow-accent-subtle transition-all duration-300 ${inputValue.split('\n').length > 1 || (inputRef.current && inputRef.current.scrollHeight > 56) ? 'rounded-[28px]' : 'rounded-full'}`}>
+            <div className={`flex flex-col bg-bg-subtle border-2 border-border-default rounded-2xl p-2 focus-within:border-accent-primary focus-within:bg-bg-elevated focus-within:shadow-lg focus-within:shadow-accent-subtle transition-all duration-300`}>
               <textarea
                 ref={inputRef}
                 value={inputValue}
@@ -415,26 +424,48 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
+                    // Only send on Enter if we are not on a small mobile device
+                    if (window.innerWidth > 768) {
+                        e.preventDefault();
+                        if (!isStreaming) handleSend();
+                    }
                   }
                 }}
                 placeholder={isStreaming ? 'Cleo is thinking...' : currentPage ? `Ask about page ${currentPage}...` : 'Ask Cleo anything...'}
                 disabled={isStreaming}
                 rows={1}
-                className='flex-1 bg-transparent px-4 py-3 focus:outline-none text-[15px] text-text-primary placeholder-slate-400 resize-none max-h-40 custom-scrollbar leading-relaxed'
+                className='w-full bg-transparent px-2 py-2 focus:outline-none text-[15px] text-text-primary placeholder-slate-400 resize-none max-h-40 custom-scrollbar leading-relaxed'
                 style={{ height: '44px' }}
               />
-              <button
-                type='submit'
-                disabled={!inputValue.trim() || isStreaming}
-                className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center flex-shrink-0 self-end mb-0.5 ${inputValue.trim() && !isStreaming
-                  ? 'bg-accent-primary text-bg-elevated shadow-xl shadow-accent-primary/20 hover:scale-110 active:scale-95'
-                  : 'bg-slate-300 text-text-tertiary cursor-not-allowed'
-                  }`}
-              >
-                <Send size={20} />
-              </button>
+              <div className="flex items-center justify-between mt-2 px-1 pb-1">
+                <button
+                  type="button"
+                  className="p-2 rounded-full hover:bg-bg-subtle/80 text-text-tertiary hover:text-text-secondary transition-colors"
+                  title="Options"
+                >
+                  <Plus size={18} />
+                </button>
+                {isStreaming ? (
+                  <button
+                    type='button'
+                    onClick={stop}
+                    className={`p-2.5 rounded-xl transition-all duration-300 flex items-center justify-center flex-shrink-0 bg-text-primary text-bg-elevated shadow-md hover:scale-105 active:scale-95`}
+                  >
+                    <Square size={16} fill="currentColor" />
+                  </button>
+                ) : (
+                  <button
+                    type='submit'
+                    disabled={!inputValue.trim()}
+                    className={`p-2.5 rounded-xl transition-all duration-300 flex items-center justify-center flex-shrink-0 ${inputValue.trim()
+                      ? 'bg-accent-primary text-bg-elevated shadow-md shadow-accent-primary/20 hover:scale-105 active:scale-95'
+                      : 'bg-slate-200 dark:bg-slate-800 text-text-tertiary cursor-not-allowed'
+                      }`}
+                  >
+                    <Send size={18} />
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         </div>
