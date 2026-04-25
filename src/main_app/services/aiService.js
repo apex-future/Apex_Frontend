@@ -57,6 +57,7 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
  * Returns a Response object whose body is an SSE stream.
  */
 export async function streamAsk({ message, bookTitle, bookId, chatType, conversationHistory = [], pageImageBase64 = null }, signal) {
+  if (import.meta.env.DEV) console.log('[Apex Cleo Debug] streamAsk — pageImageBase64 length:', pageImageBase64?.length);
   const response = await fetch(`${API_BASE}/ask`, {
     method: 'POST',
     headers: getHeaders(),

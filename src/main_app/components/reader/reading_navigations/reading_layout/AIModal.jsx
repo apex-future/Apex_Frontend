@@ -156,6 +156,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
     if (input && typeof input !== 'string') input.preventDefault();
 
     const displayContent = typeof input === 'string' ? input : inputValue.trim();
+    if (import.meta.env.DEV) console.log('[Apex Cleo Debug] On send — isImagePdf:', isImagePdfRef.current, 'pageImage length:', pageImageRef.current?.length, 'pageText length:', pageTextRef.current?.length, 'currentPage:', currentPage);
     if (!displayContent || isStreaming) return;
 
     let fullPrompt = displayContent;
@@ -173,6 +174,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
         } else {
             fullPrompt = `${displayContent}${examContext}`;
         }
+        if (import.meta.env.DEV) console.log('[Apex Cleo Debug] Sending image — length:', pageImageRef.current?.length, 'isImagePdf:', isImagePdfRef.current);
         sendMessage(fullPrompt, bookTitle, displayContent, pageImageRef.current);
     } else {
         // Text fallback — inject page text into prompt
