@@ -79,10 +79,17 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                   const canvas = wrapper.querySelector('canvas');
                   if (canvas) {
                       try {
-                          // Compressed JPEG at 0.7 quality — keeps payload small
-                          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                          // Strip the data:image/jpeg;base64, prefix
+                          // Scale down and compress — reduces base64 from ~540KB to ~80-120KB
+                          const offscreen = document.createElement('canvas');
+                          const maxWidth = 800;
+                          const ratio = Math.min(maxWidth / canvas.width, 1);
+                          offscreen.width = Math.round(canvas.width * ratio);
+                          offscreen.height = Math.round(canvas.height * ratio);
+                          const ctx = offscreen.getContext('2d');
+                          ctx.drawImage(canvas, 0, 0, offscreen.width, offscreen.height);
+                          const dataUrl = offscreen.toDataURL('image/jpeg', 0.4);
                           base64 = dataUrl.split(',')[1] || '';
+                          if (import.meta.env.DEV) console.log('[Apex Cleo] Canvas compressed — base64 length:', base64.length);
                       } catch (e) {
                           if (import.meta.env.DEV) console.warn('[Apex Cleo] Canvas capture failed:', e);
                       }
