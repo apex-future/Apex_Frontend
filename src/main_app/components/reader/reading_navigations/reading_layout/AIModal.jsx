@@ -34,6 +34,8 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
   const [chipsLoading, setChipsLoading] = useState(false);
   const chipsCache = useRef({});
   const pageTextRef = useRef('');
+  const pageImageRef = useRef('');
+  const isImagePdfRef = useRef(false);
 
   const [inputValue, setInputValue] = useState('');
   const [showHistory, setShowHistory] = useState(false);
@@ -65,12 +67,60 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                   if (textLayer) text = textLayer.innerText || textLayer.textContent || '';
               }
           });
-          return text.slice(0, 1500);
+          return text.trim();
+      };
+
+      const extractPageImage = () => {
+          const pageWrappers = document.querySelectorAll('.pdf-page-wrapper');
+          let base64 = '';
+          pageWrappers.forEach(wrapper => {
+              const pageIdx = parseInt(wrapper.dataset.pageIndex, 10);
+              if (pageIdx === currentPage) {
+                  const canvas = wrapper.querySelector('canvas');
+                  if (canvas) {
+                      try {
+                          // Compressed JPEG at 0.7 quality — keeps payload small
+                          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                          // Strip the data:image/jpeg;base64, prefix
+                          base64 = dataUrl.split(',')[1] || '';
+                      } catch (e) {
+                          if (import.meta.env.DEV) console.warn('[Apex Cleo] Canvas capture failed:', e);
+                      }
+                  }
+              }
+          });
+          return base64;
       };
 
       const timer = setTimeout(async () => {
           const pageText = extractPageText();
-          if (!pageText || pageText.length < 50) return;
+          if (!pageText || pageText.length < 20) {
+              // Image-based PDF — no text layer at all
+              const pageImage = extractPageImage();
+              if (pageImage) {
+                  pageImageRef.current = pageImage;
+                  pageTextRef.current = '';
+                  isImagePdfRef.current = true;
+                  if (import.meta.env.DEV) console.log('[Apex Cleo] Image-based PDF detected — vision fallback ready for page', currentPage);
+              }
+              // Still generate fallback chips for image PDFs
+              setChips([
+                  "What is this page about?",
+                  "Explain the key idea here",
+                  "Summarise this for me"
+              ]);
+              chipsCache.current[cacheKey] = [
+                  "What is this page about?",
+                  "Explain the key idea here",
+                  "Summarise this for me"
+              ];
+              setChipsLoading(false);
+              return;
+          }
+
+          // Text-based PDF — normal flow
+          isImagePdfRef.current = false;
+          pageImageRef.current = '';
           pageTextRef.current = pageText;
 
           setChipsLoading(true);
@@ -110,24 +160,33 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
 
     let fullPrompt = displayContent;
 
-    // Inject page context if available
-    const pageContext = pageTextRef.current
-        ? `\n\nCurrent page content:\n<page>\n${pageTextRef.current}\n</page>`
-        : '';
-
     // Inject exam type
     const examContext = resolvedExamName !== 'your exam'
         ? `\n\nStudent is preparing for: ${resolvedExamName}`
         : '';
 
-    if (activeContext) {
-      const sanitizedContext = activeContext.replace(/<\/context>/g, '&lt;/context&gt;');
-      fullPrompt = `I am asking about the following highlighted text:\n\n<context>\n${sanitizedContext}\n</context>${pageContext}${examContext}\n\nMy Question: ${displayContent}`;
+    if (isImagePdfRef.current) {
+        // Vision fallback — image sent separately, keep prompt clean
+        if (activeContext) {
+            const sanitizedContext = activeContext.replace(/<\/context>/g, '&lt;/context&gt;');
+            fullPrompt = `I am asking about the following highlighted text:\n\n<context>\n${sanitizedContext}\n</context>${examContext}\n\nMy Question: ${displayContent}`;
+        } else {
+            fullPrompt = `${displayContent}${examContext}`;
+        }
+        sendMessage(fullPrompt, bookTitle, displayContent, pageImageRef.current);
     } else {
-      fullPrompt = `${displayContent}${pageContext}${examContext}`;
+        // Text fallback — inject page text into prompt
+        const pageContext = pageTextRef.current
+            ? `\n\nCurrent page content:\n<page>\n${pageTextRef.current}\n</page>`
+            : '';
+        if (activeContext) {
+            const sanitizedContext = activeContext.replace(/<\/context>/g, '&lt;/context&gt;');
+            fullPrompt = `I am asking about the following highlighted text:\n\n<context>\n${sanitizedContext}\n</context>${pageContext}${examContext}\n\nMy Question: ${displayContent}`;
+        } else {
+            fullPrompt = `${displayContent}${pageContext}${examContext}`;
+        }
+        sendMessage(fullPrompt, bookTitle, displayContent, null);
     }
-
-    sendMessage(fullPrompt, bookTitle, displayContent);
     setInputValue('');
     if (inputRef.current) {
       inputRef.current.style.height = '44px';

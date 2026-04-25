@@ -73,7 +73,7 @@ export default function useAIChat(options = {}) {
     // Respect saveChatHistory setting — skip persistence if disabled
     const { saveChatHistory } = useSettingsStore.getState();
     if (!saveChatHistory) {
-      console.log('[Apex AI] Chat history saving disabled — skipping persist');
+      console.log('[Cleo] Chat history saving disabled — skipping persist');
       return;
     }
 
@@ -166,7 +166,7 @@ export default function useAIChat(options = {}) {
     }
   }, [persistChat]);
 
-  const sendMessage = useCallback(async (text, bookTitle, displayContent) => {
+  const sendMessage = useCallback(async (text, bookTitle, displayContent, pageImageBase64 = null) => {
     if (!text.trim() || isStreaming) return;
     setError(null);
 
@@ -206,6 +206,7 @@ export default function useAIChat(options = {}) {
         bookId: resolvedBookId,
         chatType: scope === 'general' ? 'general' : 'in_reader',
         conversationHistory: history,
+        pageImageBase64,
       }, controller.signal);
 
       await consumeStream(response, activeSessionId);

@@ -1,7 +1,7 @@
 import authService from './authService';
 
 /**
- * AI Service — Fetch wrappers for Apex AI backend endpoints.
+ * AI Service — Fetch wrappers for Cleo backend endpoints.
  * All streaming endpoints return a ReadableStream reader for SSE consumption.
  */
 const API_BASE = '/api/ai';  // relative — proxied by Vite (dev) and Vercel (prod)
@@ -56,7 +56,7 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
  * Stream an AI response to an open-ended question.
  * Returns a Response object whose body is an SSE stream.
  */
-export async function streamAsk({ message, bookTitle, bookId, chatType, conversationHistory = [] }, signal) {
+export async function streamAsk({ message, bookTitle, bookId, chatType, conversationHistory = [], pageImageBase64 = null }, signal) {
   const response = await fetch(`${API_BASE}/ask`, {
     method: 'POST',
     headers: getHeaders(),
@@ -70,6 +70,7 @@ export async function streamAsk({ message, bookTitle, bookId, chatType, conversa
         role: msg.role === 'ai' ? 'model' : msg.role,
         content: msg.content,
       })),
+      page_image_base64: pageImageBase64 || null,
     }),
   });
 
