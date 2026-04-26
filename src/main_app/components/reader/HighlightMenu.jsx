@@ -208,7 +208,7 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
                                 </div>
                                 <p className="text-sm text-blue-600 font-bold mb-5 font-sans bg-accent-subtle/50 px-2 py-1 rounded-md inline-block">{definition.phonetic}</p>
 
-                                {definition.meanings?.slice(0, 3).map((m, i) => (
+                                {(definition.meanings || []).slice(0, 3).map((m, i) => (
                                     <div key={i} className="mb-5 last:mb-2">
                                         <div className="flex items-center gap-2 mb-2">
                                             <span className="text-[10px] font-black uppercase text-text-tertiary bg-bg-subtle px-1.5 py-0.5 rounded tracking-wider">{m.partOfSpeech}</span>

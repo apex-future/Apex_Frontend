@@ -180,7 +180,7 @@ function Dictionary() {
 
                         {/* Meanings */}
                         <div className="space-y-8">
-                            {definition.meanings?.map((meaning, idx) => (
+                            {(definition.meanings || []).map((meaning, idx) => (
                                 <div key={idx} className="bg-card-glass backdrop-blur-md border-2 border-border-default rounded-3xl p-6 md:p-8 hover:border-text-tertiary transition-all shadow-sm">
                                     <div className="flex items-center gap-4 mb-6">
                                         <span className="text-sm font-bold uppercase tracking-[0.2em] text-accent-primary">
@@ -191,7 +191,7 @@ function Dictionary() {
 
                                     <h4 className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-4">Definitions</h4>
                                     <ul className="space-y-6">
-                                        {meaning.definitions?.slice(0, 3).map((def, defIdx) => (
+                                        {(meaning.definitions || []).slice(0, 3).map((def, defIdx) => (
                                             <li key={defIdx} className="group">
                                                 <div className="flex gap-4">
                                                     <span className="text-accent-primary font-bold opacity-30 mt-1">{defIdx + 1}.</span>
