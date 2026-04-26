@@ -8,6 +8,7 @@ import BookCard from '../../books/BookCard'
 import BookCover from '../../books/BookCover'
 import useQuizStore from '../../../store/quizStore'
 import { Trophy } from 'lucide-react'
+import SpaceAnalytics from './SpaceAnalytics'
 
 /**
  * ShelfDetail Page:
@@ -24,6 +25,7 @@ function SpaceDetail() {
   const [isAddingBooks, setIsAddingBooks] = useState(false);
   const [isEditingExam, setIsEditingExam] = useState(false);
   const [tempExamDate, setTempExamDate] = useState('');
+  const [activeTab, setActiveTab] = useState('books');
 
   useEffect(() => {
     setActiveSpace(spaceId);
@@ -124,93 +126,104 @@ function SpaceDetail() {
          </div>
       )}
 
-       {/* Activity Summary Section */}
+      {/* Tabs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-         <div className="bg-card-glass backdrop-blur-md border border-border-default rounded-3xl p-6 flex flex-wrap gap-8 justify-between lg:justify-start lg:gap-16 items-center shadow-sm">
-            <div>
-              <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-wider mb-1">Total Time Spent</h2>
-              <div className="flex items-center gap-2">
-                 <Clock size={20} className="text-accent-primary" />
-                 <span className="text-2xl font-black text-text-primary">{selectedShelf.activitySummaries?.timeSpent || 0} min</span>
-              </div>
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-wider mb-1">Pages Read</h2>
-              <div className="flex items-center gap-2">
-                 <FileText size={20} className="text-accent-primary" />
-                 <span className="text-2xl font-black text-text-primary">{selectedShelf.activitySummaries?.pagesRead || 0}</span>
-              </div>
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-wider mb-1">Avg Quiz Score</h2>
-              <div className="flex items-center gap-2">
-                 <Trophy size={20} className="text-accent-primary" />
-                 <span className="text-2xl font-black text-text-primary">{spaceQuizStats ? `${spaceQuizStats.averageScore}%` : 'N/A'}</span>
-              </div>
-            </div>
-         </div>
-      </div>
+          <div className="overflow-hidden mx-auto w-full bg-card-glass dark:bg-bg-dark-elevated backdrop-blur-xl p-2.5 border border-border-default dark:border-border-default-dark rounded-[3rem] shadow-sm">
+              <ul className="flex gap-2 overflow-x-auto py-2 bg-card-glass/60 dark:bg-bg-dark-elevated/60 backdrop-blur-md px-2.5 rounded-full items-center no-scrollbar border border-border-default/20 dark:border-border-default-dark/20">
+                  <li
+                      onClick={() => setActiveTab('books')}
+                      className={`text-base font-medium transition-all p-2 px-4 rounded-full cursor-pointer whitespace-nowrap
+                          ${activeTab === 'books'
+                              ? 'text-accent-primary dark:text-accent-primary-dark bg-accent-subtle dark:bg-accent-subtle-dark hover:border border-accent-hover dark:border-accent-hover-dark'
+                              : 'text-text-primary dark:text-text-primary-dark hover:text-text-secondary dark:hover:text-text-secondary-dark hover:bg-neutral-50 dark:hover:bg-bg-dark-elevated'
+                          }`}
+                  >
+                      Books
+                  </li>
+                  <li
+                      onClick={() => setActiveTab('analytics')}
+                      className={`text-base font-medium transition-all p-2 px-4 rounded-full cursor-pointer whitespace-nowrap
+                          ${activeTab === 'analytics'
+                              ? 'text-accent-primary dark:text-accent-primary-dark bg-accent-subtle dark:bg-accent-subtle-dark hover:border border-accent-hover dark:border-accent-hover-dark'
+                              : 'text-text-primary dark:text-text-primary-dark hover:text-text-secondary dark:hover:text-text-secondary-dark hover:bg-neutral-50 dark:hover:bg-bg-dark-elevated'
+                          }`}
+                  >
+                      Analytics
+                  </li>
+              </ul>
+              
+              <div className="selected-section mt-4 min-h-[400px]">
+                  {activeTab === 'books' && (
+                    <div className="w-full">
+                      {/* Add Books Inline UI */}
+                      {isAddingBooks && (
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 mb-4 border border-border-default rounded-3xl">
+                          <div className="flex justify-between items-center mb-4">
+                             <h3 className="text-lg font-bold text-text-primary">Select Books to Add</h3>
+                             <button onClick={() => setIsAddingBooks(false)} className="text-sm font-semibold text-text-tertiary hover:text-text-primary">Close</button>
+                          </div>
+                          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                            {books.filter(b => !selectedShelf.bookIds?.includes(b.id)).map(book => (
+                              <div key={book.id} className="flex-shrink-0 w-32 cursor-pointer transition-transform hover:scale-105" onClick={() => {
+                                 addBookToSpace(selectedShelf.id, book.id);
+                                 setIsAddingBooks(false);
+                              }}>
+                                <div className="w-full h-40 rounded shadow border border-border-default overflow-hidden relative">
+                                   {book.cover ? (
+                                      <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
+                                   ) : (
+                                      <BookCover title={book.title} author={book.author} className="w-full h-full" />
+                                   )}
+                                </div>
+                                <p className="text-xs font-semibold mt-2 truncate">{book.title}</p>
+                              </div>
+                            ))}
+                            {books.filter(b => !selectedShelf.bookIds?.includes(b.id)).length === 0 && (
+                              <p className="text-sm text-text-tertiary">No more books available to add.</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
-      {/* Add Books Inline UI */}
-      {isAddingBooks && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 border-b border-border-default">
-          <div className="flex justify-between items-center mb-4">
-             <h3 className="text-lg font-bold text-text-primary">Select Books to Add</h3>
-             <button onClick={() => setIsAddingBooks(false)} className="text-sm font-semibold text-text-tertiary hover:text-text-primary">Close</button>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-            {books.filter(b => !selectedShelf.bookIds?.includes(b.id)).map(book => (
-              <div key={book.id} className="flex-shrink-0 w-32 cursor-pointer transition-transform hover:scale-105" onClick={() => {
-                 addBookToSpace(selectedShelf.id, book.id);
-                 setIsAddingBooks(false);
-              }}>
-                <div className="w-full h-40 rounded shadow border border-border-default overflow-hidden relative">
-                   {book.cover ? (
-                      <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
-                   ) : (
-                      <BookCover title={book.title} author={book.author} className="w-full h-full" />
-                   )}
-                </div>
-                <p className="text-xs font-semibold mt-2 truncate">{book.title}</p>
-              </div>
-            ))}
-            {books.filter(b => !selectedShelf.bookIds?.includes(b.id)).length === 0 && (
-              <p className="text-sm text-text-tertiary">No more books available to add.</p>
-            )}
-          </div>
-        </div>
-      )}
+                      {/* Books List Grid */}
+                      <div className="w-full">
+                        {selectedShelf.books?.length > 0 ? (
+                          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-6 lg:gap-8 transition-all duration-300">
+                            {selectedShelf.books.map((book) => (
+                              <BookCard 
+                                key={book.id} 
+                                book={book} 
+                                onClick={(id) => {
+                                   if (handleBookClick) handleBookClick(id);
+                                   navigate(`/reader/${id}`);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-6 border border-border-default">
+                              <BookOpen className="text-text-tertiary" size={40} />
+                            </div>
+                            <h3 className="text-xl font-bold text-text-primary">Empty Space</h3>
+                            <p className="text-text-tertiary mt-2 max-w-sm">No books in this collection yet. Click the + button above to add books to this space.</p>
+                            <button 
+                              onClick={() => navigate('/')}
+                              className="mt-8 px-6 py-2 border-2 border-accent-primary text-accent-primary rounded-full hover:bg-accent-primary hover:text-white transition-all font-medium"
+                            >
+                              Discover Books
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
-      {/* Books List Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {selectedShelf.books?.length > 0 ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-6 lg:gap-8 transition-all duration-300">
-            {selectedShelf.books.map((book) => (
-              <BookCard 
-                key={book.id} 
-                book={book} 
-                onClick={(id) => {
-                   if (handleBookClick) handleBookClick(id);
-                   navigate(`/reader/${id}`);
-                }}
-              />
-            ))}
+                  {activeTab === 'analytics' && (
+                      <SpaceAnalytics space={selectedShelf} spaceQuizStats={spaceQuizStats} />
+                  )}
+              </div>
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-6 border border-border-default">
-              <BookOpen className="text-text-tertiary" size={40} />
-            </div>
-            <h3 className="text-xl font-bold text-text-primary">Empty Space</h3>
-            <p className="text-text-tertiary mt-2 max-w-sm">No books in this collection yet. Click the + button above to add books to this space.</p>
-            <button 
-              onClick={() => navigate('/')}
-              className="mt-8 px-6 py-2 border-2 border-accent-primary text-accent-primary rounded-full hover:bg-accent-primary hover:text-white transition-all font-medium"
-            >
-              Discover Books
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )

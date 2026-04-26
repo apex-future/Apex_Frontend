@@ -1,6 +1,7 @@
 import { ArrowLeft, Settings, Flame, Book, BookOpen, Calendar, TrendingUp } from 'lucide-react'
 import useAuthStore from '../../../store/authStore'
 import useStudyStore from '../../../store/studyStore'
+import useQuizStore from '../../../store/quizStore'
 import { BookContext } from '../../../context/BookContextInstance'
 import React, { useContext, useMemo } from 'react'
 import dummyProfileImg from "../../../../assets/user_imgs/user_img_1.jpg"
@@ -12,6 +13,8 @@ function Profile() {
   const { user } = useAuthStore();
   const { books } = useContext(BookContext);
   const streakCount = useStudyStore(state => state.streakCount);
+  const getGlobalStats = useQuizStore(state => state.getGlobalStats);
+  const globalQuizStats = getGlobalStats();
 
   const stats = useMemo(() => {
     const totalBooks = books.length;
@@ -25,7 +28,9 @@ function Profile() {
       completedBooks,
       totalPagesRead,
       streak: 0, // Streak calculation would require historic data
-      highlightsCreated: books.reduce((acc, b) => acc + (b.metadata?.highlights?.length || 0), 0)
+      highlightsCreated: books.reduce((acc, b) => acc + (b.metadata?.highlights?.length || 0), 0),
+      notesTaken: books.reduce((acc, b) => acc + (b.metadata?.notes?.length || 0), 0),
+      wordsSaved: books.reduce((acc, b) => acc + (b.metadata?.words?.length || 0), 0)
     };
   }, [books]);
 
@@ -132,6 +137,40 @@ function Profile() {
               icon={<TrendingUp />}
               label="Pages Read"
               value={stats.totalPagesRead}
+            />
+          </div>
+
+          <div className="flex items-center justify-between mt-8 mb-4 px-1">
+            <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
+              <Flame size={14} />
+              Interactions & Memory
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <StatCard
+              icon={<TrendingUp />}
+              label="Total Highlights"
+              value={stats.highlightsCreated}
+            />
+            <StatCard
+              icon={<BookOpen />}
+              label="Notes Taken"
+              value={stats.notesTaken}
+            />
+            <StatCard
+              icon={<Book />}
+              label="Words Saved"
+              value={stats.wordsSaved}
+            />
+            <StatCard
+              icon={<TrendingUp />}
+              label="Quizzes Done"
+              value={globalQuizStats?.attemptsCount || 0}
+            />
+            <StatCard
+              icon={<TrendingUp />}
+              label="Avg Quiz Score"
+              value={globalQuizStats ? `${globalQuizStats.averageScore}%` : 'N/A'}
             />
           </div>
         </section>
