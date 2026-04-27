@@ -4,7 +4,7 @@ import authService from './authService';
  * AI Service — Fetch wrappers for Cleo backend endpoints.
  * All streaming endpoints return a ReadableStream reader for SSE consumption.
  */
-const API_BASE = '/api/ai';  // relative — proxied by Vite (dev) and Vercel (prod)
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL || ''}/api/ai`;
 
 /**
  * Helper to get default headers with auth token.

@@ -104,12 +104,9 @@ export default defineConfig({
     target: 'es2015'
   },
   server: {
-    proxy: {
-      '/api': {
-        target: 'https://apexbackend.pxxl.click',
-        changeOrigin: true,
-      }
-    }
+    // In development, API calls go directly to VITE_API_BASE_URL (http://127.0.0.1:8000)
+    // No proxy needed — the env var handles routing.
+    // In production, Vercel rewrites handle /api/* routing (see vercel.json).
   },
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version)
