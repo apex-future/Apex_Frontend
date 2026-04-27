@@ -90,6 +90,8 @@ function getHighlightRanges(container, searchText, targetStartOffset) {
 // The key insight: if pageNumber, rotation, scale, and width haven't changed, the <Page>
 // component keeps its canvas and text layer intact — no blank flash.
 const VirtualPage = memo(({ pageNumber, rotation, scale, width, onRenderSuccess }) => {
+  const [hasRendered, setHasRendered] = useState(false);
+
   return (
     <Page
       pageNumber={pageNumber}
@@ -97,22 +99,27 @@ const VirtualPage = memo(({ pageNumber, rotation, scale, width, onRenderSuccess 
       scale={scale}
       renderTextLayer={true}
       renderAnnotationLayer={true}
-      onRenderSuccess={onRenderSuccess}
+      onRenderSuccess={(...args) => {
+        setHasRendered(true);
+        onRenderSuccess?.(...args);
+      }}
       width={width}
       className="!shadow-none"
       loading={
         <div
-          className="flex flex-col items-center justify-center bg-bg-elevated animate-pulse"
+          className={`flex flex-col items-center justify-center bg-bg-elevated ${hasRendered ? '' : 'animate-pulse'}`}
           style={{ width, height: Math.round(width * 1.41 * scale) }}
         >
-          <div className="w-full h-full p-8 space-y-4">
-            <div className="h-4 w-1/3 bg-bg-subtle rounded-full mx-auto" />
-            <div className="space-y-4">
-              <div className="h-2 w-full bg-bg-subtle rounded-full" />
-              <div className="h-2 w-full bg-bg-subtle rounded-full" />
-              <div className="h-2 w-2/3 bg-bg-subtle rounded-full mx-auto" />
+          {!hasRendered && (
+            <div className="w-full h-full p-8 space-y-4">
+              <div className="h-4 w-1/3 bg-bg-subtle rounded-full mx-auto" />
+              <div className="space-y-4">
+                <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                <div className="h-2 w-2/3 bg-bg-subtle rounded-full mx-auto" />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       }
     />
@@ -146,8 +153,22 @@ const PDFReader = ({
 }) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(window.innerWidth);
-  const isDesktop = containerWidth > 1024;
-  const pdfWidth = isDesktop ? Math.min(containerWidth - 120, 1100) : window.innerWidth;
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isDesktop = windowWidth > 1024;
+  
+  // The fixed width we render the PDF canvas at
+  const renderWidth = isDesktop ? Math.min(windowWidth - 120, 1100) : windowWidth;
+  
+  // Calculate how much we need to scale it down via CSS if the container shrinks
+  // We cap it at 1 so we don't scale up via CSS (which would look blurry)
+  const cssScale = containerWidth > 0 ? Math.min(1, containerWidth / renderWidth) : 1;
   const [pageRendered, setPageRendered] = useState(0);
   const renderedPagesRef = useRef(new Set());
   const [displayedPage, setDisplayedPage] = useState(pageNumber);
@@ -157,8 +178,8 @@ const PDFReader = ({
 
   // Stable estimateSize callback — prevents virtualizer from reinitializing size cache
   const estimateSize = useCallback(
-    () => Math.round(pdfWidth * 1.41 * scale),
-    [pdfWidth, scale]
+    () => Math.round(renderWidth * 1.41 * scale * cssScale),
+    [renderWidth, scale, cssScale]
   );
 
   const rowVirtualizer = useVirtualizer({
@@ -171,6 +192,10 @@ const PDFReader = ({
   const isJumping = useRef(false);
   const lastReportedPage = useRef(pageNumber);
   const pendingJump = useRef(null);
+
+  // Resize state to prevent scroll jumps
+  const isResizing = useRef(false);
+  const resizeTimeout = useRef(null);
 
   // Sync internal state when pageNumber prop changes programmatically
   useEffect(() => {
@@ -209,6 +234,7 @@ const PDFReader = ({
   const handleVerticalScroll = useCallback(() => {
     if (!isVertical || !numPages) return;
     if (isJumping.current) return;
+    if (isResizing.current) return; // Prevent scroll updates during layout shifts
     // Skip scroll processing during active text selection to prevent virtualizer churn
     if (window.getSelection()?.toString().trim()) return;
 
@@ -256,6 +282,20 @@ const PDFReader = ({
     rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start', behavior: 'smooth' });
     lastReportedPage.current = pageNumber;
   }, [pageNumber, isVertical, numPages]);
+
+  // Maintain scroll position when container width changes (e.g. side panels opening)
+  const prevCssScale = useRef(cssScale);
+  useEffect(() => {
+    if (prevCssScale.current !== cssScale) {
+      prevCssScale.current = cssScale;
+      if (isVertical && rowVirtualizer && numPages) {
+        // Use a timeout to ensure virtualizer has updated its internal measurements
+        setTimeout(() => {
+            rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start' });
+        }, 10);
+      }
+    }
+  }, [cssScale, isVertical, rowVirtualizer, numPages, pageNumber]);
 
   // Stable render success handler
   const handlePageRenderSuccess = useCallback(() => {
@@ -385,12 +425,22 @@ const PDFReader = ({
     const el = containerRef.current;
     if (!el) return;
     const observer = new ResizeObserver((entries) => {
+      // Set resizing flag to prevent scroll handler from jumping pages
+      isResizing.current = true;
+      if (resizeTimeout.current) clearTimeout(resizeTimeout.current);
+      resizeTimeout.current = setTimeout(() => {
+        isResizing.current = false;
+      }, 300);
+
       for (let entry of entries) {
         setContainerWidth(entry.contentRect.width);
       }
     });
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (resizeTimeout.current) clearTimeout(resizeTimeout.current);
+    };
   }, []);
 
   const lastEdgeHit = useRef({ left: 0, right: 0 });
@@ -484,22 +534,33 @@ const PDFReader = ({
                 <div
                   key={virtualRow.index}
                   ref={rowVirtualizer.measureElement}
-                  className="pdf-page-wrapper absolute left-0 flex flex-col items-center bg-bg-elevated w-full"
+                  className="pdf-page-wrapper absolute left-0 flex flex-col items-center w-full"
                   data-page-index={pageIdx}
                   data-index={virtualRow.index}
                   style={{
                     transform: `translateY(${virtualRow.start}px)`,
                     width: '100%',
+                    height: `${Math.round(renderWidth * 1.41 * scale * cssScale)}px`,
                   }}
                 >
-                  <VirtualPage
-                    pageNumber={pageIdx}
-                    rotation={rotation}
-                    scale={scale}
-                    width={pdfWidth}
-                    onRenderSuccess={handlePageRenderSuccess}
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/50 dark:bg-black/70 z-20 pointer-events-none" />
+                  <div
+                    style={{
+                      transform: `scale(${cssScale})`,
+                      transformOrigin: 'top center',
+                      width: `${renderWidth}px`,
+                      position: 'relative'
+                    }}
+                    className="flex flex-col items-center bg-bg-elevated shadow-sm mx-auto"
+                  >
+                    <VirtualPage
+                      pageNumber={pageIdx}
+                      rotation={rotation}
+                      scale={scale}
+                      width={renderWidth}
+                      onRenderSuccess={handlePageRenderSuccess}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/50 dark:bg-black/70 z-20 pointer-events-none" />
+                  </div>
                 </div>
               );
             })}
@@ -535,40 +596,51 @@ const PDFReader = ({
                     : 'none',
                   top: isActive ? 'auto' : 0,
                   left: isActive ? 'auto' : 0,
-                  width: isActive ? 'auto' : '100%',
+                  width: isActive ? `${renderWidth * cssScale}px` : '100%',
+                  height: isActive ? `${renderWidth * 1.41 * scale * cssScale}px` : 'auto',
                   zIndex: isActive ? 1 : 0,
+                  display: 'flex',
+                  justifyContent: 'center'
                 }}
               >
-                <Page
-                  pageNumber={bufferPageNum}
-                  rotate={rotation}
-                  scale={scale}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
-                  onRenderSuccess={() => {
-                    renderedPagesRef.current.add(bufferPageNum);
-                    if (isActive) handlePageRenderSuccess();
+                <div
+                  style={{
+                    transform: `scale(${cssScale})`,
+                    transformOrigin: 'top center',
+                    width: `${renderWidth}px`,
                   }}
-                  width={pdfWidth}
-                  className="bg-bg-elevated"
-                  loading={
-                    isActive ? (
-                      <div
-                        className="flex flex-col items-center justify-center bg-bg-elevated animate-pulse"
-                        style={{ width: pdfWidth, height: pdfWidth * 1.41 }}
-                      >
-                        <div className="w-full h-full p-8 space-y-4">
-                          <div className="h-4 w-1/3 bg-bg-subtle rounded-full" />
-                          <div className="space-y-4">
-                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                            <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                            <div className="h-2 w-2/3 bg-bg-subtle rounded-full" />
+                >
+                  <Page
+                    pageNumber={bufferPageNum}
+                    rotate={rotation}
+                    scale={scale}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    onRenderSuccess={() => {
+                      renderedPagesRef.current.add(bufferPageNum);
+                      if (isActive) handlePageRenderSuccess();
+                    }}
+                    width={renderWidth}
+                    className="bg-bg-elevated"
+                    loading={
+                      isActive ? (
+                        <div
+                          className="flex flex-col items-center justify-center bg-bg-elevated animate-pulse"
+                          style={{ width: renderWidth, height: renderWidth * 1.41 * scale }}
+                        >
+                          <div className="w-full h-full p-8 space-y-4">
+                            <div className="h-4 w-1/3 bg-bg-subtle rounded-full" />
+                            <div className="space-y-4">
+                              <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                              <div className="h-2 w-full bg-bg-subtle rounded-full" />
+                              <div className="h-2 w-2/3 bg-bg-subtle rounded-full" />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ) : null
-                  }
-                />
+                      ) : <div style={{ width: renderWidth, height: renderWidth * 1.41 * scale }} />
+                    }
+                  />
+                </div>
               </div>
             );
           })
