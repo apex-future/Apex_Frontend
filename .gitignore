@@ -17,11 +17,12 @@ dev-dist
 # .env and .env.local contain secrets — never commit
 .env.local
 .env.*.local
-# .env, .env.development, .env.production are safe to commit (no secrets)
-!.env
+.env
+.env.production
+environment_config/
 !.env.development
-!.env.production
 !.env.example
+
 
 # Editor directories and files
 .vscode/*
