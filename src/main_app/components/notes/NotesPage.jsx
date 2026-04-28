@@ -113,7 +113,7 @@ function NotesPage() {
 
                 {/* Content Section */}
                 {allNotes.length === 0 ? (
-                    <div className='flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-border-default rounded-3xl bg-bg-subtle/30'>
+                    <div className='flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-border-default rounded-card bg-bg-subtle/30'>
                         <div className='w-20 h-20 bg-bg-elevated text-text-placeholder rounded-[2rem] flex items-center justify-center mb-6 shadow-sm border border-border-default'>
                             <Pen size={32} />
                         </div>
@@ -139,7 +139,7 @@ function NotesPage() {
                         {filteredNotes.map(note => (
                             <div
                                 key={`${note.bookId}-${note.id}`}
-                                className='break-inside-avoid bg-bg-subtle border border-border-default rounded-3xl p-6 hover:shadow-xl hover:shadow-accent-subtle hover:border-accent-primary/30 transition-all duration-300 group flex flex-col gap-4 cursor-pointer'
+                                className='break-inside-avoid bg-bg-subtle border border-border-default rounded-card p-6 hover:shadow-xl hover:shadow-accent-subtle hover:border-accent-primary/30 transition-all duration-300 group flex flex-col gap-4 cursor-pointer'
                                 onClick={() => navigate(`/book/${note.bookId}`)}
                             >
                                 {/* Book Reference */}

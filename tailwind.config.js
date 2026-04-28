@@ -113,6 +113,7 @@ export default {
         'xl': '24px',
         '2xl': '32px',
         '3xl': '48px',
+        'card': '2rem',
         'full': '9999px',
       },
       colors: {

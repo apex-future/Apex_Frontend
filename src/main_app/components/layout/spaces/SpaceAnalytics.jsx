@@ -41,7 +41,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 
                 {/* Completed Books */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-3xl relative overflow-hidden group">
+                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-card relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <CheckSquare size={64} />
                     </div>
@@ -56,7 +56,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                 </div>
 
                 {/* Total Highlights */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-3xl relative overflow-hidden group">
+                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-card relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Highlighter size={64} />
                     </div>
@@ -70,7 +70,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                 </div>
 
                 {/* Pages Read */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-3xl relative overflow-hidden group">
+                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-card relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <FileText size={64} />
                     </div>
@@ -84,7 +84,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                 </div>
 
                 {/* Time Spent */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-3xl relative overflow-hidden group">
+                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-card relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Clock size={64} />
                     </div>
@@ -99,7 +99,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                 </div>
 
                 {/* Quizzes Taken */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-3xl relative overflow-hidden group">
+                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-card relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Target size={64} />
                     </div>
@@ -113,7 +113,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                 </div>
 
                 {/* Average Score */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-3xl relative overflow-hidden group">
+                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-card relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Trophy size={64} />
                     </div>

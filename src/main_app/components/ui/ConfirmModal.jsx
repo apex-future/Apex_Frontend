@@ -17,12 +17,12 @@ export default function ConfirmModal({ isOpen, title, message, actions = [], onC
   const getButtonClasses = (variant) => {
     switch (variant) {
       case 'danger':
-        return 'w-full py-3.5 rounded-2xl bg-error text-white font-semibold text-sm active:scale-95 transition-all';
+        return 'w-full py-3.5 rounded-xl bg-error text-white font-semibold text-sm active:scale-95 transition-all';
       case 'primary':
-        return 'w-full py-3.5 rounded-2xl bg-accent-primary text-white font-semibold text-sm active:scale-95 transition-all';
+        return 'w-full py-3.5 rounded-xl bg-accent-primary text-white font-semibold text-sm active:scale-95 transition-all';
       case 'ghost':
       default:
-        return 'w-full py-3.5 rounded-2xl bg-bg-subtle text-text-secondary font-semibold text-sm active:scale-95 transition-all border border-border-default';
+        return 'w-full py-3.5 rounded-xl bg-bg-subtle text-text-secondary font-semibold text-sm active:scale-95 transition-all border border-border-default';
     }
   };
 
@@ -36,7 +36,7 @@ export default function ConfirmModal({ isOpen, title, message, actions = [], onC
 
       {/* Modal card */}
       <div
-        className="relative bg-bg-elevated border border-border-default rounded-3xl p-6 w-full max-w-sm mx-4 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300"
+        className="relative bg-bg-elevated border border-border-default rounded-card p-6 w-full max-w-sm mx-4 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-text-primary font-bold text-lg font-display break-words">{title}</h2>

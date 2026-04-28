@@ -17,7 +17,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching }) {
 
             {(!books || books.length === 0) ? (
                 isSearching ? (
-                    <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
+                    <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-card border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
                         <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-6 text-text-tertiary">
                             <SearchX size={32} />
                         </div>
@@ -27,7 +27,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching }) {
                         </p>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
+                    <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-card border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
                         <div className="w-20 h-20 bg-accent-primary/10 rounded-full flex items-center justify-center mb-6 text-accent-primary">
                             <Bookmark size={32} />
                         </div>

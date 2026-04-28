@@ -353,7 +353,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
 
                 {/* Context Card */}
                 {resolvedExamName !== 'your exam' && (
-                    <div className='w-full max-w-[300px] bg-bg-elevated border border-border-default rounded-2xl p-4 mb-6 text-left shadow-sm'>
+                    <div className='w-full max-w-[300px] bg-bg-elevated border border-border-default rounded-card p-4 mb-6 text-left shadow-sm'>
                         <p className='text-[9px] font-black text-accent-primary uppercase tracking-[0.2em] mb-3'>Cleo knows</p>
                         <div className='flex flex-col gap-2'>
                             <div className='flex items-center gap-2 text-[11px] text-text-secondary'>
@@ -374,7 +374,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                             key={i}
                             onClick={() => handleSend(chip)}
                             disabled={chipsLoading}
-                            className='w-full px-4 py-3 rounded-2xl bg-bg-elevated border border-border-default text-xs text-text-secondary hover:border-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 transition-all duration-300 text-left font-bold shadow-sm hover:translate-x-1 group disabled:opacity-40 disabled:cursor-not-allowed'
+                            className='w-full px-4 py-3 rounded-card bg-bg-elevated border border-border-default text-xs text-text-secondary hover:border-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 transition-all duration-300 text-left font-bold shadow-sm hover:translate-x-1 group disabled:opacity-40 disabled:cursor-not-allowed'
                         >
                             <span className='group-hover:mr-2 transition-all opacity-0 group-hover:opacity-100 text-accent-primary'>→</span>
                             {chipsLoading ? <span className='animate-pulse'>Generating...</span> : chip}
@@ -399,7 +399,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
 
                   <div className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}>
                     <div className={`max-w-[95%] px-6 py-5 text-[15px] leading-relaxed ${msg.role === 'user'
-                      ? 'bg-text-primary text-bg-elevated rounded-3xl rounded-tr-none shadow-sm ring-1 ring-border-default'
+                      ? 'bg-text-primary text-bg-elevated rounded-card rounded-tr-none shadow-sm ring-1 ring-border-default'
                       : 'bg-bg-elevated text-text-primary'
                       }`}>
                       {msg.role === 'ai' ? (
@@ -449,7 +449,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
       {/* ── Selection Context Pin ── */}
       {!showHistory && activeContext && (
         <div className='px-4 pb-3 flex-shrink-0'>
-          <div className='bg-bg-elevated border-2 border-purple-50 rounded-2xl p-4 relative group shadow-xl shadow-accent-subtle/20 animate-in slide-in-from-bottom-2 duration-300'>
+          <div className='bg-bg-elevated border-2 border-purple-50 rounded-card p-4 relative group shadow-xl shadow-accent-subtle/20 animate-in slide-in-from-bottom-2 duration-300'>
             <div className='flex items-center justify-between mb-3'>
               <span className='text-[10px] font-bold text-accent-primary uppercase tracking-[0.15em] flex items-center gap-2'>
                 <span className='w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse'></span>

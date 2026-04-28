@@ -187,7 +187,7 @@ const ExamReminder = () => {
             </div>
             <div
                 onClick={onClick}
-                className={`bg-card-glass backdrop-blur-xl rounded-[2rem] p-4 px-6 border-2 border-border-default transition-all duration-500 group overflow-hidden shadow-xl shadow-black/5 relative min-h-[14rem] flex-1 flex flex-col cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-70 grayscale-[0.3]' : ''}`}
+                className={`bg-card-glass backdrop-blur-xl rounded-card p-4 px-6 border-2 border-border-default transition-all duration-500 group overflow-hidden shadow-xl shadow-black/5 relative min-h-[14rem] flex-1 flex flex-col cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-70 grayscale-[0.3]' : ''}`}
             >
                 {/* Background pattern */}
                 <div 

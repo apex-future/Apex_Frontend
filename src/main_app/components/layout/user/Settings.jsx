@@ -248,7 +248,7 @@ function Settings({ onLogout }) {
                       <div className="grid grid-cols-2 gap-2 mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
                         <button
                           onClick={() => updateSetting('scrollAnimation', 'slide')}
-                          className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 text-xs font-bold transition-all ${
+                          className={`flex flex-col items-center gap-2 p-3 rounded-card border-2 text-xs font-bold transition-all ${
                             scrollAnimation === 'slide'
                               ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
                               : 'border-border-default text-text-tertiary hover:border-text-tertiary/30'
@@ -263,7 +263,7 @@ function Settings({ onLogout }) {
                         </button>
                         <button
                           onClick={() => updateSetting('scrollAnimation', 'fade')}
-                          className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 text-xs font-bold transition-all ${
+                          className={`flex flex-col items-center gap-2 p-3 rounded-card border-2 text-xs font-bold transition-all ${
                             scrollAnimation === 'fade'
                               ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
                               : 'border-border-default text-text-tertiary hover:border-text-tertiary/30'
@@ -416,7 +416,7 @@ function Settings({ onLogout }) {
 
 // Subcomponents for consistency
 const SettingSection = ({ title, icon, children }) => (
-    <div className="bg-card-glass backdrop-blur-md border-2 border-border-default rounded-3xl overflow-hidden hover:border-text-tertiary/20 transition-all shadow-sm">
+    <div className="bg-card-glass backdrop-blur-md border-2 border-border-default rounded-card overflow-hidden hover:border-text-tertiary/20 transition-all shadow-sm">
         <div className="px-5 py-3 border-b border-border-default bg-bg-elevated/50 flex items-center gap-2">
             <div className="text-accent-primary p-1.5 bg-accent-primary/10 rounded-lg">
                 {icon}

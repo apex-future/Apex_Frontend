@@ -51,7 +51,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
             onClick={onClose}
         >
             <div 
-                className="bg-bg-elevated w-full max-w-lg rounded-3xl shadow-2xl border border-border-default overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[80vh]"
+                className="bg-bg-elevated w-full max-w-lg rounded-card shadow-2xl border border-border-default overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[80vh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}

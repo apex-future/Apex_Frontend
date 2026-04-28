@@ -25,7 +25,7 @@ const StreakCard = () => {
             <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Activity Streak</h2>
             <div 
                 onClick={() => navigate('/streak')}
-                className="bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-orange-500/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex flex-col justify-center items-center cursor-pointer"
+                className="bg-card-glass backdrop-blur-xl rounded-card p-6 md:p-8 border-2 border-border-default hover:border-orange-500/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex flex-col justify-center items-center cursor-pointer"
             >
                 
                 {/* Background Icon Asset - Matched with ExamReminder */}

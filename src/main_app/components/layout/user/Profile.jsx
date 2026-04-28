@@ -98,7 +98,7 @@ function Profile() {
           </div>
 
           {/* Streak Badge - MORE FLUID */}
-          <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2 sm:p-3 min-w-[64px] sm:min-w-[70px]">
+          <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-card p-2 sm:p-3 min-w-[64px] sm:min-w-[70px]">
             <Flame className='text-orange-400' size={20} />
             <p className='text-white text-lg sm:text-xl font-bold leading-none mt-1'>{streakCount}</p>
             <p className='text-purple-100 text-[9px] sm:text-[10px] uppercase tracking-wider font-medium'>days</p>
@@ -185,7 +185,7 @@ function Profile() {
 
 // Stat Card Component with PREMIUM BACKGROUND-ICON DESIGN
 const StatCard = ({ icon, label, value }) => (
-  <div className="relative overflow-hidden bg-white/70 dark:bg-zinc-900/40 backdrop-blur-md border border-border-default/60 dark:border-white/10 rounded-2xl p-5 sm:p-6 hover:scale-[1.02] hover:border-accent-primary/50 transition-all duration-300 shadow-sm hover:shadow-sm group flex flex-col justify-end min-h-[110px]">
+  <div className="relative overflow-hidden bg-white/70 dark:bg-zinc-900/40 backdrop-blur-md border border-border-default/60 dark:border-white/10 rounded-card p-5 sm:p-6 hover:scale-[1.02] hover:border-accent-primary/50 transition-all duration-300 shadow-sm hover:shadow-sm group flex flex-col justify-end min-h-[110px]">
     {/* Background Icon - LEFT POSITIONED, ROTATED */}
     <div className="absolute -left-2 -top-2 text-text-primary/10 dark:text-white/10 transition-all duration-500 transform rotate-12 group-hover:rotate-0 group-hover:scale-110 group-hover:text-accent-primary/20">
       {React.cloneElement(icon, { size: 80 })}

@@ -9,7 +9,7 @@ const LastReadCard = ({ book }) => {
         return (
             <div className="w-full h-full flex flex-col">
                 <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
-                <div className="bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default h-full min-h-[160px] flex items-center justify-center shadow-md">
+                <div className="bg-card-glass backdrop-blur-xl rounded-card p-6 md:p-8 border-2 border-border-default h-full min-h-[160px] flex items-center justify-center shadow-md">
                     <p className="text-text-tertiary font-medium">No recent books</p>
                 </div>
             </div>
@@ -23,7 +23,7 @@ const LastReadCard = ({ book }) => {
             <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
             <div
                 onClick={() => currentBook && navigate(`/reader/${currentBook.id}`)}
-                className={`bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden ${currentBook ? 'cursor-pointer' : ''} shadow-md relative`}
+                className={`bg-card-glass backdrop-blur-xl rounded-card p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden ${currentBook ? 'cursor-pointer' : ''} shadow-md relative`}
             >
                 <div className="flex gap-4 md:gap-8 w-full overflow-hidden">
                     <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-md flex-shrink-0 bg-bg-subtle border border-border-subtle group-hover:scale-[1.02] transition-transform duration-300">

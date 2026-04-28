@@ -104,7 +104,7 @@ function BookDetails() {
 
                         <div className="max-w-2xl">
                             <h2 className="text-xs sm:text-sm font-bold text-text-placeholder dark:text-text-placeholder-dark uppercase tracking-[0.2em] mb-4">About this book</h2>
-                            <div className="bg-card-glass dark:bg-bg-dark-elevated/40 backdrop-blur-md border border-border-default dark:border-border-default-dark rounded-2xl p-6 sm:p-8 hover:border-text-tertiary/20 dark:hover:border-text-tertiary-dark/20 hover:shadow-md transition-all duration-500 text-text-secondary dark:text-text-secondary-dark leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc mb-8 shadow-sm">
+                            <div className="bg-card-glass dark:bg-bg-dark-elevated/40 backdrop-blur-md border border-border-default dark:border-border-default-dark rounded-card p-6 sm:p-8 hover:border-text-tertiary/20 dark:hover:border-text-tertiary-dark/20 hover:shadow-md transition-all duration-500 text-text-secondary dark:text-text-secondary-dark leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc mb-8 shadow-sm">
                                
                                 {book.description || "No description available for this title."}
 
