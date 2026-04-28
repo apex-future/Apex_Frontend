@@ -53,47 +53,49 @@ function SpaceDetail() {
 
   return (
     <div className='w-full min-h-screen pb-20'>
-      {/* Page Header */}
-      <div className="relative flex justify-between items-center p-4 border-b border-border-default bg-white/50 backdrop-blur-md sticky top-0 z-20">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 hover:bg-neutral-100 rounded-lg transition-all"
-        >
-          <ArrowLeft size={20} />
-        </button>
-
-        <div className="text-center flex flex-col items-center">
-          <h3 className='text-lg font-semibold text-text-primary'>{selectedShelf.name}</h3>
-          <div className="flex items-center gap-3 mt-1">
-             <p className="text-xs text-text-tertiary">{selectedShelf.books?.length || 0} {selectedShelf.books?.length === 1 ? 'book' : 'books'}</p>
-             {!selectedShelf.isSystem && (
-                 <div 
-                   onClick={() => { setIsEditingExam(true); setTempExamDate(selectedShelf.examDate || globalExamDate || ''); }}
-                   className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-accent-primary/10 text-accent-primary px-2 py-0.5 rounded cursor-pointer hover:bg-accent-primary/20 transition-colors"
-                 >
-                   <Calendar size={10} />
-                   {selectedShelf.examDate ? `${new Date(selectedShelf.examDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Link Exam'}
-                 </div>
-             )}
-          </div>
-        </div>
-
-        {!selectedShelf.isSystem ? (
+      {/* Page Header - Matching BookSpaces style */}
+      <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
+        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
           <button
-            onClick={() => setIsAddingBooks(true)}
-            className="p-2 hover:bg-accent-primary/10 text-accent-primary rounded-xl transition-all"
-            title="Add Books to Space"
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group"
           >
-            <Plus size={20} />
+            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
           </button>
-        ) : (
-          <div className="w-9" />
-        )}
+
+          <div className="text-center flex flex-col items-center">
+            <h3 className='text-xl font-bold font-display text-text-primary'>{selectedShelf.name}</h3>
+            <div className="flex items-center gap-3 mt-1">
+               <p className="text-xs text-text-tertiary font-medium">{selectedShelf.books?.length || 0} {selectedShelf.books?.length === 1 ? 'book' : 'books'}</p>
+               {!selectedShelf.isSystem && (
+                   <div 
+                     onClick={() => { setIsEditingExam(true); setTempExamDate(selectedShelf.examDate || globalExamDate || ''); }}
+                     className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-accent-primary/10 text-accent-primary px-2 py-0.5 rounded cursor-pointer hover:bg-accent-primary/20 transition-colors"
+                   >
+                     <Calendar size={10} />
+                     {selectedShelf.examDate ? `${new Date(selectedShelf.examDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Link Exam'}
+                   </div>
+               )}
+            </div>
+          </div>
+
+          {!selectedShelf.isSystem ? (
+            <button
+              onClick={() => setIsAddingBooks(true)}
+              className="p-2 hover:bg-accent-primary/10 text-accent-primary rounded-xl transition-all"
+              title="Add Books to Space"
+            >
+              <Plus size={20} />
+            </button>
+          ) : (
+            <div className="w-10" />
+          )}
+        </div>
       </div>
 
       {/* Edit Exam Date Inline UI */}
       {isEditingExam && (
-         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+         <div className="w-[90%] mx-auto mt-4">
             <div className="p-4 bg-white dark:bg-zinc-900 border border-border-default rounded-2xl shadow-sm flex items-center justify-between gap-4">
                <div className="flex flex-col flex-1">
                   <span className="text-xs font-bold text-text-tertiary uppercase mb-1">Set Exam Date for {selectedShelf.name}</span>
@@ -127,9 +129,9 @@ function SpaceDetail() {
       )}
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          <div className="overflow-hidden mx-auto w-full bg-card-glass dark:bg-bg-dark-elevated backdrop-blur-xl p-2.5 border border-border-default dark:border-border-default-dark rounded-[3rem] shadow-sm">
-              <ul className="flex gap-2 overflow-x-auto py-2 bg-card-glass/60 dark:bg-bg-dark-elevated/60 backdrop-blur-md px-2.5 rounded-full items-center no-scrollbar border border-border-default/20 dark:border-border-default-dark/20">
+      <div className="w-[90%] mx-auto mt-6">
+          <div className="mx-auto w-full">
+              <ul className="flex gap-2 overflow-x-auto py-2 bg-card-glass/60 dark:bg-bg-dark-elevated/60 backdrop-blur-md px-2.5 rounded-full items-center no-scrollbar border border-border-default/20 dark:border-border-default-dark/20 shadow-sm">
                   <li
                       onClick={() => setActiveTab('books')}
                       className={`text-base font-medium transition-all p-2 px-4 rounded-full cursor-pointer whitespace-nowrap
@@ -157,7 +159,7 @@ function SpaceDetail() {
                     <div className="w-full">
                       {/* Add Books Inline UI */}
                       {isAddingBooks && (
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 mb-4 border border-border-default rounded-3xl">
+                        <div className="w-full py-6 mb-4 border border-border-default rounded-3xl">
                           <div className="flex justify-between items-center mb-4">
                              <h3 className="text-lg font-bold text-text-primary">Select Books to Add</h3>
                              <button onClick={() => setIsAddingBooks(false)} className="text-sm font-semibold text-text-tertiary hover:text-text-primary">Close</button>
