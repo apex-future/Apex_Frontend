@@ -83,6 +83,7 @@ function ReaderView() {
     const [downloadError, setDownloadError] = useState(false);
 
     const selectionRef = useRef({ text: '', x: 0, y: 0 });
+    const [selectionData, setSelectionData] = useState({ text: '', x: 0, y: 0, startOffset: null });
     const [showHighlightMenu, setShowHighlightMenu] = useState(false);
     const [isDictOpen, setIsDictOpen] = useState(false);
     const [isReaderDictOpen, setIsReaderDictOpen] = useState(false);
@@ -507,13 +508,15 @@ function ReaderView() {
                     } catch (e) {}
 
                     if (textChanged || !showHighlightMenuRef.current) {
-                        selectionRef.current = {
+                        const newData = {
                             text,
                             x: rect.left + rect.width / 2,
                             y: rect.top,
                             startOffset: foundOffset !== -1 ? foundOffset : null
                         };
-                        console.log('[Apex Performance] Selection captured via Ref');
+                        selectionRef.current = newData;
+                        setSelectionData(newData);
+                        console.log('[Apex Performance] Selection captured via State');
                     }
                     setShowHighlightMenu(true);
                 }
@@ -802,8 +805,8 @@ function ReaderView() {
                 {/* Highlight Menu */}
                 {showHighlightMenu && (
                     <HighlightMenu
-                        selection={selectionRef.current.text}
-                        position={{ x: selectionRef.current.x, y: selectionRef.current.y }}
+                        selection={selectionData.text}
+                        position={{ x: selectionData.x, y: selectionData.y }}
                         onAskAI={() => {
                             setAiModal(true);
                             setShowHighlightMenu(false);
@@ -937,7 +940,7 @@ function ReaderView() {
                     <AIModal
                         setAiModal={setAiModal}
                         bookTitle={book?.title || book?.file?.name}
-                        selectedText={selectionRef.current.text}
+                        selectedText={selectionData.text}
                         bookId={book?.id?.toString()}
                         currentPage={pageNumber}
                         numPages={numPages}
@@ -996,7 +999,7 @@ function ReaderView() {
                     onClose={closePageStrip}
                 />
             )}
-            <ReaderDictionary isOpen={isReaderDictOpen} onClose={() => setIsReaderDictOpen(false)} bookId={book?.id} initialWord={selectionRef.current?.text} />
+            <ReaderDictionary isOpen={isReaderDictOpen} onClose={() => setIsReaderDictOpen(false)} bookId={book?.id} initialWord={selectionData.text} />
         </div>
     );
 }

@@ -11,7 +11,8 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
     useEffect(() => {
         if (isOpen && initialWord?.trim()) {
             setWord(initialWord.trim());
-            fetchDefinition(initialWord.trim());
+            // User requested to cut the automatic search trigger
+            // fetchDefinition(initialWord.trim());
         }
     }, [isOpen, initialWord]);
 
