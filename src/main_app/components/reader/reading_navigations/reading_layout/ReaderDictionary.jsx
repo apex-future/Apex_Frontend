@@ -60,7 +60,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                         <div className="size-10 rounded-xl bg-accent-primary/10 flex items-center justify-center text-accent-primary">
                             <Book size={20} />
                         </div>
-                        <h2 className="text-xl font-bold text-text-primary tracking-tight">Quick Dictionary</h2>
+                        <h2 className="text-xl font-bold font-display text-text-primary tracking-tight">Quick Dictionary</h2>
                     </div>
                     <button 
                         onClick={onClose}
@@ -81,7 +81,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                 value={word}
                                 onChange={(e) => setWord(e.target.value)}
                                 placeholder="Search for a word..."
-                                className="w-full h-14 pl-12 pr-6 bg-bg-subtle border-2 border-border-default rounded-2xl text-base font-medium text-text-primary focus:outline-none focus:border-accent-primary transition-all placeholder:text-sm"
+                                className="w-full h-14 pl-12 pr-6 bg-bg-subtle border-2 border-border-default rounded-2xl text-base font-medium text-text-primary focus:outline-none focus:border-accent-primary transition-all placeholder:text-sm font-sans"
                                 autoFocus
                             />
                         </div>
@@ -90,7 +90,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                     {loading && (
                         <div className="flex flex-col items-center justify-center py-12 text-text-tertiary">
                             <Loader2 size={32} className="animate-spin mb-3 text-accent-primary" />
-                            <p className="text-sm font-medium">Looking up definition...</p>
+                            <p className="text-sm font-medium font-sans">Looking up definition...</p>
                         </div>
                     )}
 
@@ -99,7 +99,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                             <div className="text-red-500 mb-3 flex justify-center">
                                 {error.includes('internet') ? <WifiOff size={28} /> : <X size={28} />}
                             </div>
-                            <p className="text-sm text-red-700 font-medium">
+                            <p className="text-sm text-red-700 font-medium font-sans">
                                 {error.includes('internet') 
                                     ? 'Internet connection required for new words.' 
                                     : `Couldn't find definition for "${word}".`
@@ -112,7 +112,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                         <div className="animate-in fade-in duration-500">
                             <div className="flex items-center justify-between mb-6 pb-6 border-b border-border-default">
                                 <div>
-                                    <h3 className="text-3xl font-black text-text-primary capitalize tracking-tight mb-1">{definition.word}</h3>
+                                    <h3 className="text-3xl font-black font-display text-text-primary capitalize tracking-tight mb-1">{definition.word}</h3>
                                     <p className="text-accent-primary font-bold italic text-base">
                                         {definition.phonetic || definition.phonetics?.[0]?.text}
                                     </p>
@@ -136,11 +136,11 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                             </span>
                                             <div className="h-px flex-1 bg-border-default"></div>
                                         </div>
-                                        <p className="text-base text-text-secondary leading-relaxed font-medium">
+                                        <p className="text-base text-text-secondary leading-relaxed font-medium font-sans">
                                             {meaning.definitions[0].definition}
                                         </p>
                                         {meaning.definitions[0].example && (
-                                            <p className="text-sm text-text-tertiary italic pl-4 border-l-2 border-border-default">
+                                            <p className="text-sm text-text-tertiary italic pl-4 border-l-2 border-border-default font-sans">
                                                 "{meaning.definitions[0].example}"
                                             </p>
                                         )}
@@ -153,7 +153,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                     {!word && !definition && !loading && (
                         <div className="py-12 text-center opacity-40">
                             <Book size={48} className="mx-auto mb-4" strokeWidth={1} />
-                            <p className="text-sm font-medium">Enter a word to see its definition.</p>
+                            <p className="text-sm font-medium font-sans">Enter a word to see its definition.</p>
                         </div>
                     )}
                 </div>
