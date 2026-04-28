@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
 import useStudyStore from '../../store/studyStore';
+import StreakCelebration from './StreakCelebration';
+import { AnimatePresence } from 'framer-motion';
 import useSpaceStore from '../../store/spaceStore';
 import useSettingsStore from '../../store/settingsStore';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -88,6 +90,7 @@ function ReaderView() {
     const [isDictOpen, setIsDictOpen] = useState(false);
     const [isReaderDictOpen, setIsReaderDictOpen] = useState(false);
     const [showPageStrip, setShowPageStrip] = useState(false);
+    const [showStreakCelebration, setShowStreakCelebration] = useState(false);
 
     const openPageStrip = useCallback(() => {
         setNavState('none');
@@ -103,7 +106,7 @@ function ReaderView() {
     // 1-MINUTE READING TIMER — Streak & Space Tracking
     // ============================================
     const { activeSpaceId, logSpaceActivity } = useSpaceStore();
-    const updateStreak = useStudyStore(state => state.updateStreak);
+    const { updateStreak, streakCount, streakHistory } = useStudyStore();
     const updateStreakRef = useRef(updateStreak);
     const logSpaceActivityRef = useRef(logSpaceActivity);
     useEffect(() => { updateStreakRef.current = updateStreak; }, [updateStreak]);
@@ -146,6 +149,7 @@ function ReaderView() {
             // Fire daily streak ONCE per day
             if (!streakFiredTodayRef.current) {
                 updateStreakRef.current();
+                setShowStreakCelebration(true);
                 streakFiredTodayRef.current = true;
                 localStorage.setItem('apex_streak_fired_today', new Date().toLocaleDateString('en-CA'));
             }
@@ -163,6 +167,7 @@ function ReaderView() {
                     if (activeSpaceId) logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
                     if (!streakFiredTodayRef.current) {
                         updateStreakRef.current();
+                        setShowStreakCelebration(true);
                         streakFiredTodayRef.current = true;
                         localStorage.setItem('apex_streak_fired_today', new Date().toLocaleDateString('en-CA'));
                     }
@@ -1000,6 +1005,16 @@ function ReaderView() {
                 />
             )}
             <ReaderDictionary isOpen={isReaderDictOpen} onClose={() => setIsReaderDictOpen(false)} bookId={book?.id} initialWord={selectionData.text} />
+            
+            <AnimatePresence>
+                {showStreakCelebration && (
+                    <StreakCelebration 
+                        streakCount={streakCount} 
+                        streakHistory={streakHistory} 
+                        onClose={() => setShowStreakCelebration(false)} 
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }
