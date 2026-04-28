@@ -26,7 +26,6 @@ import ExamPage from './pages/ExamPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
-import useStudyStore from './store/studyStore';
 
 
 function MainApp({ onLogout }) {
@@ -43,16 +42,14 @@ function MainApp({ onLogout }) {
   const location = useLocation();
   const { showDuplicateModal, setShowDuplicateModal } = useContext(BookContext) || {};
   const { resolvedTheme } = useThemeStore();
-  const updateStreak = useStudyStore(state => state.updateStreak);
 
   React.useEffect(() => {
-    updateStreak();
     // Request notification permission and check for missed days
     notificationService.requestPermission().then(() => {
       notificationService.checkAndNotify();
       notificationService.scheduleNotification();
     });
-  }, [updateStreak]);
+  }, []);
 
   return (
     <div className={`flex relative min-h-screen bg-bg-elevated ${resolvedTheme}`}>

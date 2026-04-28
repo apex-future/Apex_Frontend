@@ -60,9 +60,9 @@ const useStudyStore = create(
           newStreak = 1;
           if (import.meta.env.DEV) console.log('[Apex Streak] First streak day!');
         } else {
-          // Check if yesterday
-          const last = new Date(lastActive);
-          const todayDate = new Date(today);
+          // Check if yesterday — append T00:00:00 to force local-time parsing
+          const last = new Date(lastActive + 'T00:00:00');
+          const todayDate = new Date(today + 'T00:00:00');
           const diffMs = todayDate.getTime() - last.getTime();
           const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
@@ -136,8 +136,10 @@ const useStudyStore = create(
         }
 
         // Streak is broken — reset to 0 (not 1, because user hasn't read today)
+        // Also clear lastActiveDate so the next reading session starts fresh
+        // instead of computing a diff from the stale date
         if (import.meta.env.DEV) console.log('[Apex Streak] Integrity check: streak BROKEN (last active', diffDays, 'days ago) — resetting to 0');
-        set({ streakCount: 0 });
+        set({ streakCount: 0, lastActiveDate: null });
 
         // Sync the reset to Supabase
         if (navigator.onLine) {
