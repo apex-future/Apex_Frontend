@@ -48,14 +48,20 @@ const ExamReminder = () => {
 
     const daysLeft = calculateDaysLeft();
     const isPaused = activeExam?.isPaused;
-    const isExamDay = daysLeft !== null && daysLeft <= 0;
-    const isUrgent = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
 
-    let moodColor = 'bg-accent-primary';
-    let moodTextColor = 'text-accent-primary';
-    let moodBgColor = 'bg-accent-primary/10';
-    let moodBorderColor = 'border-accent-primary/20';
+    // Evaluate if there is consistent activity to distinguish "Steady" from "On Track"
+    const hasConsistentActivity = linkedSpace && (
+        (linkedSpace.activitySummaries?.timeSpent > 0) || 
+        (linkedSpace.activitySummaries?.pagesRead > 0)
+    );
+
+    let moodColor = 'bg-emerald-500';
+    let moodTextColor = 'text-emerald-600 dark:text-emerald-500';
+    let moodBgColor = 'bg-emerald-500/10';
+    let moodBorderColor = 'border-emerald-500/20';
     let moodLabel = 'On Track';
+    let moodGlow = 'shadow-[inset_0_0_12px_rgba(16,185,129,0.2)]';
+    let moodAmbientBg = 'bg-emerald-500/5 group-hover:bg-emerald-500/10';
 
     if (isPaused) {
         moodColor = 'bg-neutral-500';
@@ -63,14 +69,60 @@ const ExamReminder = () => {
         moodBgColor = 'bg-neutral-500/10';
         moodBorderColor = 'border-neutral-500/20';
         moodLabel = 'Paused';
-    } else if (isExamDay) {
-        moodLabel = 'Exam Day';
-    } else if (isUrgent) {
-        moodColor = 'bg-red-500';
-        moodTextColor = 'text-red-500';
-        moodBgColor = 'bg-red-500/10';
-        moodBorderColor = 'border-red-500/20';
-        moodLabel = 'Urgent';
+        moodGlow = 'shadow-[inset_0_0_8px_rgba(115,115,115,0.15)]';
+        moodAmbientBg = 'bg-neutral-500/5 group-hover:bg-neutral-500/10';
+    } else if (daysLeft !== null) {
+        if (daysLeft <= 0) {
+            moodColor = 'bg-red-600';
+            moodTextColor = 'text-red-600 dark:text-red-500';
+            moodBgColor = 'bg-red-600/10';
+            moodBorderColor = 'border-red-600/20';
+            moodLabel = 'Exam Day';
+            moodGlow = 'shadow-[inset_0_0_15px_rgba(220,38,38,0.25)]';
+            moodAmbientBg = 'bg-red-600/5 group-hover:bg-red-600/10';
+        } else if (daysLeft <= 3) {
+            moodColor = 'bg-gradient-to-r from-orange-500 to-red-500';
+            moodTextColor = 'text-red-600 dark:text-red-500';
+            moodBgColor = 'bg-red-500/10';
+            moodBorderColor = 'border-red-500/20';
+            moodLabel = 'Final Push';
+            moodGlow = 'shadow-[inset_0_0_15px_rgba(239,68,68,0.25)]';
+            moodAmbientBg = 'bg-red-500/5 group-hover:bg-red-500/10';
+        } else if (daysLeft <= 7) {
+            moodColor = 'bg-red-500';
+            moodTextColor = 'text-red-600 dark:text-red-500';
+            moodBgColor = 'bg-red-500/10';
+            moodBorderColor = 'border-red-500/20';
+            moodLabel = 'Critical';
+            moodGlow = 'shadow-[inset_0_0_15px_rgba(239,68,68,0.25)]';
+            moodAmbientBg = 'bg-red-500/5 group-hover:bg-red-500/10';
+        } else if (daysLeft <= 21) {
+            moodColor = 'bg-amber-500';
+            moodTextColor = 'text-amber-600 dark:text-amber-500';
+            moodBgColor = 'bg-amber-500/10';
+            moodBorderColor = 'border-amber-500/20';
+            moodLabel = 'Urgent';
+            moodGlow = 'shadow-[inset_0_0_15px_rgba(245,158,11,0.2)]';
+            moodAmbientBg = 'bg-amber-500/5 group-hover:bg-amber-500/10';
+        } else {
+            if (hasConsistentActivity) {
+                moodColor = 'bg-blue-500';
+                moodTextColor = 'text-blue-600 dark:text-blue-500';
+                moodBgColor = 'bg-blue-500/10';
+                moodBorderColor = 'border-blue-500/20';
+                moodLabel = 'Steady';
+                moodGlow = 'shadow-[inset_0_0_12px_rgba(59,130,246,0.2)]';
+                moodAmbientBg = 'bg-blue-500/5 group-hover:bg-blue-500/10';
+            } else {
+                moodColor = 'bg-emerald-500';
+                moodTextColor = 'text-emerald-600 dark:text-emerald-500';
+                moodBgColor = 'bg-emerald-500/10';
+                moodBorderColor = 'border-emerald-500/20';
+                moodLabel = 'On Track';
+                moodGlow = 'shadow-[inset_0_0_12px_rgba(16,185,129,0.2)]';
+                moodAmbientBg = 'bg-emerald-500/5 group-hover:bg-emerald-500/10';
+            }
+        }
     }
 
     const nextExam = (e) => { e.stopPropagation(); setCurrentIndex(s => (s + 1) % examsList.length); };
@@ -122,8 +174,8 @@ const ExamReminder = () => {
     };
 
     const CardContainer = ({ children, onClick, className = '', title = '' }) => (
-        <div className="w-full relative group/container">
-            <div className="flex justify-between items-center mb-4 px-2">
+        <div className="w-full h-full relative group/container flex flex-col">
+            <div className="flex justify-between items-center mb-3 px-2">
                 <h2 className='text-lg sm:text-xl font-bold text-text-primary tracking-tight'>{title || activeExam?.name || 'Exam Timer'}</h2>
                 {examsList.length > 1 && !isEditing && (
                     <div className="flex items-center gap-2">
@@ -135,7 +187,7 @@ const ExamReminder = () => {
             </div>
             <div
                 onClick={onClick}
-                className={`bg-card-glass backdrop-blur-xl rounded-[2.5rem] p-6 lg:p-10 border-2 border-border-default hover:border-accent-primary/30 transition-all duration-500 group overflow-hidden shadow-xl shadow-black/5 relative min-h-[16rem] flex items-center cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-70 grayscale-[0.3]' : ''}`}
+                className={`bg-card-glass backdrop-blur-xl rounded-[2rem] p-4 px-6 border-2 border-border-default transition-all duration-500 group overflow-hidden shadow-xl shadow-black/5 relative min-h-[14rem] flex-1 flex flex-col cursor-pointer ${className} ${(activeExam?.isPaused && !isEditing) ? 'opacity-70 grayscale-[0.3]' : ''}`}
             >
                 {/* Background pattern */}
                 <div 
@@ -156,7 +208,7 @@ const ExamReminder = () => {
                 <div className="absolute -bottom-10 -left-10 size-60 text-accent-primary/5 rotate-12 group-hover:rotate-6 transition-all duration-1000 pointer-events-none">
                     <AlarmClock size="100%" strokeWidth={1} />
                 </div>
-                <div className="flex flex-col items-center justify-center w-full relative z-10 text-center gap-6">
+                <div className="flex flex-col items-center justify-center w-full h-full relative z-10 text-center gap-6">
                     <div className="size-16 bg-accent-primary/10 rounded-[2rem] flex items-center justify-center text-accent-primary shadow-inner border border-accent-primary/20 group-hover:scale-110 transition-transform">
                         <Plus size={32} />
                     </div>
@@ -175,51 +227,56 @@ const ExamReminder = () => {
     if (!isEditing) {
         return (
             <CardContainer title={activeExam?.name || 'Upcoming Exam'} className="relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-accent-primary/5 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-accent-primary/10 transition-all pointer-events-none" />
-                
-                {/* Carousel Controls */}
-                {examsList.length > 1 && (
-                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 z-20 pointer-events-none">
-                        <button onClick={prevExam} className="pointer-events-auto p-2.5 bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 text-text-secondary hover:text-accent-primary transition-all active:scale-90"><ChevronLeft size={24}/></button>
-                        <button onClick={nextExam} className="pointer-events-auto p-2.5 bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 text-text-secondary hover:text-accent-primary transition-all active:scale-90"><ChevronRight size={24}/></button>
-                    </div>
-                )}
+                <div className={`absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-16 blur-3xl transition-all duration-700 pointer-events-none ${moodAmbientBg}`} />
 
-                <div className="flex flex-col w-full h-full relative z-10">
-                    <div className="flex justify-between items-start w-full mb-auto gap-4">
-                        <div className="flex flex-col">
-                            <div className="flex items-baseline gap-2">
-                                <span className={`text-7xl lg:text-8xl font-black tabular-nums tracking-tighter leading-none ${activeExam?.isPaused ? 'text-text-tertiary opacity-40' : 'text-text-primary'}`}>
-                                    {daysLeft > 0 ? daysLeft : 0}
-                                </span>
-                                <span className="text-xs font-black text-text-tertiary uppercase tracking-widest">Days Left</span>
-                            </div>
-                            
-                            <div className="flex flex-col gap-1.5 mt-4">
-                                <p className="text-xs font-bold text-text-tertiary flex items-center gap-2">
-                                    <Calendar size={14} className="text-accent-primary" />
-                                    {new Date(activeExam?.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
-                                </p>
-                                {linkedSpace && (
-                                    <p className="text-xs font-bold text-text-tertiary flex items-center gap-2">
+                <div className="flex flex-col w-full h-full relative z-10 justify-between">
+                    {/* Top Row: Navigation and Action Buttons */}
+                    <div className="flex justify-between items-center w-full mb-2">
+                        <div className="flex gap-2 min-w-[60px]">
+                            {/* Chevrons moved to where tag was */}
+                            {examsList.length > 1 && (
+                                <>
+                                    <button onClick={prevExam} className="p-1.5 bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-xl shadow-sm border border-border-default text-text-secondary hover:text-accent-primary transition-all active:scale-90"><ChevronLeft size={16}/></button>
+                                    <button onClick={nextExam} className="p-1.5 bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-xl shadow-sm border border-border-default text-text-secondary hover:text-accent-primary transition-all active:scale-90"><ChevronRight size={16}/></button>
+                                </>
+                            )}
+                        </div>
+                        
+                        <div className="flex gap-1 backdrop-blur-xl bg-white/50 dark:bg-black/20 rounded-[1.25rem] p-1 shadow-sm transition-all z-20">
+                            <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-2 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-xl transition-all" title="Edit"><Edit2 size={16}/></button>
+                            <button onClick={(e) => { e.stopPropagation(); if (activeExam?.id && activeExam.id !== 'legacy') togglePauseExam(activeExam.id); }} className="p-2 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-xl transition-all" title={activeExam?.isPaused ? "Resume" : "Pause"}>{activeExam?.isPaused ? <Play size={16} fill="currentColor" /> : <Pause size={16} fill="currentColor" />}</button>
+                            <button onClick={handleDeleteCurrent} className="p-2 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all" title="Delete"><Trash2 size={16}/></button>
+                        </div>
+                    </div>
+
+                    {/* Middle Row: Content */}
+                    <div className="flex flex-col flex-1 items-center justify-center w-full gap-4">
+                        <div className="flex flex-col items-center justify-center">
+                            <span className={`text-6xl lg:text-7xl font-black tabular-nums tracking-tighter leading-none ${activeExam?.isPaused ? 'text-text-tertiary opacity-40' : 'text-text-primary'}`}>
+                                {daysLeft > 0 ? daysLeft : 0}
+                            </span>
+                            <span className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-1">Days Left</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-center flex-wrap text-xs font-bold text-text-tertiary gap-2">
+                            <p className="flex items-center gap-1.5">
+                                <Calendar size={14} className="text-accent-primary" />
+                                {new Date(activeExam?.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                            </p>
+                            {linkedSpace && (
+                                <>
+                                    <span className="mx-1 text-text-tertiary/40">•</span>
+                                    <p className="flex items-center gap-1.5">
                                         <Link size={14} className="text-accent-primary" />
                                         <span>Linked to {linkedSpace.name}</span>
                                     </p>
-                                )}
-                            </div>
+                                </>
+                            )}
                         </div>
-                        
-                        <div className="flex flex-col items-end gap-3 translate-y-1">
-                            <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm flex items-center gap-2 ${moodBgColor} ${moodTextColor} ${moodBorderColor}`}>
-                                <div className={`size-1.5 rounded-full ${moodColor} ${!isPaused ? 'animate-pulse' : ''}`} />
-                                {moodLabel}
-                            </div>
 
-                            <div className="flex gap-2 bg-white/40 dark:bg-zinc-800/40 backdrop-blur-xl rounded-[1.25rem] p-1.5 border border-white/10 opacity-0 group-hover:opacity-100 transition-all shadow-lg">
-                                <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-2 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-xl transition-all" title="Edit"><Edit2 size={18}/></button>
-                                <button onClick={(e) => { e.stopPropagation(); if (activeExam?.id && activeExam.id !== 'legacy') togglePauseExam(activeExam.id); }} className="p-2 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-xl transition-all" title={activeExam?.isPaused ? "Resume" : "Pause"}>{activeExam?.isPaused ? <Play size={18} fill="currentColor" /> : <Pause size={18} fill="currentColor" />}</button>
-                                <button onClick={handleDeleteCurrent} className="p-2 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all" title="Delete"><Trash2 size={18}/></button>
-                            </div>
+                        <div className={`mt-1 px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] border flex items-center gap-2 transition-all duration-500 w-max ${moodBgColor} ${moodTextColor} ${moodBorderColor} ${moodGlow}`}>
+                            <div className={`size-1.5 rounded-full ${moodColor} ${!isPaused ? 'animate-pulse' : ''}`} />
+                            {moodLabel}
                         </div>
                     </div>
                 </div>
