@@ -22,10 +22,10 @@ const StreakCard = () => {
 
     return (
         <div className="w-full">
-            <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Activity Streak</h2>
+            <h2 className='text-lg sm:text-xl px-2 font-bold text-text-primary mb-4 tracking-tight'>Activity Streak</h2>
             <div 
                 onClick={() => navigate('/streak')}
-                className="bg-card-glass backdrop-blur-xl rounded-card p-6 md:p-8 border-2 border-border-default hover:border-orange-500/40 hover:shadow-md transition-all duration-500 group overflow-hidden shadow-md relative h-48 xs:h-60 sm:h-64 flex flex-col justify-center items-center cursor-pointer"
+                className="bg-card-glass backdrop-blur-xl rounded-card p-4 px-6 border-2 border-border-default hover:border-orange-500/40 hover:shadow-xl hover:shadow-black/5 transition-all duration-500 group overflow-hidden shadow-xl shadow-black/5 relative h-48 xs:h-60 sm:h-64 flex flex-col justify-center items-center cursor-pointer"
             >
                 
                 {/* Background Icon Asset - Matched with ExamReminder */}
@@ -33,13 +33,13 @@ const StreakCard = () => {
                     <Flame size="100%" strokeWidth={1} />
                 </div>
 
-                {/* Top Section: Number + Text (Single Row) */}
-                <div className="flex items-baseline gap-2 md:gap-3 mb-6 md:mb-8 relative z-10">
-                    <span className="text-4xl md:text-6xl lg:text-8xl font-bold bg-gradient-to-br from-orange-50 to-orange-500 bg-clip-text text-transparent tracking-tighter tabular-nums text-center drop-shadow-sm">
+                {/* Top Section: Number + Text (Centered like ExamReminder) */}
+                <div className="flex flex-col items-center justify-center relative z-10 mb-6 md:mb-8">
+                    <span className="text-6xl lg:text-7xl font-black text-text-primary tabular-nums tracking-tighter leading-none">
                         {streakCount}
                     </span>
-                    <span className="text-xs md:text-base lg:text-sm font-bold text-text-secondary uppercase tracking-[0.15em]">
-                        day streak
+                    <span className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-1">
+                        days streak
                     </span>
                 </div>
 
