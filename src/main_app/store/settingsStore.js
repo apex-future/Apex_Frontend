@@ -24,9 +24,9 @@ const useSettingsStore = create(
       // ── Notifications ──
       notifications: {
         readingReminders: true,
-        streakAlerts: true,
         studyTips: false,
       },
+      reminderTime: '18:00',  // HH:MM — default 6PM
 
       // ── Reader ──
       scrollOrientation: 'vertical',    // 'vertical' | 'horizontal'
@@ -70,7 +70,7 @@ const useSettingsStore = create(
           const {
             theme, autoSaveProgress, pageAnimations,
             saveChatHistory, autoExplain, notifications,
-            scrollOrientation, scrollAnimation,
+            scrollOrientation, scrollAnimation, reminderTime,
           } = get();
 
           await apiClient.patch('/api/settings', {
@@ -82,6 +82,7 @@ const useSettingsStore = create(
             notifications,
             scroll_orientation: scrollOrientation,
             scroll_animation: scrollAnimation,
+            reminder_time: reminderTime,
           });
           if (import.meta.env.DEV) console.log('[Apex Settings] Synced to Supabase');
         } catch (err) {
@@ -104,11 +105,11 @@ const useSettingsStore = create(
           autoExplain: data.auto_explain ?? false,
           notifications: data.notifications || {
             readingReminders: true,
-            streakAlerts: true,
             studyTips: false,
           },
           scrollOrientation: data.scroll_orientation || 'vertical',
           scrollAnimation: data.scroll_animation || 'none',
+          reminderTime: data.reminder_time ? data.reminder_time.slice(0, 5) : '18:00',
         });
       },
 

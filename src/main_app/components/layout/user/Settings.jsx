@@ -10,6 +10,7 @@ import ConfirmModal from '../../ui/ConfirmModal';
 import db from '../../../db/apex.db';
 import syncService from '../../../services/syncService';
 import apiClient from '../../../services/apiClient';
+import notificationService from '../../../services/notificationService';
 
 function Settings({ onLogout }) {
     const navigate = useNavigate();
@@ -25,6 +26,7 @@ function Settings({ onLogout }) {
       notifications,
       scrollOrientation,
       scrollAnimation,
+      reminderTime,
       updateSetting,
       updateNotification,
     } = useSettingsStore();
@@ -299,18 +301,56 @@ function Settings({ onLogout }) {
 
                 {/* Notifications */}
                 <SettingSection title="Notifications" icon={<Bell size={18} />}>
-                    <ToggleRow
-                        label="Reading Reminders"
-                        desc="Get notified to meet your daily reading goals"
-                        checked={notifications.readingReminders}
-                        onChange={(e) => updateNotification('readingReminders', e.target.checked)}
-                    />
-                    <ToggleRow
-                        label="Streak Alerts"
-                        desc="Reminders to keep your reading streak alive"
-                        checked={notifications.streakAlerts}
-                        onChange={(e) => updateNotification('streakAlerts', e.target.checked)}
-                    />
+                    {/* Reading Reminders toggle + time picker */}
+                    <div className="border-b border-border-default last:border-0">
+                      <div className="flex items-center justify-between p-4 hover:bg-bg-subtle/50 transition-colors">
+                        <div className="pr-4">
+                          <p className="text-sm font-medium text-text-primary">Reading Reminders</p>
+                          <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">
+                            Daily nudge to read and keep your streak alive
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={notifications.readingReminders}
+                            onChange={async (e) => {
+                              const enabled = e.target.checked;
+                              updateNotification('readingReminders', enabled);
+                              const authToken = localStorage.getItem('apex_token');
+                              if (enabled) {
+                                const granted = await notificationService.requestPermission();
+                                if (granted) {
+                                  await notificationService.subscribeToPush(authToken);
+                                }
+                              } else {
+                                await notificationService.unsubscribeFromPush(authToken);
+                              }
+                            }}
+                          />
+                          <div className="w-11 h-6 bg-border-default peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border-default after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-primary" />
+                        </label>
+                      </div>
+
+                      {/* Time picker — only visible when reminders are enabled */}
+                      {notifications.readingReminders && (
+                        <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="flex items-center justify-between bg-bg-elevated/50 rounded-xl px-4 py-3 border border-border-default">
+                            <div>
+                              <p className="text-xs font-medium text-text-primary">Remind me at</p>
+                              <p className="text-xs text-text-tertiary mt-0.5">Time is in your local timezone</p>
+                            </div>
+                            <input
+                              type="time"
+                              value={reminderTime}
+                              onChange={(e) => updateSetting('reminderTime', e.target.value)}
+                              className="bg-transparent text-accent-primary font-bold text-sm border-none outline-none cursor-pointer"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     <ToggleRow
                         label="Study Tips"
                         desc="Occasional learning strategies and tips"
