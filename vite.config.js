@@ -57,6 +57,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['sw-push.js'],
         globPatterns: ['**/*.{js,mjs,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
