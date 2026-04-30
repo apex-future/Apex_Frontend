@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Sparkles } from 'lucide-react';
+import { Flame, Sparkles, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const StreakCelebration = ({ streakCount, streakHistory, onClose }) => {
