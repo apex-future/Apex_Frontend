@@ -135,10 +135,8 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
 
     const handleGenerateClick = async () => {
         setLoading(true);
-        const pageRangeStr = selectedPages.sort((a,b) => a - b).join(', ');
-        // Call the parent's onGenerate handler with the configuration
         await onGenerate({
-            pageRange: pageRangeStr,
+            selectedPages: [...selectedPages].sort((a, b) => a - b), // raw array, sorted
             numQuestions,
             quizTime,
             quizType,

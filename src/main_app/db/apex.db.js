@@ -101,4 +101,21 @@ db.version(8).stores({
   chats: '++id, title, scope, updatedAt',
 });
 
+db.version(9).stores({
+  // carry forward all v8 tables unchanged:
+  books: '++id, local_id, recordId, title, author, fileType, fileSize, coverImage, totalPages, uploadedAt, lastReadAt, synced, supabaseId, last_modified',
+  reading_progress: '++id, local_id, recordId, bookId, currentPage, scrollPosition, progressPercentage, lastReadAt, synced, supabaseId, last_modified',
+  highlights: '++id, local_id, recordId, bookId, userId, highlightedText, color, pageNumber, textPosition, note, createdAt, updatedAt, synced, supabaseId, last_modified',
+  bookmarks: '++id, bookId, userId, pageNumber, local_id, synced, supabaseId, label, createdAt, updatedAt, last_modified',
+  notes: '++id, local_id, bookId, supabaseId, noteType, synced, createdAt, updatedAt, last_modified',
+  ai_conversations: '++id, bookId, userId, chatType, local_id, synced, supabaseId, queryText, aiResponse, createdAt',
+  user_dictionary_history: '++id, userId, word, local_id, synced, lookedUpAt',
+  dictionary_cache: 'word, cachedAt',
+  sync_queue: '++id, action, tableName, local_id, recordId, payload, createdAt, attempts, status',
+  app_settings: '++id, key, value',
+  chats: '++id, title, scope, updatedAt',
+  // NEW:
+  quizzes: '++id, bookId, supabaseId, question_type, difficulty, completed, taken_at, synced',
+});
+
 export default db;

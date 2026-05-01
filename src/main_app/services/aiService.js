@@ -105,3 +105,44 @@ export async function summarizeHighlights({ highlights, bookTitle }) {
 
   return response.json();
 }
+
+/**
+ * Generate quiz questions from book page content (non-streaming).
+ * Gemini reads page text and returns questions_payload array.
+ */
+export async function generateQuiz({ bookId, bookTitle, pageTexts, selectedPages, numQuestions, quizTime, questionType, difficulty }) {
+  const response = await fetch(`${API_BASE}/generate-quiz`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      book_id: bookId,
+      book_title: bookTitle || null,
+      page_texts: pageTexts,       // array of { page: number, text: string }
+      selected_pages: selectedPages,
+      num_questions: numQuestions,
+      quiz_time: quizTime,
+      question_type: questionType, // 'multiple_choice' | 'short_essay'
+      difficulty,
+    }),
+  });
+  if (!response.ok) throw new Error(`Generate quiz failed: ${response.status}`);
+  return response.json();
+}
+
+/**
+ * Grade essay answers (non-streaming).
+ * Groq receives questions + model answers + user answers, returns per-question scores.
+ */
+export async function gradeEssay({ bookId, questions }) {
+  // questions: array of { id, question, model_answer, user_answer }
+  const response = await fetch(`${API_BASE}/grade-essay`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      book_id: bookId,
+      questions,
+    }),
+  });
+  if (!response.ok) throw new Error(`Grade essay failed: ${response.status}`);
+  return response.json();
+}

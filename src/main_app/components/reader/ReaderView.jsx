@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
 import useStudyStore from '../../store/studyStore';
+import useAuthStore from '../../store/authStore';
 import StreakCelebration from './StreakCelebration';
 import { AnimatePresence } from 'framer-motion';
 import useSpaceStore from '../../store/spaceStore';
@@ -11,7 +12,8 @@ import DOMPurify from 'dompurify';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import AIModal from './reading_navigations/reading_layout/AIModal';
-import QuizGenerationModal from './reading_navigations/reading_layout/QuizGenerationModal';
+import QuizPanel from './reading_navigations/reading_layout/QuizPanel';
+import QuizView from './QuizView';
 import apiClient from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 import HighlightMenu from './HighlightMenu';
@@ -73,7 +75,9 @@ function ReaderView() {
     const [locked, setLocked] = useState(false);
     const [aiModal, setAiModal] = useState(false);
     const [quizModal, setQuizModal] = useState(false);
+    const [activeQuizSession, setActiveQuizSession] = useState(null);
     const { addToast } = useToast();
+    const { user: authUser } = useAuthStore();
     const [leftPanel, setLeftPanel] = useState(false);
     const [pageSettings, setPageSettings] = useState(false);
     const { scrollOrientation: savedOrientation, updateSetting } = useSettingsStore();
@@ -955,42 +959,33 @@ function ReaderView() {
 
                 {/* Quiz panel */}
                 {quizModal && (
-                    <QuizGenerationModal
+                    <QuizPanel
                         onClose={() => setQuizModal(false)}
+                        bookId={book?.id}
+                        supabaseBookId={book?.supabaseId || book?.recordId}
                         bookTitle={book?.title || book?.file?.name}
                         fileUrl={fileUrl}
                         isPdf={isPdf}
                         numPages={numPages || (isPdf ? 0 : localPages.total)}
-                        onGenerate={async (config) => {
-                            try {
-                                const ranges = [];
-                                const parts = config.pageRange.split(',').map(p => p.trim()).filter(Boolean);
-                                for (const part of parts) {
-                                    const match = part.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-                                    if (match) {
-                                        const start = parseInt(match[1], 10);
-                                        const end = match[2] ? parseInt(match[2], 10) : start;
-                                        if (start > 0 && end >= start) ranges.push({ start, end });
-                                    }
-                                }
+                        userId={authUser?.id}
+                        onQuizStart={(session) => {
+                            console.log('[ReaderView] QuizPanel onQuizStart — launching QuizView', session);
+                            setQuizModal(false);
+                            setActiveQuizSession(session);
+                        }}
+                    />
+                )}
 
-                                // Backend is inactive, sending pending request
-                                await apiClient.post('/api/quiz/generate', {
-                                    bookId: book?.id?.toString(),
-                                    ranges: ranges.length > 0 ? ranges : null,
-                                    rawInput: config.pageRange,
-                                    numQuestions: config.numQuestions,
-                                    timeLimit: config.quizTime,
-                                    type: config.quizType,
-                                    difficulty: config.difficulty
-                                });
-                                addToast("Quiz generation requested!", "success");
-                            } catch (error) {
-                                console.error("Quiz generation failed:", error);
-                                addToast("Quiz generation requested (Pending Backend).", "success");
-                            } finally {
-                                setQuizModal(false);
-                            }
+                {/* Quiz View — full screen, always on top */}
+                {activeQuizSession && (
+                    <QuizView
+                        quizSession={activeQuizSession}
+                        bookId={book?.id}
+                        supabaseBookId={book?.supabaseId || book?.recordId}
+                        userId={authUser?.id}
+                        onClose={() => {
+                            console.log('[ReaderView] QuizView closed');
+                            setActiveQuizSession(null);
                         }}
                     />
                 )}
