@@ -128,7 +128,7 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                 }}
             >
                 <div 
-                    className={`rounded-xl overflow-hidden border-2 transition-all duration-300 w-[100px] h-[150px] flex items-center justify-center cursor-pointer ${
+                    className={`rounded-card overflow-hidden border-2 transition-all duration-300 w-[100px] h-[150px] flex items-center justify-center cursor-pointer ${
                         isCurrent ? 'border-accent-primary shadow-lg scale-105' : 'border-transparent hover:border-border-default bg-bg-subtle/50'
                     }`}
                 >
@@ -144,11 +144,11 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                                     loading={null}
                                 />
                             ) : (
-                                <div className="w-[100px] h-[150px] bg-gray-200 rounded-xl" />
+                                <div className="w-[100px] h-[150px] bg-gray-200 rounded-card" />
                             )}
                         </>
                     ) : (
-                        <div className="w-[100px] h-[150px] bg-gray-500 rounded-xl flex items-center justify-center">
+                        <div className="w-[100px] h-[150px] bg-gray-500 rounded-card flex items-center justify-center">
                             <span className="text-xl font-black text-text-tertiary">{i}</span>
                         </div>
                     )}
@@ -181,7 +181,7 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
             {/* Strip Panel */}
             <div
                 ref={stripRef}
-                className="absolute bottom-0 left-0 right-0 z-[56] pointer-events-auto bg-card-glass backdrop-blur-xl border-t border-border-default rounded-t-3xl shadow-2xl safe-area-pb"
+                className="absolute bottom-0 left-0 right-0 z-[56] pointer-events-auto bg-card-glass backdrop-blur-xl border-t border-border-default rounded-t-card shadow-2xl safe-area-pb"
             >
                 <div className="pt-3 pb-6 px-4 max-w-7xl mx-auto relative">
                     {/* Drag handle */}
@@ -215,14 +215,8 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                     {/* Thumbnail Row */}
                     <div 
                         ref={scrollContainerRef}
-                        className="flex flex-row gap-3 overflow-x-auto py-3 px-2 scroll-smooth no-scrollbar"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        className="flex flex-row gap-3 overflow-x-auto py-3 px-2 scroll-smooth hide-scrollbar pb-4"
                     >
-                        <style>{`
-                            .no-scrollbar::-webkit-scrollbar {
-                                display: none;
-                            }
-                        `}</style>
                         
                         {isPdf && fileUrl ? (
                             <Document file={fileUrl} loading={null}>

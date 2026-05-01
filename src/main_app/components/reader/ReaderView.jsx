@@ -958,6 +958,9 @@ function ReaderView() {
                     <QuizGenerationModal
                         onClose={() => setQuizModal(false)}
                         bookTitle={book?.title || book?.file?.name}
+                        fileUrl={fileUrl}
+                        isPdf={isPdf}
+                        numPages={numPages || (isPdf ? 0 : localPages.total)}
                         onGenerate={async (config) => {
                             try {
                                 const ranges = [];

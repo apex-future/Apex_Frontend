@@ -1,19 +1,144 @@
-import React, { useState } from 'react';
-import { X, BrainCircuit, AlertCircle, Sparkles, BookOpen, Clock, Target, Layers } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { X, BrainCircuit, AlertCircle, Sparkles, BookOpen, Clock, Target, Layers, CheckCircle2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
+import { Document, Page } from 'react-pdf';
 
-function QuizGenerationModal({ onClose, onGenerate, bookTitle }) {
-    const [pageRange, setPageRange] = useState('');
+function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, numPages }) {
+    const [selectedPages, setSelectedPages] = useState([]);
     const [numQuestions, setNumQuestions] = useState(5);
     const [quizTime, setQuizTime] = useState('10m');
     const [quizType, setQuizType] = useState('mcq');
     const [difficulty, setDifficulty] = useState('intermediate');
     const [loading, setLoading] = useState(false);
+    const [selectedListOpen, setSelectedListOpen] = useState(false);
+
+    const scrollContainerRef = useRef(null);
+    const [visiblePages, setVisiblePages] = useState(new Set());
+
+    // Intersection Observer for lazy rendering
+    useEffect(() => {
+        if (!numPages) return;
+        
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const pageNum = parseInt(entry.target.getAttribute('data-page'), 10);
+                        setVisiblePages((prev) => {
+                            if (prev.has(pageNum)) return prev;
+                            const next = new Set(prev);
+                            next.add(pageNum);
+                            return next;
+                        });
+                    }
+                });
+            },
+            {
+                root: scrollContainerRef.current,
+                rootMargin: '200px', // Pre-load ahead
+                threshold: 0.1
+            }
+        );
+
+        const currentContainer = scrollContainerRef.current;
+        if (currentContainer) {
+            const items = currentContainer.querySelectorAll('.thumbnail-container');
+            items.forEach((item) => observer.observe(item));
+        }
+
+        return () => {
+            if (currentContainer) {
+                const items = currentContainer.querySelectorAll('.thumbnail-container');
+                items.forEach((item) => observer.unobserve(item));
+            }
+        };
+    }, [numPages]);
+
+    const togglePageSelection = useCallback((pageNum) => {
+        setSelectedPages(prev => {
+            if (prev.includes(pageNum)) {
+                return prev.filter(p => p !== pageNum);
+            } else {
+                return [...prev, pageNum];
+            }
+        });
+    }, []);
+
+    const scrollByChunk = useCallback((direction) => {
+        if (!scrollContainerRef.current) return;
+        const container = scrollContainerRef.current;
+        const scrollAmount = container.offsetWidth * 0.8;
+        container.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth'
+        });
+    }, []);
+
+    const renderThumbnail = useCallback((i) => {
+        const isSelected = selectedPages.includes(i);
+        const isVisible = visiblePages.has(i);
+
+        return (
+            <div
+                key={i}
+                data-page={i}
+                className="thumbnail-container flex flex-col items-center flex-shrink-0 w-[90px]"
+                onClick={() => togglePageSelection(i)}
+            >
+                <div 
+                    className={`relative rounded-card overflow-hidden border-2 transition-all duration-300 w-[90px] h-[130px] flex items-center justify-center cursor-pointer ${
+                        isSelected ? 'border-accent-primary shadow-lg shadow-accent-primary/20 scale-105' : 'border-border-default/50 hover:border-border-default bg-bg-subtle/50'
+                    }`}
+                >
+                    {isPdf && fileUrl ? (
+                        <>
+                            {isVisible ? (
+                                <Page 
+                                    pageNumber={i} 
+                                    width={90} 
+                                    renderTextLayer={false} 
+                                    renderAnnotationLayer={false}
+                                    className="pointer-events-none"
+                                    loading={null}
+                                />
+                            ) : (
+                                <div className="w-[90px] h-[130px] bg-gray-200 dark:bg-bg-subtle rounded-card" />
+                            )}
+                        </>
+                    ) : (
+                        <div className="w-[90px] h-[130px] bg-bg-subtle rounded-card flex items-center justify-center">
+                            <span className="text-xl font-black text-text-tertiary">{i}</span>
+                        </div>
+                    )}
+                    
+                    {isSelected && (
+                        <div className="absolute top-2 right-2 bg-accent-primary text-white rounded-full">
+                            <CheckCircle2 size={18} />
+                        </div>
+                    )}
+                </div>
+                <span className={`text-xs font-bold mt-2 transition-colors ${
+                    isSelected ? 'text-accent-primary' : 'text-text-tertiary'
+                }`}>
+                    Page {i}
+                </span>
+            </div>
+        );
+    }, [selectedPages, visiblePages, isPdf, fileUrl, togglePageSelection]);
+
+    const thumbnails = useMemo(() => {
+        const result = [];
+        for (let i = 1; i <= numPages; i++) {
+            result.push(renderThumbnail(i));
+        }
+        return result;
+    }, [numPages, renderThumbnail]);
 
     const handleGenerateClick = async () => {
         setLoading(true);
+        const pageRangeStr = selectedPages.sort((a,b) => a - b).join(', ');
         // Call the parent's onGenerate handler with the configuration
         await onGenerate({
-            pageRange,
+            pageRange: pageRangeStr,
             numQuestions,
             quizTime,
             quizType,
@@ -23,52 +148,132 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle }) {
     };
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto p-4 sm:p-6">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto p-0 sm:p-6">
             {/* Overlay */}
             <div 
-                className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" 
+                className="absolute inset-0 hidden sm:block bg-black/60 backdrop-blur-md transition-opacity" 
                 onClick={onClose}
             />
             
             {/* Modal Content */}
-            <div className="relative bg-bg-elevated w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-300 pointer-events-auto flex flex-col hide-scrollbar">
+            <div className="relative bg-bg-elevated w-full h-[100dvh] sm:h-auto max-w-2xl sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-[2rem] shadow-none sm:shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-300 pointer-events-auto flex flex-col hide-scrollbar font-sans">
                 
                 {/* Header */}
-                <div className="sticky top-0 z-10 bg-bg-elevated/90 backdrop-blur-xl px-8 py-6 border-b border-border-default/50 flex justify-between items-center rounded-t-[2rem]">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-accent-primary/10 text-accent-primary rounded-2xl shadow-inner border border-accent-primary/10">
+                <div className="sticky top-0 z-50 bg-bg-elevated/90 backdrop-blur-xl px-4 sm:px-6 pt-6 sm:pt-4 pb-6 border-b border-border-default/50 rounded-none sm:rounded-t-[2rem]">
+                    <div className="flex justify-end mb-2">
+                        <button 
+                            onClick={onClose}
+                            className="p-2 bg-neutral-100 dark:bg-bg-subtle hover:bg-neutral-200 dark:hover:bg-bg-subtle/80 rounded-full text-text-secondary hover:text-text-primary transition-all active:scale-95"
+                        >
+                            <X size={20} strokeWidth={2.5} />
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="p-3 bg-accent-primary/10 text-accent-primary rounded-2xl shadow-inner border border-accent-primary/10 shrink-0">
                             <Sparkles size={24} className="animate-pulse" />
                         </div>
-                        <div>
-                            <h2 className="text-2xl font-black font-display text-text-primary tracking-tight">AI Quiz Generator</h2>
-                            {bookTitle && <p className="text-sm font-medium text-text-tertiary">Customizing for: {bookTitle}</p>}
+                        <div className="min-w-0 flex-1">
+                            <h2 className="text-xl sm:text-2xl font-black font-display text-text-primary tracking-tight">AI Quiz Generator</h2>
+                            {bookTitle && <p className="text-xs sm:text-sm font-medium text-text-tertiary truncate">Customizing for: {bookTitle}</p>}
                         </div>
                     </div>
-                    <button 
-                        onClick={onClose}
-                        className="p-2.5 bg-neutral-100 dark:bg-bg-subtle hover:bg-neutral-200 dark:hover:bg-bg-subtle/80 rounded-full text-text-secondary hover:text-text-primary transition-all active:scale-95"
-                    >
-                        <X size={20} strokeWidth={2.5} />
-                    </button>
                 </div>
 
                 {/* Body settings */}
-                <div className="p-8 space-y-8">
+                <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
                     
                     {/* Target Pages */}
                     <div className="space-y-3">
-                        <div className="flex items-center gap-2 mb-1">
-                            <BookOpen size={16} className="text-text-tertiary" />
-                            <label className="text-xs font-bold text-text-secondary uppercase tracking-widest">Target Pages (Optional)</label>
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                                <BookOpen size={16} className="text-text-tertiary" />
+                                <label className="text-sm font-bold text-text-secondary">Select Pages</label>
+                            </div>
+                            
+                            <div className="relative">
+                                <button 
+                                    onClick={() => setSelectedListOpen(!selectedListOpen)}
+                                    disabled={selectedPages.length === 0}
+                                    className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all ${
+                                        selectedPages.length > 0 
+                                        ? 'text-accent-primary bg-accent-primary/10 hover:bg-accent-primary/20 cursor-pointer shadow-sm border border-accent-primary/20' 
+                                        : 'text-text-tertiary bg-bg-subtle cursor-not-allowed opacity-50 border border-transparent'
+                                    }`}
+                                >
+                                    <span>{selectedPages.length} selected</span>
+                                    {selectedPages.length > 0 && (
+                                        selectedListOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+                                    )}
+                                </button>
+
+                                {/* Dropdown Popover */}
+                                {selectedListOpen && selectedPages.length > 0 && (
+                                    <div className="absolute top-full right-0 mt-2 w-56 bg-bg-elevated border border-border-default rounded-2xl shadow-xl z-20 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                                        <div className="p-3 bg-bg-subtle/50 border-b border-border-default flex justify-between items-center">
+                                            <span className="text-sm font-bold text-text-secondary">Selected Pages</span>
+                                            <button 
+                                                onClick={() => {
+                                                    setSelectedPages([]);
+                                                    setSelectedListOpen(false);
+                                                }}
+                                                className="text-[10px] text-red-500 hover:text-red-600 font-bold px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                            >
+                                                Clear All
+                                            </button>
+                                        </div>
+                                        <div className="max-h-56 overflow-y-auto p-1 custom-scrollbar">
+                                            {[...selectedPages].sort((a,b) => a - b).map(p => (
+                                                <div key={p} className="flex justify-between items-center px-3 py-2 hover:bg-bg-subtle rounded-xl group transition-colors">
+                                                    <span className="text-sm font-semibold text-text-primary">Page {p}</span>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            togglePageSelection(p);
+                                                            if (selectedPages.length === 1) setSelectedListOpen(false);
+                                                        }}
+                                                        className="text-text-tertiary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
+                                                    >
+                                                        <X size={14} strokeWidth={3} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <input 
-                            type="text" 
-                            value={pageRange}
-                            onChange={(e) => setPageRange(e.target.value)}
-                            placeholder="e.g. 1-10, 15, 20-25"
-                            className="w-full bg-neutral-50 dark:bg-bg-subtle/50 border-2 border-border-default focus:border-accent-primary/50  rounded-2xl px-5 py-4 text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-4 focus:ring-accent-primary/10 transition-all font-sans text-lg font-medium"
-                        />
-                        <p className="text-xs text-text-tertiary font-medium px-2">Leave blank to generate a quiz from the entire document.</p>
+                        
+                        <div className="relative group">
+                            <button 
+                                onClick={(e) => { e.preventDefault(); scrollByChunk('left'); }}
+                                className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-bg-elevated/90 shadow-md border border-border-default rounded-full text-text-secondary hover:text-accent-primary hover:scale-105 transition-all opacity-0 group-hover:opacity-100"
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+                            
+                            <button 
+                                onClick={(e) => { e.preventDefault(); scrollByChunk('right'); }}
+                                className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-bg-elevated/90 shadow-md border border-border-default rounded-full text-text-secondary hover:text-accent-primary hover:scale-105 transition-all opacity-0 group-hover:opacity-100"
+                            >
+                                <ChevronRight size={20} />
+                            </button>
+
+                            <div 
+                                ref={scrollContainerRef}
+                                className="flex flex-row gap-4 overflow-x-auto py-4 px-2 scroll-smooth hide-scrollbar border-2 border-border-default rounded-card bg-neutral-50 dark:bg-bg-subtle/20"
+                            >
+                                {isPdf && fileUrl ? (
+                                    <Document file={fileUrl} loading={null}>
+                                        <div className="flex flex-row gap-4">
+                                            {thumbnails}
+                                        </div>
+                                    </Document>
+                                ) : (
+                                    thumbnails
+                                )}
+                            </div>
+                        </div>
+                        {/* <p className="text-xs text-text-tertiary font-medium px-2">Leave unselected to generate a quiz from the entire document.</p> */}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
@@ -76,7 +281,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle }) {
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 mb-1">
                                 <Target size={16} className="text-text-tertiary" />
-                                <label className="text-xs font-bold text-text-secondary uppercase tracking-widest">Questions Limit</label>
+                                <label className="text-sm font-bold text-text-secondary">Questions Limit</label>
                             </div>
                             <div className="grid grid-cols-4 gap-2">
                                 {[5, 10, 15, 20].map(n => (
@@ -95,7 +300,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle }) {
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 mb-1">
                                 <Clock size={16} className="text-text-tertiary" />
-                                <label className="text-xs font-bold text-text-secondary uppercase tracking-widest">Time Limit</label>
+                                <label className="text-sm font-bold text-text-secondary">Time Limit</label>
                             </div>
                             <div className="grid grid-cols-4 gap-2">
                                 {['5m', '10m', '15m', 'None'].map(t => (
@@ -114,7 +319,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle }) {
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 mb-1">
                                 <Layers size={16} className="text-text-tertiary" />
-                                <label className="text-xs font-bold text-text-secondary uppercase tracking-widest">Question Type</label>
+                                <label className="text-sm font-bold text-text-secondary">Question Type</label>
                             </div>
                             <div className="flex gap-2">
                                 {['mcq', 'essay'].map((t) => (
@@ -133,7 +338,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle }) {
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 mb-1">
                                 <BrainCircuit size={16} className="text-text-tertiary" />
-                                <label className="text-xs font-bold text-text-secondary uppercase tracking-widest">Difficulty</label>
+                                <label className="text-sm font-bold text-text-secondary">Difficulty</label>
                             </div>
                             <div className="flex gap-2">
                                 {['beginner', 'intermediate', 'advanced'].map(d => (
@@ -160,7 +365,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle }) {
                 </div>
 
                 {/* Footer */}
-                <div className="sticky bottom-0 z-10 bg-bg-elevated/90 backdrop-blur-xl p-6 border-t border-border-default/50 rounded-b-[2rem]">
+                <div className="sticky bottom-0 z-50 bg-bg-elevated/90 backdrop-blur-xl p-4 sm:p-6 border-t border-border-default/50 rounded-none sm:rounded-b-[2rem]">
                     <button 
                         onClick={handleGenerateClick}
                         disabled={loading}
