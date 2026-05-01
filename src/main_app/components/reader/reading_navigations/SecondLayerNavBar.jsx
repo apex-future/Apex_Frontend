@@ -25,11 +25,11 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
     <div
       ref={navRef}
       onClick={(e) => e.stopPropagation()}
-      className='fixed top-0 left-0 right-0 z-50 p-2 w-full pointer-events-auto'
+      className='fixed top-0 left-0 right-0 z-50 p-2 pr-4 sm:pr-6 pointer-events-auto'
     >
-      <div className='flex top-bar pb-4 items-center justify-between w-full'>
+      <div className='flex top-bar pb-4 items-start sm:items-center justify-between w-full'>
         {/* Left: Menu — opens LeftPanel */}
-        <div className='left-side'>
+        <div className='left-side pt-1 sm:pt-0'>
           <button
             className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setLeftPanel(prev => !prev); }}
@@ -74,20 +74,20 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
         </div>
 
         {/* Right: Sparkles & Quiz — opens AI and Quiz panels */}
-        <div className='flex gap-2 right-side items-center'>
+        <div className='flex flex-col sm:flex-row gap-2 right-side items-center'>
           <button
-            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
-            onClick={(e) => { e.stopPropagation(); setQuizModal(prev => !prev); }}
-            title="Quiz Generation Settings"
-          >
-            <BrainCircuit strokeWidth={2} size={18} />
-          </button>
-          <button
-            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setAiModal(prev => !prev); }}
             title="AI Tools"
           >
             <Sparkles strokeWidth={2} size={18} />
+          </button>
+          <button
+            className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            onClick={(e) => { e.stopPropagation(); setQuizModal(prev => !prev); }}
+            title="Quiz Generation Settings"
+          >
+            <BrainCircuit strokeWidth={2} size={18} />
           </button>
         </div>
       </div>

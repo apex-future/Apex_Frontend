@@ -782,7 +782,7 @@ function ReaderView() {
         >
             <ScrollOrientationOverlay visible={showScrollOverlay} orientation={scrollOrientation} />
             {/* Subtle Menu Trigger - Persistent at top */}
-            <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center">
+            <div className={`fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center transition-all duration-500 ease-in-out ${navState !== 'none' ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
                 <button
                     onClick={(e) => { e.stopPropagation(); toggleNav(); }}
                     className="group bg-bg-elevated hover:bg-bg-subtle backdrop-blur-md shadow-sm border border-border-default/50 px-3 py-1.5 rounded-b-xl transition-all duration-300 flex items-center gap-1.5"

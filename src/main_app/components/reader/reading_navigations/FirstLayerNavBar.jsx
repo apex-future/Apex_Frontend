@@ -40,62 +40,65 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
   }, []);
 
   return (
-    <div className='fixed inset-0 z-50 flex flex-col justify-between p-2 w-full h-[100dvh] pointer-events-none'>
+    <div className='fixed inset-0 z-50 flex flex-col justify-between p-2 pr-4 sm:pr-6 pointer-events-none'>
       <div
         ref={topBarRef}
-        className='flex top-bar pb-4 items-center justify-between w-full pointer-events-auto'
+        className='flex top-bar pb-4 items-start sm:items-center justify-between w-full pointer-events-auto'
         onClick={(e) => e.stopPropagation()}
       >
         {/* Back and Settings buttons */}
-        <div className='flex items-center gap-3'>
+        <div className='flex items-center gap-3 pt-1 sm:pt-0'>
           <button
             onClick={() => navigate('/')}
-            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
+            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
           >
             <ArrowLeft size={18} strokeWidth={2} />
           </button>
           
           <button
             onClick={(e) => { e.stopPropagation(); setPageSettings?.(true); }}
-            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
+            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
           >
             <Settings size={18} strokeWidth={2} />
           </button>
         </div>
-        <div className='flex items-center gap-3'>
+        <div className='flex items-start sm:items-center gap-2 sm:gap-3'>
           {/* Dictionary search button */}
           <button
-            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
+            className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); onToggleDictionary?.(); }}
             title="Dictionary Search"
           >
             <WholeWord strokeWidth={2} size={18} />
           </button>
 
-          {/* Page Bookmark button — purple fill when bookmarked */}
-          <button
-            className={`w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 ${
-              isBookmarked
-                ? 'text-accent-primary'
-                : 'text-text-primary hover:bg-bg-subtle'
-            }`}
-            onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
-            title={isBookmarked ? 'Remove page bookmark' : 'Bookmark this page'}
-          >
-            <Bookmark
-              strokeWidth={2}
-              size={18}
-              className={`transition-all duration-200 ${isBookmarked ? 'fill-accent-primary' : 'fill-none'}`}
-            />
-          </button>
+          {/* Bookmark and Dots Wrapper */}
+          <div className='flex flex-col-reverse sm:flex-row items-center gap-2 sm:gap-3'>
+            {/* Page Bookmark button — purple fill when bookmarked */}
+            <button
+              className={`w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 ${
+                isBookmarked
+                  ? 'text-accent-primary'
+                  : 'text-text-primary hover:bg-bg-subtle'
+              }`}
+              onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
+              title={isBookmarked ? 'Remove page bookmark' : 'Bookmark this page'}
+            >
+              <Bookmark
+                strokeWidth={2}
+                size={18}
+                className={`transition-all duration-200 ${isBookmarked ? 'fill-accent-primary' : 'fill-none'}`}
+              />
+            </button>
 
-          {/* Dots — open second layer */}
-          <button
-            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
-            onClick={onDotsClick}
-          >
-            <EllipsisVertical strokeWidth={2} size={18} />
-          </button>
+            {/* Dots — open second layer */}
+            <button
+              className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+              onClick={onDotsClick}
+            >
+              <EllipsisVertical strokeWidth={2} size={18} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -109,7 +112,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
           <button
             className={`w-10 h-10 flex items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${locked
               ? 'bg-accent-primary text-bg-elevated'
-              : 'bg-card-glass backdrop-blur-md text-text-primary hover:bg-bg-subtle border border-border-default'
+              : 'bg-bg-elevated text-text-primary hover:bg-bg-subtle'
               }`}
             onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
             title={locked ? 'Unlock scroll' : 'Lock scroll'}
@@ -122,7 +125,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
 
           {/* Fit-to-screen — resets zoom to 100% */}
           <button
-            className="w-10 h-10 flex items-center justify-center bg-card-glass backdrop-blur-md shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle border border-border-default"
+            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
             title="Fit to screen (reset zoom)"
           >
