@@ -171,7 +171,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
       {/* Mobile overlay */}
       <div className="fixed inset-0 bg-black/40 z-[190] md:hidden animate-in fade-in" onClick={onClose} />
       <aside
-        className="flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-bg-subtle rounded-t-3xl h-[85vh] md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-l border-border-default md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-none animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden"
+        className="flex flex-col fixed inset-0 z-[200] bg-bg-subtle h-[100dvh] md:relative md:inset-auto md:w-96 md:h-full md:border-l border-border-default md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-none animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}
@@ -254,7 +254,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <div className="flex flex-col gap-6 sm:gap-8">
                 {/* Num Questions */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 mb-1"><Target size={16} className="text-text-tertiary" /><label className="text-sm font-bold text-text-secondary">Questions Limit</label></div>

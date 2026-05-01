@@ -274,8 +274,9 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
           </div>
 
           {/* Per-question breakdown */}
-          <div className="p-6 space-y-4 max-w-2xl mx-auto">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary mb-4">Question Breakdown</h3>
+          <div className="p-6 max-w-7xl mx-auto w-full">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary mb-6">Question Breakdown</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
             {scoredPayload.map((q, idx) => {
               const userAns = q.user_answer;
               const isCorrect = isMCQ ? userAns === q.correct_answer : false;
@@ -328,6 +329,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
                 </div>
               );
             })}
+            </div>
           </div>
 
           {/* Bottom close button */}
