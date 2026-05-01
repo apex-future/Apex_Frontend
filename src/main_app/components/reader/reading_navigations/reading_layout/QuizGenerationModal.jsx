@@ -159,24 +159,17 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
             <div className="relative bg-bg-elevated w-full h-[100dvh] sm:h-auto max-w-2xl sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-[2rem] shadow-none sm:shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-300 pointer-events-auto flex flex-col hide-scrollbar font-sans">
                 
                 {/* Header */}
-                <div className="sticky top-0 z-50 bg-bg-elevated/90 backdrop-blur-xl px-4 sm:px-6 pt-6 sm:pt-4 pb-6 border-b border-border-default/50 rounded-none sm:rounded-t-[2rem]">
-                    <div className="flex justify-end mb-2">
-                        <button 
-                            onClick={onClose}
-                            className="p-2 bg-neutral-100 dark:bg-bg-subtle hover:bg-neutral-200 dark:hover:bg-bg-subtle/80 rounded-full text-text-secondary hover:text-text-primary transition-all active:scale-95"
-                        >
-                            <X size={20} strokeWidth={2.5} />
-                        </button>
+                <div className="sticky top-0 z-50 bg-bg-elevated/90 backdrop-blur-xl flex items-center justify-between px-5 py-5 border-b border-border-default/50 shrink-0 rounded-none sm:rounded-t-[2rem]">
+                    <div className="flex items-center gap-2">
+                        <Sparkles size={18} className="text-accent-primary animate-pulse" />
+                        <h2 className="text-xs font-black text-text-tertiary tracking-[0.2em] uppercase">AI Quiz Generator</h2>
                     </div>
-                    <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="p-3 bg-accent-primary/10 text-accent-primary rounded-2xl shadow-inner border border-accent-primary/10 shrink-0">
-                            <Sparkles size={24} className="animate-pulse" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <h2 className="text-xl sm:text-2xl font-black font-display text-text-primary tracking-tight">AI Quiz Generator</h2>
-                            {bookTitle && <p className="text-xs sm:text-sm font-medium text-text-tertiary truncate">Customizing for: {bookTitle}</p>}
-                        </div>
-                    </div>
+                    <button 
+                        onClick={onClose}
+                        className="p-2 rounded-full bg-bg-subtle hover:bg-bg-subtle transition-all text-text-tertiary hover:text-text-secondary"
+                    >
+                        <X size={18} strokeWidth={2} />
+                    </button>
                 </div>
 
                 {/* Body settings */}
@@ -370,7 +363,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                         onClick={handleGenerateClick}
                         disabled={loading}
                         className={`w-full py-4 rounded-2xl font-black text-lg transition-all shadow-xl flex items-center justify-center gap-2
-                            ${loading ? 'bg-neutral-200 dark:bg-bg-subtle text-text-tertiary cursor-not-allowed shadow-none' : 'bg-text-primary text-bg-elevated hover:bg-text-secondary hover:-translate-y-1 hover:shadow-[0_10px_40px_rgba(0,0,0,0.15)]'}
+                            ${loading ? 'bg-neutral-200 dark:bg-bg-subtle text-text-tertiary cursor-not-allowed shadow-none' : 'bg-accent-primary text-white hover:bg-accent-primary/90 hover:shadow-[0_10px_40px_rgba(139,92,246,0.3)]'}
                         `}
                     >
                         {loading ? (
