@@ -250,6 +250,24 @@ function ReaderView() {
 
     function handleDocumentLoad({ numPages: total }) {
         setNumPages(total);
+
+        // Persist totalPages to Dexie immediately — this is the source of truth
+        // for progress calculation across all devices
+        if (book?.id && total > 1) {
+            db.books.update(book.id, { totalPages: total })
+                .catch(err => console.error('[Apex] Failed to persist totalPages to Dexie:', err));
+
+            // Also update Supabase books.total_pages if the book is synced
+            // This ensures new devices get the correct totalPages on pull
+            const supabaseId = book.supabaseId || book.recordId;
+            if (supabaseId && navigator.onLine) {
+                apiClient.put(`/api/books/${supabaseId}`, { total_pages: total })
+                    .catch(err => {
+                        if (import.meta.env.DEV) console.warn('[Apex] Failed to update totalPages in Supabase:', err);
+                    });
+            }
+        }
+
         syncProgress(pageNumber, total);
     }
 
@@ -257,7 +275,7 @@ function ReaderView() {
         const effectiveTotal = total || numPages || book?.totalPages || localPages.total;
         if (!book || !effectiveTotal) return;
         
-        const progress = Math.round((page / effectiveTotal) * 100);
+        const progress = Math.min(Math.round((page / effectiveTotal) * 100), 100);
         setLocalProgress(progress);
         setLocalPages({ current: page, total: effectiveTotal });
         updateBookProgress(book.id, progress, page, effectiveTotal);

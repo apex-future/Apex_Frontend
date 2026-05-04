@@ -4,6 +4,7 @@ import syncService from '../services/syncService';
 import { showToastGlobal } from '../hooks/useToast';
 import { BookContext } from './BookContextInstance.jsx';
 import useSpaceStore from '../store/spaceStore';
+import { pdfjs } from 'react-pdf';
 
 export const BookProvider = ({ children }) => {
   const { spaces, addBookToSpace, removeBookFromSpace } = useSpaceStore();
@@ -176,11 +177,20 @@ export const BookProvider = ({ children }) => {
             // Merge notes from Dexie notes table
             const tableNotes = notesByBook[b.id] || notesByBook[b.supabaseId] || [];
 
+            // Compute progress from currentPage / totalPages — single source of truth
+            // Never trust stored progress_percentage — it gets corrupted
+            const currentPage = progress?.currentPage || b.currentPage || 0;
+            const totalPages = b.totalPages || progress?.totalPages || 1;
+            const computedProgress = totalPages > 1 && currentPage > 0
+              ? Math.min(Math.round((currentPage / totalPages) * 100), 100)
+              : (progress?.progressPercentage || b.progress || 0);
+
             return {
               ...b,
               isUploading: false,
-              progress: progress?.progressPercentage || b.progress || 0,
-              currentPage: progress?.currentPage || b.currentPage || 1,
+              progress: computedProgress,
+              currentPage: currentPage || 1,
+              totalPages: totalPages,
               metadata: {
                 ...(b.metadata || {}),
                 highlights: mergedHighlights,
@@ -214,6 +224,20 @@ export const BookProvider = ({ children }) => {
     const arrayBuffer = await fileObject.arrayBuffer();
     const fileType = fileObject.type || 'application/pdf';
 
+    // Extract total page count from PDF at upload time
+    // This ensures totalPages is accurate from the start — no recalibration needed
+    let extractedPageCount = 0;
+    const isPdf = fileType === 'application/pdf' || fileObject.name?.toLowerCase().endsWith('.pdf');
+    if (isPdf) {
+      try {
+        const pdfDoc = await pdfjs.getDocument({ data: arrayBuffer.slice(0) }).promise;
+        extractedPageCount = pdfDoc.numPages;
+        console.log('[Apex] Extracted page count from PDF:', extractedPageCount);
+      } catch (err) {
+        console.warn('[Apex] Failed to extract page count from PDF:', err);
+      }
+    }
+
     const newBookData = {
       title,
       author: "N/A",
@@ -221,7 +245,7 @@ export const BookProvider = ({ children }) => {
       fileSize: fileObject.size,
       fileBlob: arrayBuffer,
       coverImage: null,
-      totalPages: 1,
+      totalPages: extractedPageCount || 1,
       uploadedAt: new Date().toISOString(),
       lastReadAt: new Date().toISOString(),
       progress: 0,
@@ -432,11 +456,12 @@ export const BookProvider = ({ children }) => {
           .catch(err => console.error("Failed to update progress in Dexie:", err));
 
         // Use direct save via syncService (this is debounced inside syncService)
+        // Send total_pages so progress can be computed from current_page / total_pages
         if (syncService.saveProgress) {
           syncService.saveProgress(id, {
             current_page: currentPage,
             scroll_position: 0,
-            progress_percentage: progress,
+            total_pages: totalPages || 1,
           });
         }
       }

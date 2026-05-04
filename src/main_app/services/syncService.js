@@ -152,11 +152,19 @@ const syncService = {
     if (!navigator.onLine) return null;
 
     try {
+      // Get total_pages from Dexie if already known (e.g. PDF was opened before upload)
+      let totalPages = 0;
+      try {
+        const localBook = await db.books.get(dexieBookId);
+        totalPages = localBook?.totalPages || 0;
+      } catch (_) {}
+
       const formData = new FormData();
       formData.append('file', fileObject);
       formData.append('title', title);
       formData.append('author', author || 'Unknown');
       formData.append('local_id', dexieBookId.toString());
+      if (totalPages > 1) formData.append('total_pages', totalPages.toString());
 
       const response = await apiClient.post('/api/books/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -340,12 +348,30 @@ const syncService = {
         // ── READING PROGRESS ──
         if (tablesToPull.includes('reading_progress') && pulledData.reading_progress?.length > 0) {
           if (import.meta.env.DEV) console.log('[Apex Sync] Pulling reading_progress:', pulledData.reading_progress.length);
+
+          // Build a UUID → Dexie integer id map from the freshly-pulled books
+          const localBooks = await db.books.toArray();
+          const uuidToDexieId = {};
+          for (const b of localBooks) {
+            if (b.supabaseId) uuidToDexieId[b.supabaseId] = b.id;
+          }
+
           await db.reading_progress.clear();
-          const mapped = pulledData.reading_progress.map(r => ({
-            ...mapSnakeToCamel(r),
-            supabaseId: r.id,
-            synced: true,
-          }));
+          const mapped = pulledData.reading_progress.map(r => {
+            const camel = mapSnakeToCamel(r);
+            // Remap bookId from Supabase UUID to local Dexie integer id
+            // This fixes the new-device mismatch where progress.bookId is a UUID
+            // but books.id is an auto-increment integer
+            const localBookId = uuidToDexieId[r.book_id];
+            if (localBookId !== undefined) {
+              camel.bookId = localBookId;
+            }
+            return {
+              ...camel,
+              supabaseId: r.id,
+              synced: true,
+            };
+          });
           for (const m of mapped) { delete m.id; }
           await db.reading_progress.bulkAdd(mapped);
         }
@@ -545,13 +571,19 @@ const syncService = {
     const localId = generateLocalId();
     const now = new Date().toISOString();
 
+    // Compute progress locally from current_page / total_pages
+    const totalPages = progressData.total_pages || 1;
+    const computedProgress = totalPages > 0
+      ? Math.min(Math.round((progressData.current_page / totalPages) * 100), 100)
+      : 0;
+
     // Save to Dexie — upsert by bookId
     const existing = await db.reading_progress.where('bookId').equals(bookId).first();
     const dexieData = {
       bookId,
       currentPage: progressData.current_page,
       scrollPosition: progressData.scroll_position || 0,
-      progressPercentage: progressData.progress_percentage,
+      progressPercentage: computedProgress,
       lastReadAt: now,
       synced: false,
     };
@@ -574,11 +606,13 @@ const syncService = {
       const supabaseBookId = await this._resolveBookId(bookId);
       if (supabaseBookId) {
         try {
+          // NOTE: progress_percentage and total_time_read are NOT sent.
+          // Server computes progress from current_page / books.total_pages.
+          // total_time_read is only incremented via /progress/time endpoint.
           const response = await apiClient.post(`/api/books/${supabaseBookId}/progress`, {
             current_page: progressData.current_page,
             scroll_position: progressData.scroll_position || 0,
-            progress_percentage: progressData.progress_percentage,
-            total_time_read: progressData.total_time_read || 0,
+            total_pages: totalPages > 1 ? totalPages : undefined,
             local_id: existing?.local_id || localId,
           });
           const record = await db.reading_progress.where('bookId').equals(bookId).first();
@@ -595,7 +629,6 @@ const syncService = {
             book_id: supabaseBookId,
             current_page: progressData.current_page,
             scroll_position: progressData.scroll_position || 0,
-            progress_percentage: progressData.progress_percentage,
             last_read_at: now,
           });
         }
@@ -604,7 +637,6 @@ const syncService = {
           _dexie_book_id: bookId,
           current_page: progressData.current_page,
           scroll_position: progressData.scroll_position || 0,
-          progress_percentage: progressData.progress_percentage,
           last_read_at: now,
         });
       }
@@ -613,7 +645,6 @@ const syncService = {
         _dexie_book_id: bookId,
         current_page: progressData.current_page,
         scroll_position: progressData.scroll_position || 0,
-        progress_percentage: progressData.progress_percentage,
         last_read_at: now,
       });
     }
