@@ -57,11 +57,11 @@ export default function useToast() {
   }, []);
 
   // Register global handler on mount
+  // NOTE: No cleanup — _globalShowToast must persist across re-renders.
+  // MainApp never unmounts, so nullifying on cleanup creates a race
+  // window where showToastGlobal finds null between React flushes.
   useEffect(() => {
     _globalShowToast = showToast;
-    return () => {
-      _globalShowToast = null;
-    };
   }, [showToast]);
 
   // Cleanup all timers on unmount

@@ -345,6 +345,44 @@ const syncService = {
           if (import.meta.env.DEV) console.log('[Apex Sync] Books pulled and stored:', newDexieIds.length);
         }
 
+        // ── CROSS-DEVICE DELETE CLEANUP ──
+        // If we pulled books, any local book with a supabaseId that ISN'T in the
+        // pulled set was deleted on another device. Clean up its local records.
+        // This runs AFTER db.books.clear() + bulkAdd, so the local DB already
+        // reflects the cloud state. But related tables may still have orphans
+        // if their pull was skipped (decision === 'skip').
+        if (tablesToPull.includes('books') && pulledData.books) {
+          const pulledSupabaseIds = new Set(pulledData.books.map(b => b.id));
+          // Check for orphaned related records whose book no longer exists
+          const currentLocalBooks = await db.books.toArray();
+          const localBookIds = new Set(currentLocalBooks.map(b => b.id));
+          const localSupabaseIds = new Set(currentLocalBooks.map(b => b.supabaseId).filter(Boolean));
+
+          // Clean up related records for books that no longer exist locally
+          const allTables = ['bookmarks', 'highlights', 'reading_progress', 'notes'];
+          for (const table of allTables) {
+            try {
+              const records = await db[table].toArray();
+              const orphanIds = records
+                .filter(r => {
+                  const bid = r.bookId;
+                  // If bookId is an integer, check if it exists in local books
+                  if (typeof bid === 'number') return !localBookIds.has(bid);
+                  // If bookId is a UUID string, check if it exists in pulled books
+                  if (typeof bid === 'string' && bid.includes('-')) return !pulledSupabaseIds.has(bid);
+                  return false;
+                })
+                .map(r => r.id);
+              if (orphanIds.length > 0) {
+                await db[table].bulkDelete(orphanIds);
+                if (import.meta.env.DEV) console.log(`[Apex Sync] Cleaned up ${orphanIds.length} orphaned ${table} records`);
+              }
+            } catch (err) {
+              if (import.meta.env.DEV) console.warn(`[Apex Sync] Orphan cleanup failed for ${table}:`, err);
+            }
+          }
+        }
+
         // ── READING PROGRESS ──
         if (tablesToPull.includes('reading_progress') && pulledData.reading_progress?.length > 0) {
           if (import.meta.env.DEV) console.log('[Apex Sync] Pulling reading_progress:', pulledData.reading_progress.length);
@@ -561,6 +599,30 @@ const syncService = {
       } catch (error) {
         if (import.meta.env.DEV) console.error('Failed to delete highlight from Supabase:', error);
       }
+    }
+  },
+
+  // ============================================
+  // DELETE BOOK — Direct API call (matches deleteHighlight/deleteBookmark pattern)
+  // ============================================
+  deleteBook: async function (supabaseId) {
+    if (!supabaseId) return;
+
+    if (navigator.onLine) {
+      try {
+        // The backend DELETE /api/books/{id} cascades to related tables
+        // (reading_progress, highlights, bookmarks, notes, storage file)
+        await apiClient.delete(`/api/books/${supabaseId}`);
+        if (import.meta.env.DEV) console.log('[Apex Sync] Book deleted from Supabase:', supabaseId);
+      } catch (error) {
+        if (import.meta.env.DEV) console.error('[Apex Sync] Failed to delete book from Supabase:', error);
+        // Queue for retry when back online
+        await this._queueForSync('delete', 'books', supabaseId, { record_id: supabaseId });
+      }
+    } else {
+      // Offline — queue for later
+      if (import.meta.env.DEV) console.log('[Apex Sync] Offline — queuing book delete for supabaseId:', supabaseId);
+      await this._queueForSync('delete', 'books', supabaseId, { record_id: supabaseId });
     }
   },
 
@@ -921,7 +983,28 @@ const syncService = {
         .filter(item => item.tableName === 'books')
         .toArray();
 
-      for (const item of pendingBooks) {
+      // Path 1a: Handle book DELETES first — these don't need fileBlob
+      const bookDeletes = pendingBooks.filter(item => item.action === 'delete');
+      for (const item of bookDeletes) {
+        try {
+          const deleteId = item.recordId || item.payload?.record_id || item.local_id;
+          if (deleteId) {
+            await apiClient.delete(`/api/books/${deleteId}`);
+            if (import.meta.env.DEV) console.log('[Apex Sync] Book delete synced for:', deleteId);
+          }
+          await db.sync_queue.update(item.id, { status: 'synced' });
+        } catch (err) {
+          if (import.meta.env.DEV) console.error('[Apex Sync] Book delete sync failed:', err);
+          await db.sync_queue.update(item.id, {
+            attempts: (item.attempts || 0) + 1,
+            status: (item.attempts || 0) >= 2 ? 'failed' : 'pending',
+          });
+        }
+      }
+
+      // Path 1b: Handle book UPLOADS — these need fileBlob
+      const bookUploads = pendingBooks.filter(item => item.action !== 'delete');
+      for (const item of bookUploads) {
         const localBook = await db.books
           .where('local_id').equals(item.local_id)
           .first();

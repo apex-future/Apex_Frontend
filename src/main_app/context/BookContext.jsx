@@ -675,8 +675,6 @@ export const BookProvider = ({ children }) => {
 
       if (!bookRecord && bookFallback) {
         console.warn('[Apex] Dexie record not found — using in-memory fallback for bookId:', targetId);
-        // Construct a minimal bookRecord from the in-memory book object
-        // so we still have supabaseId for the Supabase delete queue
         bookRecord = {
           id: targetId,
           supabaseId: bookFallback.supabaseId || bookFallback.recordId || null,
@@ -693,20 +691,19 @@ export const BookProvider = ({ children }) => {
       });
 
       // Step 2: Remove from UI immediately (optimistic)
-      // Always do this regardless of whether bookRecord exists
-      setShelves(prev => prev.map(shelf => ({
-        ...shelf,
-        books: shelf.books.filter(b => b.id !== targetId),
-      })));
+      // Use setAllBooks directly — setShelves re-adds missing books from prevBooks,
+      // which completely negates the delete. setAllBooks bypasses the shelf adapter.
+      setAllBooks(prev => prev.filter(b => b.id !== targetId));
+
+      // Step 3: Show toast immediately — before any async Dexie/Supabase work
+      showToastGlobal('Book deleted.', 'success');
 
       if (!bookRecord) {
-        // No record anywhere — UI removal is all we can do
         console.warn('[Apex] No book record found anywhere for id:', targetId);
-        showToastGlobal('Book removed.', 'success');
         return;
       }
 
-      // Step 3: Delete related records from Dexie by BOTH integer ID and supabaseId
+      // Step 4: Delete related records from Dexie by BOTH integer ID and supabaseId
       console.log('[Apex] Deleting related records from Dexie...');
 
       // Bookmarks
@@ -742,6 +739,17 @@ export const BookProvider = ({ children }) => {
         console.log('[Apex] Deleted reading progress:', allProgressIds.length);
       }
 
+      // Notes
+      const notesByInt = await db.notes.where('bookId').equals(targetId).toArray();
+      const notesByUuid = bookRecord.supabaseId
+        ? await db.notes.where('bookId').equals(bookRecord.supabaseId).toArray()
+        : [];
+      const allNoteIds = [...notesByInt, ...notesByUuid].map(n => n.id);
+      if (allNoteIds.length > 0) {
+        await db.notes.bulkDelete(allNoteIds);
+        console.log('[Apex] Deleted notes:', allNoteIds.length);
+      }
+
       // Also try deleting by supabaseId directly in case Dexie integer lookup missed it
       if (bookRecord.supabaseId) {
         try {
@@ -749,7 +757,6 @@ export const BookProvider = ({ children }) => {
             .where('supabaseId').equals(bookRecord.supabaseId)
             .first();
           if (bookByUuid && bookByUuid.id !== targetId) {
-            // Found the actual current Dexie record — delete it too
             console.log('[Apex] Found book by supabaseId with different Dexie id:', bookByUuid.id);
             await db.books.delete(bookByUuid.id);
           }
@@ -762,33 +769,14 @@ export const BookProvider = ({ children }) => {
       await db.books.delete(targetId).catch(() => {});
       console.log('[Apex] Dexie delete complete for bookId:', targetId);
 
-      // Step 4: Queue Supabase delete if book was synced
+      // Step 5: Delete from Supabase directly (not via sync queue)
+      // This matches the pattern used by deleteHighlight/deleteBookmark/deleteNote
       if (bookRecord.supabaseId) {
-        console.log('[Apex] Queueing Supabase delete for supabaseId:', bookRecord.supabaseId);
-
-        await db.sync_queue.add({
-          action: 'delete',
-          tableName: 'books',
-          local_id: (bookRecord.local_id || targetId).toString(),
-          recordId: bookRecord.supabaseId,
-          payload: {},
-          createdAt: new Date().toISOString(),
-          attempts: 0,
-          status: 'pending',
-        });
-
-        if (navigator.onLine) {
-          console.log('[Apex] Online — triggering immediate sync for delete');
-          syncService.triggerSync?.();
-        } else {
-          console.log('[Apex] Offline — delete queued for when back online');
-          showToastGlobal('Book removed. Cloud sync will complete when you\'re back online.', 'info');
-        }
+        console.log('[Apex] Deleting from Supabase for supabaseId:', bookRecord.supabaseId);
+        syncService.deleteBook(bookRecord.supabaseId);
       } else {
         console.log('[Apex] Book was local only — no Supabase delete needed');
       }
-
-      showToastGlobal('Book deleted.', 'success');
 
     } catch (err) {
       console.error('[Apex] deleteBookFromShelves failed:', err);
