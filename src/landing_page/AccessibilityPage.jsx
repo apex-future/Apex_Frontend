@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Keyboard, ZoomIn, ZoomOut, Maximize, RotateCw, Settings, BookOpen } from 'lucide-react';
+import { ArrowLeft, Keyboard, ZoomIn, ZoomOut, Maximize, RotateCw, Settings, BookOpen, Bot, HelpCircle, SlidersHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 function AccessibilityPage() {
@@ -14,6 +14,9 @@ function AccessibilityPage() {
         { key: 'R', action: 'Rotate Document', icon: <RotateCw size={20} /> },
         { key: 'F', action: 'Toggle Full Navigation', icon: <Settings size={20} /> },
         { key: 'D', action: 'Toggle Dictionary', icon: <BookOpen size={20} /> },
+        { key: 'A', action: 'Toggle Cleo (AI Panel)', icon: <Bot size={20} /> },
+        { key: 'S', action: 'Toggle Page Settings', icon: <SlidersHorizontal size={20} /> },
+        { key: 'Q', action: 'Toggle Quiz Panel', icon: <HelpCircle size={20} /> },
         { key: 'Escape', action: 'Close all Menus/Dialogs', icon: <Keyboard size={20} /> },
     ];
 

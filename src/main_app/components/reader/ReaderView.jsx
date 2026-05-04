@@ -396,6 +396,21 @@ function ReaderView() {
                     e.preventDefault();
                     setIsReaderDictOpen(prev => !prev);
                     break;
+                case 'a':
+                case 'A':
+                    e.preventDefault();
+                    setAiModal(prev => !prev);
+                    break;
+                case 's':
+                case 'S':
+                    e.preventDefault();
+                    setPageSettings(prev => !prev);
+                    break;
+                case 'q':
+                case 'Q':
+                    e.preventDefault();
+                    setQuizModal(prev => !prev);
+                    break;
                 case 'Escape':
                     e.preventDefault();
                     setNavState('none');
