@@ -394,22 +394,54 @@ function ReaderView() {
                 case 'd':
                 case 'D':
                     e.preventDefault();
-                    setIsReaderDictOpen(prev => !prev);
+                    setIsReaderDictOpen(prev => {
+                        if (!prev) {
+                            setAiModal(false);
+                            setPageSettings(false);
+                            setQuizModal(false);
+                            setLeftPanel(false);
+                        }
+                        return !prev;
+                    });
                     break;
                 case 'a':
                 case 'A':
                     e.preventDefault();
-                    setAiModal(prev => !prev);
+                    setAiModal(prev => {
+                        if (!prev) {
+                            setPageSettings(false);
+                            setQuizModal(false);
+                            setIsReaderDictOpen(false);
+                            setLeftPanel(false);
+                        }
+                        return !prev;
+                    });
                     break;
                 case 's':
                 case 'S':
                     e.preventDefault();
-                    setPageSettings(prev => !prev);
+                    setPageSettings(prev => {
+                        if (!prev) {
+                            setAiModal(false);
+                            setQuizModal(false);
+                            setIsReaderDictOpen(false);
+                            setLeftPanel(false);
+                        }
+                        return !prev;
+                    });
                     break;
                 case 'q':
                 case 'Q':
                     e.preventDefault();
-                    setQuizModal(prev => !prev);
+                    setQuizModal(prev => {
+                        if (!prev) {
+                            setAiModal(false);
+                            setPageSettings(false);
+                            setIsReaderDictOpen(false);
+                            setLeftPanel(false);
+                        }
+                        return !prev;
+                    });
                     break;
                 case 'Escape':
                     e.preventDefault();
