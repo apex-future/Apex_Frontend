@@ -15,6 +15,7 @@ import AIModal from './reading_navigations/reading_layout/AIModal';
 import QuizPanel from './reading_navigations/reading_layout/QuizPanel';
 import QuizView from './QuizView';
 import apiClient from '../../services/apiClient';
+import syncService from '../../services/syncService';
 import useToast from '../../hooks/useToast';
 import HighlightMenu from './HighlightMenu';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
@@ -150,6 +151,11 @@ function ReaderView() {
                 logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
             }
 
+            // Increment reading time in Dexie + Supabase — 1 minute has passed
+            if (book?.id) {
+                syncService.incrementReadingTime(book.id);
+            }
+
             // Fire daily streak ONCE per day
             if (!streakFiredTodayRef.current) {
                 updateStreakRef.current();
@@ -169,6 +175,12 @@ function ReaderView() {
                 streakTimerRef.current = setInterval(() => {
                     console.log('[Apex Reader] 60 seconds passed - logging activity');
                     if (activeSpaceId) logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
+
+                    // Increment reading time in Dexie + Supabase — 1 minute has passed
+                    if (book?.id) {
+                        syncService.incrementReadingTime(book.id);
+                    }
+
                     if (!streakFiredTodayRef.current) {
                         updateStreakRef.current();
                         setShowStreakCelebration(true);

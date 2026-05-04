@@ -623,6 +623,44 @@ const syncService = {
   saveProgress: null, // initialized in init()
 
   // ============================================
+  // INCREMENT READING TIME — called by reading timer
+  // Fire-and-forget: 1 minute passed → tell the backend
+  // ============================================
+  incrementReadingTime: async function(bookId) {
+    console.log('[ReadingTime] 1 minute elapsed — incrementing reading time for bookId:', bookId);
+
+    // Also increment in Dexie so local reads stay accurate
+    try {
+      const existing = await db.reading_progress.where('bookId').equals(bookId).first();
+      if (existing) {
+        const newTime = (existing.total_time_read || 0) + 1;
+        await db.reading_progress.update(existing.id, { 
+          total_time_read: newTime,
+          lastReadAt: new Date().toISOString()
+        });
+        console.log('[ReadingTime] Dexie updated — total_time_read:', newTime);
+      }
+      // Note: if no Dexie row exists yet, the backend will create one
+    } catch (err) {
+      console.warn('[ReadingTime] Dexie increment failed (non-blocking):', err);
+    }
+
+    // Fire-and-forget to backend — do not await, never block the timer
+    if (navigator.onLine) {
+      const supabaseBookId = await this._resolveBookId(bookId).catch(() => null);
+      if (supabaseBookId) {
+        apiClient.post(`/api/books/${supabaseBookId}/progress/time`)
+          .then(() => console.log('[ReadingTime] Backend increment confirmed'))
+          .catch(err => console.warn('[ReadingTime] Backend increment failed (non-blocking):', err));
+      } else {
+        console.warn('[ReadingTime] Cannot increment — book not yet synced to Supabase');
+      }
+    } else {
+      console.log('[ReadingTime] Offline — reading time increment will be lost (acceptable tradeoff)');
+    }
+  },
+
+  // ============================================
   // DIRECT SAVE — BOOKMARKS (Category A)
   // ============================================
   saveBookmark: async function (bookId, bookmarkData) {

@@ -16,38 +16,20 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BookCover from '../../books/BookCover';
+import apiClient from '../../../services/apiClient';
 
-// --- MOCK DATA GENERATOR ---
-const generateMockData = (books) => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    
-    // Generate streak history for current month (mock)
-    const streakHistory = Array.from({ length: 15 }, (_, i) => {
-        const d = new Date(year, month, today.getDate() - i * (Math.random() > 0.3 ? 1 : 2));
-        return d.toISOString().split('T')[0];
-    });
-
-    // Recent activity log
-    const recentActivity = books.slice(0, 4).map((book, i) => ({
-        id: book.id,
-        title: book.title,
-        timestamp: i === 0 ? '2h ago' : i === 1 ? '5h ago' : 'Yesterday',
-        action: i === 0 ? 'Read 12 pages' : i === 1 ? 'Completed Quiz' : 'Added 5 highlights',
-        type: i === 1 ? 'quiz' : 'read'
-    }));
-
-    // Mock trend data for each book
-    const bookTrends = {};
-    books.forEach(book => {
-        bookTrends[book.id] = Array.from({ length: 7 }, () => Math.floor(Math.random() * 60) + 40);
-    });
-    // Overall trend
-    bookTrends['overall'] = Array.from({ length: 7 }, () => Math.floor(Math.random() * 40) + 50);
-
-    return { streakHistory, recentActivity, bookTrends };
-};
+// --- HELPER ---
+function formatRelativeTime(isoString) {
+    if (!isoString) return '';
+    const diff = Date.now() - new Date(isoString).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'Yesterday';
+    return `${days}d ago`;
+}
 
 // --- SUB-COMPONENTS ---
 
@@ -309,24 +291,150 @@ const TrendMaker = React.memo(({ books, trends, onBookSelect, selectedBookId }) 
 
 function SpaceAnalytics({ space, spaceQuizStats }) {
     const [selectedTrendBook, setSelectedTrendBook] = useState('overall');
+    const [analyticsData, setAnalyticsData] = useState(null);
+    const [analyticsLoading, setAnalyticsLoading] = useState(true);
+    const [analyticsError, setAnalyticsError] = useState(null);
+    const [retryCount, setRetryCount] = useState(0);
 
     useEffect(() => {
-        console.log('[Apex Analytics] Dashboard mounted with mock data');
-    }, []);
+        if (!space?.books) return;
+
+        // Extract Supabase UUIDs from the space's books — skip unsynced local-only books
+        const bookIds = space.books
+            .map(b => b.supabaseId || b.recordId)
+            .filter(Boolean);
+
+        console.log('[SpaceAnalytics] Book UUIDs for analytics:', bookIds);
+
+        if (bookIds.length === 0) {
+            console.log('[SpaceAnalytics] No synced books in space — skipping fetch');
+            setAnalyticsData(null);
+            setAnalyticsLoading(false);
+            return;
+        }
+
+        const fetchAnalytics = async () => {
+            setAnalyticsLoading(true);
+            setAnalyticsError(null);
+            console.log('[SpaceAnalytics] Fetching real analytics for', bookIds.length, 'books');
+            try {
+                // POST book UUIDs — spaces are local-only, backend has no space table
+                const response = await apiClient.post('/api/ai/space/analytics', { book_ids: bookIds });
+                console.log('[SpaceAnalytics] Analytics data received:', response.data);
+                setAnalyticsData(response.data);
+            } catch (err) {
+                console.error('[SpaceAnalytics] Failed to fetch analytics:', err);
+                setAnalyticsError('Failed to load analytics');
+            } finally {
+                setAnalyticsLoading(false);
+            }
+        };
+
+        fetchAnalytics();
+    }, [space?.books, retryCount]);
+
+    // Merge per-book analytics into the books array from props
+    // space.books provides title and local id; analyticsData provides real stats
+    const enrichedBooks = useMemo(() => {
+        if (!analyticsData || !space?.books) return space?.books || [];
+        return space.books.map(book => {
+            // Match by supabaseId — space.books entries should carry supabaseId or recordId
+            const analytics = analyticsData.books_analytics?.find(
+                a => a.book_id === (book.supabaseId || book.recordId)
+            );
+            return {
+                ...book,
+                progress: analytics?.progress_percentage ?? book.progress ?? 0,
+                timeSpent: analytics?.time_read_minutes ?? book.timeSpent ?? 0,
+                highlightsCount: analytics?.highlights_count ?? 0,
+                aiUsesCount: analytics?.ai_uses_count ?? 0,
+                quizAttempts: analytics?.quiz_attempts ?? 0,
+                averageScore: analytics?.average_score ?? null,
+                bestScore: analytics?.best_score ?? null,
+                lastReadAt: analytics?.last_read_at ?? null,
+            };
+        });
+    }, [analyticsData, space?.books]);
+
+    const streakHistory = analyticsData?.streak_history ?? [];
+    const currentStreak = analyticsData?.current_streak ?? 0;
+
+    const totalMinutes = analyticsData?.total_time_minutes ?? 0;
+    const timeSpent = useMemo(() => {
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        return { h, m };
+    }, [totalMinutes]);
+
+    const quizStats = analyticsData?.quiz_stats ?? {
+        attempts_count: 0,
+        average_score: 0,
+        best_score: 0,
+        book_trends: { overall: [0, 0, 0, 0, 0, 0, 0] }
+    };
+
+    // Map book_trends keys: backend uses supabase UUIDs, TrendMaker uses local book ids
+    // Build a local-id-keyed trends object
+    const localBookTrends = useMemo(() => {
+        const trends = { overall: quizStats.book_trends?.overall ?? [0,0,0,0,0,0,0] };
+        if (space?.books && quizStats.book_trends) {
+            space.books.forEach(book => {
+                const supabaseId = book.supabaseId || book.recordId;
+                if (supabaseId && quizStats.book_trends[supabaseId]) {
+                    trends[book.id] = quizStats.book_trends[supabaseId];
+                } else {
+                    trends[book.id] = [0, 0, 0, 0, 0, 0, 0];
+                }
+            });
+        }
+        return trends;
+    }, [space?.books, quizStats.book_trends]);
+
+    // Recent activity — enrich with book titles from space.books
+    const recentActivity = useMemo(() => {
+        if (!analyticsData?.recent_activity) return [];
+        return analyticsData.recent_activity.map((event, i) => {
+            const book = space?.books?.find(
+                b => (b.supabaseId || b.recordId) === event.book_id
+            );
+            return {
+                id: i,
+                title: book?.title ?? 'Unknown Book',
+                timestamp: formatRelativeTime(event.timestamp),
+                action: event.detail,
+                type: event.type,
+            };
+        });
+    }, [analyticsData?.recent_activity, space?.books]);
+
+    const avgScore = quizStats.average_score;
 
     if (!space) return null;
 
-    const books = space.books || [];
-    const mockData = useMemo(() => generateMockData(books), [books]);
+    // Loading state
+    if (analyticsLoading) {
+        return (
+            <div className="w-full py-8 flex flex-col items-center justify-center min-h-[400px] gap-4 animate-in fade-in">
+                <div className="w-8 h-8 rounded-full border-2 border-accent-primary border-t-transparent animate-spin" />
+                <p className="text-xs font-bold text-text-tertiary uppercase tracking-widest">Loading analytics...</p>
+            </div>
+        );
+    }
 
-    const totalMinutes = books.reduce((acc, book) => acc + (book.timeSpent || 0), 0);
-    const formatTime = (totalMins) => {
-        const h = Math.floor(totalMins / 60);
-        const m = totalMins % 60;
-        return { h, m };
-    };
-    const timeSpent = formatTime(totalMinutes);
-    const avgScore = spaceQuizStats?.averageScore || 71;
+    // Error state
+    if (analyticsError) {
+        return (
+            <div className="w-full py-8 flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <p className="text-sm font-bold text-text-tertiary">{analyticsError}</p>
+                <button 
+                    onClick={() => setRetryCount(c => c + 1)}
+                    className="text-xs font-bold text-accent-primary hover:underline"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full py-8 animate-in fade-in duration-700">
@@ -350,7 +458,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                     
                     {/* Row 1: Coverage */}
                     <BentoCard delay={0.1} className="flex-1">
-                        <CoverageList books={books} />
+                        <CoverageList books={enrichedBooks} />
                     </BentoCard>
 
                     {/* Row 2: Stats Grid */}
@@ -371,7 +479,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                                 <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-widest mt-4">Total study time</p>
                             </div>
                             <div className="mt-auto space-y-4">
-                                {books.slice(0, 2).map((book, i) => (
+                                {enrichedBooks.slice(0, 2).map((book, i) => (
                                     <div key={i} className="flex items-center justify-between text-[11px] font-bold">
                                         <div className="flex items-center gap-3 max-w-[75%]">
                                             <div className="w-5 h-7 rounded-sm overflow-hidden flex-shrink-0 border border-border-subtle">
@@ -392,10 +500,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                                     <Trophy size={16} className="text-accent-primary" />
                                     <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">Mastery Score</span>
                                 </div>
-                                <div className="flex items-center gap-1 text-success text-[10px] font-bold bg-success/10 px-2 py-0.5 rounded-full">
-                                    <TrendingUp size={12} />
-                                    <span>+12%</span>
-                                </div>
+                                {/* TODO: trend delta */}
                             </div>
                             
                             <div className="flex items-center gap-10 mb-8">
@@ -405,18 +510,20 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                                 <div className="flex flex-col gap-3">
                                     <div>
                                         <p className="text-[9px] text-text-tertiary font-bold uppercase tracking-wider mb-0.5">Quizzes Attempted</p>
-                                        <p className="text-base font-black text-text-secondary">{spaceQuizStats?.attemptsCount || 14}</p>
+                                        <p className="text-base font-black text-text-secondary">{quizStats.attempts_count}</p>
                                     </div>
                                     <div>
                                         <p className="text-[9px] text-text-tertiary font-bold uppercase tracking-wider mb-0.5">Best Score</p>
-                                        <p className="text-base font-black text-text-secondary">92% <span className="text-sm font-medium text-text-secondary">in Chemistry</span></p>
+                                        <p className="text-base font-black text-text-secondary">
+                                            {quizStats.best_score ? `${quizStats.best_score}%` : '—'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
                             <TrendMaker 
-                                books={books} 
-                                trends={mockData.bookTrends} 
+                                books={enrichedBooks} 
+                                trends={localBookTrends} 
                                 onBookSelect={setSelectedTrendBook}
                                 selectedBookId={selectedTrendBook}
                             />
@@ -427,8 +534,8 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                 {/* RIGHT COLUMN (30% equivalent on LG) - Unified Activity & Calendar */}
                 <div className="lg:col-span-4">
                     <BentoCard delay={0.4} noPadding className="h-full">
-                        <IntegratedCalendar streakHistory={mockData.streakHistory} />
-                        <IntegratedActivityLog activities={mockData.recentActivity} />
+                        <IntegratedCalendar streakHistory={streakHistory} />
+                        <IntegratedActivityLog activities={recentActivity} />
                     </BentoCard>
                 </div>
 
@@ -448,7 +555,8 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
                     background: rgba(var(--text-tertiary), 0.2);
                 }
-            `}</style>
+            `}
+            </style>
         </div>
     );
 }
