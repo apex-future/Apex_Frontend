@@ -1,9 +1,11 @@
 import React, { useContext, useState } from 'react';
-import { Heart, Eye, Bookmark, Trash } from "lucide-react";
+import { createPortal } from 'react-dom';
+import { Heart, Eye, Bookmark, Trash, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
 import ConfirmModal from '../ui/ConfirmModal';
 import { BookContext } from '../../context/BookContextInstance';
+import useSpaceStore from '../../store/spaceStore';
 
 const statusStyles = {
     literature: 'bg-blue-100 text-blue-600',
@@ -17,9 +19,11 @@ const statusStyles = {
 export default function BookCard({ book, onClick }) {
     const navigate = useNavigate();
     const { toggleFavorite, toggleBookmarkedBook, deleteBookFromShelves } = useContext(BookContext) || {};
+    const { spaces, addBookToSpace, removeBookFromSpace } = useSpaceStore();
 
-    // State for delete confirmation modal
+    // State for modals
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showSpaceModal, setShowSpaceModal] = useState(false);
 
     const handleDetailsClick = (e) => {
         e.stopPropagation();
@@ -33,7 +37,7 @@ export default function BookCard({ book, onClick }) {
 
     const handleBookmarkClick = (e) => {
         e.stopPropagation();
-        if (toggleBookmarkedBook) toggleBookmarkedBook(book.id);
+        setShowSpaceModal(true);
     };
 
     const handleDeleteClick = (e) => {
@@ -156,6 +160,86 @@ export default function BookCard({ book, onClick }) {
                 },
               ]}
             />
+
+            {/* Save to Space Modal */}
+            {showSpaceModal && createPortal(
+                <div 
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" 
+                    onClick={(e) => { e.stopPropagation(); setShowSpaceModal(false); }}
+                >
+                    <div 
+                        className="bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-neutral-100 dark:border-neutral-800" 
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/50">
+                            <h3 className="font-bold text-lg text-neutral-900 dark:text-neutral-100 font-display">Save to Space</h3>
+                            <button 
+                                onClick={() => setShowSpaceModal(false)} 
+                                className="p-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="p-3 max-h-[60vh] overflow-y-auto space-y-1">
+                            {/* General Bookmarks */}
+                            <div 
+                                className="flex items-center justify-between p-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 rounded-2xl cursor-pointer transition-colors group"
+                                onClick={() => { if (toggleBookmarkedBook) toggleBookmarkedBook(book.id); }}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-xl transition-colors ${book.isBookmarked ? 'bg-accent-primary/10 text-accent-primary' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'}`}>
+                                        <Bookmark size={18} fill={book.isBookmarked ? 'currentColor' : 'none'} />
+                                    </div>
+                                    <span className="font-semibold text-neutral-700 dark:text-neutral-200 text-sm">General Bookmarks</span>
+                                </div>
+                                <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${book.isBookmarked ? 'bg-accent-primary border-accent-primary' : 'border-neutral-300 dark:border-neutral-600 group-hover:border-accent-primary/50'}`}>
+                                    {book.isBookmarked && <span className="text-white text-[10px] font-bold">✓</span>}
+                                </div>
+                            </div>
+
+                            <div className="h-px bg-neutral-100 dark:bg-neutral-800 my-2 mx-3" />
+
+                            {/* Custom Spaces */}
+                            {spaces.filter(s => !s.isSystem).map(space => {
+                                const inSpace = space.bookIds.includes(book.id);
+                                return (
+                                    <div 
+                                        key={space.id}
+                                        className="flex items-center justify-between p-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 rounded-2xl cursor-pointer transition-colors group"
+                                        onClick={() => {
+                                            if (inSpace) {
+                                                removeBookFromSpace(space.id, book.id);
+                                            } else {
+                                                addBookToSpace(space.id, book.id);
+                                            }
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-500/20 dark:to-blue-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold uppercase text-xs border border-indigo-100/50 dark:border-indigo-500/20">
+                                                {space.name.substring(0, 2)}
+                                            </div>
+                                            <span className="font-semibold text-neutral-700 dark:text-neutral-200 text-sm">{space.name}</span>
+                                        </div>
+                                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${inSpace ? 'bg-accent-primary border-accent-primary' : 'border-neutral-300 dark:border-neutral-600 group-hover:border-accent-primary/50'}`}>
+                                            {inSpace && <span className="text-white text-[10px] font-bold">✓</span>}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            
+                            {spaces.filter(s => !s.isSystem).length === 0 && (
+                                <div className="text-center py-8 px-4">
+                                    <div className="w-12 h-12 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <Bookmark size={20} className="text-neutral-400" />
+                                    </div>
+                                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">No custom spaces yet</p>
+                                    <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Create spaces to organize your library.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            , document.body)}
         </div>
     );
 }
