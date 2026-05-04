@@ -319,7 +319,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
             console.log('[SpaceAnalytics] Fetching real analytics for', bookIds.length, 'books');
             try {
                 // POST book UUIDs — spaces are local-only, backend has no space table
-                const response = await apiClient.post('/api/ai/space/analytics', { book_ids: bookIds });
+                const response = await apiClient.post('/api/spaces/analytics', { book_ids: bookIds });
                 console.log('[SpaceAnalytics] Analytics data received:', response.data);
                 setAnalyticsData(response.data);
             } catch (err) {
