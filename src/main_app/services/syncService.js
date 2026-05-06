@@ -125,7 +125,10 @@ const syncService = {
   // ============================================
   // HELPER: Resolve a Dexie book ID to Supabase UUID
   // ============================================
-  _resolveBookId: async function (bookId) {
+  _resolveBookId: async function (bookId, supabaseIdHint) {
+    // If a supabaseId hint was passed directly, use it immediately
+    if (supabaseIdHint) return supabaseIdHint;
+
     // If it already looks like a UUID string, return it directly
     if (typeof bookId === 'string' && bookId.includes('-')) {
       return bookId;
@@ -138,6 +141,22 @@ const syncService = {
       if (!book) {
         const byLocalId = await db.books.where('local_id').equals(bookId.toString()).first();
         if (byLocalId?.supabaseId) return byLocalId.supabaseId;
+      }
+      // After pull sync, Dexie IDs change but the supabaseId is preserved.
+      // Scan all books to find one whose supabaseId matches — last resort.
+      if (!book) {
+        const allBooks = await db.books.toArray();
+        for (const b of allBooks) {
+          if (b.supabaseId && (b.localId === bookId.toString() || b.local_id === bookId.toString())) {
+            return b.supabaseId;
+          }
+        }
+        // If the book was found by integer ID but had no supabaseId, check if
+        // any book has this integer as part of its history
+        if (allBooks.length > 0 && allBooks[0].supabaseId) {
+          // At least one book is synced — the bookId might be stale
+          if (import.meta.env.DEV) console.warn('[Apex Sync] _resolveBookId: Dexie ID', bookId, 'not found. Books may have been re-IDed after pull sync.');
+        }
       }
     } catch (err) {
       if (import.meta.env.DEV) console.warn('Failed to resolve book ID:', err);
@@ -525,7 +544,7 @@ const syncService = {
 
     // Step 2: If online, resolve the Supabase book UUID and save directly
     if (navigator.onLine) {
-      const supabaseBookId = await this._resolveBookId(bookId);
+      const supabaseBookId = await this._resolveBookId(bookId, highlightData._supabase_book_id);
       if (supabaseBookId) {
         try {
           const response = await apiClient.post(`/api/books/${supabaseBookId}/highlights`, {
@@ -630,6 +649,13 @@ const syncService = {
   // DIRECT SAVE — READING PROGRESS (Category A, debounced)
   // ============================================
   _saveProgressDirect: async function (bookId, progressData) {
+    if (import.meta.env.DEV) console.log('[Apex Sync] _saveProgressDirect called:', {
+      bookId,
+      current_page: progressData.current_page,
+      scroll_position: progressData.scroll_position,
+      progress_percentage: progressData.progress_percentage,
+      _supabase_book_id: progressData._supabase_book_id,
+    });
     const localId = generateLocalId();
     const now = new Date().toISOString();
 
@@ -665,7 +691,10 @@ const syncService = {
       return;
     }
     if (navigator.onLine) {
-      const supabaseBookId = await this._resolveBookId(bookId);
+      // Use the supabaseId hint passed from BookContext (React state) first.
+      // After pull sync, Dexie book IDs change but React state keeps old IDs,
+      // so _resolveBookId(oldDexieId) fails. The hint bypasses that broken lookup.
+      const supabaseBookId = progressData._supabase_book_id || await this._resolveBookId(bookId);
       if (supabaseBookId) {
         try {
           // NOTE: progress_percentage and total_time_read are NOT sent.
@@ -773,7 +802,7 @@ const syncService = {
     const dexieId = await db.bookmarks.add(dexieRecord);
 
     if (navigator.onLine) {
-      const supabaseBookId = await this._resolveBookId(bookId);
+      const supabaseBookId = await this._resolveBookId(bookId, bookmarkData._supabase_book_id);
       if (supabaseBookId) {
         try {
           const response = await apiClient.post(`/api/books/${supabaseBookId}/bookmarks`, {
@@ -852,7 +881,7 @@ const syncService = {
 
     // Step 2: If online, resolve Supabase book UUID and save
     if (navigator.onLine) {
-      const supabaseBookId = await this._resolveBookId(bookId);
+      const supabaseBookId = await this._resolveBookId(bookId, noteData._supabase_book_id);
       if (supabaseBookId) {
         try {
           const response = await apiClient.post(`/api/books/${supabaseBookId}/notes`, {
@@ -1072,15 +1101,26 @@ const syncService = {
       // Pre-process: resolve _dexie_book_id to actual Supabase UUID for queued items
       for (const item of queueItems) {
         if (item.payload?._dexie_book_id && !item.payload?.book_id) {
-          const supabaseBookId = await this._resolveBookId(item.payload._dexie_book_id);
+          let supabaseBookId = await this._resolveBookId(item.payload._dexie_book_id);
+
           if (supabaseBookId) {
             item.payload.book_id = supabaseBookId;
             delete item.payload._dexie_book_id;
             // Update in Dexie so we don't re-resolve next time
             await db.sync_queue.update(item.id, { payload: item.payload });
           } else {
-            // Book still not synced — skip this item for now
-            if (import.meta.env.DEV) console.warn(`Sync: Skipping ${item.tableName} — book not synced yet`);
+            // Check if this Dexie ID is definitively gone (not just unsynced)
+            const bookExists = await db.books.get(item.payload._dexie_book_id);
+            if (!bookExists) {
+              // Book ID doesn't exist in Dexie at all — this is a stale item from before
+              // pull sync re-IDed all books. The data it contains was already pulled from
+              // Supabase, so this queue entry is safe to discard immediately.
+              if (import.meta.env.DEV) console.log(`[Apex Sync] Cleaning stale ${item.tableName} queue item — Dexie ID ${item.payload._dexie_book_id} no longer exists`);
+              await db.sync_queue.update(item.id, { status: 'failed' });
+            } else {
+              // Book exists but has no supabaseId — genuinely not synced yet, retry later
+              if (import.meta.env.DEV) console.warn(`Sync: Skipping ${item.tableName} — book not synced yet`);
+            }
             continue;
           }
         }
