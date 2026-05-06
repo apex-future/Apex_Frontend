@@ -81,8 +81,8 @@ const IntegratedCalendar = React.memo(({ streakHistory }) => {
             </div>
 
             <div className="grid grid-cols-7 gap-1 mb-2">
-                {weekDays.map(d => (
-                    <div key={d} className="text-center text-[10px] font-bold text-text-tertiary uppercase">{d}</div>
+                {weekDays.map((d, i) => (
+                    <div key={i} className="text-center text-[10px] font-bold text-text-tertiary uppercase">{d}</div>
                 ))}
             </div>
 
