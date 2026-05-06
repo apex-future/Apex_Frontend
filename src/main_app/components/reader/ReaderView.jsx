@@ -268,7 +268,8 @@ function ReaderView() {
             }
         }
 
-        syncProgress(pageNumber, total);
+        // Defer syncProgress to avoid updating BookProvider state during PDF render
+        Promise.resolve().then(() => syncProgress(pageNumber, total));
     }
 
     function syncProgress(page, total) {
