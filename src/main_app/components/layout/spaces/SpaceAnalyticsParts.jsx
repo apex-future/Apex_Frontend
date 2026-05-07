@@ -272,11 +272,17 @@ export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends,
     return { avg: book.averageScore || 0, best: book.bestScore || 0, attempts: book.quizAttempts || 0 };
   }, [selectedBook, enrichedBooks, quizStats]);
 
-  // Get trend data (score arrays) — last 5 non-zero entries
+  // Get trend data — handles both old format (plain numbers) and new ({score, date} objects)
   const bars = useMemo(() => {
     const key = selectedBook === 'overall' ? 'overall' : selectedBook;
     const trend = localBookTrends[key] || localBookTrends['overall'] || [];
-    const nonZero = trend.map((score, i) => ({ score, index: i })).filter(e => e.score > 0);
+    // Normalize: old format is [number, ...], new format is [{score, date}, ...]
+    const normalized = trend.map(e => {
+      if (typeof e === 'number') return { score: e, date: null };
+      if (e && typeof e === 'object') return { score: e.score ?? 0, date: e.date ?? null };
+      return null;
+    }).filter(Boolean);
+    const nonZero = normalized.filter(e => e.score > 0);
     const last5 = nonZero.slice(-5);
     console.log(`[SpaceAnalytics] Quiz bars rendering for book: ${selectedBook}, attempts: ${last5.length}`);
     return last5;
@@ -284,13 +290,22 @@ export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends,
 
   const avg = bars.length > 0 ? bars.reduce((s, b) => s + b.score, 0) / bars.length : 0;
   const maxScore = 100;
-  const H = 80;
+  const H = 120;
+  const yTicks = [0, 20, 40, 60, 80, 100];
+  const Y_LABEL_W = 36;
 
   const pills = [
     { label: 'AVG SCORE', value: `${Math.round(currentStats.avg)}%` },
     { label: 'BEST SCORE', value: `${Math.round(currentStats.best)}%` },
     { label: 'ATTEMPTS', value: currentStats.attempts },
   ];
+
+  // Format date for bar labels
+  const fmtBarDate = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
 
   return (
     <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, padding: 24 }}>
@@ -317,35 +332,67 @@ export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends,
 
       {bars.length > 0 ? (
         <div>
-          <div style={{ position: 'relative', height: H, display: 'flex', alignItems: 'flex-end', gap: 12, paddingBottom: 0 }}>
-            {/* Average dashed line */}
-            <div style={{
-              position: 'absolute', left: 0, right: 0, bottom: (avg / maxScore) * H,
-              borderTop: '1.5px dashed rgb(var(--text-tertiary) / 0.4)', zIndex: 1,
-            }} />
-            {bars.map((b, i) => {
-              const h = (b.score / maxScore) * H;
-              let barColor = '#AFA9EC';
-              if (b.score >= avg) barColor = '#7F77DD';
-              const isMax = b.score === Math.max(...bars.map(x => x.score));
-              if (isMax) barColor = '#534AB7';
-              return (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
-                  <div style={{ width: '100%', maxWidth: 36, height: h, background: barColor, borderRadius: '4px 4px 0 0', transition: 'height 0.3s ease' }} />
-                </div>
-              );
-            })}
+          {/* Chart area with Y-axis */}
+          <div style={{ display: 'flex', alignItems: 'stretch' }}>
+            {/* Y-axis labels */}
+            <div style={{ width: Y_LABEL_W, flexShrink: 0, position: 'relative', height: H }}>
+              {yTicks.map(tick => (
+                <span key={tick} style={{
+                  position: 'absolute', bottom: `${(tick / maxScore) * 100}%`, right: 6,
+                  transform: 'translateY(50%)', fontSize: 9, fontWeight: 600,
+                  color: 'rgb(var(--text-tertiary))', lineHeight: 1
+                }}>{tick}%</span>
+              ))}
+            </div>
+
+            {/* Chart body */}
+            <div style={{ flex: 1, position: 'relative', height: H }}>
+              {/* Horizontal gridlines */}
+              {yTicks.map(tick => (
+                <div key={`grid-${tick}`} style={{
+                  position: 'absolute', left: 0, right: 0, bottom: `${(tick / maxScore) * 100}%`,
+                  borderTop: tick === 0 ? '1px solid rgb(var(--text-tertiary) / 0.2)' : '1px dashed rgb(var(--text-tertiary) / 0.1)',
+                }} />
+              ))}
+
+              {/* Average dashed line */}
+              <div style={{
+                position: 'absolute', left: 0, right: 0, bottom: `${(avg / maxScore) * 100}%`,
+                borderTop: '1.5px dashed #7F77DD55', zIndex: 1,
+              }} />
+
+              {/* Bars */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: '100%', position: 'relative', zIndex: 2, paddingLeft: 4, paddingRight: 4 }}>
+                {bars.map((b, i) => {
+                  const h = (b.score / maxScore) * H;
+                  let barColor = '#AFA9EC';
+                  if (b.score >= avg) barColor = '#7F77DD';
+                  const isMax = b.score === Math.max(...bars.map(x => x.score));
+                  if (isMax) barColor = '#534AB7';
+                  return (
+                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: barColor, marginBottom: 4 }}>{Math.round(b.score)}%</span>
+                      <div style={{ width: '100%', maxWidth: 40, height: h, background: barColor, borderRadius: '5px 5px 0 0', transition: 'height 0.3s ease' }} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
+
+          {/* Date labels */}
+          <div style={{ display: 'flex', marginTop: 8, paddingLeft: Y_LABEL_W }}>
             {bars.map((b, i) => (
-              <div key={i} style={{ flex: 1, textAlign: 'center', fontSize: 10, color: 'rgb(var(--text-tertiary))', fontWeight: 500 }}>
-                {`#${i + 1}`}
+              <div key={i} style={{ flex: 1, textAlign: 'center', fontSize: 9, color: 'rgb(var(--text-tertiary))', fontWeight: 500 }}>
+                {fmtBarDate(b.date)}
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
-            <div style={{ width: 16, borderTop: '1.5px dashed rgb(var(--text-tertiary) / 0.5)' }} />
-            <span style={{ fontSize: 10, color: 'rgb(var(--text-tertiary))' }}>average</span>
+
+          {/* Legend */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, paddingLeft: Y_LABEL_W }}>
+            <div style={{ width: 16, borderTop: '1.5px dashed #7F77DD55' }} />
+            <span style={{ fontSize: 10, color: 'rgb(var(--text-tertiary))' }}>average ({Math.round(avg)}%)</span>
           </div>
         </div>
       ) : (

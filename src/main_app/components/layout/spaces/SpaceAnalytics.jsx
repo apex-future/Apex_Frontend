@@ -115,20 +115,20 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
         attempts_count: 0,
         average_score: 0,
         best_score: 0,
-        book_trends: { overall: [0, 0, 0, 0, 0, 0, 0] }
+        book_trends: { overall: [] }
     };
 
     // Map book_trends keys: backend uses supabase UUIDs, TrendMaker uses local book ids
-    // Build a local-id-keyed trends object
+    // Backend now returns [{score, date}, ...] objects per book
     const localBookTrends = useMemo(() => {
-        const trends = { overall: quizStats.book_trends?.overall ?? [0,0,0,0,0,0,0] };
+        const trends = { overall: quizStats.book_trends?.overall ?? [] };
         if (space?.books && quizStats.book_trends) {
             space.books.forEach(book => {
                 const supabaseId = book.supabaseId || book.recordId;
                 if (supabaseId && quizStats.book_trends[supabaseId]) {
                     trends[book.id] = quizStats.book_trends[supabaseId];
                 } else {
-                    trends[book.id] = [0, 0, 0, 0, 0, 0, 0];
+                    trends[book.id] = [];
                 }
             });
         }
