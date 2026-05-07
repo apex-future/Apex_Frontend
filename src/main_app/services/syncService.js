@@ -1075,8 +1075,8 @@ const syncService = {
   // EXAM REMINDERS — save & delete (called by studyStore)
   // ============================================
   saveExamReminder: async function (examData) {
-    console.log('[ExamReminders] saveExamReminder called for:', examData.name);
-    const localId = generateLocalId();
+    console.log('[ExamReminders] saveExamReminder called for:', examData.name, 'Payload:', examData);
+    const localId = examData.id || generateLocalId();
     const now = new Date().toISOString();
 
     const dexieRecord = {
@@ -1086,29 +1086,47 @@ const syncService = {
       isActive: !examData.isPaused,
       bookSpaceSupabaseId: examData.bookSpaceSupabaseId || null,
       synced: false,
-      supabaseId: null,
-      createdAt: now,
+      supabaseId: examData.supabaseId || null,
       updatedAt: now,
     };
 
-    const dexieId = await db.exam_reminders.add(dexieRecord);
+    // Upsert in Dexie (local_id is unique index)
+    const existing = await db.exam_reminders.where('local_id').equals(localId).first();
+    let dexieId;
+    if (existing) {
+      await db.exam_reminders.update(existing.id, dexieRecord);
+      dexieId = existing.id;
+    } else {
+      dexieRecord.createdAt = now;
+      dexieId = await db.exam_reminders.add(dexieRecord);
+    }
 
     if (navigator.onLine) {
       try {
-        const response = await apiClient.post('/api/exam-reminders', {
+        const payload = {
           exam_name: examData.name,
           exam_date: examData.date,
           is_active: !examData.isPaused,
           book_space_id: examData.bookSpaceSupabaseId || null,
           local_id: localId,
-        });
+        };
+
+        let response;
+        if (examData.supabaseId) {
+          console.log('[ExamReminders] Updating existing exam on Supabase:', examData.supabaseId);
+          response = await apiClient.put(`/api/exam-reminders/${examData.supabaseId}`, payload);
+        } else {
+          console.log('[ExamReminders] Creating new exam on Supabase');
+          response = await apiClient.post('/api/exam-reminders', payload);
+        }
+
         await db.exam_reminders.update(dexieId, {
           supabaseId: response.data.id,
           synced: true,
         });
         return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
       } catch (err) {
-        if (import.meta.env.DEV) console.error('[ExamReminders] Failed to save to Supabase:', err);
+        console.error('[ExamReminders] Failed to sync to Supabase:', err);
       }
     }
 

@@ -178,13 +178,27 @@ const ExamReminder = () => {
         
         const isNew = !activeExam;
 
+        // Resolve the supabaseId of the first selected space for Supabase persistence
+        const linkedSpaceSupabaseId = selectedSpaceIds.length > 0
+            ? customSpaces.find(s => s.id === selectedSpaceIds[0])?.supabaseId || null
+            : null;
+
         if (activeExam?.id === 'legacy') {
-            setExamDate(tempDate);
-            setExamName(tempName);
+            // Convert legacy to a new synced exam
+            addExam({ name: tempName, date: tempDate, bookSpaceSupabaseId: linkedSpaceSupabaseId });
+            setExamDate(null); // Clear legacy
+            setExamName('');
         } else if (activeExam?.id) {
-            updateExam(activeExam.id, { name: tempName, date: tempDate });
+            // Update existing
+            updateExam(activeExam.id, { 
+                name: tempName, 
+                date: tempDate, 
+                bookSpaceSupabaseId: linkedSpaceSupabaseId,
+                supabaseId: activeExam.supabaseId // Ensure we pass this for PUT logic in syncService
+            });
         } else {
-            addExam({ name: tempName, date: tempDate });
+            // Create new
+            addExam({ name: tempName, date: tempDate, bookSpaceSupabaseId: linkedSpaceSupabaseId });
         }
 
         // Only update spaces that changed
