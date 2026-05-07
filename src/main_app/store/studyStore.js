@@ -18,10 +18,42 @@ const useStudyStore = create(
       // Multi-exam state
       exams: [],
 
-      addExam: (exam) => set((state) => ({ exams: [...state.exams, { ...exam, id: crypto.randomUUID(), createdAt: new Date().toISOString(), isPaused: false }] })),
-      updateExam: (id, updates) => set((state) => ({ exams: state.exams.map(e => e.id === id ? { ...e, ...updates } : e) })),
-      deleteExam: (id) => set((state) => ({ exams: state.exams.filter(e => e.id !== id) })),
+      addExam: async (exam) => {
+        const newExam = { ...exam, id: exam.id || crypto.randomUUID(), createdAt: new Date().toISOString(), isPaused: false };
+        set((state) => ({ exams: [...state.exams, newExam] }));
+        try {
+          const syncService = (await import('../services/syncService')).default;
+          await syncService.saveExamReminder(newExam);
+        } catch (err) {
+          console.error('[StudyStore] Failed to save exam reminder to sync:', err);
+        }
+      },
+      updateExam: async (id, updates) => {
+        set((state) => ({ exams: state.exams.map(e => e.id === id ? { ...e, ...updates } : e) }));
+        const updatedExam = get().exams.find(e => e.id === id);
+        if (updatedExam) {
+          try {
+            const syncService = (await import('../services/syncService')).default;
+            await syncService.saveExamReminder(updatedExam);
+          } catch (err) {
+            console.error('[StudyStore] Failed to update exam reminder in sync:', err);
+          }
+        }
+      },
+      deleteExam: async (id) => {
+        const examToDelete = get().exams.find(e => e.id === id);
+        set((state) => ({ exams: state.exams.filter(e => e.id !== id) }));
+        if (examToDelete) {
+          try {
+            const syncService = (await import('../services/syncService')).default;
+            await syncService.deleteExamReminder(examToDelete.id);
+          } catch (err) {
+            console.error('[StudyStore] Failed to delete exam reminder from sync:', err);
+          }
+        }
+      },
       togglePauseExam: (id) => set((state) => ({ exams: state.exams.map(e => e.id === id ? { ...e, isPaused: !e.isPaused } : e) })),
+      setExams: (exams) => set({ exams }),
 
       /**
        * getTodayString — returns today as 'YYYY-MM-DD'

@@ -25,11 +25,13 @@ function BookShelf() {
   const [newSpaceName, setNewSpaceName] = useState('');
   const [selectedBooks, setSelectedBooks] = useState([]);
 
-  const handleCreateSpace = (e) => {
+  const handleCreateSpace = async (e) => {
     e.preventDefault();
     if (newSpaceName.trim()) {
-      const spaceId = createSpace(newSpaceName.trim(), '', null);
-      selectedBooks.forEach(id => addBookToSpace(spaceId, id));
+      const spaceId = await createSpace(newSpaceName.trim());
+      for (const id of selectedBooks) {
+        await addBookToSpace(spaceId, id);
+      }
 
       setNewSpaceName('');
       setSelectedBooks([]);

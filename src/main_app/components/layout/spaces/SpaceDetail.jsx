@@ -184,8 +184,10 @@ function SpaceDetail() {
                           {selectedBooksToAdd.length > 0 && (
                             <div className="flex justify-end mt-6 pt-6 border-t border-border-default/50">
                               <button 
-                                onClick={() => {
-                                  selectedBooksToAdd.forEach(id => addBookToSpace(selectedShelf.id, id));
+                                onClick={async () => {
+                                  for (const id of selectedBooksToAdd) {
+                                    await addBookToSpace(selectedShelf.id, id);
+                                  }
                                   setSelectedBooksToAdd([]);
                                   setIsAddingBooks(false);
                                 }}

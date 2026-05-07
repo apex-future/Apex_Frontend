@@ -54,7 +54,7 @@ export default function BookCard({ book, onClick }) {
         );
     };
 
-    const handleConfirmAddToSpace = () => {
+    const handleConfirmAddToSpace = async () => {
         // Sync Bookmark state
         const shouldBeBookmarked = selectedIds.includes('general');
         if (shouldBeBookmarked !== book.isBookmarked && toggleBookmarkedBook) {
@@ -62,16 +62,16 @@ export default function BookCard({ book, onClick }) {
         }
 
         // Sync Custom Spaces
-        spaces.filter(s => !s.isSystem).forEach(space => {
+        for (const space of spaces.filter(s => !s.isSystem)) {
             const wasIn = space.bookIds.includes(book.id);
             const shouldBeIn = selectedIds.includes(space.id);
             
             if (shouldBeIn && !wasIn) {
-                addBookToSpace(space.id, book.id);
+                await addBookToSpace(space.id, book.id);
             } else if (!shouldBeIn && wasIn) {
-                removeBookFromSpace(space.id, book.id);
+                await removeBookFromSpace(space.id, book.id);
             }
-        });
+        }
         
         setShowSpaceModal(false);
     };
