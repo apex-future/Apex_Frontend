@@ -160,8 +160,8 @@ export async function initiateMCQQuiz({ bookId, supabaseBookId, bookTitle, userI
   };
 
   const dexieId = await saveQuizToLocal(quizData);
-  // Fire-and-forget sync — don't await
-  syncQuizToSupabase(dexieId, quizData, userId, supabaseBookId).catch(() => {});
+  // Don't sync to Supabase here — the incomplete row will be synced
+  // once the quiz is completed (completeMCQQuiz), avoiding duplicate inserts.
 
   return { dexieId, questionsPayload: questions_payload };
 }
@@ -205,7 +205,8 @@ export async function initiateEssayQuiz({ bookId, supabaseBookId, bookTitle, use
   };
 
   const dexieId = await saveQuizToLocal(quizData);
-  syncQuizToSupabase(dexieId, quizData, userId, supabaseBookId).catch(() => {});
+  // Don't sync to Supabase here — the incomplete row will be synced
+  // once the quiz is completed (completeEssayQuiz), avoiding duplicate inserts.
 
   return { dexieId, questionsPayload: questions_payload };
 }

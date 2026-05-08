@@ -24,6 +24,7 @@ export default function BookCard({ book, onClick }) {
     // State for modals
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showSpaceModal, setShowSpaceModal] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
 
     const handleDetailsClick = (e) => {
         e.stopPropagation();
@@ -37,7 +38,42 @@ export default function BookCard({ book, onClick }) {
 
     const handleBookmarkClick = (e) => {
         e.stopPropagation();
+        // Pre-fill with current spaces the book is in
+        const currentIds = [];
+        if (book.isBookmarked) currentIds.push('general');
+        spaces.filter(s => !s.isSystem).forEach(s => {
+            if (s.bookIds.includes(book.id)) currentIds.push(s.id);
+        });
+        setSelectedIds(currentIds);
         setShowSpaceModal(true);
+    };
+
+    const toggleSelection = (id) => {
+        setSelectedIds(prev => 
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
+
+    const handleConfirmAddToSpace = async () => {
+        // Sync Bookmark state
+        const shouldBeBookmarked = selectedIds.includes('general');
+        if (shouldBeBookmarked !== book.isBookmarked && toggleBookmarkedBook) {
+            toggleBookmarkedBook(book.id);
+        }
+
+        // Sync Custom Spaces
+        for (const space of spaces.filter(s => !s.isSystem)) {
+            const wasIn = space.bookIds.includes(book.id);
+            const shouldBeIn = selectedIds.includes(space.id);
+            
+            if (shouldBeIn && !wasIn) {
+                await addBookToSpace(space.id, book.id);
+            } else if (!shouldBeIn && wasIn) {
+                await removeBookFromSpace(space.id, book.id);
+            }
+        }
+        
+        setShowSpaceModal(false);
     };
 
     const handleDeleteClick = (e) => {
@@ -168,7 +204,7 @@ export default function BookCard({ book, onClick }) {
                     onClick={(e) => { e.stopPropagation(); setShowSpaceModal(false); }}
                 >
                     <div 
-                        className="bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-neutral-100 dark:border-neutral-800" 
+                        className="bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-neutral-100 dark:border-neutral-800 flex flex-col" 
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/50">
@@ -180,20 +216,21 @@ export default function BookCard({ book, onClick }) {
                                 <X size={18} />
                             </button>
                         </div>
-                        <div className="p-3 max-h-[60vh] overflow-y-auto space-y-1">
+                        
+                        <div className="p-3 max-h-[50vh] overflow-y-auto space-y-1 custom-scrollbar">
                             {/* General Bookmarks */}
                             <div 
-                                className="flex items-center justify-between p-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 rounded-2xl cursor-pointer transition-colors group"
-                                onClick={() => { if (toggleBookmarkedBook) toggleBookmarkedBook(book.id); }}
+                                className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all group ${selectedIds.includes('general') ? 'bg-accent-primary/5 border border-accent-primary/20' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 border border-transparent'}`}
+                                onClick={() => toggleSelection('general')}
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-xl transition-colors ${book.isBookmarked ? 'bg-accent-primary/10 text-accent-primary' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'}`}>
-                                        <Bookmark size={18} fill={book.isBookmarked ? 'currentColor' : 'none'} />
+                                    <div className={`p-2 rounded-xl transition-colors ${selectedIds.includes('general') ? 'bg-accent-primary/10 text-accent-primary' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'}`}>
+                                        <Bookmark size={18} fill={selectedIds.includes('general') ? 'currentColor' : 'none'} />
                                     </div>
-                                    <span className="font-semibold text-neutral-700 dark:text-neutral-200 text-sm">General Bookmarks</span>
+                                    <span className="font-semibold text-neutral-700 dark:text-neutral-200 text-sm block">General Bookmarks</span>
                                 </div>
-                                <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${book.isBookmarked ? 'bg-accent-primary border-accent-primary' : 'border-neutral-300 dark:border-neutral-600 group-hover:border-accent-primary/50'}`}>
-                                    {book.isBookmarked && <span className="text-white text-[10px] font-bold">✓</span>}
+                                <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${selectedIds.includes('general') ? 'bg-accent-primary border-accent-primary' : 'border-neutral-300 dark:border-neutral-600 group-hover:border-accent-primary/50'}`}>
+                                    {selectedIds.includes('general') && <span className="text-white text-[10px] font-bold">✓</span>}
                                 </div>
                             </div>
 
@@ -201,27 +238,21 @@ export default function BookCard({ book, onClick }) {
 
                             {/* Custom Spaces */}
                             {spaces.filter(s => !s.isSystem).map(space => {
-                                const inSpace = space.bookIds.includes(book.id);
+                                const isSelected = selectedIds.includes(space.id);
                                 return (
                                     <div 
                                         key={space.id}
-                                        className="flex items-center justify-between p-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 rounded-2xl cursor-pointer transition-colors group"
-                                        onClick={() => {
-                                            if (inSpace) {
-                                                removeBookFromSpace(space.id, book.id);
-                                            } else {
-                                                addBookToSpace(space.id, book.id);
-                                            }
-                                        }}
+                                        className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all group ${isSelected ? 'bg-accent-primary/5 border border-accent-primary/20' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 border border-transparent'}`}
+                                        onClick={() => toggleSelection(space.id)}
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-500/20 dark:to-blue-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold uppercase text-xs border border-indigo-100/50 dark:border-indigo-500/20">
                                                 {space.name.substring(0, 2)}
                                             </div>
-                                            <span className="font-semibold text-neutral-700 dark:text-neutral-200 text-sm">{space.name}</span>
+                                            <span className="font-semibold text-neutral-700 dark:text-neutral-200 text-sm block">{space.name}</span>
                                         </div>
-                                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${inSpace ? 'bg-accent-primary border-accent-primary' : 'border-neutral-300 dark:border-neutral-600 group-hover:border-accent-primary/50'}`}>
-                                            {inSpace && <span className="text-white text-[10px] font-bold">✓</span>}
+                                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${isSelected ? 'bg-accent-primary border-accent-primary' : 'border-neutral-300 dark:border-neutral-600 group-hover:border-accent-primary/50'}`}>
+                                            {isSelected && <span className="text-white text-[10px] font-bold">✓</span>}
                                         </div>
                                     </div>
                                 );
@@ -236,6 +267,17 @@ export default function BookCard({ book, onClick }) {
                                     <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Create spaces to organize your library.</p>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Footer Action Button */}
+                        <div className="p-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
+                            <button
+                                onClick={handleConfirmAddToSpace}
+                                className="w-full py-3.5 px-4 bg-accent-primary hover:bg-accent-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-accent-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                            >
+                                <Bookmark size={18} fill="currentColor" />
+                                <span>Add to Bookspace</span>
+                            </button>
                         </div>
                     </div>
                 </div>

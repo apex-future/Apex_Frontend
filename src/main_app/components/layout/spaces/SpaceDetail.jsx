@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Plus, Clock, FileText, Calendar } from 'lucide-react'
+import { ArrowLeft, BookOpen, Plus, Clock, FileText, Calendar, X, Check } from 'lucide-react'
 import { BookContext } from "../../../context/BookContextInstance"
 import useSpaceStore from '../../../store/spaceStore'
 import useStudyStore from '../../../store/studyStore'
@@ -19,12 +19,11 @@ function SpaceDetail() {
   const navigate = useNavigate();
   const { shelves, books, handleBookClick } = useContext(BookContext);
   const { addBookToSpace, setActiveSpace, updateSpace } = useSpaceStore();
-  const { examDate: globalExamDate, setExamDate: setGlobalExamDate } = useStudyStore();
+  const { exams, examDate: globalExamDate, examName: globalExamName, setExamDate: setGlobalExamDate } = useStudyStore();
   const { getAggregatedStatsForSpace } = useQuizStore();
   const spaceQuizStats = getAggregatedStatsForSpace(spaceId);
   const [isAddingBooks, setIsAddingBooks] = useState(false);
-  const [isEditingExam, setIsEditingExam] = useState(false);
-  const [tempExamDate, setTempExamDate] = useState('');
+  const [selectedBooksToAdd, setSelectedBooksToAdd] = useState([]);
   const [activeTab, setActiveTab] = useState('books');
 
   useEffect(() => {
@@ -35,6 +34,19 @@ function SpaceDetail() {
   const selectedShelf = useMemo(() => {
     return shelves?.find(s => s.id === spaceId);
   }, [shelves, spaceId]);
+
+  // Find linked exam
+  const linkedExam = useMemo(() => {
+    if (!selectedShelf?.examDate) return null;
+    // Check multi-exams
+    const multiMatch = exams.find(e => e.date === selectedShelf.examDate);
+    if (multiMatch) return multiMatch;
+    // Check legacy fallback
+    if (globalExamDate === selectedShelf.examDate) {
+        return { name: globalExamName || 'Upcoming Exam', date: globalExamDate };
+    }
+    return null;
+  }, [exams, selectedShelf?.examDate, globalExamDate, globalExamName]);
 
   if (!selectedShelf) {
     return (
@@ -67,13 +79,12 @@ function SpaceDetail() {
             <h3 className='text-xl font-bold font-display text-text-primary'>{selectedShelf.name}</h3>
             <div className="flex items-center gap-3 mt-1">
                <p className="text-xs text-text-tertiary font-medium">{selectedShelf.books?.length || 0} {selectedShelf.books?.length === 1 ? 'book' : 'books'}</p>
-               {!selectedShelf.isSystem && (
+               {linkedExam && (
                    <div 
-                     onClick={() => { setIsEditingExam(true); setTempExamDate(selectedShelf.examDate || globalExamDate || ''); }}
-                     className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-accent-primary/10 text-accent-primary px-2 py-0.5 rounded cursor-pointer hover:bg-accent-primary/20 transition-colors"
+                     className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-accent-primary/10 text-accent-primary px-2.5 py-1 rounded-full border border-accent-primary/20"
                    >
-                     <Calendar size={10} />
-                     {selectedShelf.examDate ? `${new Date(selectedShelf.examDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Link Exam'}
+                     <Calendar size={10} strokeWidth={3} />
+                     <span>{linkedExam.name} <span className="mx-0.5 opacity-40">•</span> {new Date(linkedExam.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                    </div>
                )}
             </div>
@@ -92,41 +103,6 @@ function SpaceDetail() {
           )}
         </div>
       </div>
-
-      {/* Edit Exam Date Inline UI */}
-      {isEditingExam && (
-         <div className="w-[90%] mx-auto mt-4">
-            <div className="p-4 bg-white dark:bg-zinc-900 border border-border-default rounded-2xl shadow-sm flex items-center justify-between gap-4">
-               <div className="flex flex-col flex-1">
-                  <span className="text-xs font-bold text-text-tertiary uppercase mb-1">Set Exam Date for {selectedShelf.name}</span>
-                  <input 
-                     type="date" 
-                     value={tempExamDate}
-                     onChange={(e) => setTempExamDate(e.target.value)}
-                     className="bg-neutral-100 dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-primary"
-                  />
-               </div>
-               <div className="flex gap-2">
-                  <button 
-                     onClick={() => setIsEditingExam(false)}
-                     className="px-4 py-2 text-sm font-semibold text-text-secondary hover:bg-neutral-100 dark:hover:bg-zinc-800 rounded-xl"
-                  >
-                     Cancel
-                  </button>
-                  <button 
-                     onClick={() => {
-                        updateSpace(selectedShelf.id, { examDate: tempExamDate, isLinkedToExam: true });
-                        setGlobalExamDate(tempExamDate); // Also sync globally for dashboard
-                        setIsEditingExam(false);
-                     }}
-                     className="px-4 py-2 text-sm font-bold bg-accent-primary text-white rounded-xl hover:bg-accent-pressed"
-                  >
-                     Save Link
-                  </button>
-               </div>
-            </div>
-         </div>
-      )}
 
       {/* Tabs */}
       <div className="w-[90%] mx-auto mt-6">
@@ -159,31 +135,68 @@ function SpaceDetail() {
                     <div className="w-full">
                       {/* Add Books Inline UI */}
                       {isAddingBooks && (
-                        <div className="w-full py-6 mb-4 border border-border-default rounded-3xl">
-                          <div className="flex justify-between items-center mb-4">
-                             <h3 className="text-lg font-bold text-text-primary">Select Books to Add</h3>
-                             <button onClick={() => setIsAddingBooks(false)} className="text-sm font-semibold text-text-tertiary hover:text-text-primary">Close</button>
+                        <div className="w-full p-6 sm:p-8 mb-8 bg-bg-elevated/50 backdrop-blur-xl border border-border-default rounded-card shadow-lg animate-in fade-in zoom-in-95 duration-300">
+                          <div className="flex justify-between items-center mb-6 px-1">
+                             <h3 className="text-lg font-black text-text-primary tracking-tight">Select Books to Add</h3>
+                             <button 
+                               onClick={() => { setIsAddingBooks(false); setSelectedBooksToAdd([]); }} 
+                               className="p-2 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all"
+                             >
+                               <X size={20} />
+                             </button>
                           </div>
-                          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                            {books.filter(b => !selectedShelf.bookIds?.includes(b.id)).map(book => (
-                              <div key={book.id} className="flex-shrink-0 w-32 cursor-pointer transition-transform hover:scale-105" onClick={() => {
-                                 addBookToSpace(selectedShelf.id, book.id);
-                                 setIsAddingBooks(false);
-                              }}>
-                                <div className="w-full h-40 rounded shadow border border-border-default overflow-hidden relative">
-                                   {book.cover ? (
-                                      <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
-                                   ) : (
-                                      <BookCover title={book.title} author={book.author} className="w-full h-full" />
-                                   )}
+                          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide py-4 px-1">
+                            {books.filter(b => !selectedShelf.bookIds?.includes(b.id)).map(book => {
+                              const isSelected = selectedBooksToAdd.includes(book.id);
+                              return (
+                                <div 
+                                  key={book.id} 
+                                  className={`flex-shrink-0 w-28 relative cursor-pointer transition-all duration-300 hover:scale-110 rounded-lg border-2 bg-bg-elevated ${isSelected ? 'border-accent-primary shadow-lg shadow-accent-primary/20' : 'border-transparent'}`}
+                                  onClick={() => {
+                                    setSelectedBooksToAdd(prev => isSelected ? prev.filter(id => id !== book.id) : [...prev, book.id]);
+                                  }}
+                                >
+                                  <div className="w-full h-36 rounded-md shadow-sm border border-border-default overflow-hidden relative">
+                                     {book.cover ? (
+                                        <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
+                                     ) : (
+                                        <BookCover title={book.title} author={book.author} className="w-full h-full" />
+                                     )}
+                                  </div>
+                                  
+                                  {isSelected && (
+                                    <div className="absolute -top-2 -right-2 bg-accent-primary text-white rounded-full p-1 shadow-md scale-in-center z-10">
+                                      <Check size={14} strokeWidth={4} />
+                                    </div>
+                                  )}
+                                  
+                                  <p className="text-[10px] font-bold mt-2 truncate px-2 pb-2 text-text-secondary">{book.title}</p>
                                 </div>
-                                <p className="text-xs font-semibold mt-2 truncate">{book.title}</p>
-                              </div>
-                            ))}
+                              );
+                            })}
                             {books.filter(b => !selectedShelf.bookIds?.includes(b.id)).length === 0 && (
-                              <p className="text-sm text-text-tertiary">No more books available to add.</p>
+                              <div className="w-full py-8 text-center bg-bg-subtle/50 rounded-2xl border-2 border-dashed border-border-default">
+                                <p className="text-sm font-bold text-text-tertiary italic">No more books available to add.</p>
+                              </div>
                             )}
                           </div>
+                          
+                          {selectedBooksToAdd.length > 0 && (
+                            <div className="flex justify-end mt-6 pt-6 border-t border-border-default/50">
+                              <button 
+                                onClick={async () => {
+                                  for (const id of selectedBooksToAdd) {
+                                    await addBookToSpace(selectedShelf.id, id);
+                                  }
+                                  setSelectedBooksToAdd([]);
+                                  setIsAddingBooks(false);
+                                }}
+                                className="px-8 py-3 bg-accent-primary text-white font-bold rounded-2xl shadow-xl shadow-accent-primary/20 hover:bg-accent-pressed active:scale-95 transition-all"
+                              >
+                                Add {selectedBooksToAdd.length} {selectedBooksToAdd.length === 1 ? 'Book' : 'Books'}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
 

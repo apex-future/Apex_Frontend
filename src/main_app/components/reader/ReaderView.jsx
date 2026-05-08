@@ -124,46 +124,46 @@ function ReaderView() {
     const streakStartTimeRef = useRef(null);
 
     useEffect(() => {
-        // Don't start timer if book isn't loaded yet
         if (isLoading || !bookId) return;
 
-        // Check if streak already fired today — don't double count
-        const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
+        // Check if streak already fired today — but DON'T return early
+        const today = new Date().toLocaleDateString('en-CA');
         const lastActive = localStorage.getItem('apex_streak_fired_today');
         if (lastActive === today) {
-            console.log('[Apex Streak] Already fired today — timer skipped');
+            console.log('[Apex Streak] Already fired today — streak will be skipped, timer continues');
             streakFiredTodayRef.current = true;
         }
 
-        if (streakFiredTodayRef.current) return;
+        // Timer always starts regardless of streak state
+        const STREAK_DURATION = 60 * 1000;
 
-        const STREAK_DURATION = 60 * 1000; // 60 seconds
-        const remainingTime = STREAK_DURATION - streakElapsedRef.current;
-
-        console.log('[Apex Streak] Starting 1-minute reading timer... (' + Math.round(remainingTime / 1000) + 's remaining)');
+        console.log('[Apex Streak] Starting 1-minute reading timer...');
         streakStartTimeRef.current = Date.now();
 
-        streakTimerRef.current = setInterval(() => {
-            console.log('[Apex Reader] 60 seconds passed - logging activity');
-            
-            // Log space activity unconditionally every 60 seconds
-            if (activeSpaceId) {
-                logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
-            }
+        const runInterval = () => {
+            streakTimerRef.current = setInterval(() => {
+                console.log('[Apex Reader] 60 seconds passed - logging activity');
 
-            // Increment reading time in Dexie + Supabase — 1 minute has passed
-            if (book?.id) {
-                syncService.incrementReadingTime(book.id);
-            }
+                // Always runs — reading time and space activity are not streak-gated
+                if (activeSpaceId) {
+                    logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
+                }
 
-            // Fire daily streak ONCE per day
-            if (!streakFiredTodayRef.current) {
-                updateStreakRef.current();
-                setShowStreakCelebration(true);
-                streakFiredTodayRef.current = true;
-                localStorage.setItem('apex_streak_fired_today', new Date().toLocaleDateString('en-CA'));
-            }
-        }, STREAK_DURATION);
+                if (book?.id) {
+                    syncService.incrementReadingTime(book.id);
+                }
+
+                // Streak fires once per day only
+                if (!streakFiredTodayRef.current) {
+                    updateStreakRef.current();
+                    setShowStreakCelebration(true);
+                    streakFiredTodayRef.current = true;
+                    localStorage.setItem('apex_streak_fired_today', new Date().toLocaleDateString('en-CA'));
+                }
+            }, STREAK_DURATION);
+        };
+
+        runInterval();
 
         const handleVisibilityChange = () => {
             if (document.hidden) {
@@ -171,23 +171,7 @@ function ReaderView() {
                 clearInterval(streakTimerRef.current);
             } else {
                 console.log('[Apex Reader] Tab visible — resuming timer');
-                // Restart interval
-                streakTimerRef.current = setInterval(() => {
-                    console.log('[Apex Reader] 60 seconds passed - logging activity');
-                    if (activeSpaceId) logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
-
-                    // Increment reading time in Dexie + Supabase — 1 minute has passed
-                    if (book?.id) {
-                        syncService.incrementReadingTime(book.id);
-                    }
-
-                    if (!streakFiredTodayRef.current) {
-                        updateStreakRef.current();
-                        setShowStreakCelebration(true);
-                        streakFiredTodayRef.current = true;
-                        localStorage.setItem('apex_streak_fired_today', new Date().toLocaleDateString('en-CA'));
-                    }
-                }, STREAK_DURATION);
+                runInterval();
             }
         };
 
@@ -250,8 +234,6 @@ function ReaderView() {
 
     function handleDocumentLoad({ numPages: total }) {
         setNumPages(total);
-<<<<<<< HEAD
-
         // Persist totalPages to Dexie immediately — this is the source of truth
         // for progress calculation across all devices
         if (book?.id && total > 1) {
@@ -269,11 +251,8 @@ function ReaderView() {
             }
         }
 
-        syncProgress(pageNumber, total);
-=======
         // Defer syncProgress to avoid updating BookProvider state during PDF render
         Promise.resolve().then(() => syncProgress(pageNumber, total));
->>>>>>> e25ccfb9c4e343ef79869772582e96667afdfdbb
     }
 
     function syncProgress(page, total) {

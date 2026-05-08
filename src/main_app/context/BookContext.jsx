@@ -187,16 +187,11 @@ export const BookProvider = ({ children }) => {
 
             return {
               ...b,
-<<<<<<< HEAD
               isUploading: false,
               progress: computedProgress,
               currentPage: currentPage || 1,
               totalPages: totalPages,
-=======
-              progress: progress?.progressPercentage || b.progress || 0,
-              currentPage: progress?.currentPage || b.currentPage || 1,
               scrollPosition: progress?.scrollPosition || b.scrollPosition || 0,
->>>>>>> e25ccfb9c4e343ef79869772582e96667afdfdbb
               metadata: {
                 ...(b.metadata || {}),
                 highlights: mergedHighlights,
@@ -462,24 +457,16 @@ export const BookProvider = ({ children }) => {
           .catch(err => console.error("Failed to update progress in Dexie:", err));
 
         // Use direct save via syncService (this is debounced inside syncService)
-<<<<<<< HEAD
+        // Pass supabaseId directly — after pull sync, Dexie IDs change but React
+        // state keeps old IDs, so _resolveBookId(oldDexieId) fails. Passing
+        // the supabaseId we already have bypasses the broken Dexie lookup.
         // Send total_pages so progress can be computed from current_page / total_pages
         if (syncService.saveProgress) {
           syncService.saveProgress(id, {
             current_page: currentPage,
-            scroll_position: 0,
-            total_pages: totalPages || 1,
-=======
-        // Pass supabaseId directly — after pull sync, Dexie IDs change but React
-        // state keeps old IDs, so _resolveBookId(oldDexieId) fails. Passing
-        // the supabaseId we already have bypasses the broken Dexie lookup.
-        if (syncService.saveProgress) {
-          syncService.saveProgress(id, {
-            current_page: currentPage,
             scroll_position: scrollPosition,
-            progress_percentage: progress,
+            total_pages: totalPages || 1,
             _supabase_book_id: updatedBook.supabaseId || null,
->>>>>>> e25ccfb9c4e343ef79869772582e96667afdfdbb
           });
         }
       }

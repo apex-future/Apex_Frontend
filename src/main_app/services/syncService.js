@@ -4,6 +4,7 @@ import apiClient from './apiClient';
 import authService from './authService';
 import useAuthStore from '../store/authStore';
 import useSettingsStore from '../store/settingsStore';
+import useSpaceStore from '../store/spaceStore';
 
 // Helper: generate a local ID
 function generateLocalId() {
@@ -277,6 +278,8 @@ const syncService = {
           highlights: new Date().toISOString(),
           bookmarks: new Date().toISOString(),
           notes: new Date().toISOString(),
+          book_spaces: new Date().toISOString(),
+          exam_reminders: new Date().toISOString(),
           server_time: new Date().toISOString(),
         };
         serverTime = new Date().toISOString();
@@ -287,7 +290,7 @@ const syncService = {
       if (import.meta.env.DEV) console.log('[Apex Sync] Last synced at:', lastSyncedAt || 'never (first sync on this device)');
 
       // Step 3: Decide action per table — no client clock involved
-      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'notes'];
+      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'notes', 'book_spaces', 'exam_reminders'];
       const decisions = {};
 
       for (const table of tables) {
@@ -470,6 +473,106 @@ const syncService = {
           }));
           for (const m of mapped) { delete m.id; }
           await db.notes.bulkAdd(mapped);
+        }
+
+        // ── BOOK SPACES ──
+        if (pulledData.book_spaces?.length > 0) {
+          console.log('[Apex Sync] Pulling book_spaces:', pulledData.book_spaces.length);
+          await db.book_spaces.clear();
+          const mappedSpaces = pulledData.book_spaces.map(s => ({
+            local_id: s.local_id || s.id,
+            supabaseId: s.id,
+            name: s.name,
+            cover_color: s.cover_color || '#8B5CF6',
+            synced: true,
+            createdAt: s.created_at,
+            updatedAt: s.updated_at,
+          }));
+          await db.book_spaces.bulkAdd(mappedSpaces);
+
+          // Rehydrate Zustand spaceStore — preserve system spaces
+          const { spaces: currentSpaces } = useSpaceStore.getState();
+          const systemSpaces = currentSpaces.filter(s => s.isSystem);
+          const pulledUserSpaces = mappedSpaces.map(s => ({
+            id: s.local_id,
+            local_id: s.local_id,
+            supabaseId: s.supabaseId,
+            name: s.name,
+            isSystem: false,
+            bookIds: [],
+            goals: [],
+            activitySummaries: { timeSpent: 0, pagesRead: 0, quizzesTaken: 0, aiInteractions: 0 },
+            synced: true,
+          }));
+          useSpaceStore.setState({ spaces: [...systemSpaces, ...pulledUserSpaces] });
+          console.log('[Apex Sync] Zustand spaceStore rehydrated with', pulledUserSpaces.length, 'spaces');
+        }
+
+        // ── BOOK SPACE BOOKS ──
+        if (pulledData.book_space_books?.length > 0) {
+          console.log('[Apex Sync] Pulling book_space_books:', pulledData.book_space_books.length);
+          await db.book_space_books.clear();
+          const localBooks = await db.books.toArray();
+          const supabaseIdToDexieId = {};
+          for (const b of localBooks) { if (b.supabaseId) supabaseIdToDexieId[b.supabaseId] = b.id; }
+
+          const mappedJoins = pulledData.book_space_books.map(r => ({
+            local_id: r.id,
+            supabaseId: r.id,
+            spaceLocalId: r.book_space_id,
+            spaceSupabaseId: r.book_space_id,
+            bookSupabaseId: r.book_id,
+            synced: true,
+            addedAt: r.added_at,
+          }));
+          await db.book_space_books.bulkAdd(mappedJoins);
+
+          // Rehydrate bookIds in Zustand spaceStore
+          const spaceBookMap = {};
+          for (const r of pulledData.book_space_books) {
+            if (!spaceBookMap[r.book_space_id]) spaceBookMap[r.book_space_id] = [];
+            const localBookId = supabaseIdToDexieId[r.book_id];
+            if (localBookId !== undefined) spaceBookMap[r.book_space_id].push(localBookId);
+          }
+          const { spaces } = useSpaceStore.getState();
+          useSpaceStore.setState({
+            spaces: spaces.map(s => {
+              if (s.isSystem) return s;
+              const localBookIds = spaceBookMap[s.supabaseId] || [];
+              return { ...s, bookIds: localBookIds };
+            })
+          });
+          console.log('[Apex Sync] bookIds rehydrated into Zustand spaces');
+        }
+
+        // ── EXAM REMINDERS ──
+        if (pulledData.exam_reminders?.length > 0) {
+          console.log('[Apex Sync] Pulling exam_reminders:', pulledData.exam_reminders.length);
+          await db.exam_reminders.clear();
+          const mappedReminders = pulledData.exam_reminders.map(r => ({
+            local_id: r.local_id || r.id,
+            supabaseId: r.id,
+            examName: r.exam_name,
+            examDate: r.exam_date,
+            isActive: r.is_active,
+            bookSpaceSupabaseId: r.book_space_id || null,
+            synced: true,
+            createdAt: r.created_at,
+            updatedAt: r.updated_at,
+          }));
+          await db.exam_reminders.bulkAdd(mappedReminders);
+
+          // Rehydrate studyStore exams from pulled exam reminders
+          const { default: useStudyStore } = await import('../store/studyStore');
+          const examsMapped = mappedReminders.map(r => ({
+            id: r.local_id,
+            supabaseId: r.supabaseId,
+            name: r.examName,
+            date: r.examDate,
+            isPaused: !r.isActive,
+          }));
+          useStudyStore.getState().setExams(examsMapped);
+          console.log('[Apex Sync] studyStore exams rehydrated:', examsMapped.length);
         }
 
         // ── AI CONVERSATIONS (Category B — always pull, no conflict resolution) ──
@@ -964,6 +1067,91 @@ const syncService = {
         if (import.meta.env.DEV) console.log('[Apex] Note deleted from Supabase:', supabaseId);
       } catch (err) {
         if (import.meta.env.DEV) console.error('[Apex] Failed to delete note from Supabase:', err);
+      }
+    }
+  },
+
+  // ============================================
+  // EXAM REMINDERS — save & delete (called by studyStore)
+  // ============================================
+  saveExamReminder: async function (examData) {
+    console.log('[ExamReminders] saveExamReminder called for:', examData.name, 'Payload:', examData);
+    const localId = examData.id || generateLocalId();
+    const now = new Date().toISOString();
+
+    const dexieRecord = {
+      local_id: localId,
+      examName: examData.name,
+      examDate: examData.date,
+      isActive: !examData.isPaused,
+      bookSpaceSupabaseId: examData.bookSpaceSupabaseId || null,
+      synced: false,
+      supabaseId: examData.supabaseId || null,
+      updatedAt: now,
+    };
+
+    // Upsert in Dexie (local_id is unique index)
+    const existing = await db.exam_reminders.where('local_id').equals(localId).first();
+    let dexieId;
+    if (existing) {
+      await db.exam_reminders.update(existing.id, dexieRecord);
+      dexieId = existing.id;
+    } else {
+      dexieRecord.createdAt = now;
+      dexieId = await db.exam_reminders.add(dexieRecord);
+    }
+
+    if (navigator.onLine) {
+      try {
+        const payload = {
+          exam_name: examData.name,
+          exam_date: examData.date,
+          is_active: !examData.isPaused,
+          book_space_id: examData.bookSpaceSupabaseId || null,
+          local_id: localId,
+        };
+
+        let response;
+        if (examData.supabaseId) {
+          console.log('[ExamReminders] Updating existing exam on Supabase:', examData.supabaseId);
+          response = await apiClient.put(`/api/exam-reminders/${examData.supabaseId}`, payload);
+        } else {
+          console.log('[ExamReminders] Creating new exam on Supabase');
+          response = await apiClient.post('/api/exam-reminders', payload);
+        }
+
+        await db.exam_reminders.update(dexieId, {
+          supabaseId: response.data.id,
+          synced: true,
+        });
+        return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
+      } catch (err) {
+        console.error('[ExamReminders] Failed to sync to Supabase:', err);
+      }
+    }
+
+    return { ...dexieRecord, id: dexieId };
+  },
+
+  deleteExamReminder: async function (localId) {
+    console.log('[ExamReminders] deleteExamReminder called for local_id:', localId);
+
+    let supabaseId = null;
+    try {
+      const record = await db.exam_reminders.where('local_id').equals(localId).first();
+      if (record) {
+        supabaseId = record.supabaseId;
+        await db.exam_reminders.delete(record.id);
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('[ExamReminders] Dexie delete failed:', err);
+    }
+
+    if (navigator.onLine && supabaseId) {
+      try {
+        await apiClient.delete(`/api/exam-reminders/${supabaseId}`);
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('[ExamReminders] Failed to delete from Supabase:', err);
       }
     }
   },
