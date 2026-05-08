@@ -187,10 +187,16 @@ export const BookProvider = ({ children }) => {
 
             return {
               ...b,
+<<<<<<< HEAD
               isUploading: false,
               progress: computedProgress,
               currentPage: currentPage || 1,
               totalPages: totalPages,
+=======
+              progress: progress?.progressPercentage || b.progress || 0,
+              currentPage: progress?.currentPage || b.currentPage || 1,
+              scrollPosition: progress?.scrollPosition || b.scrollPosition || 0,
+>>>>>>> e25ccfb9c4e343ef79869772582e96667afdfdbb
               metadata: {
                 ...(b.metadata || {}),
                 highlights: mergedHighlights,
@@ -435,14 +441,14 @@ export const BookProvider = ({ children }) => {
     }
   }, [books]);
 
-  const updateBookProgress = useCallback(async (id, progress, currentPage, totalPages) => {
+  const updateBookProgress = useCallback(async (id, progress, currentPage, totalPages, scrollPosition = 0) => {
     setShelves((prevShelves) => {
       let updatedBook = null;
       const newShelves = prevShelves.map((shelf) => ({
         ...shelf,
         books: shelf.books.map((book) => {
           if (book.id === id) {
-            updatedBook = { ...book, progress, currentPage, totalPages };
+            updatedBook = { ...book, progress, currentPage, totalPages, scrollPosition };
             return updatedBook;
           }
           return book;
@@ -452,16 +458,28 @@ export const BookProvider = ({ children }) => {
       if (updatedBook) {
         const now = new Date().toISOString();
         // Update in Dexie books table
-        db.books.update(id, { progress, currentPage, totalPages, lastReadAt: now })
+        db.books.update(id, { progress, currentPage, totalPages, scrollPosition, lastReadAt: now })
           .catch(err => console.error("Failed to update progress in Dexie:", err));
 
         // Use direct save via syncService (this is debounced inside syncService)
+<<<<<<< HEAD
         // Send total_pages so progress can be computed from current_page / total_pages
         if (syncService.saveProgress) {
           syncService.saveProgress(id, {
             current_page: currentPage,
             scroll_position: 0,
             total_pages: totalPages || 1,
+=======
+        // Pass supabaseId directly — after pull sync, Dexie IDs change but React
+        // state keeps old IDs, so _resolveBookId(oldDexieId) fails. Passing
+        // the supabaseId we already have bypasses the broken Dexie lookup.
+        if (syncService.saveProgress) {
+          syncService.saveProgress(id, {
+            current_page: currentPage,
+            scroll_position: scrollPosition,
+            progress_percentage: progress,
+            _supabase_book_id: updatedBook.supabaseId || null,
+>>>>>>> e25ccfb9c4e343ef79869772582e96667afdfdbb
           });
         }
       }
@@ -504,7 +522,7 @@ export const BookProvider = ({ children }) => {
 
         if (isBookmarked) {
           // It was added
-          syncService.saveBookmark(bookId, { page_number: page, label: `Page ${page}` });
+          syncService.saveBookmark(bookId, { page_number: page, label: `Page ${page}`, _supabase_book_id: updatedBook?.supabaseId || null });
         } else {
           // It was removed. We need to find the record in Dexie to delete it.
           db.bookmarks.where({ bookId, pageNumber: page }).first().then(record => {
@@ -845,6 +863,7 @@ export const BookProvider = ({ children }) => {
   const addHighlight = useCallback(async (bookId, highlight) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
     const highlightId = Date.now();
+    let bookSupabaseId = null;
 
     // Update UI state immediately
     setShelves((prevShelves) => {
@@ -853,6 +872,7 @@ export const BookProvider = ({ children }) => {
         ...shelf,
         books: shelf.books.map((book) => {
           if (book.id !== targetId) return book;
+          bookSupabaseId = book.supabaseId || null;
           const existingHighlights = book.metadata?.highlights || [];
           updatedBook = {
             ...book,
@@ -879,6 +899,7 @@ export const BookProvider = ({ children }) => {
         page_number: highlight.page || highlight.pageNumber || 0,
         text_position: highlight.position || highlight.textPosition || '',
         note: highlight.note || null,
+        _supabase_book_id: bookSupabaseId,
       });
 
       if (savedRecord) {
@@ -966,8 +987,10 @@ export const BookProvider = ({ children }) => {
 
     console.log('[Apex] addNote called for bookId:', targetId, '| type:', noteObj.type);
 
+    // Find the book's supabaseId for sync resolution
+    const bookObj = books.find(b => b.id === targetId);
     // Save to Dexie + Supabase via syncService
-    const savedNote = await syncService.saveNote(targetId, noteObj);
+    const savedNote = await syncService.saveNote(targetId, { ...noteObj, _supabase_book_id: bookObj?.supabaseId || null });
     if (!savedNote) return;
 
     // Build UI note object

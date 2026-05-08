@@ -250,6 +250,7 @@ function ReaderView() {
 
     function handleDocumentLoad({ numPages: total }) {
         setNumPages(total);
+<<<<<<< HEAD
 
         // Persist totalPages to Dexie immediately — this is the source of truth
         // for progress calculation across all devices
@@ -269,6 +270,10 @@ function ReaderView() {
         }
 
         syncProgress(pageNumber, total);
+=======
+        // Defer syncProgress to avoid updating BookProvider state during PDF render
+        Promise.resolve().then(() => syncProgress(pageNumber, total));
+>>>>>>> e25ccfb9c4e343ef79869772582e96667afdfdbb
     }
 
     function syncProgress(page, total) {
@@ -278,7 +283,7 @@ function ReaderView() {
         const progress = Math.min(Math.round((page / effectiveTotal) * 100), 100);
         setLocalProgress(progress);
         setLocalPages({ current: page, total: effectiveTotal });
-        updateBookProgress(book.id, progress, page, effectiveTotal);
+        updateBookProgress(book.id, progress, page, effectiveTotal, 0);
     }
 
     function goToPage(n) {
@@ -771,7 +776,13 @@ function ReaderView() {
     useEffect(() => {
         if (!bookId || !book || lastBookIdRef.current === bookId) return;
         lastBookIdRef.current = bookId;
-        window.scrollTo(0, 0);
+        // For non-PDF books, restore saved scroll position; for PDFs, page number handles it
+        if (!isPdf && book.scrollPosition > 0) {
+            // Delay to let content render before scrolling
+            setTimeout(() => window.scrollTo(0, book.scrollPosition), 300);
+        } else {
+            window.scrollTo(0, 0);
+        }
         Promise.resolve().then(() => {
             setLocalProgress(book.progress || 0);
             setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
@@ -805,7 +816,7 @@ function ReaderView() {
             if (now - lastUpdateRef.current > 300) {
                 const hasChanged = progress !== b.progress || currentPage !== b.currentPage || totalPages !== b.totalPages;
                 if (hasChanged || progress === 100) {
-                    updateProgressRef.current(b.id, progress, currentPage, totalPages);
+                    updateProgressRef.current(b.id, progress, currentPage, totalPages, scrollY);
                     lastUpdateRef.current = now;
                 }
             }

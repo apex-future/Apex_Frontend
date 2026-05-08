@@ -276,8 +276,21 @@ const PDFReader = ({
   }, []);
 
   // Handle programmatic scroll for goToPage in vertical mode
+  const initialScrollDone = useRef(false);
   useEffect(() => {
     if (!isVertical || !rowVirtualizer || !numPages) return;
+
+    // On initial load, scroll to the saved page even if pageNumber === lastReportedPage.
+    // This is needed because lastReportedPage is initialized to pageNumber (same value),
+    // so the guard below would skip the scroll on first load.
+    if (!initialScrollDone.current && pageNumber > 1) {
+      rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start' });
+      lastReportedPage.current = pageNumber;
+      initialScrollDone.current = true;
+      return;
+    }
+    initialScrollDone.current = true;
+
     if (pageNumber === lastReportedPage.current) return;
     rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start', behavior: 'smooth' });
     lastReportedPage.current = pageNumber;
