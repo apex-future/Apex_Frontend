@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react'
-import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Settings, WholeWord } from 'lucide-react'
+import React, { useRef, useEffect, useState } from 'react'
+import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Maximize, Minimize, Settings, WholeWord } from 'lucide-react'
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
@@ -20,6 +20,8 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
     setLeftPanel: internalSetLeftPanel, // renamed to avoid conflict if any
   } = readerControls || {};
 
+  const [isFullScreen, setIsFullScreen] = useState(!!document.fullscreenElement);
+
   useEffect(() => {
     if (topBarRef.current) {
       gsap.killTweensOf(topBarRef.current);
@@ -37,7 +39,26 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         { y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.7)' }
       );
     }
+
+    const handleFsChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
+
+  const handleFullScreen = (e) => {
+    e.stopPropagation();
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
 
   return (
     <div className='fixed inset-0 z-50 flex flex-col justify-between p-2 pr-4 sm:pr-6 pointer-events-none'>
@@ -107,7 +128,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         className="bottom-bar flex flex-col gap-4 items-center pointer-events-auto w-full px-2 pb-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className='flex items-center justify-between w-full'>
+        <div className='flex items-end sm:items-center justify-between w-full'>
           {/* Lock — toggles pan/scroll lock */}
           <button
             className={`w-10 h-10 flex items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${locked
@@ -123,14 +144,30 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
             }
           </button>
 
-          {/* Fit-to-screen — resets zoom to 100% */}
-          <button
-            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
-            onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
-            title="Fit to screen (reset zoom)"
-          >
-            <Fullscreen strokeWidth={2} size={18} />
-          </button>
+          {/* Bottom Right Controls — Fit-to-screen and Browser Fullscreen */}
+          <div className='flex flex-col-reverse sm:flex-row items-center gap-2 sm:gap-3'>
+            {/* Fit-to-screen — resets zoom to 100% */}
+            <button
+              className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+              onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
+              title="Fit to screen (reset zoom)"
+            >
+              <Fullscreen strokeWidth={2} size={18} />
+            </button>
+
+            {/* Browser Fullscreen — makes app occupy entire window */}
+            <button
+              className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+              onClick={handleFullScreen}
+              title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
+            >
+              {isFullScreen ? (
+                <Minimize strokeWidth={2} size={18} />
+              ) : (
+                <Maximize strokeWidth={2} size={18} />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Real progress bar */}
