@@ -31,6 +31,7 @@ function getHighlightRanges(container, searchText, targetStartOffset) {
   const nodeMap = [];
   for (let i = 0; i < textNodes.length; i++) {
     const tn = textNodes[i];
+    // Add space between nodes if needed to match browser selection behavior
     if (i > 0 && fullText.length > 0 && !fullText.endsWith(' ') && !tn.textContent.startsWith(' ')) {
       fullText += ' ';
     }
@@ -39,47 +40,65 @@ function getHighlightRanges(container, searchText, targetStartOffset) {
     nodeMap.push({ node: tn, start, end: fullText.length });
   }
 
-  const normalizedSearch = searchText.replace(/\s+/g, ' ').trim();
-  const lowerFull = fullText.toLowerCase();
-  const lowerSearch = normalizedSearch.toLowerCase();
-  let idx = lowerFull.indexOf(lowerSearch);
-  const ranges = [];
+  // Escape special regex characters
+  const escapeRegExp = (string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  };
 
-  const addRangeForMatch = (matchStart) => {
-      const matchEnd = matchStart + lowerSearch.length;
-      for (let i = 0; i < nodeMap.length; i++) {
-          const nm = nodeMap[i];
-          if (nm.end <= matchStart || nm.start >= matchEnd) continue;
-          const overlapStart = Math.max(0, matchStart - nm.start);
-          const overlapEnd = Math.min(nm.node.textContent.length, matchEnd - nm.start);
-          try {
-              const range = document.createRange();
-              range.setStart(nm.node, overlapStart);
-              range.setEnd(nm.node, overlapEnd);
-              ranges.push(range);
-          } catch (e) {}
+  // Create a regex that matches the search text while ignoring whitespace differences
+  const words = searchText.replace(/\s+/g, ' ').trim().split(' ');
+  const regexStr = words.map(word => escapeRegExp(word)).join('\\s+');
+  let regex;
+  try {
+    regex = new RegExp(regexStr, 'gi');
+  } catch (e) {
+    return [];
+  }
+
+  const ranges = [];
+  let match;
+  let matches = [];
+
+  while ((match = regex.exec(fullText)) !== null) {
+    matches.push({ start: match.index, end: regex.lastIndex });
+  }
+
+  if (matches.length === 0) return [];
+
+  // If we have a target offset, find the closest match
+  let bestMatch = matches[0];
+  if (targetStartOffset != null && matches.length > 1) {
+    let minDiff = Infinity;
+    for (const m of matches) {
+      const diff = Math.abs(m.start - targetStartOffset);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestMatch = m;
       }
+    }
+  }
+
+  // Create ranges for the best match (or all matches if no target offset was used, 
+  // though target offset is usually provided for specific highlights)
+  const applyMatch = (m) => {
+    for (let i = 0; i < nodeMap.length; i++) {
+      const nm = nodeMap[i];
+      if (nm.end <= m.start || nm.start >= m.end) continue;
+      const overlapStart = Math.max(0, m.start - nm.start);
+      const overlapEnd = Math.min(nm.node.textContent.length, m.end - nm.start);
+      try {
+        const range = document.createRange();
+        range.setStart(nm.node, overlapStart);
+        range.setEnd(nm.node, overlapEnd);
+        ranges.push(range);
+      } catch (e) {}
+    }
   };
 
   if (targetStartOffset != null) {
-      let bestIdx = -1;
-      let minDiff = Infinity;
-      while (idx !== -1) {
-          const diff = Math.abs(idx - targetStartOffset);
-          if (diff < minDiff) {
-              minDiff = diff;
-              bestIdx = idx;
-          }
-          idx = lowerFull.indexOf(lowerSearch, idx + lowerSearch.length);
-      }
-      if (bestIdx !== -1) {
-          addRangeForMatch(bestIdx);
-      }
+    applyMatch(bestMatch);
   } else {
-      while (idx !== -1) {
-          addRangeForMatch(idx);
-          idx = lowerFull.indexOf(lowerSearch, idx + lowerSearch.length);
-      }
+    matches.forEach(applyMatch);
   }
 
   return ranges;
@@ -358,6 +377,7 @@ const PDFReader = ({
         for (const h of pageHighlights) {
             const text = h.text || h.highlightedText || '';
             let color = h.color || '#fef08a';
+            const isSimplified = h.isSimplified === true;
             if (!text) continue;
 
             const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
@@ -365,7 +385,46 @@ const PDFReader = ({
             const ranges = getHighlightRanges(textLayer, text, h.startOffset);
             if (ranges.length === 0) continue;
 
-            if (useCSSHighlight) {
+            if (isSimplified) {
+                // Simplified text: render as underline, not background
+                if (useCSSHighlight) {
+                    const safeColor = color.replace(/[^a-zA-Z0-9]/g, '');
+                    const highlightName = `apex-simplified-${safeColor}-${ranges.length}`;
+                    const highlight = new Highlight(...ranges);
+                    CSS.highlights.set(highlightName, highlight);
+                    // CSS Highlight API only supports background-color and color,
+                    // so we use a transparent background and render underline via fallback overlay
+                }
+                // Always use fallback overlay for underline rendering (works on all devices)
+                if (!hlLayer) {
+                    hlLayer = document.createElement('div');
+                    hlLayer.className = 'apex-fallback-hl-layer';
+                    hlLayer.style.position = 'absolute';
+                    hlLayer.style.top = '0';
+                    hlLayer.style.left = '0';
+                    hlLayer.style.width = '100%';
+                    hlLayer.style.height = '100%';
+                    hlLayer.style.pointerEvents = 'none';
+                    hlLayer.style.zIndex = '10';
+                    pageEl.appendChild(hlLayer);
+                }
+                for (const range of ranges) {
+                    const rects = range.getClientRects();
+                    for (let i = 0; i < rects.length; i++) {
+                        const rect = rects[i];
+                        const div = document.createElement('div');
+                        div.style.position = 'absolute';
+                        div.style.left = `${rect.left - pageRect.left}px`;
+                        div.style.top = `${rect.top - pageRect.top + rect.height - 2}px`;
+                        div.style.width = `${rect.width}px`;
+                        div.style.height = '2px';
+                        div.style.backgroundColor = color;
+                        div.style.opacity = '0.6';
+                        div.style.borderRadius = '1px';
+                        hlLayer.appendChild(div);
+                    }
+                }
+            } else if (useCSSHighlight) {
                 if (!collectedRanges[color]) collectedRanges[color] = [];
                 collectedRanges[color].push(...ranges);
             } else if (hlLayer) {

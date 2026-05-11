@@ -166,7 +166,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         </div>
 
                         <div className="flex items-center justify-center gap-4 p-3 bg-bg-subtle/50 border-t border-border-default/50">
-                            {['#fef08a', '#bbf7d0', '#bfdbfe', '#ffcfd2', '#e9d5ff'].map(color => (
+                            {['#d1d5db', '#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff'].map(color => (
                                 <button
                                     key={color}
                                     onClick={() => onHighlight?.(color)}

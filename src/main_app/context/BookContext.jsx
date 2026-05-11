@@ -1071,6 +1071,69 @@ export const BookProvider = ({ children }) => {
     })));
   }, []);
 
+  const addSimplification = useCallback(async (bookId, simplification) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    const simplificationId = Date.now();
+
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existing = book.metadata?.simplifications || [];
+          // Deduplicate by original text (case-insensitive)
+          if (existing.some(s => s.originalText?.toLowerCase() === simplification.originalText?.toLowerCase())) {
+            return book;
+          }
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              simplifications: [...existing, { ...simplification, id: simplificationId }],
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to save simplification metadata:', err));
+      }
+      return newShelves;
+    });
+
+    return simplificationId;
+  }, []);
+
+  const removeSimplification = useCallback(async (bookId, simplificationId) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existing = book.metadata?.simplifications || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              simplifications: existing.filter(s => s.id !== simplificationId),
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to remove simplification metadata:', err));
+      }
+      return newShelves;
+    });
+  }, []);
+
   return (
     <BookContext.Provider value={{
       shelves,
@@ -1090,6 +1153,8 @@ export const BookProvider = ({ children }) => {
       addNote,
       updateNote,
       deleteNote,
+      addSimplification,
+      removeSimplification,
       showDuplicateModal,
       setShowDuplicateModal,
     }}>

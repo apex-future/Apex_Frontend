@@ -1,14 +1,16 @@
 import React, { useState } from 'react'
-import { BookOpen, List, Bookmark, X, ChevronLeft, Heart, Highlighter } from 'lucide-react'
+import { BookOpen, List, Bookmark, X, ChevronLeft, Heart, Highlighter, Wand2 } from 'lucide-react'
 import BookmarksView from './BookmarksView'
 import SidebarNotesView from './SidebarNotesView'
 import HighlightsView from './HighlightsView'
+import SimplifiedView from './SimplifiedView'
 
 const NAV_ITEMS = [
   { id: 'toc', icon: List, label: 'Table of Contents' },
   { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
   { id: 'highlights', icon: Highlighter, label: 'Highlights' },
   { id: 'notes', icon: BookOpen, label: 'Notes' },
+  { id: 'simplified', icon: Wand2, label: 'Simplified' },
 ];
 
 function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
@@ -24,6 +26,9 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
     highlights = [],
     removeHighlight,
     onJumpToHighlight,
+    simplifications = [],
+    removeSimplification,
+    onViewSimplification,
   } = readerControls || {};
 
   function handleNavClick(id) {
@@ -72,11 +77,13 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
               const isNotesItem = id === 'notes';
               const isBookmarksItem = id === 'bookmarks';
               const isHighlightsItem = id === 'highlights';
+              const isSimplifiedItem = id === 'simplified';
 
               let count = 0;
               if (isNotesItem) count = notes.length;
               if (isBookmarksItem) count = bookmarks.length;
               if (isHighlightsItem) count = highlights.length;
+              if (isSimplifiedItem) count = simplifications.length;
 
               return (
                 <button
@@ -89,7 +96,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
                   </div>
                   <span className="flex-1 tracking-tight">{label}</span>
                   {/* Show count badge */}
-                  {(isNotesItem || isBookmarksItem || isHighlightsItem) && count > 0 && (
+                  {(isNotesItem || isBookmarksItem || isHighlightsItem || isSimplifiedItem) && count > 0 && (
                     <span className="text-[11px] font-black bg-accent-primary text-bg-elevated rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
                       {count}
                     </span>
@@ -140,6 +147,22 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
               setLeftPanel(false);
             }}
             onRemove={removeHighlight}
+          />
+        )}
+
+        {/* Simplified section */}
+        {activeSection === 'simplified' && (
+          <SimplifiedView
+            simplifications={simplifications}
+            onJumpTo={(page) => {
+              pdfControls?.goToPage?.(page);
+              setLeftPanel(false);
+            }}
+            onRemove={removeSimplification}
+            onViewSimplification={(s) => {
+              onViewSimplification?.(s);
+              setLeftPanel(false);
+            }}
           />
         )}
       </div>

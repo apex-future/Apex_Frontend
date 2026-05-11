@@ -18,6 +18,7 @@ import apiClient from '../../services/apiClient';
 import syncService from '../../services/syncService';
 import useToast from '../../hooks/useToast';
 import HighlightMenu from './HighlightMenu';
+import SimplifyModal from './SimplifyModal';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 import PageSettings from './reading_navigations/reading_layout/PageSettings';
 import BookSkeleton from './BookSkeleton';
@@ -42,7 +43,7 @@ const ScrollOrientationOverlay = ({ visible, orientation }) => {
 };
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addNote, updateNote, deleteNote, toggleFavorite, toggleBookmarkedBook } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addNote, updateNote, deleteNote, toggleFavorite, toggleBookmarkedBook, addSimplification, removeSimplification } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -96,7 +97,10 @@ function ReaderView() {
     const [isReaderDictOpen, setIsReaderDictOpen] = useState(false);
     const [showPageStrip, setShowPageStrip] = useState(false);
     const [showStreakCelebration, setShowStreakCelebration] = useState(false);
-    const [aiInitialPrompt, setAiInitialPrompt] = useState(null);
+
+    // Simplify feature state
+    const [showSimplifyModal, setShowSimplifyModal] = useState(false);
+    const [activeSimplification, setActiveSimplification] = useState({ originalText: '', simplifiedText: '', loading: false, error: null });
 
     const openPageStrip = useCallback(() => {
         setNavState('none');
@@ -107,10 +111,6 @@ function ReaderView() {
         setShowPageStrip(false);
         setNavState('first');
     }, []);
-
-    useEffect(() => {
-        if (!aiModal) setAiInitialPrompt(null);
-    }, [aiModal]);
 
     // ============================================
     // 1-MINUTE READING TIMER — Streak & Space Tracking
@@ -204,12 +204,78 @@ function ReaderView() {
         window.getSelection().removeAllRanges();
     };
 
-    const handleSimplify = () => {
-        if (!selectionRef.current.text) return;
-        setAiInitialPrompt("Can you simplify this text for me? Break it down into easier terms.");
-        setAiModal(true);
+    const simplifications = book?.metadata?.simplifications || [];
+
+    const handleSimplify = async () => {
+        const text = selectionRef.current.text?.replace(/\s+/g, ' ').trim();
+        if (!text || !book) return;
+
         setShowHighlightMenu(false);
         setIsDictOpen(false);
+        window.getSelection()?.removeAllRanges();
+
+        // Check cache — if already simplified, show cached result
+        const cached = simplifications.find(s => s.originalText?.toLowerCase() === text.toLowerCase());
+        if (cached) {
+            setActiveSimplification({ originalText: cached.originalText, simplifiedText: cached.simplifiedText, loading: false, error: null });
+            setShowSimplifyModal(true);
+            return;
+        }
+
+        // Show modal with loading state
+        setActiveSimplification({ originalText: text, simplifiedText: '', loading: true, error: null });
+        setShowSimplifyModal(true);
+
+        try {
+            const response = await apiClient.post('/api/ai/simplify', {
+                text,
+                book_title: book?.title || book?.file?.name || '',
+            });
+            const simplified = response.data?.simplified || '';
+
+            setActiveSimplification({ originalText: text, simplifiedText: simplified, loading: false, error: null });
+
+            // Persist the simplification + auto-highlight with soft indigo color
+            addSimplification(book.id, {
+                originalText: text,
+                simplifiedText: simplified,
+                page: pageNumber,
+                startOffset: selectionRef.current.startOffset,
+                color: '#a78bfa',  // subtle purple (matches underline)
+                addedAt: new Date().toISOString(),
+            });
+
+            // Also add a highlight with underline style to mark simplified text
+            addHighlight(book.id, {
+                text,
+                color: '#a78bfa',  // subtle purple for underline
+                page: pageNumber,
+                startOffset: selectionRef.current.startOffset,
+                addedAt: new Date().toISOString(),
+                isSimplified: true,
+            });
+        } catch (err) {
+            console.error('[Apex Simplify] Failed:', err);
+            setActiveSimplification(prev => ({ ...prev, loading: false, error: err.message || 'Failed to simplify' }));
+        }
+    };
+
+    const handleRetrySimplify = () => {
+        if (!activeSimplification.originalText) return;
+        // Re-trigger with the same text
+        selectionRef.current.text = activeSimplification.originalText;
+        setShowSimplifyModal(false);
+        handleSimplify();
+    };
+
+    const handleSparkleClick = (simplification) => {
+        setActiveSimplification({
+            originalText: simplification.originalText,
+            simplifiedText: simplification.simplifiedText,
+            loading: false,
+            error: null,
+        });
+        setShowSimplifyModal(true);
     };
 
     // --- PDF Control Handlers ---
@@ -330,6 +396,10 @@ function ReaderView() {
         addNote: (text) => addNote(book.id, text),
         updateNote: (noteId, text) => updateNote(book.id, noteId, text),
         deleteNote: (noteId) => deleteNote(book.id, noteId),
+        // Simplifications
+        simplifications,
+        removeSimplification: (simplificationId) => removeSimplification(book.id, simplificationId),
+        onViewSimplification: handleSparkleClick,
         // Favorites & Bookmarked Status (Book Level)
         isFavorite: book?.isFavorite,
         onToggleFavorite: () => toggleFavorite(book.id),
@@ -448,8 +518,8 @@ function ReaderView() {
                     setIsReaderDictOpen(false);
                     setShowHighlightMenu(false);
                     setAiModal(false);
-                    setAiInitialPrompt(null);
                     setQuizModal(false);
+                    setShowSimplifyModal(false);
                     break;
                 default:
                     break;
@@ -915,6 +985,18 @@ function ReaderView() {
                     />
                 )}
 
+                {/* Simplify Modal */}
+                {showSimplifyModal && (
+                    <SimplifyModal
+                        originalText={activeSimplification.originalText}
+                        simplifiedText={activeSimplification.simplifiedText}
+                        loading={activeSimplification.loading}
+                        error={activeSimplification.error}
+                        onRetry={handleRetrySimplify}
+                        onClose={() => setShowSimplifyModal(false)}
+                    />
+                )}
+
                 {/* Main reading area */}
                 <div className="flex-1 relative min-w-0 flex flex-col h-full max-h-full overflow-hidden">
 
@@ -1036,7 +1118,6 @@ function ReaderView() {
                         currentPage={pageNumber}
                         numPages={numPages}
                         examName={book?.examName || ''}
-                        initialPrompt={aiInitialPrompt}
                     />
                 )}
 
