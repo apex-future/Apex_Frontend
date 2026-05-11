@@ -96,6 +96,7 @@ function ReaderView() {
     const [isReaderDictOpen, setIsReaderDictOpen] = useState(false);
     const [showPageStrip, setShowPageStrip] = useState(false);
     const [showStreakCelebration, setShowStreakCelebration] = useState(false);
+    const [aiInitialPrompt, setAiInitialPrompt] = useState(null);
 
     const openPageStrip = useCallback(() => {
         setNavState('none');
@@ -106,6 +107,10 @@ function ReaderView() {
         setShowPageStrip(false);
         setNavState('first');
     }, []);
+
+    useEffect(() => {
+        if (!aiModal) setAiInitialPrompt(null);
+    }, [aiModal]);
 
     // ============================================
     // 1-MINUTE READING TIMER — Streak & Space Tracking
@@ -197,6 +202,14 @@ function ReaderView() {
         setShowHighlightMenu(false);
         // Clear browser selection
         window.getSelection().removeAllRanges();
+    };
+
+    const handleSimplify = () => {
+        if (!selectionRef.current.text) return;
+        setAiInitialPrompt("Can you simplify this text for me? Break it down into easier terms.");
+        setAiModal(true);
+        setShowHighlightMenu(false);
+        setIsDictOpen(false);
     };
 
     // --- PDF Control Handlers ---
@@ -435,6 +448,7 @@ function ReaderView() {
                     setIsReaderDictOpen(false);
                     setShowHighlightMenu(false);
                     setAiModal(false);
+                    setAiInitialPrompt(null);
                     setQuizModal(false);
                     break;
                 default:
@@ -895,6 +909,7 @@ function ReaderView() {
                         bookId={book?.id}
                         onSaveWord={addSavedWord}
                         onHighlight={handleHighlight}
+                        onSimplify={handleSimplify}
                         onDictToggle={setIsDictOpen}
                         onAddNote={readerControls.addNote}
                     />
@@ -1021,6 +1036,7 @@ function ReaderView() {
                         currentPage={pageNumber}
                         numPages={numPages}
                         examName={book?.examName || ''}
+                        initialPrompt={aiInitialPrompt}
                     />
                 )}
 

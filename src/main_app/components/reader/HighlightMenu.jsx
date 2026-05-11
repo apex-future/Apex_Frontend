@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff, StickyNote, Save } from 'lucide-react';
+import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff, StickyNote, Save, Wand2 } from 'lucide-react';
 import dictionaryService from '../../services/dictionaryService';
 
-function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose }) {
+function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose }) {
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -124,43 +124,53 @@ function HighlightMenu({ selection, position, onAskAI, bookId, onSaveWord, onHig
         >
             <div className="bg-bg-elevated border border-border-default shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
                 {!showDict && !showNote ? (
-                    <div className="flex items-center p-1.5 gap-1">
-                        <button
-                            onClick={() => fetchDefinition(selection)}
-                            className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
-                        >
-                            <Book size={20} className="text-text-secondary group-hover:text-blue-600 transition-colors" />
-                            <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Define</span>
-                        </button>
+                    <div className="flex flex-col">
+                        <div className="flex items-center p-1.5 gap-1">
+                            <button
+                                onClick={() => fetchDefinition(selection)}
+                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
+                            >
+                                <Book size={20} className="text-text-secondary group-hover:text-blue-600 transition-colors" />
+                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Define</span>
+                            </button>
 
-                        <div className="w-[1px] h-8 bg-bg-subtle" />
+                            <div className="w-[1px] h-8 bg-border-default/50" />
 
-                        <button
-                            onClick={onAskAI}
-                            className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
-                        >
-                            <Sparkles size={20} className="text-text-secondary group-hover:text-purple-600 transition-colors" />
-                            <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask</span>
-                        </button>
+                            <button
+                                onClick={onAskAI}
+                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
+                            >
+                                <Sparkles size={20} className="text-text-secondary group-hover:text-purple-600 transition-colors" />
+                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask</span>
+                            </button>
 
-                        <div className="w-[1px] h-8 bg-bg-subtle" />
+                            <div className="w-[1px] h-8 bg-border-default/50" />
 
-                        <button
-                            onClick={() => toggleNote(true)}
-                            className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
-                        >
-                            <StickyNote size={20} className="text-text-secondary group-hover:text-amber-600 transition-colors" />
-                            <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Note</span>
-                        </button>
+                            <button
+                                onClick={() => toggleNote(true)}
+                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
+                            >
+                                <StickyNote size={20} className="text-text-secondary group-hover:text-amber-600 transition-colors" />
+                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Note</span>
+                            </button>
 
-                        <div className="w-[1px] h-8 bg-bg-subtle" />
+                            <div className="w-[1px] h-8 bg-border-default/50" />
 
-                        <div className="flex gap-1.5 px-3">
-                            {['#fef08a', '#bbf7d0', '#bfdbfe'].map(color => (
+                            <button
+                                onClick={() => onSimplify?.()}
+                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
+                            >
+                                <Wand2 size={20} className="text-text-secondary group-hover:text-emerald-600 transition-colors" />
+                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Simplify</span>
+                            </button>
+                        </div>
+
+                        <div className="flex items-center justify-center gap-4 p-3 bg-bg-subtle/50 border-t border-border-default/50">
+                            {['#fef08a', '#bbf7d0', '#bfdbfe', '#ffcfd2', '#e9d5ff'].map(color => (
                                 <button
                                     key={color}
                                     onClick={() => onHighlight?.(color)}
-                                    className="w-5 h-5 rounded-full border border-border-default hover:scale-110 transition-transform"
+                                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-125 hover:shadow-md transition-all duration-200 active:scale-95"
                                     style={{ backgroundColor: color }}
                                     title="Highlight"
                                 />

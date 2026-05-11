@@ -8,7 +8,7 @@ import apiClient from '../../../../services/apiClient'
 import TypingIndicator from '../../../ai/TypingIndicator'
 import Orb from '../../../ui/Orb'
 
-function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, numPages, examName }) {
+function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, numPages, examName, initialPrompt }) {
   const {
     messages,
     isStreaming,
@@ -151,6 +151,13 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
 
       return () => clearTimeout(timer);
   }, [currentPage, bookId]);
+
+  // Handle initial prompt
+  useEffect(() => {
+    if (initialPrompt && messages.length === 0 && !isStreaming) {
+      handleSend(initialPrompt);
+    }
+  }, [initialPrompt]);
 
   // Auto-scroll to bottom
   useEffect(() => {
