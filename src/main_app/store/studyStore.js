@@ -194,27 +194,18 @@ const useStudyStore = create(
             streak_history: streakHistory,
           });
 
+          // Server returns the MERGED history — always update local to match
+          // This is how a fresh device gets its history restored after formatting
+          if (response.data?.streak_history) {
+            set({ streakHistory: response.data.streak_history });
+          }
+
           // Server returns its validated date — correct local store if it was wrong
           if (response.data?.last_active_date &&
             response.data.last_active_date !== lastActiveDate) {
             if (import.meta.env.DEV) console.log('[Apex Streak] Server corrected last_active_date:',
               lastActiveDate, '→', response.data.last_active_date);
             set({ lastActiveDate: response.data.last_active_date });
-          }
-
-          // Also correct any future dates from streak_history using server_date
-          if (response.data?.server_date && streakHistory.length > 0) {
-            const serverDate = new Date(response.data.server_date);
-            const sanitized = streakHistory.filter(entry => {
-              const entryDate = new Date(entry);
-              const daysAhead = (entryDate - serverDate) / (1000 * 60 * 60 * 24);
-              return daysAhead <= 1; // Remove anything more than 1 day in the future
-            });
-            if (sanitized.length !== streakHistory.length) {
-              if (import.meta.env.DEV) console.log('[Apex Streak] Removed', streakHistory.length - sanitized.length,
-                'future dates from local streak history');
-              set({ streakHistory: sanitized });
-            }
           }
 
           if (import.meta.env.DEV) console.log('[Apex Streak] Synced to Supabase successfully');
@@ -237,21 +228,32 @@ const useStudyStore = create(
 
         const localLastActive = get().lastActiveDate;
         const localStreak = get().streakCount;
+        const localHistory = get().streakHistory || [];
         const supabaseLastActive = last_active_date;
         const supabaseStreak = current_streak || 0;
+        const supabaseHistory = streak_history || [];
 
-        // Only seed if Supabase data is more recent than local
-        // This prevents overwriting a streak earned offline
+        // Always merge streak history — take whichever is larger
+        // A formatted device has empty history; Supabase always wins here
+        const mergedHistory = supabaseHistory.length >= localHistory.length
+          ? supabaseHistory
+          : localHistory;
+
         if (supabaseStreak > localStreak || (supabaseLastActive && supabaseLastActive > (localLastActive || ''))) {
           if (import.meta.env.DEV) console.log('[Apex Streak] Seeding from Supabase — more recent data found');
           set({
             streakCount: supabaseStreak,
             longestStreak: longest_streak || 0,
             lastActiveDate: last_active_date || null,
-            streakHistory: streak_history || [],
+            streakHistory: mergedHistory,
           });
         } else {
-          if (import.meta.env.DEV) console.log('[Apex Streak] Local streak data is more recent — keeping local');
+          if (import.meta.env.DEV) console.log('[Apex Streak] Local streak more recent — keeping local, merging history');
+          // Even when keeping local streak, always restore history from Supabase
+          // if local history is empty (e.g. after formatting)
+          if (mergedHistory.length > localHistory.length) {
+            set({ streakHistory: mergedHistory });
+          }
         }
       },
 

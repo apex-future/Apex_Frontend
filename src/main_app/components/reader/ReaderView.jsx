@@ -234,7 +234,6 @@ function ReaderView() {
 
     function handleDocumentLoad({ numPages: total }) {
         setNumPages(total);
-
         // Persist totalPages to Dexie immediately — this is the source of truth
         // for progress calculation across all devices
         if (book?.id && total > 1) {
