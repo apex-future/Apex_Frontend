@@ -80,6 +80,34 @@ const useBookNotesStore = create((set, get) => ({
   // Get a single note by local_id
   getNoteByLocalId: async (localId) => {
     return await db.book_notes.where('local_id').equals(localId).first();
+  },
+
+  // Get summary for all notebooks (counts and recent previews)
+  getNotebooksSummary: async (bookIds) => {
+    const summary = {};
+    await Promise.all(bookIds.map(async (id) => {
+      try {
+        const count = await db.book_notes.where('bookId').equals(Number(id)).count();
+        const tabsCount = await db.tabs.where('bookId').equals(Number(id)).count();
+        const allNotes = await db.book_notes
+          .where('bookId')
+          .equals(Number(id))
+          .toArray();
+        
+        // Sort manually for now as Dexie complex sorts can be tricky without compound indexes
+        const sorted = allNotes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        
+        summary[id] = {
+          count,
+          tabsCount,
+          recent: sorted.slice(0, 3)
+        };
+      } catch (err) {
+        console.error(`[bookNotesStore] error fetching summary for book ${id}:`, err);
+        summary[id] = { count: 0, tabsCount: 0, recent: [] };
+      }
+    }));
+    return summary;
   }
 }));
 
