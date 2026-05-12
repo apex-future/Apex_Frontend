@@ -182,7 +182,10 @@ function NoteEditorPage() {
   const [wordCount, setWordCount] = useState(0);
   const [saved, setSaved] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
   const saveTimerRef = useRef(null);
+  const titleRef = useRef('Untitled');
+  const contentRef = useRef(null);
 
   // TipTap editor
   const editor = useEditor({
@@ -195,7 +198,6 @@ function NoteEditorPage() {
       Placeholder.configure({
         placeholder: "Start writing your note…",
       }),
-      Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Typography,
       CharacterCount,
@@ -204,17 +206,18 @@ function NoteEditorPage() {
     ],
     content: '',
     onUpdate: ({ editor }) => {
-      // Skip logic if we are still setting up the editor
+      const json = editor.getJSON();
+      contentRef.current = json;
+
       if (isInitialLoad) return;
 
       const words = editor.storage.characterCount.words();
       setWordCount(words);
       setSaved(false);
 
-      // Debounce save — 1.5s after last keystroke
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(async () => {
-        await handleAutoSave(editor.getJSON(), words);
+        await handleAutoSave();
       }, 1500);
     },
   });
@@ -223,21 +226,24 @@ function NoteEditorPage() {
   useEffect(() => {
     const loadNote = async () => {
       if (noteId && noteId !== 'new') {
+        // If we already have this note loaded (e.g. just navigated from 'new'), skip
+        if (localId === noteId) return;
+
         const existing = await getNoteByLocalId(noteId);
         if (existing) {
           setLocalId(existing.local_id);
           setTitle(existing.title);
+          titleRef.current = existing.title;
           setCreatedAt(existing.createdAt);
           setLastEdited(existing.updatedAt);
           setWordCount(existing.word_count || 0);
+          contentRef.current = existing.content;
           
           if (editor) {
             editor.commands.setContent(existing.content);
-            // Delay marking load as finished to prevent immediate auto-save trigger
             setTimeout(() => setIsInitialLoad(false), 100);
           }
         } else {
-          // Note not found, treat as new or handle error
           initNewNote();
         }
       } else {
@@ -247,23 +253,28 @@ function NoteEditorPage() {
 
     const initNewNote = () => {
       const now = new Date().toISOString();
-      setLocalId(crypto.randomUUID());
+      const newId = crypto.randomUUID();
+      setLocalId(newId);
       setCreatedAt(now);
       setLastEdited(now);
+      setTitle('Untitled');
+      titleRef.current = 'Untitled';
       setIsInitialLoad(false);
     };
 
     loadNote();
-  }, [noteId, editor, getNoteByLocalId]);
+  }, [noteId, editor, getNoteByLocalId, localId]);
 
-  const handleAutoSave = async (content, words) => {
+  const handleAutoSave = async () => {
+    if (!localId) return;
+    
     try {
       const noteData = {
         local_id: localId,
         bookId: Number(bookId),
-        title,
-        content: content || editor.getJSON(),
-        word_count: words || wordCount,
+        title: titleRef.current,
+        content: contentRef.current || (editor ? editor.getJSON() : null),
+        word_count: editor ? editor.storage.characterCount.words() : wordCount,
         createdAt,
       };
 
@@ -271,7 +282,6 @@ function NoteEditorPage() {
       setLastEdited(result.updatedAt);
       setSaved(true);
       
-      // If it was a new note, update URL to prevent multiple 'new' notes
       if (noteId === 'new') {
         navigate(`/notes/${bookId}/${localId}`, { replace: true });
       }
@@ -280,15 +290,15 @@ function NoteEditorPage() {
     }
   };
 
-  // Title change
   const handleTitleChange = (e) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
+    titleRef.current = newTitle;
     setSaved(false);
     
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(async () => {
-      await handleAutoSave(null, null);
+      await handleAutoSave();
     }, 1500);
   };
 
@@ -331,10 +341,8 @@ function NoteEditorPage() {
             )}
           </div>
 
-          {/* Word count pill */}
-          <div className="text-[11px] font-bold text-text-tertiary bg-bg-subtle px-3 py-1.5 rounded-lg border border-border-default">
-            {wordCount} words
-          </div>
+          {/* Spacer */}
+          <div className="w-8" />
         </div>
       </div>
 
@@ -371,6 +379,13 @@ function NoteEditorPage() {
               {formatFullDate(createdAt)}
             </span>
           </div>
+
+          <div className="flex items-center gap-0">
+            <span className="text-xs text-text-tertiary w-32 flex-shrink-0">Word count</span>
+            <span className="text-xs text-text-secondary font-medium">
+              {wordCount} {wordCount === 1 ? 'word' : 'words'}
+            </span>
+          </div>
         </div>
 
         {/* ── Separator ────────────────────────────────────────────────── */}
@@ -378,7 +393,7 @@ function NoteEditorPage() {
 
         {/* ── Floating Toolbar ─────────────────────────────────────────── */}
         <div className="sticky top-[61px] z-40 mb-4 -mx-2">
-          <div className="bg-bg-elevated/95 backdrop-blur-xl border border-border-default rounded-2xl shadow-lg px-3 py-2 flex items-center gap-0.5 flex-wrap">
+          <div className="bg-bg-elevated/95 backdrop-blur-xl border border-border-default rounded-2xl shadow-lg px-3 py-2 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
 
             <HeadingDropdown editor={editor} />
             <ToolbarDivider />
