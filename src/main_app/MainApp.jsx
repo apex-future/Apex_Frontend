@@ -17,7 +17,7 @@ import SpaceDetail from './components/layout/spaces/SpaceDetail';
 import BookDetails from './components/books/BookDetails';
 import Dictionary from './components/dictionary/Dictionary';
 import ApexAI from './components/ai/ApexAI';
-import NotesPage from './components/notes/NotesPage';
+import TabsPage from './components/tabs/TabsPage';
 import Settings from './components/layout/user/Settings';
 import DuplicateBookModal from './components/modals/DuplicateBookModal';
 import ImportPage from './pages/ImportPage';
@@ -74,7 +74,7 @@ function MainApp({ onLogout }) {
                 <Route path="/book/:bookId" element={<BookDetails />} />
                 <Route path="/dictionary" element={<Dictionary />} />
                 <Route path="/ai" element={<ApexAI />} />
-                <Route path="/notes" element={<NotesPage />} />
+                <Route path="/tabs" element={<TabsPage />} />
                 <Route path="/import" element={<ImportPage />} />
                 <Route path="/streak" element={<StreakPage />} />
                 <Route path="/exams" element={<ExamPage />} />

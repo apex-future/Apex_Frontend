@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { BookOpen, List, Bookmark, X, ChevronLeft, ChevronDown, Highlighter, Wand2 } from 'lucide-react'
 import BookmarksView from './BookmarksView'
-import SidebarNotesView from './SidebarNotesView'
+import SidebarTabsView from './SidebarTabsView'
 import HighlightsView from './HighlightsView'
 import SimplifiedView from './SimplifiedView'
 
@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { id: 'toc', icon: List, label: 'Table of Contents' },
   { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
   { id: 'highlights', icon: Highlighter, label: 'Highlights' },
-  { id: 'notes', icon: BookOpen, label: 'Notes' },
+  { id: 'tabs', icon: BookOpen, label: 'Tabs' },
   { id: 'simplified', icon: Wand2, label: 'Simplified' },
 ];
 
@@ -91,10 +91,10 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
   const [activeSection, setActiveSection] = useState(null);
 
   const {
-    notes = [],
-    addNote,
-    updateNote,
-    deleteNote,
+    tabs = [],
+    addTab,
+    updateTab,
+    deleteTab,
     bookmarks = [],
     onRemoveBookmark,
     highlights = [],
@@ -148,13 +148,13 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
           <div className="p-4 flex flex-col gap-4">
             {NAV_ITEMS.map((item) => {
               const { id, label, icon: ItemIcon } = item;
-              const isNotesItem = id === 'notes';
+              const isTabsItem = id === 'tabs';
               const isBookmarksItem = id === 'bookmarks';
               const isHighlightsItem = id === 'highlights';
               const isSimplifiedItem = id === 'simplified';
 
               let count = 0;
-              if (isNotesItem) count = notes.length;
+              if (isTabsItem) count = tabs.length;
               if (isBookmarksItem) count = bookmarks.length;
               if (isHighlightsItem) count = highlights.length;
               if (isSimplifiedItem) count = simplifications.length;
@@ -170,7 +170,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
                   </div>
                   <span className="flex-1 tracking-tight">{label}</span>
                   {/* Show count badge */}
-                  {(isNotesItem || isBookmarksItem || isHighlightsItem || isSimplifiedItem) && count > 0 && (
+                  {(isTabsItem || isBookmarksItem || isHighlightsItem || isSimplifiedItem) && count > 0 && (
                     <span className="text-[11px] font-black bg-accent-primary text-bg-elevated rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
                       {count}
                     </span>
@@ -212,13 +212,13 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
           />
         )}
 
-        {/* Notes section */}
-        {activeSection === 'notes' && (
-          <SidebarNotesView
-            notes={notes}
-            addNote={addNote}
-            updateNote={updateNote}
-            deleteNote={deleteNote}
+        {/* Tabs section */}
+        {activeSection === 'tabs' && (
+          <SidebarTabsView
+            tabs={tabs}
+            addTab={addTab}
+            updateTab={updateTab}
+            deleteTab={deleteTab}
           />
         )}
 

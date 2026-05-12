@@ -277,7 +277,7 @@ const syncService = {
           reading_progress: new Date().toISOString(),
           highlights: new Date().toISOString(),
           bookmarks: new Date().toISOString(),
-          notes: new Date().toISOString(),
+          tabs: new Date().toISOString(),
           book_spaces: new Date().toISOString(),
           exam_reminders: new Date().toISOString(),
           server_time: new Date().toISOString(),
@@ -290,7 +290,7 @@ const syncService = {
       if (import.meta.env.DEV) console.log('[Apex Sync] Last synced at:', lastSyncedAt || 'never (first sync on this device)');
 
       // Step 3: Decide action per table — no client clock involved
-      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'notes', 'book_spaces', 'exam_reminders'];
+      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'tabs', 'book_spaces', 'exam_reminders'];
       const decisions = {};
 
       for (const table of tables) {
@@ -381,7 +381,7 @@ const syncService = {
           const localSupabaseIds = new Set(currentLocalBooks.map(b => b.supabaseId).filter(Boolean));
 
           // Clean up related records for books that no longer exist locally
-          const allTables = ['bookmarks', 'highlights', 'reading_progress', 'notes'];
+          const allTables = ['bookmarks', 'highlights', 'reading_progress', 'tabs'];
           for (const table of allTables) {
             try {
               const records = await db[table].toArray();
@@ -463,16 +463,16 @@ const syncService = {
         }
 
         // ── NOTES ──
-        if (tablesToPull.includes('notes') && pulledData.notes?.length > 0) {
-          if (import.meta.env.DEV) console.log('[Apex Sync] Pulling notes:', pulledData.notes.length);
-          await db.notes.clear();
-          const mapped = pulledData.notes.map(n => ({
+        if (tablesToPull.includes('tabs') && pulledData.tabs?.length > 0) {
+          if (import.meta.env.DEV) console.log('[Apex Sync] Pulling tabs:', pulledData.tabs.length);
+          await db.tabs.clear();
+          const mapped = pulledData.tabs.map(n => ({
             ...mapSnakeToCamel(n),
             supabaseId: n.id,
             synced: true,
           }));
           for (const m of mapped) { delete m.id; }
-          await db.notes.bulkAdd(mapped);
+          await db.tabs.bulkAdd(mapped);
         }
 
         // ── BOOK SPACES ──
@@ -733,7 +733,7 @@ const syncService = {
     if (navigator.onLine) {
       try {
         // The backend DELETE /api/books/{id} cascades to related tables
-        // (reading_progress, highlights, bookmarks, notes, storage file)
+        // (reading_progress, highlights, bookmarks, tabs, storage file)
         await apiClient.delete(`/api/books/${supabaseId}`);
         if (import.meta.env.DEV) console.log('[Apex Sync] Book deleted from Supabase:', supabaseId);
       } catch (error) {
@@ -959,9 +959,9 @@ const syncService = {
   },
 
   // ============================================
-  // DIRECT SAVE — NOTES (Category A)
+  // DIRECT SAVE — TABS (Category A)
   // ============================================
-  saveNote: async function (bookId, noteData) {
+  saveTab: async function (bookId, tabData) {
     const localId = generateLocalId();
     const now = new Date().toISOString();
 
@@ -979,29 +979,29 @@ const syncService = {
     };
 
     // Step 1: Save to Dexie immediately
-    const dexieId = await db.notes.add(dexieRecord);
-    if (import.meta.env.DEV) console.log('[Apex] Note saved to Dexie:', dexieId);
+    const dexieId = await db.tabs.add(dexieRecord);
+    if (import.meta.env.DEV) console.log('[Apex] Tab saved to Dexie:', dexieId);
 
     // Step 2: If online, resolve Supabase book UUID and save
     if (navigator.onLine) {
       const supabaseBookId = await this._resolveBookId(bookId, noteData._supabase_book_id);
       if (supabaseBookId) {
         try {
-          const response = await apiClient.post(`/api/books/${supabaseBookId}/notes`, {
+          const response = await apiClient.post(`/api/books/${supabaseBookId}/tabs`, {
             text: dexieRecord.text,
             context: dexieRecord.context,
             note_type: dexieRecord.noteType,
             local_id: localId,
           });
-          await db.notes.update(dexieId, {
+          await db.tabs.update(dexieId, {
             supabaseId: response.data.id,
             synced: true,
           });
-          if (import.meta.env.DEV) console.log('[Apex] Note saved to Supabase:', response.data.id);
+          if (import.meta.env.DEV) console.log('[Apex] Tab saved to Supabase:', response.data.id);
           return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
         } catch (err) {
-          if (import.meta.env.DEV) console.error('[Apex] Failed to save note to Supabase:', err);
-          await this._queueForSync('upload', 'notes', localId, {
+          if (import.meta.env.DEV) console.error('[Apex] Failed to save tab to Supabase:', err);
+          await this._queueForSync('upload', 'tabs', localId, {
             book_id: supabaseBookId,
             text: dexieRecord.text,
             context: dexieRecord.context,
@@ -1010,8 +1010,8 @@ const syncService = {
         }
       } else {
         // Book not synced yet — queue with dexie book id for later resolution
-        if (import.meta.env.DEV) console.warn('[Apex] Book not synced yet — queuing note');
-        await this._queueForSync('upload', 'notes', localId, {
+        if (import.meta.env.DEV) console.warn('[Apex] Book not synced yet — queuing tab');
+        await this._queueForSync('upload', 'tabs', localId, {
           _dexie_book_id: bookId,
           text: dexieRecord.text,
           context: dexieRecord.context,
@@ -1020,8 +1020,8 @@ const syncService = {
       }
     } else {
       // Offline — queue for later
-      if (import.meta.env.DEV) console.log('[Apex] Offline — note queued for sync');
-      await this._queueForSync('upload', 'notes', localId, {
+      if (import.meta.env.DEV) console.log('[Apex] Offline — tab queued for sync');
+      await this._queueForSync('upload', 'tabs', localId, {
         _dexie_book_id: bookId,
         text: dexieRecord.text,
         context: dexieRecord.context,
@@ -1032,41 +1032,41 @@ const syncService = {
     return { ...dexieRecord, id: dexieId };
   },
 
-  updateNote: async function (supabaseId, dexieId, text) {
+  updateTab: async function (supabaseId, dexieId, text) {
     const now = new Date().toISOString();
 
     // Update Dexie immediately
-    await db.notes.update(dexieId, { text, updatedAt: now, synced: false });
-    if (import.meta.env.DEV) console.log('[Apex] Note updated in Dexie:', dexieId);
+    await db.tabs.update(dexieId, { text, updatedAt: now, synced: false });
+    if (import.meta.env.DEV) console.log('[Apex] Tab updated in Dexie:', dexieId);
 
     // If online and synced, update Supabase
     if (navigator.onLine && supabaseId) {
       try {
-        await apiClient.put(`/api/notes/${supabaseId}`, { text, updated_at: now });
-        await db.notes.update(dexieId, { synced: true });
-        if (import.meta.env.DEV) console.log('[Apex] Note updated in Supabase:', supabaseId);
+        await apiClient.put(`/api/tabs/${supabaseId}`, { text, updated_at: now });
+        await db.tabs.update(dexieId, { synced: true });
+        if (import.meta.env.DEV) console.log('[Apex] Tab updated in Supabase:', supabaseId);
       } catch (err) {
-        if (import.meta.env.DEV) console.error('[Apex] Failed to update note in Supabase:', err);
+        if (import.meta.env.DEV) console.error('[Apex] Failed to update tab in Supabase:', err);
       }
     }
   },
 
-  deleteNote: async function (supabaseId, dexieId) {
+  deleteTab: async function (supabaseId, dexieId) {
     // Delete from Dexie immediately
     if (dexieId) {
-      await db.notes.delete(dexieId).catch(err =>
-        { if (import.meta.env.DEV) console.error('[Apex] Failed to delete note from Dexie:', err); }
+      await db.tabs.delete(dexieId).catch(err =>
+        { if (import.meta.env.DEV) console.error('[Apex] Failed to delete tab from Dexie:', err); }
       );
-      if (import.meta.env.DEV) console.log('[Apex] Note deleted from Dexie:', dexieId);
+      if (import.meta.env.DEV) console.log('[Apex] Tab deleted from Dexie:', dexieId);
     }
 
     // If online and synced, delete from Supabase
     if (navigator.onLine && supabaseId) {
       try {
-        await apiClient.delete(`/api/notes/${supabaseId}`);
-        if (import.meta.env.DEV) console.log('[Apex] Note deleted from Supabase:', supabaseId);
+        await apiClient.delete(`/api/tabs/${supabaseId}`);
+        if (import.meta.env.DEV) console.log('[Apex] Tab deleted from Supabase:', supabaseId);
       } catch (err) {
-        if (import.meta.env.DEV) console.error('[Apex] Failed to delete note from Supabase:', err);
+        if (import.meta.env.DEV) console.error('[Apex] Failed to delete tab from Supabase:', err);
       }
     }
   },

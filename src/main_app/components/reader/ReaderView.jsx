@@ -43,7 +43,7 @@ const ScrollOrientationOverlay = ({ visible, orientation }) => {
 };
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addNote, updateNote, deleteNote, toggleFavorite, toggleBookmarkedBook, addSimplification, removeSimplification } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addTab, updateTab, deleteTab, toggleFavorite, toggleBookmarkedBook, addSimplification, removeSimplification } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -451,10 +451,10 @@ function ReaderView() {
         removeHighlight: (highlightId) => removeHighlight(book.id, highlightId),
         onJumpToHighlight: goToPage,
         // Notes
-        notes: book?.metadata?.notes || [],
-        addNote: (text) => addNote(book.id, text),
-        updateNote: (noteId, text) => updateNote(book.id, noteId, text),
-        deleteNote: (noteId) => deleteNote(book.id, noteId),
+        tabs: book?.metadata?.tabs || [],
+        addTab: (text) => addTab(book.id, text),
+        updateTab: (tabId, text) => updateTab(book.id, tabId, text),
+        deleteTab: (tabId) => deleteTab(book.id, tabId),
         // Simplifications
         simplifications,
         removeSimplification: (simplificationId) => removeSimplification(book.id, simplificationId),
@@ -1041,7 +1041,7 @@ function ReaderView() {
                         onHighlight={handleHighlight}
                         onSimplify={handleSimplify}
                         onDictToggle={setIsDictOpen}
-                        onAddNote={readerControls.addNote}
+                        onAddNote={readerControls.addTab}
                     />
                 )}
 

@@ -34,7 +34,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
     { icon: Book, label: 'Book Spaces', path: '/spaces' },
     { icon: WholeWord, label: 'Dictionary', path: '/dictionary' },
     { icon: Sparkle, label: 'Cleo', path: '/ai' },
-    { icon: Pen, label: 'Notes', path: '/notes' },
+    { icon: Pen, label: 'Tabs', path: '/tabs' },
   ];
 
   return (
