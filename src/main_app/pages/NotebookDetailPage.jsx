@@ -1,6 +1,7 @@
 import { useContext, useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BookContext } from '../context/BookContextInstance';
+import useBookNotesStore from '../store/bookNotesStore';
 import {
   ArrowLeft, Plus, FileText, Bookmark, AlignLeft,
   Highlighter, Pen, Search
@@ -49,18 +50,11 @@ function getTemplateStyle(template) {
 
 // Extract plain text preview from JSONB content blocks
 function getContentPreview(content) {
-  if (!content || !Array.isArray(content) || content.length === 0) return null;
-  for (const block of content) {
-    if (block.text && typeof block.text === 'string' && block.text.trim()) {
-      return block.text.trim();
-    }
-    // Handle nested children (common in block editors)
-    if (block.children && Array.isArray(block.children)) {
-      for (const child of block.children) {
-        if (child.text && typeof child.text === 'string' && child.text.trim()) {
-          return child.text.trim();
-        }
-      }
+  if (!content || !content.content || !Array.isArray(content.content)) return null;
+  for (const block of content.content) {
+    if (block.type === 'paragraph' && block.content) {
+      const text = block.content.map(c => c.text).join(' ');
+      if (text.trim()) return text.trim();
     }
   }
   return null;
@@ -70,6 +64,7 @@ function NotebookDetailPage() {
   const { bookId } = useParams();
   const navigate = useNavigate();
   const { books } = useContext(BookContext);
+  const { notes, fetchNotesByBook, loading } = useBookNotesStore();
 
   const parsedBookId = useMemo(() => {
     const n = parseInt(bookId, 10);
@@ -81,17 +76,17 @@ function NotebookDetailPage() {
     [books, parsedBookId, bookId]
   );
 
-  // TODO: book_notes data should come from bookNotesStore when built — using empty array
-  const notes = useMemo(() => [], []);
+  // Fetch notes for this book
+  useEffect(() => {
+    if (bookId) {
+      fetchNotesByBook(bookId);
+    }
+  }, [bookId, fetchNotesByBook]);
 
   // Tabs from book metadata
   const tabs = useMemo(() => {
     return book?.metadata?.tabs || [];
   }, [book]);
-
-  useEffect(() => {
-    console.log('[NotebookDetailPage] bookId:', bookId, 'notes:', notes?.length, 'tabs:', tabs?.length);
-  }, [bookId, notes, tabs]);
 
   const bookTitle = book?.title || 'Unknown Book';
   const notesCount = notes.length;
@@ -146,7 +141,11 @@ function NotebookDetailPage() {
           </div>
 
           {/* Notes grid */}
-          {notes.length === 0 ? (
+          {loading ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+               {[1,2,3].map(i => <div key={i} className="h-40 bg-bg-subtle animate-pulse rounded-card" />)}
+             </div>
+          ) : notes.length === 0 ? (
             <div className="border border-dashed border-border-default rounded-card p-10 text-center flex flex-col items-center gap-3">
               <FileText size={28} className="text-text-placeholder" />
               <h4 className="font-display text-lg font-bold text-text-primary">No notes yet</h4>
@@ -157,13 +156,13 @@ function NotebookDetailPage() {
               {notes.map((note) => {
                 const preview = getContentPreview(note.content);
                 const template = note.template || 'blank';
-                const wordCount = note.word_count || note.wordCount || 0;
+                const wordCount = note.word_count || 0;
 
                 return (
                   <div
-                    key={note.id}
-                    className="break-inside-avoid bg-bg-subtle border border-border-default rounded-card overflow-hidden hover:shadow-lg hover:border-accent-primary/30 transition-all duration-300 group cursor-pointer flex flex-col"
-                    onClick={() => navigate(`/notes/${bookId}/${note.id}`)}
+                    key={note.local_id}
+                    className="break-inside-avoid bg-bg-subtle border border-border-default rounded-card overflow-hidden hover:-translate-y-1 transition-all duration-300 group cursor-pointer flex flex-col"
+                    onClick={() => navigate(`/notes/${bookId}/${note.local_id}`)}
                   >
                     {/* Card top — title area */}
                     <div className="p-5 pb-4">
@@ -204,7 +203,7 @@ function NotebookDetailPage() {
 
                       {/* Right — last edited */}
                       <span className="text-[11px] text-text-tertiary">
-                        {formatDate(note.updatedAt || note.updated_at)}
+                        {formatDate(note.updatedAt)}
                       </span>
                     </div>
                   </div>

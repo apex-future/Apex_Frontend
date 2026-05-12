@@ -9,6 +9,7 @@ import Typography from '@tiptap/extension-typography';
 import CharacterCount from '@tiptap/extension-character-count';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
+import useBookNotesStore from '../store/bookNotesStore';
 
 import {
   ArrowLeft,
@@ -172,13 +173,15 @@ function HeadingDropdown({ editor }) {
 function NoteEditorPage() {
   const { bookId, noteId } = useParams();
   const navigate = useNavigate();
+  const { saveNote, getNoteByLocalId } = useBookNotesStore();
 
-  // Note metadata state — in a real app this would load from / save to bookNotesStore
+  const [localId, setLocalId] = useState(null);
   const [title, setTitle] = useState('Untitled');
-  const [createdAt] = useState(() => new Date().toISOString());
-  const [lastEdited, setLastEdited] = useState(() => new Date().toISOString());
+  const [createdAt, setCreatedAt] = useState(null);
+  const [lastEdited, setLastEdited] = useState(null);
   const [wordCount, setWordCount] = useState(0);
   const [saved, setSaved] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const saveTimerRef = useRef(null);
 
   // TipTap editor
@@ -190,7 +193,7 @@ function NoteEditorPage() {
         orderedList: { keepMarks: true },
       }),
       Placeholder.configure({
-        placeholder: "Start writing your note… Press '/' for commands",
+        placeholder: "Start writing your note…",
       }),
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
@@ -201,52 +204,101 @@ function NoteEditorPage() {
     ],
     content: '',
     onUpdate: ({ editor }) => {
-      const words = editor.getText().trim().split(/\s+/).filter(Boolean).length;
+      // Skip logic if we are still setting up the editor
+      if (isInitialLoad) return;
+
+      const words = editor.storage.characterCount.words();
       setWordCount(words);
       setSaved(false);
 
       // Debounce save — 1.5s after last keystroke
       clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = setTimeout(() => {
-        const now = new Date().toISOString();
-        setLastEdited(now);
-        setSaved(true);
-        // TODO: persist to bookNotesStore / Dexie when store is built
-        console.log('[NoteEditorPage] auto-saved note — bookId:', bookId, 'noteId:', noteId);
+      saveTimerRef.current = setTimeout(async () => {
+        await handleAutoSave(editor.getJSON(), words);
       }, 1500);
     },
   });
 
+  // Load existing note
+  useEffect(() => {
+    const loadNote = async () => {
+      if (noteId && noteId !== 'new') {
+        const existing = await getNoteByLocalId(noteId);
+        if (existing) {
+          setLocalId(existing.local_id);
+          setTitle(existing.title);
+          setCreatedAt(existing.createdAt);
+          setLastEdited(existing.updatedAt);
+          setWordCount(existing.word_count || 0);
+          
+          if (editor) {
+            editor.commands.setContent(existing.content);
+            // Delay marking load as finished to prevent immediate auto-save trigger
+            setTimeout(() => setIsInitialLoad(false), 100);
+          }
+        } else {
+          // Note not found, treat as new or handle error
+          initNewNote();
+        }
+      } else {
+        initNewNote();
+      }
+    };
+
+    const initNewNote = () => {
+      const now = new Date().toISOString();
+      setLocalId(crypto.randomUUID());
+      setCreatedAt(now);
+      setLastEdited(now);
+      setIsInitialLoad(false);
+    };
+
+    loadNote();
+  }, [noteId, editor, getNoteByLocalId]);
+
+  const handleAutoSave = async (content, words) => {
+    try {
+      const noteData = {
+        local_id: localId,
+        bookId: Number(bookId),
+        title,
+        content: content || editor.getJSON(),
+        word_count: words || wordCount,
+        createdAt,
+      };
+
+      const result = await saveNote(noteData);
+      setLastEdited(result.updatedAt);
+      setSaved(true);
+      
+      // If it was a new note, update URL to prevent multiple 'new' notes
+      if (noteId === 'new') {
+        navigate(`/notes/${bookId}/${localId}`, { replace: true });
+      }
+    } catch (error) {
+      console.error('[NoteEditorPage] auto-save failed:', error);
+    }
+  };
+
   // Title change
   const handleTitleChange = (e) => {
-    setTitle(e.target.value);
+    const newTitle = e.target.value;
+    setTitle(newTitle);
     setSaved(false);
+    
     clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
-      setLastEdited(new Date().toISOString());
-      setSaved(true);
-      console.log('[NoteEditorPage] title saved:', e.target.value);
+    saveTimerRef.current = setTimeout(async () => {
+      await handleAutoSave(null, null);
     }, 1500);
   };
 
-  // Manual save shortcut Ctrl+S
+  // Clean up
   useEffect(() => {
-    const handler = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
+    return () => {
+      if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
-        setLastEdited(new Date().toISOString());
-        setSaved(true);
-        console.log('[NoteEditorPage] manual save triggered');
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
-  useEffect(() => {
-    console.log('[NoteEditorPage] mounted — bookId:', bookId, 'noteId:', noteId);
-    return () => clearTimeout(saveTimerRef.current);
   }, []);
 
   if (!editor) return null;
@@ -279,17 +331,10 @@ function NoteEditorPage() {
             )}
           </div>
 
-          {/* Manual save button */}
-          <button
-            onClick={() => {
-              clearTimeout(saveTimerRef.current);
-              setLastEdited(new Date().toISOString());
-              setSaved(true);
-            }}
-            className="flex items-center gap-1.5 text-xs font-bold text-accent-primary bg-accent-primary/10 hover:bg-accent-primary/20 px-3 py-1.5 rounded-lg transition-all flex-shrink-0"
-          >
-            <Save size={13} /> Save
-          </button>
+          {/* Word count pill */}
+          <div className="text-[11px] font-bold text-text-tertiary bg-bg-subtle px-3 py-1.5 rounded-lg border border-border-default">
+            {wordCount} words
+          </div>
         </div>
       </div>
 
@@ -313,7 +358,6 @@ function NoteEditorPage() {
 
         {/* ── Properties panel ─────────────────────────────────────────── */}
         <div className="mt-6 mb-8 flex flex-col gap-1.5">
-          {/* Last edited */}
           <div className="flex items-center gap-0">
             <span className="text-xs text-text-tertiary w-32 flex-shrink-0">Last edited</span>
             <span className="text-xs text-text-secondary font-medium">
@@ -321,19 +365,10 @@ function NoteEditorPage() {
             </span>
           </div>
 
-          {/* Created at */}
           <div className="flex items-center gap-0">
             <span className="text-xs text-text-tertiary w-32 flex-shrink-0">Created at</span>
             <span className="text-xs text-text-secondary font-medium">
               {formatFullDate(createdAt)}
-            </span>
-          </div>
-
-          {/* Word count */}
-          <div className="flex items-center gap-0">
-            <span className="text-xs text-text-tertiary w-32 flex-shrink-0">Word count</span>
-            <span className="text-xs text-text-secondary font-medium">
-              {wordCount} {wordCount === 1 ? 'word' : 'words'}
             </span>
           </div>
         </div>
@@ -345,29 +380,27 @@ function NoteEditorPage() {
         <div className="sticky top-[61px] z-40 mb-4 -mx-2">
           <div className="bg-bg-elevated/95 backdrop-blur-xl border border-border-default rounded-2xl shadow-lg px-3 py-2 flex items-center gap-0.5 flex-wrap">
 
-            {/* Heading dropdown */}
             <HeadingDropdown editor={editor} />
             <ToolbarDivider />
 
-            {/* Text style */}
             <ToolbarBtn
               onClick={() => editor.chain().focus().toggleBold().run()}
               active={editor.isActive('bold')}
-              title="Bold (Ctrl+B)"
+              title="Bold"
             >
               <Bold size={15} />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().toggleItalic().run()}
               active={editor.isActive('italic')}
-              title="Italic (Ctrl+I)"
+              title="Italic"
             >
               <Italic size={15} />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().toggleUnderline().run()}
               active={editor.isActive('underline')}
-              title="Underline (Ctrl+U)"
+              title="Underline"
             >
               <UnderlineIcon size={15} />
             </ToolbarBtn>
@@ -388,7 +421,6 @@ function NoteEditorPage() {
 
             <ToolbarDivider />
 
-            {/* Alignment */}
             <ToolbarBtn
               onClick={() => editor.chain().focus().setTextAlign('left').run()}
               active={editor.isActive({ textAlign: 'left' })}
@@ -410,17 +442,9 @@ function NoteEditorPage() {
             >
               <AlignRight size={15} />
             </ToolbarBtn>
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-              active={editor.isActive({ textAlign: 'justify' })}
-              title="Justify"
-            >
-              <AlignJustify size={15} />
-            </ToolbarBtn>
 
             <ToolbarDivider />
 
-            {/* Lists */}
             <ToolbarBtn
               onClick={() => editor.chain().focus().toggleBulletList().run()}
               active={editor.isActive('bulletList')}
@@ -442,29 +466,14 @@ function NoteEditorPage() {
             >
               <Quote size={15} />
             </ToolbarBtn>
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().toggleCode().run()}
-              active={editor.isActive('code')}
-              title="Inline Code"
-            >
-              <Code size={15} />
-            </ToolbarBtn>
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().setHorizontalRule().run()}
-              active={false}
-              title="Divider"
-            >
-              <Minus size={15} />
-            </ToolbarBtn>
 
             <ToolbarDivider />
 
-            {/* History */}
             <ToolbarBtn
               onClick={() => editor.chain().focus().undo().run()}
               active={false}
               disabled={!editor.can().undo()}
-              title="Undo (Ctrl+Z)"
+              title="Undo"
             >
               <Undo2 size={15} />
             </ToolbarBtn>
@@ -472,7 +481,7 @@ function NoteEditorPage() {
               onClick={() => editor.chain().focus().redo().run()}
               active={false}
               disabled={!editor.can().redo()}
-              title="Redo (Ctrl+Shift+Z)"
+              title="Redo"
             >
               <Redo2 size={15} />
             </ToolbarBtn>
