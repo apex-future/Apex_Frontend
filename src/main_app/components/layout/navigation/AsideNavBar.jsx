@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // Import Lucide icons for visual representation in the navigation
-import { Sparkle, Home, X, Book, Pen, Cog, WholeWord, Menu, LogOut, Sun, Moon, Monitor, User } from 'lucide-react';
+import { Sparkle, Home, X, Book, NotebookPen, Cog, WholeWord, Menu, LogOut, Sun, Moon, Monitor, User } from 'lucide-react';
 // Import navigation hooks and components from react-router-dom
 import { NavLink, useLocation } from 'react-router-dom';
 import useThemeStore from '../../../store/themeStore';
@@ -34,7 +34,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
     { icon: Book, label: 'Book Spaces', path: '/spaces' },
     { icon: WholeWord, label: 'Dictionary', path: '/dictionary' },
     { icon: Sparkle, label: 'Cleo', path: '/ai' },
-    { icon: Pen, label: 'Tabs', path: '/tabs' },
+    { icon: NotebookPen, label: 'Notebook', path: '/notes' },
   ];
 
   return (

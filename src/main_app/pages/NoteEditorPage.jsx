@@ -1,0 +1,492 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import Typography from '@tiptap/extension-typography';
+import CharacterCount from '@tiptap/extension-character-count';
+import Highlight from '@tiptap/extension-highlight';
+import { TextStyle } from '@tiptap/extension-text-style';
+
+import {
+  ArrowLeft,
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  Strikethrough,
+  Highlighter,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  Quote,
+  Code,
+  Minus,
+  Undo2,
+  Redo2,
+  ChevronDown,
+  Check,
+  Type,
+  Save,
+} from 'lucide-react';
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function formatFullDate(isoString) {
+  if (!isoString) return '—';
+  return new Date(isoString).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatRelative(isoString) {
+  if (!isoString) return '—';
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay === 1) return 'Yesterday';
+  return formatFullDate(isoString);
+}
+
+// ─── Toolbar Button ──────────────────────────────────────────────────────────
+
+function ToolbarBtn({ onClick, active, title, children, disabled }) {
+  return (
+    <button
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
+      disabled={disabled}
+      title={title}
+      className={`p-1.5 rounded-lg transition-all duration-150 ${
+        active
+          ? 'bg-accent-primary text-white shadow-sm'
+          : 'text-text-secondary hover:text-text-primary hover:bg-bg-subtle'
+      } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ─── Divider ────────────────────────────────────────────────────────────────
+
+function ToolbarDivider() {
+  return <div className="w-px h-5 bg-border-default mx-1 flex-shrink-0" />;
+}
+
+// ─── Heading Dropdown ────────────────────────────────────────────────────────
+
+const HEADING_OPTIONS = [
+  { label: 'Paragraph', icon: Type, level: 0 },
+  { label: 'Heading 1', icon: Heading1, level: 1 },
+  { label: 'Heading 2', icon: Heading2, level: 2 },
+  { label: 'Heading 3', icon: Heading3, level: 3 },
+];
+
+function HeadingDropdown({ editor }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const current = HEADING_OPTIONS.find((o) => {
+    if (o.level === 0) return editor?.isActive('paragraph');
+    return editor?.isActive('heading', { level: o.level });
+  }) || HEADING_OPTIONS[0];
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onMouseDown={(e) => { e.preventDefault(); setOpen((p) => !p); }}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-all"
+      >
+        <current.icon size={14} />
+        <span className="hidden sm:inline">{current.label}</span>
+        <ChevronDown size={12} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 bg-bg-elevated border border-border-default rounded-xl shadow-xl overflow-hidden min-w-[160px]">
+          {HEADING_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            const isActive = opt.level === 0
+              ? editor?.isActive('paragraph')
+              : editor?.isActive('heading', { level: opt.level });
+            return (
+              <button
+                key={opt.level}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  if (opt.level === 0) {
+                    editor?.chain().focus().setParagraph().run();
+                  } else {
+                    editor?.chain().focus().toggleHeading({ level: opt.level }).run();
+                  }
+                  setOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-all ${
+                  isActive
+                    ? 'bg-accent-primary/10 text-accent-primary'
+                    : 'text-text-primary hover:bg-bg-subtle'
+                }`}
+              >
+                <Icon size={16} />
+                <span className="font-medium">{opt.label}</span>
+                {isActive && <Check size={14} className="ml-auto" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Editor Page ────────────────────────────────────────────────────────
+
+function NoteEditorPage() {
+  const { bookId, noteId } = useParams();
+  const navigate = useNavigate();
+
+  // Note metadata state — in a real app this would load from / save to bookNotesStore
+  const [title, setTitle] = useState('Untitled');
+  const [createdAt] = useState(() => new Date().toISOString());
+  const [lastEdited, setLastEdited] = useState(() => new Date().toISOString());
+  const [wordCount, setWordCount] = useState(0);
+  const [saved, setSaved] = useState(true);
+  const saveTimerRef = useRef(null);
+
+  // TipTap editor
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+        bulletList: { keepMarks: true },
+        orderedList: { keepMarks: true },
+      }),
+      Placeholder.configure({
+        placeholder: "Start writing your note… Press '/' for commands",
+      }),
+      Underline,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      Typography,
+      CharacterCount,
+      Highlight.configure({ multicolor: false }),
+      TextStyle,
+    ],
+    content: '',
+    onUpdate: ({ editor }) => {
+      const words = editor.getText().trim().split(/\s+/).filter(Boolean).length;
+      setWordCount(words);
+      setSaved(false);
+
+      // Debounce save — 1.5s after last keystroke
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        const now = new Date().toISOString();
+        setLastEdited(now);
+        setSaved(true);
+        // TODO: persist to bookNotesStore / Dexie when store is built
+        console.log('[NoteEditorPage] auto-saved note — bookId:', bookId, 'noteId:', noteId);
+      }, 1500);
+    },
+  });
+
+  // Title change
+  const handleTitleChange = (e) => {
+    setTitle(e.target.value);
+    setSaved(false);
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      setLastEdited(new Date().toISOString());
+      setSaved(true);
+      console.log('[NoteEditorPage] title saved:', e.target.value);
+    }, 1500);
+  };
+
+  // Manual save shortcut Ctrl+S
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        clearTimeout(saveTimerRef.current);
+        setLastEdited(new Date().toISOString());
+        setSaved(true);
+        console.log('[NoteEditorPage] manual save triggered');
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  useEffect(() => {
+    console.log('[NoteEditorPage] mounted — bookId:', bookId, 'noteId:', noteId);
+    return () => clearTimeout(saveTimerRef.current);
+  }, []);
+
+  if (!editor) return null;
+
+  return (
+    <div className="min-h-screen bg-bg-elevated flex flex-col">
+
+      {/* ── Top bar ───────────────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          {/* Back */}
+          <button
+            onClick={() => navigate(`/notes/${bookId}`)}
+            className="p-2 hover:bg-bg-subtle text-text-secondary rounded-xl transition-all group flex-shrink-0"
+          >
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+          </button>
+
+          {/* Save status */}
+          <div className="flex items-center gap-2 text-xs text-text-tertiary">
+            {saved ? (
+              <span className="flex items-center gap-1.5">
+                <Check size={12} className="text-emerald-500" /> Saved
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 animate-pulse">
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
+                Saving…
+              </span>
+            )}
+          </div>
+
+          {/* Manual save button */}
+          <button
+            onClick={() => {
+              clearTimeout(saveTimerRef.current);
+              setLastEdited(new Date().toISOString());
+              setSaved(true);
+            }}
+            className="flex items-center gap-1.5 text-xs font-bold text-accent-primary bg-accent-primary/10 hover:bg-accent-primary/20 px-3 py-1.5 rounded-lg transition-all flex-shrink-0"
+          >
+            <Save size={13} /> Save
+          </button>
+        </div>
+      </div>
+
+      {/* ── Editor area ───────────────────────────────────────────────────── */}
+      <div className="flex-1 max-w-4xl w-full mx-auto px-6 md:px-16 py-10 md:py-16 flex flex-col gap-0">
+
+        {/* Title */}
+        <textarea
+          value={title}
+          onChange={handleTitleChange}
+          placeholder="Untitled"
+          rows={1}
+          spellCheck
+          className="w-full resize-none bg-transparent text-text-primary font-display font-bold text-4xl md:text-5xl leading-tight placeholder:text-text-placeholder focus:outline-none overflow-hidden"
+          style={{ height: 'auto' }}
+          onInput={(e) => {
+            e.target.style.height = 'auto';
+            e.target.style.height = e.target.scrollHeight + 'px';
+          }}
+        />
+
+        {/* ── Properties panel ─────────────────────────────────────────── */}
+        <div className="mt-6 mb-8 flex flex-col gap-1.5">
+          {/* Last edited */}
+          <div className="flex items-center gap-0">
+            <span className="text-xs text-text-tertiary w-32 flex-shrink-0">Last edited</span>
+            <span className="text-xs text-text-secondary font-medium">
+              {formatRelative(lastEdited)}
+            </span>
+          </div>
+
+          {/* Created at */}
+          <div className="flex items-center gap-0">
+            <span className="text-xs text-text-tertiary w-32 flex-shrink-0">Created at</span>
+            <span className="text-xs text-text-secondary font-medium">
+              {formatFullDate(createdAt)}
+            </span>
+          </div>
+
+          {/* Word count */}
+          <div className="flex items-center gap-0">
+            <span className="text-xs text-text-tertiary w-32 flex-shrink-0">Word count</span>
+            <span className="text-xs text-text-secondary font-medium">
+              {wordCount} {wordCount === 1 ? 'word' : 'words'}
+            </span>
+          </div>
+        </div>
+
+        {/* ── Separator ────────────────────────────────────────────────── */}
+        <div className="border-t border-border-default mb-6" />
+
+        {/* ── Floating Toolbar ─────────────────────────────────────────── */}
+        <div className="sticky top-[61px] z-40 mb-4 -mx-2">
+          <div className="bg-bg-elevated/95 backdrop-blur-xl border border-border-default rounded-2xl shadow-lg px-3 py-2 flex items-center gap-0.5 flex-wrap">
+
+            {/* Heading dropdown */}
+            <HeadingDropdown editor={editor} />
+            <ToolbarDivider />
+
+            {/* Text style */}
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              active={editor.isActive('bold')}
+              title="Bold (Ctrl+B)"
+            >
+              <Bold size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              active={editor.isActive('italic')}
+              title="Italic (Ctrl+I)"
+            >
+              <Italic size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              active={editor.isActive('underline')}
+              title="Underline (Ctrl+U)"
+            >
+              <UnderlineIcon size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              active={editor.isActive('strike')}
+              title="Strikethrough"
+            >
+              <Strikethrough size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().toggleHighlight().run()}
+              active={editor.isActive('highlight')}
+              title="Highlight"
+            >
+              <Highlighter size={15} />
+            </ToolbarBtn>
+
+            <ToolbarDivider />
+
+            {/* Alignment */}
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().setTextAlign('left').run()}
+              active={editor.isActive({ textAlign: 'left' })}
+              title="Align Left"
+            >
+              <AlignLeft size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().setTextAlign('center').run()}
+              active={editor.isActive({ textAlign: 'center' })}
+              title="Align Center"
+            >
+              <AlignCenter size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().setTextAlign('right').run()}
+              active={editor.isActive({ textAlign: 'right' })}
+              title="Align Right"
+            >
+              <AlignRight size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+              active={editor.isActive({ textAlign: 'justify' })}
+              title="Justify"
+            >
+              <AlignJustify size={15} />
+            </ToolbarBtn>
+
+            <ToolbarDivider />
+
+            {/* Lists */}
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              active={editor.isActive('bulletList')}
+              title="Bullet List"
+            >
+              <List size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              active={editor.isActive('orderedList')}
+              title="Numbered List"
+            >
+              <ListOrdered size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              active={editor.isActive('blockquote')}
+              title="Blockquote"
+            >
+              <Quote size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().toggleCode().run()}
+              active={editor.isActive('code')}
+              title="Inline Code"
+            >
+              <Code size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().setHorizontalRule().run()}
+              active={false}
+              title="Divider"
+            >
+              <Minus size={15} />
+            </ToolbarBtn>
+
+            <ToolbarDivider />
+
+            {/* History */}
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().undo().run()}
+              active={false}
+              disabled={!editor.can().undo()}
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 size={15} />
+            </ToolbarBtn>
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().redo().run()}
+              active={false}
+              disabled={!editor.can().redo()}
+              title="Redo (Ctrl+Shift+Z)"
+            >
+              <Redo2 size={15} />
+            </ToolbarBtn>
+          </div>
+        </div>
+
+        {/* ── TipTap Editor Content ─────────────────────────────────────── */}
+        <EditorContent
+          editor={editor}
+          className="tiptap-editor flex-1 min-h-[400px] focus:outline-none"
+        />
+      </div>
+    </div>
+  );
+}
+
+export default NoteEditorPage;
