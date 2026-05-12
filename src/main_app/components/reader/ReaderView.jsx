@@ -64,6 +64,7 @@ function ReaderView() {
     const [numPages, setNumPages] = useState(null);
     const [scale, setScale] = useState(1.0);
     const [rotation, setRotation] = useState(0);
+    const [tocOutline, setTocOutline] = useState(null);
 
     // Progress state
     const [localProgress, setLocalProgress] = useState(book?.progress || 0);
@@ -311,27 +312,85 @@ function ReaderView() {
         setScale(1.0);
     }, []);
 
-    function handleDocumentLoad({ numPages: total }) {
+    async function handleDocumentLoad(pdf) {
+        const total = pdf.numPages;
         setNumPages(total);
-        // Persist totalPages to Dexie immediately — this is the source of truth
-        // for progress calculation across all devices
+
         if (book?.id && total > 1) {
             db.books.update(book.id, { totalPages: total })
-                .catch(err => console.error('[Apex] Failed to persist totalPages to Dexie:', err));
+                .catch(err => console.error('[Apex TOC] Failed to persist totalPages:', err));
 
-            // Also update Supabase books.total_pages if the book is synced
-            // This ensures new devices get the correct totalPages on pull
             const supabaseId = book.supabaseId || book.recordId;
             if (supabaseId && navigator.onLine) {
                 apiClient.put(`/api/books/${supabaseId}`, { total_pages: total })
                     .catch(err => {
-                        if (import.meta.env.DEV) console.warn('[Apex] Failed to update totalPages in Supabase:', err);
+                        if (import.meta.env.DEV) console.warn('[Apex TOC] Failed to update totalPages in Supabase:', err);
                     });
             }
         }
 
-        // Defer syncProgress to avoid updating BookProvider state during PDF render
         Promise.resolve().then(() => syncProgress(pageNumber, total));
+
+        // --- Outline extraction ---
+        // Check Dexie cache first
+        const cached = await db.books.get(book?.id);
+        if (cached?.outline) {
+            console.log('[Apex TOC] Loaded outline from Dexie cache:', cached.outline.length, 'items');
+            setTocOutline(cached.outline);
+            return;
+        }
+
+        // Extract from pdfjs
+        try {
+            const rawOutline = await pdf.getOutline();
+            if (!rawOutline || rawOutline.length === 0) {
+                console.log('[Apex TOC] No outline found in this PDF');
+                setTocOutline([]);
+                return;
+            }
+
+            // Resolve dest → page number recursively
+            const resolveItem = async (item, level = 0) => {
+                let pageNumber = null;
+                try {
+                    if (item.dest) {
+                        const dest = typeof item.dest === 'string'
+                            ? await pdf.getDestination(item.dest)
+                            : item.dest;
+                        if (dest) {
+                            const pageIndex = await pdf.getPageIndex(dest[0]);
+                            pageNumber = pageIndex + 1; // pdfjs is 0-based
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[Apex TOC] Failed to resolve dest for:', item.title, e);
+                }
+
+                const resolved = { title: item.title, pageNumber, level };
+
+                if (item.items && item.items.length > 0) {
+                    resolved.children = await Promise.all(
+                        item.items.map(child => resolveItem(child, level + 1))
+                    );
+                }
+
+                return resolved;
+            };
+
+            const resolved = await Promise.all(rawOutline.map(item => resolveItem(item, 0)));
+            console.log('[Apex TOC] Outline extracted:', resolved.length, 'top-level items');
+            setTocOutline(resolved);
+
+            // Cache to Dexie — fire and forget
+            if (book?.id) {
+                db.books.update(book.id, { outline: resolved })
+                    .then(() => console.log('[Apex TOC] Outline cached to Dexie'))
+                    .catch(err => console.error('[Apex TOC] Failed to cache outline:', err));
+            }
+        } catch (err) {
+            console.error('[Apex TOC] Outline extraction failed:', err);
+            setTocOutline([]);
+        }
     }
 
     function syncProgress(page, total) {
@@ -956,7 +1015,8 @@ function ReaderView() {
                         setLeftPanel(val);
                     }} 
                     readerControls={readerControls} 
-                    pdfControls={pdfControls} 
+                    pdfControls={pdfControls}
+                    tocOutline={tocOutline}
                 />}
                 
                 {/* Settings panel */}

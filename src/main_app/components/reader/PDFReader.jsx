@@ -591,7 +591,7 @@ const PDFReader = ({
     >
       <Document
         file={fileUrl}
-        onLoadSuccess={onDocumentLoad}
+        onLoadSuccess={(pdf) => onDocumentLoad(pdf)}
         onLoadError={(err) => console.error('PDF load error:', err)}
         loading={<BookSkeleton message="Rendering document..." />}
         className="flex flex-col items-center justify-center min-h-full w-full mx-auto"

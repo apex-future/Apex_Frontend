@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { BookOpen, List, Bookmark, X, ChevronLeft, Heart, Highlighter, Wand2 } from 'lucide-react'
+import { BookOpen, List, Bookmark, X, ChevronLeft, ChevronDown, Highlighter, Wand2 } from 'lucide-react'
 import BookmarksView from './BookmarksView'
 import SidebarNotesView from './SidebarNotesView'
 import HighlightsView from './HighlightsView'
@@ -13,7 +13,81 @@ const NAV_ITEMS = [
   { id: 'simplified', icon: Wand2, label: 'Simplified' },
 ];
 
-function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
+function TocItems({ items, onJump, depth = 0 }) {
+  const [collapsed, setCollapsed] = useState({});
+
+  const toggle = (idx) =>
+    setCollapsed(prev => ({ ...prev, [idx]: !prev[idx] }));
+
+  return (
+    <>
+      {items.map((item, idx) => {
+        const hasChildren = item.children && item.children.length > 0;
+        const isCollapsed = collapsed[idx] ?? false;
+
+        return (
+          <React.Fragment key={idx}>
+            <button
+              onClick={() => {
+                if (hasChildren) {
+                  toggle(idx);
+                } else if (item.pageNumber) {
+                  onJump(item.pageNumber);
+                }
+              }}
+              disabled={!hasChildren && !item.pageNumber}
+              className={`
+                w-full text-left py-2.5 flex items-center gap-2
+                text-text-secondary hover:text-accent-primary hover:bg-accent-primary/5
+                transition-colors disabled:opacity-40 disabled:cursor-default
+                ${depth === 0 ? 'text-[13px] font-semibold border-b border-border-default/30' : 'text-[12px] font-medium'}
+              `}
+              style={{ paddingLeft: `${20 + depth * 16}px`, paddingRight: '16px' }}
+            >
+              {/* Chevron for collapsible parents */}
+              {hasChildren && (
+                <ChevronDown
+                  size={13}
+                  strokeWidth={2.5}
+                  className={`shrink-0 text-text-tertiary transition-transform duration-200 ${
+                    isCollapsed ? '-rotate-90' : 'rotate-0'
+                  }`}
+                />
+              )}
+
+              <span className='flex-1 truncate'>{item.title}</span>
+
+              {/* Page number — always jumps, stops propagation when inside a toggle row */}
+              {item.pageNumber && (
+                <span
+                  onClick={(e) => {
+                    if (hasChildren) e.stopPropagation();
+                    onJump(item.pageNumber);
+                  }}
+                  className='text-[11px] text-text-tertiary tabular-nums shrink-0 hover:text-accent-primary cursor-pointer'
+                >
+                  {item.pageNumber}
+                </span>
+              )}
+            </button>
+
+            {/* Children — animated collapse */}
+            {hasChildren && (
+              <div
+                className='overflow-hidden transition-all duration-200 ease-in-out'
+                style={{ maxHeight: isCollapsed ? 0 : '9999px', opacity: isCollapsed ? 0 : 1 }}
+              >
+                <TocItems items={item.children} onJump={onJump} depth={depth + 1} />
+              </div>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+}
+
+function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
   const [activeSection, setActiveSection] = useState(null);
 
   const {
@@ -107,14 +181,25 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls }) {
           </div>
         )}
 
-        {/* Table of contents — placeholder */}
         {activeSection === 'toc' && (
-          <div className='flex flex-col items-center justify-center py-12 px-4 text-center'>
-            <div className='w-12 h-12 rounded-2xl bg-bg-subtle flex items-center justify-center mb-3'>
-              <List size={22} className='text-text-tertiary' strokeWidth={1.5} />
-            </div>
-            <p className='text-sm font-semibold text-text-secondary'>Table of Contents</p>
-            <p className='text-xs text-text-tertiary mt-1'>Coming soon</p>
+          <div className='flex flex-col py-2'>
+            {/* No outline available */}
+            {(!tocOutline || tocOutline.length === 0) && (
+              <div className='flex flex-col items-center justify-center py-12 px-4 text-center'>
+                <div className='w-12 h-12 rounded-2xl bg-bg-subtle flex items-center justify-center mb-3'>
+                  <List size={22} className='text-text-tertiary' strokeWidth={1.5} />
+                </div>
+                <p className='text-sm font-semibold text-text-secondary'>No Table of Contents</p>
+                <p className='text-xs text-text-tertiary mt-1 max-w-[200px]'>
+                  This book doesn't have an embedded table of contents.
+                </p>
+              </div>
+            )}
+
+            {/* Outline available */}
+            {tocOutline && tocOutline.length > 0 && (
+              <TocItems items={tocOutline} onJump={handleJumpTo} />
+            )}
           </div>
         )}
 
