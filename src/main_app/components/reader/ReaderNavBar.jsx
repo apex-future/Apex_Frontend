@@ -9,7 +9,7 @@ function ReaderNavBar({ navigate, navState, setNavState, aiModal, setAiModal, qu
   };
 
   return (
-    <div className="reading-nav-bar fixed inset-0 z-50 pointer-events-none h-[100dvh]">
+    <div className="reading-nav-bar absolute inset-0 z-50 pointer-events-none h-full">
       {navState === 'first' && (
         <FirstLayerNavBar
           navigate={navigate}
