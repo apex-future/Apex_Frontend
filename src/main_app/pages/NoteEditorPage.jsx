@@ -186,6 +186,9 @@ function NoteEditorPage() {
   const saveTimerRef = useRef(null);
   const titleRef = useRef('Untitled');
   const contentRef = useRef(null);
+  // Tracks whether we've already seeded state for the current noteId so that
+  // setting localId (UUID) doesn't re-trigger the load effect infinitely.
+  const initializedRef = useRef(false);
 
   // TipTap editor
   const editor = useEditor({
@@ -222,34 +225,20 @@ function NoteEditorPage() {
     },
   });
 
-  // Load existing note
+  // Load existing note — runs only once per (noteId, editor) combination.
+  // IMPORTANT: `localId` must NOT be in the dependency array. Setting it inside
+  // initNewNote() would otherwise trigger an infinite re-initialization loop
+  // that resets the title on every render and breaks navigation.
   useEffect(() => {
-    const loadNote = async () => {
-      if (noteId && noteId !== 'new') {
-        // If we already have this note loaded (e.g. just navigated from 'new'), skip
-        if (localId === noteId) return;
+    if (!editor) return;
+    // Reset the guard whenever the target note changes so switching routes works.
+    initializedRef.current = false;
+  }, [noteId]);
 
-        const existing = await getNoteByLocalId(noteId);
-        if (existing) {
-          setLocalId(existing.local_id);
-          setTitle(existing.title);
-          titleRef.current = existing.title;
-          setCreatedAt(existing.createdAt);
-          setLastEdited(existing.updatedAt);
-          setWordCount(existing.word_count || 0);
-          contentRef.current = existing.content;
-          
-          if (editor) {
-            editor.commands.setContent(existing.content);
-            setTimeout(() => setIsInitialLoad(false), 100);
-          }
-        } else {
-          initNewNote();
-        }
-      } else {
-        initNewNote();
-      }
-    };
+  useEffect(() => {
+    if (!editor) return;
+    if (initializedRef.current) return;
+    initializedRef.current = true;
 
     const initNewNote = () => {
       const now = new Date().toISOString();
@@ -262,8 +251,29 @@ function NoteEditorPage() {
       setIsInitialLoad(false);
     };
 
+    const loadNote = async () => {
+      if (noteId && noteId !== 'new') {
+        const existing = await getNoteByLocalId(noteId);
+        if (existing) {
+          setLocalId(existing.local_id);
+          setTitle(existing.title);
+          titleRef.current = existing.title;
+          setCreatedAt(existing.createdAt);
+          setLastEdited(existing.updatedAt);
+          setWordCount(existing.word_count || 0);
+          contentRef.current = existing.content;
+          editor.commands.setContent(existing.content);
+          setTimeout(() => setIsInitialLoad(false), 100);
+        } else {
+          initNewNote();
+        }
+      } else {
+        initNewNote();
+      }
+    };
+
     loadNote();
-  }, [noteId, editor, getNoteByLocalId, localId]);
+  }, [noteId, editor, getNoteByLocalId]);
 
   const handleAutoSave = async () => {
     if (!localId) return;

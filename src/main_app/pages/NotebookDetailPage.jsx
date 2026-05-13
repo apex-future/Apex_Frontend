@@ -1,10 +1,10 @@
-import { useContext, useState, useMemo, useEffect } from 'react';
+import { useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BookContext } from '../context/BookContextInstance';
 import useBookNotesStore from '../store/bookNotesStore';
 import {
   ArrowLeft, Plus, FileText, Bookmark, AlignLeft,
-  Highlighter, Pen, Search
+  Highlighter, Pen, Search, Trash2, AlertTriangle
 } from 'lucide-react';
 
 function formatDate(isoString) {
@@ -60,11 +60,90 @@ function getContentPreview(content) {
   return null;
 }
 
+// ─── Delete Confirmation Modal ──────────────────────────────────────────────
+
+function DeleteConfirmModal({ noteTitle, onConfirm, onCancel }) {
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-bg-elevated border border-border-default rounded-[28px] p-8 w-full max-w-sm shadow-2xl flex flex-col gap-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Icon */}
+        <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center">
+          <AlertTriangle size={22} className="text-red-500" />
+        </div>
+
+        {/* Copy */}
+        <div className="flex flex-col gap-1.5">
+          <h3 className="font-display text-lg font-bold text-text-primary">Delete Note</h3>
+          <p className="text-sm text-text-secondary leading-relaxed">
+            <span className="font-semibold text-text-primary">
+              &ldquo;{noteTitle || 'Untitled'}&rdquo;
+            </span>{' '}
+            will be permanently deleted. This action cannot be undone.
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 pt-1">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-3 rounded-2xl text-sm font-bold text-text-secondary bg-bg-subtle hover:bg-border-default transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-3 rounded-2xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 active:scale-95 transition-all shadow-lg shadow-red-500/20"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
+
 function NotebookDetailPage() {
   const { bookId } = useParams();
   const navigate = useNavigate();
   const { books } = useContext(BookContext);
-  const { notes, fetchNotesByBook, loading } = useBookNotesStore();
+  const { notes, fetchNotesByBook, deleteNote, loading } = useBookNotesStore();
+
+  // Custom delete modal state
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const pendingNote = notes.find(n => n.local_id === pendingDeleteId);
+
+  const requestDelete = useCallback((e, localId) => {
+    e.stopPropagation();
+    setPendingDeleteId(localId);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDeleteId) return;
+    try {
+      await deleteNote(pendingDeleteId);
+    } catch (err) {
+      console.error('[NotebookDetailPage] delete failed:', err);
+    } finally {
+      setPendingDeleteId(null);
+    }
+  }, [pendingDeleteId, deleteNote]);
+
+  const cancelDelete = useCallback(() => setPendingDeleteId(null), []);
 
   const parsedBookId = useMemo(() => {
     const n = parseInt(bookId, 10);
@@ -76,12 +155,15 @@ function NotebookDetailPage() {
     [books, parsedBookId, bookId]
   );
 
-  // Fetch notes for this book
+  // Fetch notes for this book.
+  // fetchNotesByBook is defined inside Zustand create() so its reference is
+  // stable across renders — but we guard with an eslint disable just in case.
   useEffect(() => {
     if (bookId) {
       fetchNotesByBook(bookId);
     }
-  }, [bookId, fetchNotesByBook]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookId]);
 
   // Tabs from book metadata
   const tabs = useMemo(() => {
@@ -173,7 +255,7 @@ function NotebookDetailPage() {
                           <span className="text-text-tertiary italic">Untitled note</span>
                         )}
                       </h4>
-                      <p className="text-sm text-text-secondary leading-relaxed line-clamp-3 mt-2">
+                      <p className="text-sm text-text-secondary leading-relaxed line-clamp-1 mt-2">
                         {preview ? (
                           preview
                         ) : (
@@ -199,12 +281,21 @@ function NotebookDetailPage() {
                         <span className="text-[11px] text-text-tertiary flex items-center gap-1">
                           <AlignLeft size={11} /> {wordCount} words
                         </span>
+                        <button
+                          onClick={(e) => requestDelete(e, note.local_id)}
+                          title="Delete note"
+                          className="p-1.5 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       </div>
 
                       {/* Right — last edited */}
-                      <span className="text-[11px] text-text-tertiary">
-                        {formatDate(note.updatedAt)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-text-tertiary">
+                          {formatDate(note.updatedAt)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -285,6 +376,14 @@ function NotebookDetailPage() {
           )}
         </div>
       </div>
+      {/* ─── Delete Confirmation Modal ─── */}
+      {pendingDeleteId && (
+        <DeleteConfirmModal
+          noteTitle={pendingNote?.title}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
+      )}
     </div>
   );
 }

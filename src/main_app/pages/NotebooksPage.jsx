@@ -211,6 +211,27 @@ function NotebooksPage() {
             <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No notebooks yet</h3>
             <button onClick={() => navigate('/')} className="mt-4 bg-accent-primary text-white px-8 py-3 rounded-xl font-bold">Go to Library</button>
           </div>
+        ) : filteredNotebooks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-border-default rounded-card">
+            {activeFilter === 'starred' ? (
+              <>
+                <Star size={32} className="text-text-placeholder mb-4" />
+                <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No starred notebooks</h3>
+                <p className="text-text-secondary">Star your favorite notebooks to see them here.</p>
+              </>
+            ) : searchQuery.trim() ? (
+              <>
+                <Search size={32} className="text-text-placeholder mb-4" />
+                <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No results found</h3>
+                <p className="text-text-secondary">We couldn't find any notebooks matching "{searchQuery}".</p>
+              </>
+            ) : (
+              <>
+                <BookOpen size={32} className="text-text-placeholder mb-4" />
+                <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No notebooks found</h3>
+              </>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filteredNotebooks.map((nb) => (
@@ -314,7 +335,8 @@ function NotebooksPage() {
       {renameModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setRenameModal(null)}>
           <div className="bg-bg-elevated rounded-[32px] p-8 w-full max-w-sm shadow-2xl border border-border-default" onClick={e => e.stopPropagation()}>
-            <h3 className="font-display text-xl font-bold text-text-primary">Rename</h3>
+            <h3 className="font-display text-xl font-bold text-text-primary">Rename Notebook</h3>
+            <p className="text-sm text-text-secondary mt-1.5">Give this notebook a new name — anything you like.</p>
             <input
               type="text"
               value={renameValue}

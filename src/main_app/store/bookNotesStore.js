@@ -1,26 +1,36 @@
 import { create } from 'zustand';
 import db from '../db/apex.db';
 
+/** Deduplicate an array of notes by local_id, keeping the last occurrence. */
+function dedupeNotes(arr) {
+  const seen = new Map();
+  for (const note of arr) seen.set(note.local_id, note);
+  return [...seen.values()];
+}
+
 const useBookNotesStore = create((set, get) => ({
   notes: [],
   loading: false,
 
-  // Load all notes for a specific book
+  // Load all notes for a specific book.
+  // Always replaces state with a fresh deduplicated fetch so stale in-memory
+  // duplicates (from back-navigation or repeated effect calls) are cleared.
   fetchNotesByBook: async (bookId) => {
     set({ loading: true });
     try {
-      const bookNotes = await db.book_notes
+      const raw = await db.book_notes
         .where('bookId')
         .equals(Number(bookId))
         .toArray();
-      set({ notes: bookNotes, loading: false });
+      // Deduplicate by local_id in case the DB somehow has phantom duplicates
+      set({ notes: dedupeNotes(raw), loading: false });
     } catch (error) {
       console.error('[bookNotesStore] fetchNotesByBook error:', error);
       set({ loading: false });
     }
   },
 
-  // Save or update a note
+  // Save or update a note (upsert by local_id)
   saveNote: async (noteData) => {
     const {
       local_id,
@@ -32,13 +42,12 @@ const useBookNotesStore = create((set, get) => ({
     } = noteData;
 
     const now = new Date().toISOString();
-    
-    // Construct note object
+
     const noteEntry = {
       local_id: local_id || crypto.randomUUID(),
       bookId: Number(bookId),
       title: title || 'Untitled',
-      content, // JSONB blocks from TipTap
+      content,
       template,
       word_count,
       updatedAt: now,
@@ -53,11 +62,8 @@ const useBookNotesStore = create((set, get) => ({
     }
 
     try {
-      // Upsert using local_id as the unique key for our logic, 
-      // but Dexie uses the primary key 'id' for actual storage.
-      // We'll search by local_id first.
       const existing = await db.book_notes.where('local_id').equals(noteEntry.local_id).first();
-      
+
       let id;
       if (existing) {
         id = existing.id;
@@ -66,13 +72,27 @@ const useBookNotesStore = create((set, get) => ({
         id = await db.book_notes.add(noteEntry);
       }
 
-      // Update local state
-      const updatedNotes = get().notes.filter(n => n.local_id !== noteEntry.local_id);
-      set({ notes: [...updatedNotes, { ...noteEntry, id }] });
-      
+      // Replace any existing entry with the same local_id then deduplicate
+      const withoutOld = get().notes.filter(n => n.local_id !== noteEntry.local_id);
+      set({ notes: dedupeNotes([...withoutOld, { ...noteEntry, id }]) });
+
       return { ...noteEntry, id };
     } catch (error) {
       console.error('[bookNotesStore] saveNote error:', error);
+      throw error;
+    }
+  },
+
+  // Delete a note by local_id — removes from Dexie and from in-memory state
+  deleteNote: async (localId) => {
+    try {
+      const record = await db.book_notes.where('local_id').equals(localId).first();
+      if (record) {
+        await db.book_notes.delete(record.id);
+      }
+      set({ notes: get().notes.filter(n => n.local_id !== localId) });
+    } catch (error) {
+      console.error('[bookNotesStore] deleteNote error:', error);
       throw error;
     }
   },
@@ -82,25 +102,23 @@ const useBookNotesStore = create((set, get) => ({
     return await db.book_notes.where('local_id').equals(localId).first();
   },
 
-  // Get summary for all notebooks (counts and recent previews)
+  // Get summary for all notebooks (counts + recent previews)
   getNotebooksSummary: async (bookIds) => {
     const summary = {};
     await Promise.all(bookIds.map(async (id) => {
       try {
-        const count = await db.book_notes.where('bookId').equals(Number(id)).count();
-        const tabsCount = await db.tabs.where('bookId').equals(Number(id)).count();
         const allNotes = await db.book_notes
           .where('bookId')
           .equals(Number(id))
           .toArray();
-        
-        // Sort manually for now as Dexie complex sorts can be tricky without compound indexes
-        const sorted = allNotes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        
+        const unique = dedupeNotes(allNotes);
+        const sorted = unique.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        const tabsCount = await db.tabs.where('bookId').equals(Number(id)).count();
+
         summary[id] = {
-          count,
+          count: unique.length,
           tabsCount,
-          recent: sorted.slice(0, 3)
+          recent: sorted.slice(0, 3),
         };
       } catch (err) {
         console.error(`[bookNotesStore] error fetching summary for book ${id}:`, err);
@@ -108,7 +126,7 @@ const useBookNotesStore = create((set, get) => ({
       }
     }));
     return summary;
-  }
+  },
 }));
 
 export default useBookNotesStore;
