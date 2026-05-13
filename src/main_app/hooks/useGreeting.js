@@ -69,8 +69,9 @@ export default function useGreeting(firstName) {
     }
     const isExamClose = closestExamDays <= 7;
 
-    // 3. Streak alive: > 3 consecutive days
-    const isStreakAlive = streakCount > 3;
+    // 3. Streak alive: > 3 consecutive days AND user hasn't studied today yet
+    // (streak messages are a nudge — irrelevant once they've already logged a session today)
+    const isStreakAlive = streakCount > 3 && lastActiveDate !== todayStr;
 
     // 4. Time of day (always available as fallback)
     const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
