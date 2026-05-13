@@ -124,13 +124,9 @@ function ReaderView() {
         if (window.getSelection().toString().trim()) return;
         
         setNavState(prev => (prev === 'first' || prev === 'second') ? 'none' : 'first');
-        // Close other panels if they are open
+        // Close overlay modals
         setAiModal(false);
         setQuizModal(false);
-        setLeftPanel(false);
-        setPageSettings(false);
-        setNotebookPanel(false);
-        setNoteEditor(null);
     }, []);
 
     // ============================================
@@ -1030,7 +1026,12 @@ function ReaderView() {
                 {notebookPanel && <ReaderNotebookPanel
                     setNotebookPanel={setNotebookPanel}
                     bookId={bookId}
-                    onAddNote={(id) => setNoteEditor(id)}
+                    onAddNote={(id) => {
+                        setLeftPanel(false);
+                        setPageSettings(false);
+                        setAiModal(false);
+                        setNoteEditor(id);
+                    }}
                     readerControls={readerControls}
                 />}
                 {noteEditor && <ReaderNoteEditor
@@ -1097,13 +1098,25 @@ function ReaderView() {
                         navigate={navigate}
                         navState={navState}
                         setNavState={setNavState}
+                        setPageSettings={(val) => {
+                            if (val) {
+                                setLeftPanel(false);
+                                setNotebookPanel(false);
+                                setNoteEditor(null);
+                            }
+                            setPageSettings(val);
+                        }}
                         aiModal={aiModal}
                         setAiModal={setAiModal}
                         quizModal={quizModal}
                         setQuizModal={setQuizModal}
                         leftPanel={leftPanel}
                         setLeftPanel={(val) => {
-                            if (val) setPageSettings(false);
+                            if (val) {
+                                setPageSettings(false);
+                                setNotebookPanel(false);
+                                setNoteEditor(null);
+                            }
                             setLeftPanel(val);
                         }}
                         pdfControls={pdfControls}
@@ -1115,7 +1128,15 @@ function ReaderView() {
                         scrollOrientation={scrollOrientation}
                         onNotebookClick={() => {
                             setNavState('none');
-                            setNotebookPanel(prev => !prev);
+                            setNotebookPanel(prev => {
+                                const next = !prev;
+                                if (next) {
+                                    setLeftPanel(false);
+                                    setPageSettings(false);
+                                    setAiModal(false);
+                                }
+                                return next;
+                            });
                             setNoteEditor(null);
                         }}
                     />

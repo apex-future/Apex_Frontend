@@ -178,40 +178,44 @@ function NotebookDetailPage() {
     <div className="min-h-screen bg-bg-elevated w-full overflow-x-hidden">
       {/* Header — standard Apex glassmorphic pattern */}
       <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between gap-6">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group"
+            className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group shrink-0"
           >
             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
           </button>
 
           {/* Centre — two-line block */}
-          <div className="text-center">
-            <p className="text-xs text-text-secondary tracking-wide">
-              Notes / {bookTitle}
-            </p>
+          <div className="flex-1 text-center min-w-0">
+            <div className="flex items-center justify-center gap-1.5 text-xs text-text-secondary tracking-wide">
+              <span>Notes</span>
+              <span className="opacity-40">/</span>
+              <span className="truncate max-w-[200px] font-bold text-text-primary">{bookTitle}</span>
+            </div>
             <p className="text-[11px] text-text-tertiary mt-0.5">
               {notesCount} notes · {tabsCount} tabs
             </p>
           </div>
 
-          {/* Right — New Note button */}
-          <button
-            onClick={() => {
-              console.log('[NotebookDetailPage] open note panel — navigating to editor');
-              navigate(`/notes/${bookId}/new`);
-            }}
-            className="flex items-center gap-1.5 bg-accent-primary text-white text-sm font-bold px-4 py-2 rounded-xl hover:opacity-90 transition-all shadow-sm shadow-accent-primary/20"
-          >
-            <Plus size={16} />
-            New Note
-          </button>
+          {/* Right spacer for balance */}
+          <div className="w-10 shrink-0" />
         </div>
       </div>
 
       {/* Page content */}
       <div className="max-w-6xl mx-auto flex flex-col gap-8 px-4 md:px-8 py-8 md:py-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        
+        {/* Actions Bar */}
+        <div className="flex justify-end items-center">
+          <button
+            onClick={() => navigate(`/notes/${bookId}/new`)}
+            className="flex items-center gap-2 bg-accent-primary text-white text-sm font-bold px-6 py-3 rounded-2xl hover:bg-accent-primary/90 active:scale-95 transition-all shadow-lg shadow-accent-primary/20"
+          >
+            <Plus size={18} />
+            New Note
+          </button>
+        </div>
         {/* ═══ SECTION 1 — NOTES ═══ */}
         <div>
           {/* Section header */}
