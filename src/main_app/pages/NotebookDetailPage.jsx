@@ -180,7 +180,7 @@ function NotebookDetailPage() {
       <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
         <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
           <button
-            onClick={() => navigate('/notes')}
+            onClick={() => navigate(-1)}
             className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group"
           >
             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />

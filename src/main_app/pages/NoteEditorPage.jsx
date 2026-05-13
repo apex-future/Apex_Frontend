@@ -331,7 +331,7 @@ function NoteEditorPage() {
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Back */}
           <button
-            onClick={() => navigate(`/notes/${bookId}`)}
+            onClick={() => navigate(-1)}
             className="p-2 hover:bg-bg-subtle text-text-secondary rounded-xl transition-all group flex-shrink-0"
           >
             <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
