@@ -155,7 +155,7 @@ function NotesSection({ bookId, onAddNote }) {
                     </span>
                     <button
                       onClick={(e) => requestDelete(e, note.local_id)}
-                      className="p-1 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                      className="p-1 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all"
                     >
                       <Trash2 size={11} />
                     </button>
@@ -303,7 +303,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
                   )}
                   <div className="flex justify-between items-start gap-3">
                     <p className="text-[13px] text-text-primary leading-relaxed font-medium flex-1">{tab.text}</p>
-                    <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <div className="flex flex-col gap-1 transition-all duration-300">
                       <button onClick={() => { setEditingId(tab.id); setEditText(tab.text); }} className="p-1.5 rounded-lg bg-bg-elevated border border-border-default shadow-sm text-text-tertiary hover:text-accent-primary transition-all"><Edit3 size={12} /></button>
                       <button onClick={() => deleteTab(tab.id)} className="p-1.5 rounded-lg bg-bg-elevated border border-border-default shadow-sm text-text-tertiary hover:text-red-500 transition-all"><Trash2 size={12} /></button>
                     </div>

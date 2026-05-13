@@ -120,7 +120,7 @@ function DeleteConfirmModal({ noteTitle, onConfirm, onCancel }) {
 function NotebookDetailPage() {
   const { bookId } = useParams();
   const navigate = useNavigate();
-  const { books } = useContext(BookContext);
+  const { books, deleteTab } = useContext(BookContext);
   const { notes, fetchNotesByBook, deleteNote, loading } = useBookNotesStore();
 
   // Custom delete modal state
@@ -284,7 +284,7 @@ function NotebookDetailPage() {
                         <button
                           onClick={(e) => requestDelete(e, note.local_id)}
                           title="Delete note"
-                          className="p-1.5 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                          className="p-1.5 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -349,10 +349,22 @@ function NotebookDetailPage() {
                         </span>
                       )}
 
-                      {/* Timestamp */}
-                      <span className="text-[11px] text-text-tertiary">
-                        {formatDate(tab.updatedAt || tab.createdAt)}
-                      </span>
+                      {/* Timestamp & Actions */}
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px] text-text-tertiary">
+                          {formatDate(tab.updatedAt || tab.createdAt)}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteTab(book.id, tab.id || tab.dexieId);
+                          }}
+                          className="p-1.5 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all"
+                          title="Delete tab"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Content */}
