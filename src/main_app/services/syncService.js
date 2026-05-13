@@ -969,9 +969,9 @@ const syncService = {
     const dexieRecord = {
       bookId,
       local_id: localId,
-      text: noteData.text || '',
-      context: noteData.context || null,
-      noteType: noteData.type || noteData.noteType || 'manual_note',
+      text: tabData.text || '',
+      context: tabData.context || null,
+      noteType: tabData.type || tabData.noteType || 'manual_note',
       createdAt: now,
       updatedAt: now,
       synced: false,
@@ -984,7 +984,7 @@ const syncService = {
 
     // Step 2: If online, resolve Supabase book UUID and save
     if (navigator.onLine) {
-      const supabaseBookId = await this._resolveBookId(bookId, noteData._supabase_book_id);
+      const supabaseBookId = await this._resolveBookId(bookId, tabData._supabase_book_id);
       if (supabaseBookId) {
         try {
           const response = await apiClient.post(`/api/books/${supabaseBookId}/tabs`, {
