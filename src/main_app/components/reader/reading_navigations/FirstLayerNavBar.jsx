@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Maximize, Minimize, Settings, WholeWord } from 'lucide-react'
+import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Maximize, Minimize, NotebookPen, Settings, WholeWord } from 'lucide-react'
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
@@ -84,17 +84,8 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
           </button>
         </div>
         <div className='flex items-start sm:items-center gap-2 sm:gap-3'>
-          {/* Dictionary search button */}
-          <button
-            className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
-            onClick={(e) => { e.stopPropagation(); onToggleDictionary?.(); }}
-            title="Dictionary Search"
-          >
-            <WholeWord strokeWidth={2} size={18} />
-          </button>
-
-          {/* Bookmark and Dots Wrapper */}
-          <div className='flex flex-col-reverse sm:flex-row items-center gap-2 sm:gap-3'>
+          {/* Bookmark and Dots Wrapper — always side-by-side */}
+          <div className='flex flex-row items-center gap-2 sm:gap-3'>
             {/* Page Bookmark button — purple fill when bookmarked */}
             <button
               className={`w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 ${
@@ -129,44 +120,65 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className='flex items-end sm:items-center justify-between w-full'>
-          {/* Lock — toggles pan/scroll lock */}
-          <button
-            className={`w-10 h-10 flex items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${locked
-              ? 'bg-accent-primary text-bg-elevated'
-              : 'bg-bg-elevated text-text-primary hover:bg-bg-subtle'
-              }`}
-            onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
-            title={locked ? 'Unlock scroll' : 'Lock scroll'}
-          >
-            {locked
-              ? <Lock strokeWidth={2} size={18} />
-              : <LockOpen strokeWidth={2} size={18} />
-            }
-          </button>
-
-          {/* Bottom Right Controls — Fit-to-screen and Browser Fullscreen */}
-          <div className='flex flex-col-reverse sm:flex-row items-center gap-2 sm:gap-3'>
-            {/* Fit-to-screen — resets zoom to 100% */}
+          {/* Bottom Left Controls — Dictionary and Notebook */}
+          <div className='flex items-center gap-2 sm:gap-3'>
             <button
-              className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
-              onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
-              title="Fit to screen (reset zoom)"
+              className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+              onClick={(e) => { e.stopPropagation(); onToggleDictionary?.(); }}
+              title="Dictionary Search"
             >
-              <Fullscreen strokeWidth={2} size={18} />
+              <WholeWord strokeWidth={2} size={18} />
             </button>
 
-            {/* Browser Fullscreen — makes app occupy entire window */}
             <button
-              className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
-              onClick={handleFullScreen}
-              title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
+              className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+              onClick={(e) => { e.stopPropagation(); navigate('/notes'); }}
+              title="Notebook"
             >
-              {isFullScreen ? (
-                <Minimize strokeWidth={2} size={18} />
-              ) : (
-                <Maximize strokeWidth={2} size={18} />
-              )}
+              <NotebookPen strokeWidth={2} size={18} />
             </button>
+          </div>
+
+          {/* Bottom Right Controls — Lock, Fit-to-screen and Browser Fullscreen */}
+          <div className='flex items-end sm:items-center gap-2 sm:gap-3'>
+            {/* Lock — toggles pan/scroll lock */}
+            <button
+              className={`w-10 h-10 flex shrink-0 items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${locked
+                ? 'bg-accent-primary text-bg-elevated'
+                : 'bg-bg-elevated text-text-primary hover:bg-bg-subtle'
+                }`}
+              onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
+              title={locked ? 'Unlock scroll' : 'Lock scroll'}
+            >
+              {locked
+                ? <Lock strokeWidth={2} size={18} />
+                : <LockOpen strokeWidth={2} size={18} />
+              }
+            </button>
+
+            <div className='flex flex-col-reverse sm:flex-row items-center gap-2 sm:gap-3'>
+              {/* Fit-to-screen — resets zoom to 100% */}
+              <button
+                className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+                onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
+                title="Fit to screen (reset zoom)"
+              >
+                <Fullscreen strokeWidth={2} size={18} />
+              </button>
+
+              {/* Browser Fullscreen — makes app occupy entire window */}
+              <button
+                className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+                onClick={handleFullScreen}
+                title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
+              >
+                {isFullScreen ? (
+                  <Minimize strokeWidth={2} size={18} />
+                ) : (
+                  <Maximize strokeWidth={2} size={18} />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
