@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Maximize, Minimize, NotebookPen, Settings, WholeWord } from 'lucide-react'
 import { gsap } from 'gsap'
 
-function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
+function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookClick }) {
   const topBarRef = useRef(null);
   const bottomBarRef = useRef(null);
 
@@ -132,7 +132,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls }) {
 
             <button
               className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
-              onClick={(e) => { e.stopPropagation(); navigate('/notes'); }}
+              onClick={(e) => { e.stopPropagation(); onNotebookClick?.(); }}
               title="Notebook"
             >
               <NotebookPen strokeWidth={2} size={18} />

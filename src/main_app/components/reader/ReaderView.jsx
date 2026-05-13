@@ -25,6 +25,8 @@ import BookSkeleton from './BookSkeleton';
 import PageStrip from './PageStrip';
 import ReaderDictionary from './reading_navigations/reading_layout/ReaderDictionary';
 import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
+import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
@@ -103,6 +105,10 @@ function ReaderView() {
     const [showSimplifyModal, setShowSimplifyModal] = useState(false);
     const [activeSimplification, setActiveSimplification] = useState({ originalText: '', simplifiedText: '', loading: false, error: null });
 
+    // Notebook and Note Editor state
+    const [notebookPanel, setNotebookPanel] = useState(false);
+    const [noteEditor, setNoteEditor] = useState(null); // stores noteId or 'new'
+
     const openPageStrip = useCallback(() => {
         setNavState('none');
         setShowPageStrip(true);
@@ -111,6 +117,20 @@ function ReaderView() {
     const closePageStrip = useCallback(() => {
         setShowPageStrip(false);
         setNavState('first');
+    }, []);
+
+    const toggleNav = useCallback(() => {
+        // If text is selected, don't toggle nav — let the highlight menu handle it
+        if (window.getSelection().toString().trim()) return;
+        
+        setNavState(prev => (prev === 'first' || prev === 'second') ? 'none' : 'first');
+        // Close other panels if they are open
+        setAiModal(false);
+        setQuizModal(false);
+        setLeftPanel(false);
+        setPageSettings(false);
+        setNotebookPanel(false);
+        setNoteEditor(null);
     }, []);
 
     // ============================================
@@ -590,11 +610,7 @@ function ReaderView() {
     }, [nextPage, previousPage, zoomIn, zoomOut, rotate, resetZoom]);
 
     // Screen handlers
-    const toggleNav = useCallback(() => {
-        // If text is selected, don't toggle nav — let the highlight menu handle it
-        if (window.getSelection().toString().trim()) return;
-        setNavState(prev => prev === 'none' ? 'first' : 'none');
-    }, []);
+
 
     const closeNav = useCallback(() => {
         // Don't close nav if user just finished selecting text — prevents re-render flicker
@@ -998,17 +1014,33 @@ function ReaderView() {
             <div className="flex h-full max-h-full overflow-hidden relative">
                 {/* Far-left panel */}
                 {leftPanel && <LeftPanel 
-                    setLeftPanel={(val) => {
-                        if (val) setPageSettings(false); // Close settings if left panel open
-                        setLeftPanel(val);
-                    }} 
+                    setLeftPanel={setLeftPanel} 
                     readerControls={readerControls} 
                     pdfControls={pdfControls}
                     tocOutline={tocOutline}
                 />}
                 
                 {/* Settings panel */}
-                {pageSettings && <PageSettings setPageSettings={setPageSettings} readerControls={readerControls} />}
+                {pageSettings && <PageSettings 
+                    setPageSettings={setPageSettings}
+                    readerControls={readerControls}
+                />}
+
+                {/* Notebook panels */}
+                {notebookPanel && <ReaderNotebookPanel
+                    setNotebookPanel={setNotebookPanel}
+                    bookId={bookId}
+                    onAddNote={(id) => setNoteEditor(id)}
+                    readerControls={readerControls}
+                />}
+                {noteEditor && <ReaderNoteEditor
+                    bookId={bookId}
+                    noteId={noteEditor}
+                    onClose={() => {
+                        setNoteEditor(null);
+                        setNotebookPanel(true);
+                    }}
+                />}
 
                 {/* Highlight Menu */}
                 {showHighlightMenu && (
@@ -1081,6 +1113,11 @@ function ReaderView() {
                         fileUrl={fileUrl}
                         isPdf={isPdf}
                         scrollOrientation={scrollOrientation}
+                        onNotebookClick={() => {
+                            setNavState('none');
+                            setNotebookPanel(prev => !prev);
+                            setNoteEditor(null);
+                        }}
                     />
 
                     {/* PDF Content */}
