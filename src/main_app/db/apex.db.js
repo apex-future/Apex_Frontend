@@ -157,4 +157,23 @@ db.version(11).stores({
   exam_reminders: '++id, local_id, supabaseId, examName, examDate, isActive, bookSpaceSupabaseId, synced, createdAt, updatedAt',
 });
 
+db.version(14).stores({
+  books: '++id, local_id, recordId, title, author, fileType, fileSize, coverImage, totalPages, uploadedAt, lastReadAt, synced, supabaseId, last_modified, outline',
+  reading_progress: '++id, local_id, recordId, bookId, currentPage, scrollPosition, progressPercentage, lastReadAt, synced, supabaseId, last_modified',
+  highlights: '++id, local_id, recordId, bookId, userId, highlightedText, color, pageNumber, textPosition, note, createdAt, updatedAt, synced, supabaseId, last_modified',
+  bookmarks: '++id, bookId, userId, pageNumber, local_id, synced, supabaseId, label, createdAt, updatedAt, last_modified',
+  tabs: '++id, local_id, bookId, supabaseId, noteType, synced, createdAt, updatedAt, last_modified',
+  book_notes: '++id, local_id, bookId, supabaseId, title, content, template, word_count, synced, createdAt, updatedAt, last_modified',
+  ai_conversations: '++id, bookId, userId, chatType, local_id, synced, supabaseId, queryText, aiResponse, createdAt',
+  user_dictionary_history: '++id, userId, word, local_id, synced, lookedUpAt',
+  dictionary_cache: 'word, cachedAt',
+  sync_queue: '++id, action, tableName, local_id, recordId, payload, createdAt, attempts, status',
+  app_settings: '++id, key, value',
+  chats: '++id, title, scope, updatedAt',
+  quizzes: '++id, bookId, supabaseId, question_type, difficulty, completed, taken_at, synced',
+  book_spaces: '++id, local_id, supabaseId, name, cover_color, synced, createdAt, updatedAt',
+  book_space_books: '++id, local_id, supabaseId, spaceLocalId, spaceSupabaseId, bookSupabaseId, synced, addedAt',
+  exam_reminders: '++id, local_id, supabaseId, examName, examDate, isActive, bookSpaceSupabaseId, synced, createdAt, updatedAt',
+});
+
 export default db;

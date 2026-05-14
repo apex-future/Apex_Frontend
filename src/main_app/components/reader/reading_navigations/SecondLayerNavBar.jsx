@@ -25,7 +25,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
     <div
       ref={navRef}
       onClick={(e) => e.stopPropagation()}
-      className='fixed top-0 left-0 right-0 z-50 p-2 pr-4 sm:pr-6 pointer-events-auto'
+      className='absolute top-0 left-0 right-0 z-50 p-2 pr-4 sm:pr-6 pointer-events-auto'
     >
       <div className='flex top-bar pb-4 items-start sm:items-center justify-between w-full'>
         {/* Left: Menu — opens LeftPanel */}

@@ -17,13 +17,16 @@ import SpaceDetail from './components/layout/spaces/SpaceDetail';
 import BookDetails from './components/books/BookDetails';
 import Dictionary from './components/dictionary/Dictionary';
 import ApexAI from './components/ai/ApexAI';
-import NotesPage from './components/notes/NotesPage';
+import TabsPage from './components/tabs/TabsPage';
 import Settings from './components/layout/user/Settings';
 import DuplicateBookModal from './components/modals/DuplicateBookModal';
 import ImportPage from './pages/ImportPage';
 import StreakPage from './pages/StreakPage';
 import ExamPage from './pages/ExamPage';
 import GlobalAnalytics from './components/analytics/GlobalAnalytics';
+import NotebooksPage from './pages/NotebooksPage';
+import NotebookDetailPage from './pages/NotebookDetailPage';
+import NoteEditorPage from './pages/NoteEditorPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
@@ -57,7 +60,7 @@ function MainApp({ onLogout }) {
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>
-          {asideIsOpen && !location.pathname.startsWith('/reader') && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} onLogout={onLogout} />}
+          {asideIsOpen && !location.pathname.startsWith('/reader') && !location.pathname.match(/^\/notes\/[^/]+\/(new|[^/]+)$/) && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} onLogout={onLogout} />}
 
           <div className='flex-1 min-w-0 relative z-[10]'>
             <main className="">
@@ -75,16 +78,20 @@ function MainApp({ onLogout }) {
                 <Route path="/book/:bookId" element={<BookDetails />} />
                 <Route path="/dictionary" element={<Dictionary />} />
                 <Route path="/ai" element={<ApexAI />} />
-                <Route path="/notes" element={<NotesPage />} />
+                <Route path="/tabs" element={<TabsPage />} />
                 <Route path="/import" element={<ImportPage />} />
                 <Route path="/streak" element={<StreakPage />} />
                 <Route path="/exams" element={<ExamPage />} />
                 <Route path="/analytics" element={<GlobalAnalytics />} />
+                <Route path="/notes" element={<NotebooksPage />} />
+                <Route path="/notes/:bookId" element={<NotebookDetailPage />} />
+                <Route path="/notes/:bookId/new" element={<NoteEditorPage />} />
+                <Route path="/notes/:bookId/:noteId" element={<NoteEditorPage />} />
               </Routes>
             </main>
 
             {/* Hide bottom navbar on specialized screens */}
-            {!location.pathname.startsWith('/reader') && location.pathname !== '/ai' && <BottomNavBar />}
+            {!location.pathname.startsWith('/reader') && location.pathname !== '/ai' && !location.pathname.match(/^\/notes\/[^/]+\/(new|[^/]+)$/) && <BottomNavBar />}
           </div>
 
           <DuplicateBookModal

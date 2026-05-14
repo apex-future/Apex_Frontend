@@ -18,12 +18,15 @@ import apiClient from '../../services/apiClient';
 import syncService from '../../services/syncService';
 import useToast from '../../hooks/useToast';
 import HighlightMenu from './HighlightMenu';
+import SimplifyModal from './SimplifyModal';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
 import PageSettings from './reading_navigations/reading_layout/PageSettings';
 import BookSkeleton from './BookSkeleton';
 import PageStrip from './PageStrip';
 import ReaderDictionary from './reading_navigations/reading_layout/ReaderDictionary';
 import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
+import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
@@ -42,7 +45,7 @@ const ScrollOrientationOverlay = ({ visible, orientation }) => {
 };
 
 function ReaderView() {
-    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addNote, updateNote, deleteNote, toggleFavorite, toggleBookmarkedBook } = useContext(BookContext);
+    const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addTab, updateTab, deleteTab, toggleFavorite, toggleBookmarkedBook, addSimplification, removeSimplification } = useContext(BookContext);
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -63,6 +66,7 @@ function ReaderView() {
     const [numPages, setNumPages] = useState(null);
     const [scale, setScale] = useState(1.0);
     const [rotation, setRotation] = useState(0);
+    const [tocOutline, setTocOutline] = useState(null);
 
     // Progress state
     const [localProgress, setLocalProgress] = useState(book?.progress || 0);
@@ -97,6 +101,14 @@ function ReaderView() {
     const [showPageStrip, setShowPageStrip] = useState(false);
     const [showStreakCelebration, setShowStreakCelebration] = useState(false);
 
+    // Simplify feature state
+    const [showSimplifyModal, setShowSimplifyModal] = useState(false);
+    const [activeSimplification, setActiveSimplification] = useState({ originalText: '', simplifiedText: '', loading: false, error: null });
+
+    // Notebook and Note Editor state
+    const [notebookPanel, setNotebookPanel] = useState(false);
+    const [noteEditor, setNoteEditor] = useState(null); // stores noteId or 'new'
+
     const openPageStrip = useCallback(() => {
         setNavState('none');
         setShowPageStrip(true);
@@ -105,6 +117,16 @@ function ReaderView() {
     const closePageStrip = useCallback(() => {
         setShowPageStrip(false);
         setNavState('first');
+    }, []);
+
+    const toggleNav = useCallback(() => {
+        // If text is selected, don't toggle nav — let the highlight menu handle it
+        if (window.getSelection().toString().trim()) return;
+        
+        setNavState(prev => (prev === 'first' || prev === 'second') ? 'none' : 'first');
+        // Close overlay modals
+        setAiModal(false);
+        setQuizModal(false);
     }, []);
 
     // ============================================
@@ -199,6 +221,80 @@ function ReaderView() {
         window.getSelection().removeAllRanges();
     };
 
+    const simplifications = book?.metadata?.simplifications || [];
+
+    const handleSimplify = async () => {
+        const text = selectionRef.current.text?.replace(/\s+/g, ' ').trim();
+        if (!text || !book) return;
+
+        setShowHighlightMenu(false);
+        setIsDictOpen(false);
+        window.getSelection()?.removeAllRanges();
+
+        // Check cache — if already simplified, show cached result
+        const cached = simplifications.find(s => s.originalText?.toLowerCase() === text.toLowerCase());
+        if (cached) {
+            setActiveSimplification({ originalText: cached.originalText, simplifiedText: cached.simplifiedText, loading: false, error: null });
+            setShowSimplifyModal(true);
+            return;
+        }
+
+        // Show modal with loading state
+        setActiveSimplification({ originalText: text, simplifiedText: '', loading: true, error: null });
+        setShowSimplifyModal(true);
+
+        try {
+            const response = await apiClient.post('/api/ai/simplify', {
+                text,
+                book_title: book?.title || book?.file?.name || '',
+            });
+            const simplified = response.data?.simplified || '';
+
+            setActiveSimplification({ originalText: text, simplifiedText: simplified, loading: false, error: null });
+
+            // Persist the simplification + auto-highlight with soft indigo color
+            addSimplification(book.id, {
+                originalText: text,
+                simplifiedText: simplified,
+                page: pageNumber,
+                startOffset: selectionRef.current.startOffset,
+                color: '#a78bfa',  // subtle purple (matches underline)
+                addedAt: new Date().toISOString(),
+            });
+
+            // Also add a highlight with underline style to mark simplified text
+            addHighlight(book.id, {
+                text,
+                color: '#a78bfa',  // subtle purple for underline
+                page: pageNumber,
+                startOffset: selectionRef.current.startOffset,
+                addedAt: new Date().toISOString(),
+                isSimplified: true,
+            });
+        } catch (err) {
+            console.error('[Apex Simplify] Failed:', err);
+            setActiveSimplification(prev => ({ ...prev, loading: false, error: err.message || 'Failed to simplify' }));
+        }
+    };
+
+    const handleRetrySimplify = () => {
+        if (!activeSimplification.originalText) return;
+        // Re-trigger with the same text
+        selectionRef.current.text = activeSimplification.originalText;
+        setShowSimplifyModal(false);
+        handleSimplify();
+    };
+
+    const handleSparkleClick = (simplification) => {
+        setActiveSimplification({
+            originalText: simplification.originalText,
+            simplifiedText: simplification.simplifiedText,
+            loading: false,
+            error: null,
+        });
+        setShowSimplifyModal(true);
+    };
+
     // --- PDF Control Handlers ---
     const nextPage = useCallback(() => {
         setPageNumber(prev => {
@@ -232,27 +328,85 @@ function ReaderView() {
         setScale(1.0);
     }, []);
 
-    function handleDocumentLoad({ numPages: total }) {
+    async function handleDocumentLoad(pdf) {
+        const total = pdf.numPages;
         setNumPages(total);
-        // Persist totalPages to Dexie immediately — this is the source of truth
-        // for progress calculation across all devices
+
         if (book?.id && total > 1) {
             db.books.update(book.id, { totalPages: total })
-                .catch(err => console.error('[Apex] Failed to persist totalPages to Dexie:', err));
+                .catch(err => console.error('[Apex TOC] Failed to persist totalPages:', err));
 
-            // Also update Supabase books.total_pages if the book is synced
-            // This ensures new devices get the correct totalPages on pull
             const supabaseId = book.supabaseId || book.recordId;
             if (supabaseId && navigator.onLine) {
                 apiClient.put(`/api/books/${supabaseId}`, { total_pages: total })
                     .catch(err => {
-                        if (import.meta.env.DEV) console.warn('[Apex] Failed to update totalPages in Supabase:', err);
+                        if (import.meta.env.DEV) console.warn('[Apex TOC] Failed to update totalPages in Supabase:', err);
                     });
             }
         }
 
-        // Defer syncProgress to avoid updating BookProvider state during PDF render
         Promise.resolve().then(() => syncProgress(pageNumber, total));
+
+        // --- Outline extraction ---
+        // Check Dexie cache first
+        const cached = await db.books.get(book?.id);
+        if (cached?.outline) {
+            console.log('[Apex TOC] Loaded outline from Dexie cache:', cached.outline.length, 'items');
+            setTocOutline(cached.outline);
+            return;
+        }
+
+        // Extract from pdfjs
+        try {
+            const rawOutline = await pdf.getOutline();
+            if (!rawOutline || rawOutline.length === 0) {
+                console.log('[Apex TOC] No outline found in this PDF');
+                setTocOutline([]);
+                return;
+            }
+
+            // Resolve dest → page number recursively
+            const resolveItem = async (item, level = 0) => {
+                let pageNumber = null;
+                try {
+                    if (item.dest) {
+                        const dest = typeof item.dest === 'string'
+                            ? await pdf.getDestination(item.dest)
+                            : item.dest;
+                        if (dest) {
+                            const pageIndex = await pdf.getPageIndex(dest[0]);
+                            pageNumber = pageIndex + 1; // pdfjs is 0-based
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[Apex TOC] Failed to resolve dest for:', item.title, e);
+                }
+
+                const resolved = { title: item.title, pageNumber, level };
+
+                if (item.items && item.items.length > 0) {
+                    resolved.children = await Promise.all(
+                        item.items.map(child => resolveItem(child, level + 1))
+                    );
+                }
+
+                return resolved;
+            };
+
+            const resolved = await Promise.all(rawOutline.map(item => resolveItem(item, 0)));
+            console.log('[Apex TOC] Outline extracted:', resolved.length, 'top-level items');
+            setTocOutline(resolved);
+
+            // Cache to Dexie — fire and forget
+            if (book?.id) {
+                db.books.update(book.id, { outline: resolved })
+                    .then(() => console.log('[Apex TOC] Outline cached to Dexie'))
+                    .catch(err => console.error('[Apex TOC] Failed to cache outline:', err));
+            }
+        } catch (err) {
+            console.error('[Apex TOC] Outline extraction failed:', err);
+            setTocOutline([]);
+        }
     }
 
     function syncProgress(page, total) {
@@ -313,10 +467,14 @@ function ReaderView() {
         removeHighlight: (highlightId) => removeHighlight(book.id, highlightId),
         onJumpToHighlight: goToPage,
         // Notes
-        notes: book?.metadata?.notes || [],
-        addNote: (text) => addNote(book.id, text),
-        updateNote: (noteId, text) => updateNote(book.id, noteId, text),
-        deleteNote: (noteId) => deleteNote(book.id, noteId),
+        tabs: book?.metadata?.tabs || [],
+        addTab: (text) => addTab(book.id, text),
+        updateTab: (tabId, text) => updateTab(book.id, tabId, text),
+        deleteTab: (tabId) => deleteTab(book.id, tabId),
+        // Simplifications
+        simplifications,
+        removeSimplification: (simplificationId) => removeSimplification(book.id, simplificationId),
+        onViewSimplification: handleSparkleClick,
         // Favorites & Bookmarked Status (Book Level)
         isFavorite: book?.isFavorite,
         onToggleFavorite: () => toggleFavorite(book.id),
@@ -436,6 +594,7 @@ function ReaderView() {
                     setShowHighlightMenu(false);
                     setAiModal(false);
                     setQuizModal(false);
+                    setShowSimplifyModal(false);
                     break;
                 default:
                     break;
@@ -447,11 +606,7 @@ function ReaderView() {
     }, [nextPage, previousPage, zoomIn, zoomOut, rotate, resetZoom]);
 
     // Screen handlers
-    const toggleNav = useCallback(() => {
-        // If text is selected, don't toggle nav — let the highlight menu handle it
-        if (window.getSelection().toString().trim()) return;
-        setNavState(prev => prev === 'none' ? 'first' : 'none');
-    }, []);
+
 
     const closeNav = useCallback(() => {
         // Don't close nav if user just finished selecting text — prevents re-render flicker
@@ -852,31 +1007,41 @@ function ReaderView() {
             onClick={closeNav}
         >
             <ScrollOrientationOverlay visible={showScrollOverlay} orientation={scrollOrientation} />
-            {/* Subtle Menu Trigger - Persistent at top */}
-            <div className={`fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center transition-all duration-500 ease-in-out ${navState !== 'none' ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
-                <button
-                    onClick={(e) => { e.stopPropagation(); toggleNav(); }}
-                    className="group bg-bg-elevated hover:bg-bg-subtle backdrop-blur-md shadow-sm border border-border-default/50 px-3 py-1.5 rounded-b-xl transition-all duration-300 flex items-center gap-1.5"
-                >
-                    <div className={`w-1 h-1 rounded-full transition-colors ${navState !== 'none' ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-accent-primary'}`} />
-                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`}>Menu</span>
-                    <Menu size={12} className={`transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`} />
-                </button>
-            </div>
-
             <div className="flex h-full max-h-full overflow-hidden relative">
                 {/* Far-left panel */}
                 {leftPanel && <LeftPanel 
-                    setLeftPanel={(val) => {
-                        if (val) setPageSettings(false); // Close settings if left panel open
-                        setLeftPanel(val);
-                    }} 
+                    setLeftPanel={setLeftPanel} 
                     readerControls={readerControls} 
-                    pdfControls={pdfControls} 
+                    pdfControls={pdfControls}
+                    tocOutline={tocOutline}
                 />}
                 
                 {/* Settings panel */}
-                {pageSettings && <PageSettings setPageSettings={setPageSettings} readerControls={readerControls} />}
+                {pageSettings && <PageSettings 
+                    setPageSettings={setPageSettings}
+                    readerControls={readerControls}
+                />}
+
+                {/* Notebook panels */}
+                {notebookPanel && <ReaderNotebookPanel
+                    setNotebookPanel={setNotebookPanel}
+                    bookId={bookId}
+                    onAddNote={(id) => {
+                        setLeftPanel(false);
+                        setPageSettings(false);
+                        setAiModal(false);
+                        setNoteEditor(id);
+                    }}
+                    readerControls={readerControls}
+                />}
+                {noteEditor && <ReaderNoteEditor
+                    bookId={bookId}
+                    noteId={noteEditor}
+                    onClose={() => {
+                        setNoteEditor(null);
+                        setNotebookPanel(true);
+                    }}
+                />}
 
                 {/* Highlight Menu */}
                 {showHighlightMenu && (
@@ -895,26 +1060,63 @@ function ReaderView() {
                         bookId={book?.id}
                         onSaveWord={addSavedWord}
                         onHighlight={handleHighlight}
+                        onSimplify={handleSimplify}
                         onDictToggle={setIsDictOpen}
-                        onAddNote={readerControls.addNote}
+                        onAddNote={readerControls.addTab}
+                    />
+                )}
+
+                {/* Simplify Modal */}
+                {showSimplifyModal && (
+                    <SimplifyModal
+                        originalText={activeSimplification.originalText}
+                        simplifiedText={activeSimplification.simplifiedText}
+                        loading={activeSimplification.loading}
+                        error={activeSimplification.error}
+                        onRetry={handleRetrySimplify}
+                        onClose={() => setShowSimplifyModal(false)}
                     />
                 )}
 
                 {/* Main reading area */}
                 <div className="flex-1 relative min-w-0 flex flex-col h-full max-h-full overflow-hidden">
+                    {/* Subtle Menu Trigger - Persistent at top, now relative to content area */}
+                    <div className={`absolute top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center transition-all duration-500 ease-in-out ${navState !== 'none' ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); toggleNav(); }}
+                            className="group bg-bg-elevated hover:bg-bg-subtle backdrop-blur-md shadow-sm border border-border-default/50 px-3 py-1.5 rounded-b-xl transition-all duration-300 flex items-center gap-1.5"
+                        >
+                            <div className={`w-1 h-1 rounded-full transition-colors ${navState !== 'none' ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-accent-primary'}`} />
+                            <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`}>Menu</span>
+                            <Menu size={12} className={`transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`} />
+                        </button>
+                    </div>
+
 
                     <ReaderNavBar
                         book={book}
                         navigate={navigate}
                         navState={navState}
                         setNavState={setNavState}
+                        setPageSettings={(val) => {
+                            if (val) {
+                                setLeftPanel(false);
+                                setNotebookPanel(false);
+                                setNoteEditor(null);
+                            }
+                            setPageSettings(val);
+                        }}
                         aiModal={aiModal}
                         setAiModal={setAiModal}
                         quizModal={quizModal}
                         setQuizModal={setQuizModal}
                         leftPanel={leftPanel}
                         setLeftPanel={(val) => {
-                            if (val) setPageSettings(false);
+                            if (val) {
+                                setPageSettings(false);
+                                setNotebookPanel(false);
+                                setNoteEditor(null);
+                            }
                             setLeftPanel(val);
                         }}
                         pdfControls={pdfControls}
@@ -924,6 +1126,19 @@ function ReaderView() {
                         fileUrl={fileUrl}
                         isPdf={isPdf}
                         scrollOrientation={scrollOrientation}
+                        onNotebookClick={() => {
+                            setNavState('none');
+                            setNotebookPanel(prev => {
+                                const next = !prev;
+                                if (next) {
+                                    setLeftPanel(false);
+                                    setPageSettings(false);
+                                    setAiModal(false);
+                                }
+                                return next;
+                            });
+                            setNoteEditor(null);
+                        }}
                     />
 
                     {/* PDF Content */}

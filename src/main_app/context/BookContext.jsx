@@ -132,14 +132,14 @@ export const BookProvider = ({ children }) => {
             });
           }
 
-          // Load notes from Dexie notes table
-          // Notes are stored by bookId (integer OR supabaseId string)
-          const allNotes = await db.notes.toArray();
-          const notesByBook = {};
-          for (const n of allNotes) {
+          // Load tabs from Dexie tabs table
+          // Tabs are stored by bookId (integer OR supabaseId string)
+          const allTabs = await db.tabs.toArray();
+          const tabsByBook = {};
+          for (const n of allTabs) {
             const key = n.bookId;
-            if (!notesByBook[key]) notesByBook[key] = [];
-            notesByBook[key].push({
+            if (!tabsByBook[key]) tabsByBook[key] = [];
+            tabsByBook[key].push({
               id: n.id,           // Dexie integer id — used for UI operations
               dexieId: n.id,
               supabaseId: n.supabaseId,
@@ -174,8 +174,8 @@ export const BookProvider = ({ children }) => {
             const uniqueMetaBookmarks = metadataBookmarks.filter(bm => !existingPages.has(bm.page));
             const mergedBookmarks = [...tableBookmarks, ...uniqueMetaBookmarks].sort((a, c) => a.page - c.page);
 
-            // Merge notes from Dexie notes table
-            const tableNotes = notesByBook[b.id] || notesByBook[b.supabaseId] || [];
+            // Merge tabs from Dexie tabs table
+            const tableTabs = tabsByBook[b.id] || tabsByBook[b.supabaseId] || [];
 
             // Compute progress from currentPage / totalPages — single source of truth
             // Never trust stored progress_percentage — it gets corrupted
@@ -196,7 +196,7 @@ export const BookProvider = ({ children }) => {
                 ...(b.metadata || {}),
                 highlights: mergedHighlights,
                 bookmarks: mergedBookmarks,
-                notes: tableNotes, // ← from Dexie notes table, not metadata
+                tabs: tableTabs, // ← from Dexie tabs table, not metadata
               },
             };
           });
@@ -263,7 +263,7 @@ export const BookProvider = ({ children }) => {
       metadata: {
         bookmarks: [],
         highlights: [],
-        notes: [],
+        tabs: [],
       },
     };
 
@@ -744,15 +744,15 @@ export const BookProvider = ({ children }) => {
         console.log('[Apex] Deleted reading progress:', allProgressIds.length);
       }
 
-      // Notes
-      const notesByInt = await db.notes.where('bookId').equals(targetId).toArray();
-      const notesByUuid = bookRecord.supabaseId
-        ? await db.notes.where('bookId').equals(bookRecord.supabaseId).toArray()
+      // Tabs
+      const tabsByInt = await db.tabs.where('bookId').equals(targetId).toArray();
+      const tabsByUuid = bookRecord.supabaseId
+        ? await db.tabs.where('bookId').equals(bookRecord.supabaseId).toArray()
         : [];
-      const allNoteIds = [...notesByInt, ...notesByUuid].map(n => n.id);
-      if (allNoteIds.length > 0) {
-        await db.notes.bulkDelete(allNoteIds);
-        console.log('[Apex] Deleted notes:', allNoteIds.length);
+      const allTabIds = [...tabsByInt, ...tabsByUuid].map(n => n.id);
+      if (allTabIds.length > 0) {
+        await db.tabs.bulkDelete(allTabIds);
+        console.log('[Apex] Deleted tabs:', allTabIds.length);
       }
 
       // Also try deleting by supabaseId directly in case Dexie integer lookup missed it
@@ -966,32 +966,32 @@ export const BookProvider = ({ children }) => {
     });
   }, []);
 
-  const addNote = useCallback(async (bookId, noteData) => {
+  const addTab = useCallback(async (bookId, tabData) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
-    const noteObj = typeof noteData === 'string'
-      ? { text: noteData, type: 'manual_note' }
-      : noteData;
+    const tabObj = typeof tabData === 'string'
+      ? { text: tabData, type: 'manual_note' }
+      : tabData;
 
-    console.log('[Apex] addNote called for bookId:', targetId, '| type:', noteObj.type);
+    console.log('[Apex] addTab called for bookId:', targetId, '| type:', tabObj.type);
 
     // Find the book's supabaseId for sync resolution
     const bookObj = books.find(b => b.id === targetId);
     // Save to Dexie + Supabase via syncService
-    const savedNote = await syncService.saveNote(targetId, { ...noteObj, _supabase_book_id: bookObj?.supabaseId || null });
-    if (!savedNote) return;
+    const savedTab = await syncService.saveTab(targetId, { ...tabObj, _supabase_book_id: bookObj?.supabaseId || null });
+    if (!savedTab) return;
 
-    // Build UI note object
-    const uiNote = {
-      id: savedNote.id,
-      dexieId: savedNote.id,
-      supabaseId: savedNote.supabaseId || null,
-      text: savedNote.text,
-      context: savedNote.context || null,
-      type: savedNote.noteType || 'manual_note',
-      noteType: savedNote.noteType || 'manual_note',
-      createdAt: savedNote.createdAt,
-      updatedAt: savedNote.updatedAt,
-      local_id: savedNote.local_id,
+    // Build UI tab object
+    const uiTab = {
+      id: savedTab.id,
+      dexieId: savedTab.id,
+      supabaseId: savedTab.supabaseId || null,
+      text: savedTab.text,
+      context: savedTab.context || null,
+      type: savedTab.noteType || 'manual_note',
+      noteType: savedTab.noteType || 'manual_note',
+      createdAt: savedTab.createdAt,
+      updatedAt: savedTab.updatedAt,
+      local_id: savedTab.local_id,
     };
 
     // Update UI state immediately
@@ -1003,24 +1003,24 @@ export const BookProvider = ({ children }) => {
           ...book,
           metadata: {
             ...(book.metadata || {}),
-            notes: [uiNote, ...(book.metadata?.notes || [])],
+            tabs: [uiTab, ...(book.metadata?.tabs || [])],
           },
         };
       }),
     })));
   }, []);
 
-  const updateNote = useCallback(async (bookId, noteId, text) => {
+  const updateTab = useCallback(async (bookId, tabId, text) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
     const now = new Date().toISOString();
 
-    console.log('[Apex] updateNote called for noteId:', noteId);
+    console.log('[Apex] updateTab called for tabId:', tabId);
 
-    // Find the note record to get supabaseId
-    const noteRecord = await db.notes.get(noteId).catch(() => null);
+    // Find the tab record to get supabaseId
+    const tabRecord = await db.tabs.get(tabId).catch(() => null);
 
     // Update via syncService
-    await syncService.updateNote(noteRecord?.supabaseId || null, noteId, text);
+    await syncService.updateTab(tabRecord?.supabaseId || null, tabId, text);
 
     // Update UI state immediately
     setShelves(prev => prev.map(shelf => ({
@@ -1031,8 +1031,8 @@ export const BookProvider = ({ children }) => {
           ...book,
           metadata: {
             ...(book.metadata || {}),
-            notes: (book.metadata?.notes || []).map(n =>
-              n.id === noteId || n.dexieId === noteId
+            tabs: (book.metadata?.tabs || []).map(n =>
+              n.id === tabId || n.dexieId === tabId
                 ? { ...n, text, updatedAt: now }
                 : n
             ),
@@ -1042,16 +1042,16 @@ export const BookProvider = ({ children }) => {
     })));
   }, []);
 
-  const deleteNote = useCallback(async (bookId, noteId) => {
+  const deleteTab = useCallback(async (bookId, tabId) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
 
-    console.log('[Apex] deleteNote called for noteId:', noteId);
+    console.log('[Apex] deleteTab called for tabId:', tabId);
 
-    // Find the note record to get supabaseId
-    const noteRecord = await db.notes.get(noteId).catch(() => null);
+    // Find the tab record to get supabaseId
+    const tabRecord = await db.tabs.get(tabId).catch(() => null);
 
     // Delete via syncService (handles Dexie + Supabase)
-    await syncService.deleteNote(noteRecord?.supabaseId || null, noteId);
+    await syncService.deleteTab(tabRecord?.supabaseId || null, tabId);
 
     // Update UI state immediately
     setShelves(prev => prev.map(shelf => ({
@@ -1062,13 +1062,76 @@ export const BookProvider = ({ children }) => {
           ...book,
           metadata: {
             ...(book.metadata || {}),
-            notes: (book.metadata?.notes || []).filter(n =>
-              n.id !== noteId && n.dexieId !== noteId
+            tabs: (book.metadata?.tabs || []).filter(n =>
+              n.id !== tabId && n.dexieId !== tabId
             ),
           },
         };
       }),
     })));
+  }, []);
+
+  const addSimplification = useCallback(async (bookId, simplification) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    const simplificationId = Date.now();
+
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existing = book.metadata?.simplifications || [];
+          // Deduplicate by original text (case-insensitive)
+          if (existing.some(s => s.originalText?.toLowerCase() === simplification.originalText?.toLowerCase())) {
+            return book;
+          }
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              simplifications: [...existing, { ...simplification, id: simplificationId }],
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to save simplification metadata:', err));
+      }
+      return newShelves;
+    });
+
+    return simplificationId;
+  }, []);
+
+  const removeSimplification = useCallback(async (bookId, simplificationId) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existing = book.metadata?.simplifications || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              simplifications: existing.filter(s => s.id !== simplificationId),
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to remove simplification metadata:', err));
+      }
+      return newShelves;
+    });
   }, []);
 
   return (
@@ -1087,9 +1150,11 @@ export const BookProvider = ({ children }) => {
       removeSavedWord,
       addHighlight,
       removeHighlight,
-      addNote,
-      updateNote,
-      deleteNote,
+      addTab,
+      updateTab,
+      deleteTab,
+      addSimplification,
+      removeSimplification,
       showDuplicateModal,
       setShowDuplicateModal,
     }}>
