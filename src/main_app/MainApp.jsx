@@ -23,6 +23,7 @@ import DuplicateBookModal from './components/modals/DuplicateBookModal';
 import ImportPage from './pages/ImportPage';
 import StreakPage from './pages/StreakPage';
 import ExamPage from './pages/ExamPage';
+import GlobalAnalytics from './components/analytics/GlobalAnalytics';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
@@ -78,6 +79,7 @@ function MainApp({ onLogout }) {
                 <Route path="/import" element={<ImportPage />} />
                 <Route path="/streak" element={<StreakPage />} />
                 <Route path="/exams" element={<ExamPage />} />
+                <Route path="/analytics" element={<GlobalAnalytics />} />
               </Routes>
             </main>
 

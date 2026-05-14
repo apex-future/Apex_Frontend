@@ -1,19 +1,4 @@
 import React, { useMemo, useEffect, useState } from 'react';
-import { 
-    Clock, 
-    FileText, 
-    Highlighter, 
-    CheckSquare, 
-    Target, 
-    Trophy, 
-    Calendar as CalendarIcon, 
-    TrendingUp, 
-    ArrowUpRight,
-    BookOpen,
-    ChevronLeft,
-    ChevronRight,
-    ChevronDown
-} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BookCover from '../../books/BookCover';
 import apiClient from '../../../services/apiClient';
@@ -202,7 +187,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                 </div>
 
                 {/* Right column */}
-                <div className="sa-right">
+                <div className="sa-right" style={{ display:'flex', flexDirection:'column', gap: 20 }}>
                     <div className="sa-card-limit">
                         <CalendarActivityCard 
                             streakHistory={streakHistory}
