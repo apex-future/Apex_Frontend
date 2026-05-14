@@ -2,8 +2,11 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { KnowledgeMasteryCard, CoverageCard, CalendarActivityCard, QuizCard, PARTS_STYLES } from '../layout/spaces/SpaceAnalyticsParts';
 import { BookContext } from '../../context/BookContextInstance';
 import apiClient from '../../services/apiClient';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 function GlobalAnalytics() {
+    const navigate = useNavigate();
     console.log('[GlobalAnalytics] Component mounting...');
     
     const context = React.useContext(BookContext);
@@ -205,10 +208,18 @@ function GlobalAnalytics() {
         <div className="w-full min-h-screen pb-20 bg-bg-elevated">
             {PARTS_STYLES}
             <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-                <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
-                    <h3 className="text-xl font-bold font-display text-text-primary">Global Analytics</h3>
-                    <div className="px-3 py-1 rounded-full bg-accent-primary/10 border border-accent-primary/20">
-                        <p className="text-[10px] text-accent-primary font-bold uppercase tracking-wider">Live Dashboard</p>
+                <div className="max-w-6xl mx-auto px-4 py-6 flex items-center gap-4">
+                    <button 
+                        onClick={() => navigate(-1)}
+                        className="p-2 hover:bg-white/10 rounded-full transition-colors group"
+                    >
+                        <ArrowLeft size={20} className="text-text-secondary group-hover:text-text-primary" />
+                    </button>
+                    <div className="flex-1 flex items-center justify-between">
+                        <h3 className="text-xl font-bold font-display text-text-primary">Global Analytics</h3>
+                        <div className="px-3 py-1 rounded-full bg-accent-primary/10 border border-accent-primary/20">
+                            <p className="text-[10px] text-accent-primary font-bold uppercase tracking-wider">Live Dashboard</p>
+                        </div>
                     </div>
                 </div>
             </div>

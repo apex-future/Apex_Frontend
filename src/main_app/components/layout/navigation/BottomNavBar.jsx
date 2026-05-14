@@ -78,19 +78,7 @@ function BottomNavBar() {
         </label>
       </div>
 
-      <NavLink
-        to="/analytics"
-        className={() => `p-2 hover:bg-neutral-100/50 dark:hover:bg-white/10 rounded-full transition-all relative flex flex-col items-center group`}
-      >
-        {({ isActive }) => (
-          <>
-            <TrendingUp size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040] dark:text-zinc-400'} />
-            {isActive && (
-              <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
-            )}
-          </>
-        )}
-      </NavLink>
+
 
       <NavLink
         to="/profile"
