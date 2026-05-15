@@ -203,10 +203,6 @@ const syncService = {
     } catch (error) {
       if (import.meta.env.DEV) console.error('Failed to upload book to Supabase:', error);
     }
-
-    // Schedule background retry for this book
-    await this._scheduleBookRetry(dexieBookId);
-    await db.books.update(dexieBookId, { sync_status: 'pending' });
     return null;
   },
 
@@ -1198,77 +1194,157 @@ const syncService = {
 
   // ============================================
   // BOOK RETRY QUEUE — exponential backoff for failed uploads
+  //
+  // Lifecycle:
+  //   Phase 1 (in-session):  3 timed retries at 30s → 2min → 5min
+  //   Phase 2 (app re-entry): 2 more attempts, one per app open
+  //   After 5 total retries (3 + 2) the book is permanently failed
+  //
+  // sync_retry_count is persisted in Dexie so reentry retries survive refresh.
+  // _bookRetryQueue (in-memory Map) only tracks active timeoutHandles to
+  // prevent duplicate concurrent timers — it is NOT the source of truth for
+  // attempt counts.
   // ============================================
 
-  // Per-book retry state map
-  // Structure: Map<dexieBookId, { attempts: number, timeoutHandle: number|null }>
+  // In-memory map: dexieBookId → timeoutHandle (for deduplication only)
   _bookRetryQueue: new Map(),
 
+  /**
+   * Schedule the next in-session backoff retry for a book.
+   * Called once after the initial upload fails. The retry chain is
+   * self-contained: each timeout callback either succeeds, schedules
+   * the next retry, or marks the book as failed. No other code path
+   * should call _scheduleBookRetry for the same book.
+   */
   _scheduleBookRetry: async function(dexieBookId) {
     const BACKOFF_DELAYS = [30_000, 120_000, 300_000]; // 30s, 2min, 5min
-    const MAX_ATTEMPTS = 3;
+    const MAX_IN_SESSION = 3;
 
-    const existing = this._bookRetryQueue.get(dexieBookId) || { attempts: 0, timeoutHandle: null };
-
-    // Clear any existing timeout for this book
-    if (existing.timeoutHandle) clearTimeout(existing.timeoutHandle);
-
-    if (existing.attempts >= MAX_ATTEMPTS) {
-      // All retries exhausted — mark as failed and stop
-      console.log('[Apex Sync] Book retry exhausted after', MAX_ATTEMPTS, 'attempts for dexieId:', dexieBookId);
-      this._bookRetryQueue.delete(dexieBookId);
-      await db.books.update(dexieBookId, { sync_status: 'failed' });
+    // Prevent duplicate timers for the same book
+    const existingHandle = this._bookRetryQueue.get(dexieBookId);
+    if (existingHandle) {
+      console.log('[Apex Sync] Retry already scheduled for dexieId:', dexieBookId, '— skipping');
       return;
     }
 
-    const delay = BACKOFF_DELAYS[existing.attempts];
-    const nextAttempt = existing.attempts + 1;
-    console.log('[Apex Sync] Scheduling book retry', nextAttempt, 'of', MAX_ATTEMPTS, 'in', delay / 1000, 's for dexieId:', dexieBookId);
+    // Read persistent retry count from Dexie
+    const book = await db.books.get(dexieBookId);
+    if (!book) return;
+    if (book.supabaseId) return; // already synced
+    if (book.sync_status === 'failed') return; // already exhausted
+
+    const retryCount = book.sync_retry_count || 0;
+
+    if (retryCount >= MAX_IN_SESSION) {
+      // In-session retries exhausted → mark as failed
+      console.log('[Apex Sync] In-session retries exhausted (' + retryCount + '/' + MAX_IN_SESSION + ') for:', book.title);
+      this._bookRetryQueue.delete(dexieBookId);
+      await db.books.update(dexieBookId, { sync_status: 'failed', sync_retry_count: retryCount });
+      return;
+    }
+
+    const delay = BACKOFF_DELAYS[retryCount];
+    console.log('[Apex Sync] Scheduling book retry', (retryCount + 1), 'of', MAX_IN_SESSION, 'in', delay / 1000, 's for:', book.title);
 
     const timeoutHandle = setTimeout(async () => {
+      // Timer fired — remove handle from dedup map immediately
+      this._bookRetryQueue.delete(dexieBookId);
+
       if (!navigator.onLine) {
-        console.log('[Apex Sync] Retry fired but offline — rescheduling for dexieId:', dexieBookId);
-        this._bookRetryQueue.set(dexieBookId, { attempts: nextAttempt - 1, timeoutHandle: null });
-        this._scheduleBookRetry(dexieBookId);
+        console.log('[Apex Sync] Retry fired but offline — will retry when back online for:', book.title);
+        // Don't reschedule — the online listener will pick it up
         return;
       }
 
-      const book = await db.books.get(dexieBookId);
-      if (!book) {
-        console.log('[Apex Sync] Book no longer exists in Dexie — cancelling retry for dexieId:', dexieBookId);
-        this._bookRetryQueue.delete(dexieBookId);
+      // Re-read book state (it may have changed while waiting)
+      const freshBook = await db.books.get(dexieBookId);
+      if (!freshBook) {
+        console.log('[Apex Sync] Book deleted during retry wait — cancelling for dexieId:', dexieBookId);
         return;
       }
-      if (book.supabaseId) {
-        console.log('[Apex Sync] Book already synced — cancelling retry for dexieId:', dexieBookId);
-        this._bookRetryQueue.delete(dexieBookId);
+      if (freshBook.supabaseId) {
+        console.log('[Apex Sync] Book already synced during retry wait — cancelling for:', freshBook.title);
         return;
       }
-      if (!book.fileBlob) {
-        console.log('[Apex Sync] No fileBlob — cannot retry upload for dexieId:', dexieBookId);
-        this._bookRetryQueue.delete(dexieBookId);
+      if (freshBook.sync_status === 'failed') {
+        console.log('[Apex Sync] Book already marked failed — cancelling retry for:', freshBook.title);
+        return;
+      }
+      if (!freshBook.fileBlob) {
+        console.log('[Apex Sync] No fileBlob — cannot retry upload for:', freshBook.title);
         await db.books.update(dexieBookId, { sync_status: 'failed' });
         return;
       }
 
-      console.log('[Apex Sync] Retrying book upload, attempt', nextAttempt, 'for:', book.title);
-      this._bookRetryQueue.set(dexieBookId, { attempts: nextAttempt, timeoutHandle: null });
+      const currentRetry = (freshBook.sync_retry_count || 0) + 1;
+      console.log('[Apex Sync] Retrying book upload, attempt', currentRetry, 'for:', freshBook.title);
 
-      const file = new File([book.fileBlob], book.title, { type: book.fileType || 'application/pdf' });
-      const result = await this.uploadBook(file, book.title, book.author || 'Unknown', dexieBookId);
+      // Persist the incremented count BEFORE the attempt
+      await db.books.update(dexieBookId, { sync_retry_count: currentRetry });
+
+      const file = new File([freshBook.fileBlob], freshBook.title, { type: freshBook.fileType || 'application/pdf' });
+      const result = await this.uploadBook(file, freshBook.title, freshBook.author || 'Unknown', dexieBookId);
 
       if (result) {
-        console.log('[Apex Sync] Book retry succeeded for:', book.title);
-        this._bookRetryQueue.delete(dexieBookId);
-        await db.books.update(dexieBookId, { sync_status: 'synced' });
+        console.log('[Apex Sync] Book retry succeeded for:', freshBook.title);
+        await db.books.update(dexieBookId, { sync_status: 'synced', sync_retry_count: currentRetry });
       } else {
-        console.log('[Apex Sync] Book retry failed, attempt', nextAttempt, 'for:', book.title);
-        this._bookRetryQueue.set(dexieBookId, { attempts: nextAttempt, timeoutHandle: null });
-        await this._scheduleBookRetry(dexieBookId);
+        console.log('[Apex Sync] Book retry', currentRetry, 'failed for:', freshBook.title);
+        if (currentRetry >= MAX_IN_SESSION) {
+          console.log('[Apex Sync] In-session retries exhausted — marking failed for:', freshBook.title);
+          await db.books.update(dexieBookId, { sync_status: 'failed', sync_retry_count: currentRetry });
+        } else {
+          // Schedule the next backoff retry (recursive, but deduped by the Map check)
+          await this._scheduleBookRetry(dexieBookId);
+        }
       }
     }, delay);
 
-    this._bookRetryQueue.set(dexieBookId, { attempts: existing.attempts, timeoutHandle });
+    this._bookRetryQueue.set(dexieBookId, timeoutHandle);
+  },
+
+  /**
+   * App-reentry retry: called once on init() for books that failed in a
+   * previous session. Gives 2 extra attempts (sync_retry_count 3→4, 4→5).
+   * After sync_retry_count reaches 5, the book is permanently abandoned.
+   */
+  _attemptReentryRetries: async function() {
+    const MAX_TOTAL_RETRIES = 5; // 3 in-session + 2 reentry
+
+    const failedBooks = await db.books
+      .filter(b => b.sync_status === 'failed' && !b.supabaseId && !!b.fileBlob)
+      .toArray();
+
+    for (const book of failedBooks) {
+      const retryCount = book.sync_retry_count || 0;
+
+      if (retryCount >= MAX_TOTAL_RETRIES) {
+        console.log('[Apex Sync] Reentry: book permanently failed (retry count:', retryCount, ') —', book.title);
+        continue;
+      }
+
+      if (!navigator.onLine) {
+        console.log('[Apex Sync] Reentry: offline — skipping retry for:', book.title);
+        continue;
+      }
+
+      const nextRetry = retryCount + 1;
+      console.log('[Apex Sync] Reentry retry', (nextRetry - 3), 'of 2 for:', book.title, '(total attempt', nextRetry, ')');
+
+      // Mark as pending during this attempt
+      await db.books.update(book.id, { sync_status: 'pending', sync_retry_count: nextRetry });
+
+      const file = new File([book.fileBlob], book.title, { type: book.fileType || 'application/pdf' });
+      const result = await this.uploadBook(file, book.title, book.author || 'Unknown', book.id);
+
+      if (result) {
+        console.log('[Apex Sync] Reentry retry succeeded for:', book.title);
+        await db.books.update(book.id, { sync_status: 'synced', sync_retry_count: nextRetry });
+      } else {
+        console.log('[Apex Sync] Reentry retry failed for:', book.title, '— attempt', nextRetry, 'of', MAX_TOTAL_RETRIES);
+        await db.books.update(book.id, { sync_status: 'failed', sync_retry_count: nextRetry });
+      }
+    }
   },
 
   // ============================================
@@ -1307,6 +1383,13 @@ const syncService = {
           .where('local_id').equals(item.local_id)
           .first();
 
+        // Skip books that are already marked as failed — retry queue handles those
+        if (localBook?.sync_status === 'failed') {
+          if (import.meta.env.DEV) console.log('[Apex Sync] Skipping failed book in pushSync — retry queue owns this:', localBook.title);
+          await db.sync_queue.update(item.id, { status: 'failed' });
+          continue;
+        }
+
         if (import.meta.env.DEV) console.log('[Apex Sync] Processing offline book upload:', {
           local_id: item.local_id,
           title: localBook?.title,
@@ -1340,16 +1423,16 @@ const syncService = {
           filePath: result?.file_path,
         });
 
-        await db.sync_queue.update(item.id, {
-          status: result ? 'synced' : 'pending',
-          attempts: result ? item.attempts : (item.attempts || 0) + 1,
-        });
-
-        if (!result) {
-          // Trigger background retry — pushSync handles the sync_queue status,
-          // _scheduleBookRetry handles the Dexie book sync_status
-          const localBook = await db.books.where('local_id').equals(item.local_id).first();
-          if (localBook) await this._scheduleBookRetry(localBook.id);
+        if (result) {
+          await db.sync_queue.update(item.id, { status: 'synced' });
+          await db.books.update(localBook.id, { sync_status: 'synced' });
+        } else {
+          await db.sync_queue.update(item.id, {
+            status: 'pending',
+            attempts: (item.attempts || 0) + 1,
+          });
+          // Schedule backoff retries — _scheduleBookRetry is the sole owner
+          await this._scheduleBookRetry(localBook.id);
         }
       }
 
@@ -1547,6 +1630,14 @@ const syncService = {
     });
 
     this.triggerSync = () => this._triggerDebouncedFlush();
+
+    // App-reentry retries: give failed books 2 more chances across app opens
+    // Runs once per app load, after a small delay to let auth finish
+    setTimeout(() => {
+      if (navigator.onLine) {
+        this._attemptReentryRetries();
+      }
+    }, 5000);
   },
 
   // ============================================
