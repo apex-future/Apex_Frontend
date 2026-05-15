@@ -20,7 +20,6 @@ import AccessibilityPage from './landing_page/AccessibilityPage';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
-  const [hydrating, setHydrating] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
@@ -135,17 +134,12 @@ function App() {
 
           setIsLoggedIn(true);
 
-          // Run full data pull if online
+          // Run full data pull if online (non-blocking — app already rendered from local data)
           if (navigator.onLine) {
-            setHydrating(true);
-            try {
-              await syncService.pullAllUserData();
-              await syncService.pushSync();
-            } catch (err) {
-              console.error('Pull sync failed, continuing with local data:', err.message);
-            } finally {
-              setHydrating(false);
-            }
+            console.log('[Apex] Sync running in background');
+            syncService.pullAllUserData()
+              .then(() => syncService.pushSync())
+              .catch((err) => console.error('Pull sync failed, continuing with local data:', err.message));
           }
         } catch (error) {
           console.error("Auth verification failed:", error.message);
@@ -208,18 +202,11 @@ function App() {
     }
     setIsLoggedIn(true);
 
-    // Pull all data from Supabase for this user
+    // Pull all data from Supabase for this user (non-blocking — app already rendered)
     if (navigator.onLine) {
-      setHydrating(true);
-      try {
-        await syncService.pullAllUserData();
-        // Also migrate any pre-account local data
-        await syncService.migrateLocalData();
-      } catch (err) {
-        console.error('Post-login sync failed:', err.message);
-      } finally {
-        setHydrating(false);
-      }
+      syncService.pullAllUserData()
+        .then(() => syncService.migrateLocalData())
+        .catch((err) => console.error('Post-login sync failed:', err.message));
     }
   };
 
@@ -233,8 +220,8 @@ function App() {
     setNeedsOnboarding(false);
   };
 
-  // Show loading screen during initial auth check OR during data hydration
-  if (loading || hydrating) {
+  // Show loading screen only during initial auth token check
+  if (loading) {
     return showLandingLoader ? <LandingLoadingScreen /> : <ApexLoadingScreen />;
   }
 
