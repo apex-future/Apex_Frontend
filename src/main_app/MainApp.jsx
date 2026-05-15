@@ -23,6 +23,7 @@ import DuplicateBookModal from './components/modals/DuplicateBookModal';
 import ImportPage from './pages/ImportPage';
 import StreakPage from './pages/StreakPage';
 import ExamPage from './pages/ExamPage';
+import GlobalAnalytics from './components/analytics/GlobalAnalytics';
 import NotebooksPage from './pages/NotebooksPage';
 import NotebookDetailPage from './pages/NotebookDetailPage';
 import NoteEditorPage from './pages/NoteEditorPage';
@@ -81,6 +82,7 @@ function MainApp({ onLogout }) {
                 <Route path="/import" element={<ImportPage />} />
                 <Route path="/streak" element={<StreakPage />} />
                 <Route path="/exams" element={<ExamPage />} />
+                <Route path="/analytics" element={<GlobalAnalytics />} />
                 <Route path="/notes" element={<NotebooksPage />} />
                 <Route path="/notes/:bookId" element={<NotebookDetailPage />} />
                 <Route path="/notes/:bookId/new" element={<NoteEditorPage />} />

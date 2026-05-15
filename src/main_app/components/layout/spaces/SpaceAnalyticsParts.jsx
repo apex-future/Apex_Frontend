@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Check, Zap, BrainCircuit, Target, TrendingUp, AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ── CUSTOM SELECT COMPONENT ──
@@ -99,7 +99,7 @@ function toDateStr(d) {
   return `${y}-${m}-${dd}`;
 }
 
-const PARTS_STYLES = (
+export const PARTS_STYLES = (
   <style>{`
     .cc-header {
       display: flex;
@@ -441,7 +441,7 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
   const dayEvents = useMemo(() => {
     if (!rawActivity) return [];
     const filtered = rawActivity.filter(ev => {
-      if (!ev.timestamp) return false;
+      if (!ev || !ev.timestamp || typeof ev.timestamp !== 'string') return false;
       return ev.timestamp.slice(0, 10) === selectedDay;
     }).map(ev => {
       const book = spaceBooks?.find(b => (b.supabaseId || b.recordId) === ev.book_id);
@@ -589,6 +589,98 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
             })}
           </div>
         )}
+      </div>
+    </div>
+  );
+});
+
+// ═══════════════════════════════════════
+// Card 4 — Knowledge Mastery (Strengths & Weaknesses)
+// ═══════════════════════════════════════
+export const KnowledgeMasteryCard = React.memo(({ spaceBooks, masteryData }) => {
+  // MOCK DATA for now since backend doesn't supply topic-level quiz data yet.
+  const data = masteryData || {
+    strong: [
+      { topic: 'Quantum States', score: 92, trend: 'up' },
+      { topic: 'Thermodynamics', score: 88, trend: 'up' },
+    ],
+    weak: [
+      { topic: 'Entanglement Theory', score: 45, trend: 'down' },
+      { topic: 'Wave Functions', score: 52, trend: 'down' },
+    ],
+    recommendation: "You're consistently scoring low on Entanglement Theory. I recommend re-reading Chapter 3 and taking a targeted mini-quiz on Bell's Theorem to master these concepts."
+  };
+
+  return (
+    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, overflow: 'hidden' }}>
+      {PARTS_STYLES}
+      <div style={{ padding: 24, borderBottom: '1px solid rgb(var(--border-default) / 0.4)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <BrainCircuit size={18} color="#7F77DD" />
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Knowledge Mastery</span>
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 600, color: 'rgb(var(--text-tertiary))', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Beta</span>
+        </div>
+        <p style={{ fontSize: 11, color: 'rgb(var(--text-secondary))', marginTop: 8 }}>Based on your recent quiz performance across this space.</p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0 }}>
+        {/* Strong Areas */}
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgb(var(--border-default) / 0.3)', background: 'linear-gradient(to right, rgba(16, 185, 129, 0.03), transparent)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+            <Target size={14} color="#10B981" />
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#10B981', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Strengths</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {data.strong.map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{item.topic}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TrendingUp size={12} color="#10B981" />
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'rgb(var(--text-primary))' }}>{item.score}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Weak Areas */}
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgb(var(--border-default) / 0.3)', background: 'linear-gradient(to right, rgba(245, 158, 11, 0.03), transparent)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+            <AlertTriangle size={14} color="#F59E0B" />
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#F59E0B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Needs Focus</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {data.weak.map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{item.topic}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TrendingUp size={12} color="#F59E0B" style={{ transform: 'rotate(180deg)' }} />
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'rgb(var(--text-primary))' }}>{item.score}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* AI Action Plan */}
+        <div style={{ padding: 24, background: 'rgba(127, 119, 221, 0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+            <Sparkles size={14} color="#7F77DD" />
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#7F77DD', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cleo's Action Plan</span>
+          </div>
+          <p style={{ fontSize: 12, color: 'rgb(var(--text-secondary))', lineHeight: 1.6, marginBottom: 16 }}>
+            {data.recommendation}
+          </p>
+          <button style={{ 
+            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', 
+            background: '#7F77DD', color: '#fff', borderRadius: 8, border: 'none', 
+            fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+          }}>
+            Generate Custom Quiz <ArrowRight size={14} />
+          </button>
+        </div>
       </div>
     </div>
   );

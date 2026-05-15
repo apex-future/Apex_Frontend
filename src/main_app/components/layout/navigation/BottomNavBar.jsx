@@ -1,4 +1,4 @@
-import { Home, Plus, User } from 'lucide-react'
+import { Home, Plus, User, TrendingUp } from 'lucide-react'
 import React, { useContext, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BookContext } from '../../../context/BookContextInstance';
@@ -77,6 +77,8 @@ function BottomNavBar() {
           <Plus className='text-white' size={24} />
         </label>
       </div>
+
+
 
       <NavLink
         to="/profile"
