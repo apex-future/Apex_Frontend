@@ -278,6 +278,7 @@ const syncService = {
           highlights: new Date().toISOString(),
           bookmarks: new Date().toISOString(),
           tabs: new Date().toISOString(),
+          book_notes: new Date().toISOString(),
           book_spaces: new Date().toISOString(),
           exam_reminders: new Date().toISOString(),
           server_time: new Date().toISOString(),
@@ -290,7 +291,7 @@ const syncService = {
       if (import.meta.env.DEV) console.log('[Apex Sync] Last synced at:', lastSyncedAt || 'never (first sync on this device)');
 
       // Step 3: Decide action per table — no client clock involved
-      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'tabs', 'book_spaces', 'exam_reminders'];
+      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'tabs', 'book_notes', 'book_spaces', 'exam_reminders'];
       const decisions = {};
 
       for (const table of tables) {
@@ -381,7 +382,7 @@ const syncService = {
           const localSupabaseIds = new Set(currentLocalBooks.map(b => b.supabaseId).filter(Boolean));
 
           // Clean up related records for books that no longer exist locally
-          const allTables = ['bookmarks', 'highlights', 'reading_progress', 'tabs'];
+          const allTables = ['bookmarks', 'highlights', 'reading_progress', 'tabs', 'book_notes'];
           for (const table of allTables) {
             try {
               const records = await db[table].toArray();
@@ -473,6 +474,19 @@ const syncService = {
           }));
           for (const m of mapped) { delete m.id; }
           await db.tabs.bulkAdd(mapped);
+        }
+
+        // ── BOOK NOTES ──
+        if (tablesToPull.includes('book_notes') && pulledData.book_notes?.length > 0) {
+          if (import.meta.env.DEV) console.log('[Apex Sync] Pulling book_notes:', pulledData.book_notes.length);
+          await db.book_notes.clear();
+          const mapped = pulledData.book_notes.map(n => ({
+            ...mapSnakeToCamel(n),
+            supabaseId: n.id,
+            synced: true,
+          }));
+          for (const m of mapped) { delete m.id; }
+          await db.book_notes.bulkAdd(mapped);
         }
 
         // ── BOOK SPACES ──
@@ -1069,6 +1083,156 @@ const syncService = {
         if (import.meta.env.DEV) console.log('[Apex] Tab deleted from Supabase:', supabaseId);
       } catch (err) {
         if (import.meta.env.DEV) console.error('[Apex] Failed to delete tab from Supabase:', err);
+      }
+    }
+  },
+
+  // ============================================
+  // DIRECT SAVE — BOOK NOTES (Category A)
+  // ============================================
+  saveBookNote: async function (bookId, noteData) {
+    const localId = noteData.local_id || generateLocalId();
+    const now = new Date().toISOString();
+
+    // Build Dexie record
+    const dexieRecord = {
+      bookId,
+      local_id: localId,
+      title: noteData.title || 'Untitled',
+      content: noteData.content || '',
+      template: noteData.template || 'blank',
+      word_count: noteData.word_count || 0,
+      createdAt: noteData.createdAt || now,
+      updatedAt: now,
+      synced: false,
+      supabaseId: noteData.supabaseId || null,
+    };
+
+    // Step 1: Upsert in Dexie
+    const existing = await db.book_notes.where('local_id').equals(localId).first();
+    let dexieId;
+    if (existing) {
+      dexieId = existing.id;
+      await db.book_notes.update(dexieId, dexieRecord);
+    } else {
+      dexieId = await db.book_notes.add(dexieRecord);
+    }
+    if (import.meta.env.DEV) console.log('[Apex] Book note saved to Dexie:', dexieId);
+
+    // Step 2: If online, resolve Supabase book UUID and save/update
+    if (navigator.onLine) {
+      const supabaseBookId = await this._resolveBookId(bookId, noteData._supabase_book_id);
+      if (supabaseBookId) {
+        try {
+          let response;
+          if (noteData.supabaseId) {
+            // Update existing note on Supabase
+            response = await apiClient.put(`/api/book-notes/${noteData.supabaseId}`, {
+              title: dexieRecord.title,
+              content: dexieRecord.content,
+              template: dexieRecord.template,
+              word_count: dexieRecord.word_count,
+              updated_at: now,
+            });
+          } else {
+            // Create new note on Supabase
+            response = await apiClient.post(`/api/books/${supabaseBookId}/book-notes`, {
+              title: dexieRecord.title,
+              content: dexieRecord.content,
+              template: dexieRecord.template,
+              word_count: dexieRecord.word_count,
+              local_id: localId,
+            });
+          }
+          await db.book_notes.update(dexieId, {
+            supabaseId: response.data.id,
+            synced: true,
+          });
+          if (import.meta.env.DEV) console.log('[Apex] Book note saved to Supabase:', response.data.id);
+          this._triggerDebouncedFlush();
+          return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
+        } catch (err) {
+          if (import.meta.env.DEV) console.error('[Apex] Failed to save book note to Supabase:', err);
+          await this._queueForSync('upload', 'book_notes', localId, {
+            book_id: supabaseBookId,
+            title: dexieRecord.title,
+            content: dexieRecord.content,
+            template: dexieRecord.template,
+            word_count: dexieRecord.word_count,
+          });
+        }
+      } else {
+        // Book not synced yet — queue with dexie book id for later resolution
+        console.log('[Apex Sync] Blocking activity sync — book not yet synced, queuing book note');
+        await this._queueForSync('upload', 'book_notes', localId, {
+          _dexie_book_id: bookId,
+          title: dexieRecord.title,
+          content: dexieRecord.content,
+          template: dexieRecord.template,
+          word_count: dexieRecord.word_count,
+        });
+      }
+    } else {
+      // Offline — queue for later
+      if (import.meta.env.DEV) console.log('[Apex] Offline — book note queued for sync');
+      await this._queueForSync('upload', 'book_notes', localId, {
+        _dexie_book_id: bookId,
+        title: dexieRecord.title,
+        content: dexieRecord.content,
+        template: dexieRecord.template,
+        word_count: dexieRecord.word_count,
+      });
+    }
+
+    return { ...dexieRecord, id: dexieId };
+  },
+
+  updateBookNote: async function (supabaseId, dexieId, updateData) {
+    const now = new Date().toISOString();
+
+    // Update Dexie immediately
+    const dexieUpdate = {
+      ...updateData,
+      updatedAt: now,
+      synced: false,
+    };
+    await db.book_notes.update(dexieId, dexieUpdate);
+    if (import.meta.env.DEV) console.log('[Apex] Book note updated in Dexie:', dexieId);
+
+    // If online and synced, update Supabase
+    if (navigator.onLine && supabaseId) {
+      try {
+        await apiClient.put(`/api/book-notes/${supabaseId}`, {
+          title: updateData.title,
+          content: updateData.content,
+          template: updateData.template,
+          word_count: updateData.word_count,
+          updated_at: now,
+        });
+        await db.book_notes.update(dexieId, { synced: true });
+        if (import.meta.env.DEV) console.log('[Apex] Book note updated in Supabase:', supabaseId);
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('[Apex] Failed to update book note in Supabase:', err);
+      }
+    }
+  },
+
+  deleteBookNote: async function (supabaseId, dexieId) {
+    // Delete from Dexie immediately
+    if (dexieId) {
+      await db.book_notes.delete(dexieId).catch(err =>
+        { if (import.meta.env.DEV) console.error('[Apex] Failed to delete book note from Dexie:', err); }
+      );
+      if (import.meta.env.DEV) console.log('[Apex] Book note deleted from Dexie:', dexieId);
+    }
+
+    // If online and synced, delete from Supabase
+    if (navigator.onLine && supabaseId) {
+      try {
+        await apiClient.delete(`/api/book-notes/${supabaseId}`);
+        if (import.meta.env.DEV) console.log('[Apex] Book note deleted from Supabase:', supabaseId);
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('[Apex] Failed to delete book note from Supabase:', err);
       }
     }
   },
