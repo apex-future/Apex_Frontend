@@ -203,6 +203,10 @@ const syncService = {
     } catch (error) {
       if (import.meta.env.DEV) console.error('Failed to upload book to Supabase:', error);
     }
+
+    // Schedule background retry for this book
+    await this._scheduleBookRetry(dexieBookId);
+    await db.books.update(dexieBookId, { sync_status: 'pending' });
     return null;
   },
 
@@ -677,7 +681,7 @@ const syncService = {
         }
       } else {
         // Book hasn't synced yet — queue for later
-        if (import.meta.env.DEV) console.warn('Book not synced to Supabase yet, queuing highlight');
+        console.log('[Apex Sync] Blocking activity sync — book not yet synced, queuing');
         await this._queueForSync('upload', 'highlights', localId, {
           _dexie_book_id: bookId, // Will need to resolve later
           highlighted_text: dexieRecord.highlightedText,
@@ -827,6 +831,7 @@ const syncService = {
           });
         }
       } else {
+        console.log('[Apex Sync] Blocking activity sync — book not yet synced, queuing');
         await this._queueForSync('upload', 'reading_progress', existing?.local_id || localId, {
           _dexie_book_id: bookId,
           current_page: progressData.current_page,
@@ -928,6 +933,7 @@ const syncService = {
           });
         }
       } else {
+        console.log('[Apex Sync] Blocking activity sync — book not yet synced, queuing');
         await this._queueForSync('upload', 'bookmarks', localId, {
           _dexie_book_id: bookId,
           page_number: dexieRecord.pageNumber,
@@ -1010,7 +1016,7 @@ const syncService = {
         }
       } else {
         // Book not synced yet — queue with dexie book id for later resolution
-        if (import.meta.env.DEV) console.warn('[Apex] Book not synced yet — queuing tab');
+        console.log('[Apex Sync] Blocking activity sync — book not yet synced, queuing');
         await this._queueForSync('upload', 'tabs', localId, {
           _dexie_book_id: bookId,
           text: dexieRecord.text,
@@ -1191,6 +1197,81 @@ const syncService = {
   },
 
   // ============================================
+  // BOOK RETRY QUEUE — exponential backoff for failed uploads
+  // ============================================
+
+  // Per-book retry state map
+  // Structure: Map<dexieBookId, { attempts: number, timeoutHandle: number|null }>
+  _bookRetryQueue: new Map(),
+
+  _scheduleBookRetry: async function(dexieBookId) {
+    const BACKOFF_DELAYS = [30_000, 120_000, 300_000]; // 30s, 2min, 5min
+    const MAX_ATTEMPTS = 3;
+
+    const existing = this._bookRetryQueue.get(dexieBookId) || { attempts: 0, timeoutHandle: null };
+
+    // Clear any existing timeout for this book
+    if (existing.timeoutHandle) clearTimeout(existing.timeoutHandle);
+
+    if (existing.attempts >= MAX_ATTEMPTS) {
+      // All retries exhausted — mark as failed and stop
+      console.log('[Apex Sync] Book retry exhausted after', MAX_ATTEMPTS, 'attempts for dexieId:', dexieBookId);
+      this._bookRetryQueue.delete(dexieBookId);
+      await db.books.update(dexieBookId, { sync_status: 'failed' });
+      return;
+    }
+
+    const delay = BACKOFF_DELAYS[existing.attempts];
+    const nextAttempt = existing.attempts + 1;
+    console.log('[Apex Sync] Scheduling book retry', nextAttempt, 'of', MAX_ATTEMPTS, 'in', delay / 1000, 's for dexieId:', dexieBookId);
+
+    const timeoutHandle = setTimeout(async () => {
+      if (!navigator.onLine) {
+        console.log('[Apex Sync] Retry fired but offline — rescheduling for dexieId:', dexieBookId);
+        this._bookRetryQueue.set(dexieBookId, { attempts: nextAttempt - 1, timeoutHandle: null });
+        this._scheduleBookRetry(dexieBookId);
+        return;
+      }
+
+      const book = await db.books.get(dexieBookId);
+      if (!book) {
+        console.log('[Apex Sync] Book no longer exists in Dexie — cancelling retry for dexieId:', dexieBookId);
+        this._bookRetryQueue.delete(dexieBookId);
+        return;
+      }
+      if (book.supabaseId) {
+        console.log('[Apex Sync] Book already synced — cancelling retry for dexieId:', dexieBookId);
+        this._bookRetryQueue.delete(dexieBookId);
+        return;
+      }
+      if (!book.fileBlob) {
+        console.log('[Apex Sync] No fileBlob — cannot retry upload for dexieId:', dexieBookId);
+        this._bookRetryQueue.delete(dexieBookId);
+        await db.books.update(dexieBookId, { sync_status: 'failed' });
+        return;
+      }
+
+      console.log('[Apex Sync] Retrying book upload, attempt', nextAttempt, 'for:', book.title);
+      this._bookRetryQueue.set(dexieBookId, { attempts: nextAttempt, timeoutHandle: null });
+
+      const file = new File([book.fileBlob], book.title, { type: book.fileType || 'application/pdf' });
+      const result = await this.uploadBook(file, book.title, book.author || 'Unknown', dexieBookId);
+
+      if (result) {
+        console.log('[Apex Sync] Book retry succeeded for:', book.title);
+        this._bookRetryQueue.delete(dexieBookId);
+        await db.books.update(dexieBookId, { sync_status: 'synced' });
+      } else {
+        console.log('[Apex Sync] Book retry failed, attempt', nextAttempt, 'for:', book.title);
+        this._bookRetryQueue.set(dexieBookId, { attempts: nextAttempt, timeoutHandle: null });
+        await this._scheduleBookRetry(dexieBookId);
+      }
+    }, delay);
+
+    this._bookRetryQueue.set(dexieBookId, { attempts: existing.attempts, timeoutHandle });
+  },
+
+  // ============================================
   // PUSH SYNC — flush sync_queue to Supabase
   // ============================================
   pushSync: async function () {
@@ -1263,6 +1344,13 @@ const syncService = {
           status: result ? 'synced' : 'pending',
           attempts: result ? item.attempts : (item.attempts || 0) + 1,
         });
+
+        if (!result) {
+          // Trigger background retry — pushSync handles the sync_queue status,
+          // _scheduleBookRetry handles the Dexie book sync_status
+          const localBook = await db.books.where('local_id').equals(item.local_id).first();
+          if (localBook) await this._scheduleBookRetry(localBook.id);
+        }
       }
 
       // CRITICAL: Books are handled exclusively via uploadBook() above (Path 1)
@@ -1443,6 +1531,19 @@ const syncService = {
     window.addEventListener('online', () => {
       if (import.meta.env.DEV) console.log('Device online, flushing sync queue...');
       this.pushSync();
+    });
+
+    window.addEventListener('online', async () => {
+      console.log('[Apex Sync] Back online — checking for pending book uploads');
+      const pendingBooks = await db.books
+        .filter(b => b.sync_status === 'pending' && !b.supabaseId)
+        .toArray();
+      for (const book of pendingBooks) {
+        if (!this._bookRetryQueue.has(book.id)) {
+          console.log('[Apex Sync] Scheduling retry for unqueued pending book:', book.title);
+          await this._scheduleBookRetry(book.id);
+        }
+      }
     });
 
     this.triggerSync = () => this._triggerDebouncedFlush();
