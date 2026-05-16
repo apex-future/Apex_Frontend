@@ -92,77 +92,62 @@ function App() {
   // }, []);
 
   useEffect(() => {
-    // Initialize theme
-    useThemeStore.getState().initTheme();
-
     const checkAuth = async () => {
-      // Initialize sync service (listeners, debounced functions)
       syncService.init();
 
-      if (authService.isAuthenticated()) {
-        try {
-          // Verify token is still valid
-          const user = await authService.me();
-          // Store user in Zustand immediately
-          useAuthStore.getState().setUser(user);
+      if (!authService.isAuthenticated()) {
+        setLoading(false);
+        return;
+      }
 
-          // Seed streak store from Supabase data on app load
-          // seedFromSupabase only overwrites local if Supabase is more recent
-          useStudyStore.getState().seedFromSupabase(user);
-          console.log('[Apex Streak] Store seeded from Supabase');
+      // User has a token — render immediately from whatever is cached locally
+      // Apply theme from localStorage before render so there's no flash
+      useThemeStore.getState().initTheme();
 
-          // Check if streak is broken (lastActiveDate is not today/yesterday)
-          // Resets streakCount to 0 immediately so StreakBadge shows the correct value
-          useStudyStore.getState().checkStreakIntegrity();
+      // Unblock the app immediately — Dexie has the data, render it
+      setIsLoggedIn(true);
+      setLoading(false);
 
-          // Seed settings store from Supabase
-          if (user.settings) {
-            useSettingsStore.getState().seedFromSupabase(user.settings);
-            console.log('[Apex Settings] Store seeded from Supabase');
+      // Everything below runs in the background — nothing here blocks render
+      try {
+        const user = await authService.me();
+        useAuthStore.getState().setUser(user);
 
-            // Apply theme from settings
-            const savedTheme = user.settings.theme;
-            if (savedTheme) {
-              useThemeStore.getState().setTheme(savedTheme);
-            }
-          }
+        useStudyStore.getState().seedFromSupabase(user);
+        console.log('[Apex Streak] Store seeded from Supabase');
+        useStudyStore.getState().checkStreakIntegrity();
 
-          // Check if existing user needs onboarding
-          if (!user.user_type) {
-            setNeedsOnboarding(true);
-          }
+        if (user.settings) {
+          useSettingsStore.getState().seedFromSupabase(user.settings);
+          console.log('[Apex Settings] Store seeded from Supabase');
+          const savedTheme = user.settings.theme;
+          if (savedTheme) useThemeStore.getState().setTheme(savedTheme);
+        }
 
-          setIsLoggedIn(true);
+        if (!user.user_type) {
+          setNeedsOnboarding(true);
+        }
 
-          // Run full data pull if online (non-blocking — app already rendered from local data)
-          if (navigator.onLine) {
-            console.log('[Apex] Sync running in background');
-            syncService.pullAllUserData()
-              .then(() => syncService.pushSync())
-              .catch((err) => console.error('Pull sync failed, continuing with local data:', err.message));
-          }
-        } catch (error) {
-          console.error("Auth verification failed:", error.message);
-          // Only log out if it's a 401 Unauthorized
-          if (error.response?.status === 401) {
-            authService.logout();
-            useAuthStore.getState().clearUser();
-            setIsLoggedIn(false);
-          } else {
-            // Network error or 500 — keep them logged in locally using cached data
-            console.log("[Apex Auth] Network or server error during auth check, proceeding with local session.");
-            
-            // Re-use cached user if available
-            const cachedUser = useAuthStore.getState().user;
-            if (cachedUser && !cachedUser.user_type) {
-              setNeedsOnboarding(true);
-            }
-            
-            setIsLoggedIn(true);
-          }
+        if (navigator.onLine) {
+          console.log('[Apex] Sync running in background');
+          syncService.pullAllUserData()
+            .then(() => syncService.pushSync())
+            .catch((err) => console.error('Pull sync failed, continuing with local data:', err.message));
+        }
+      } catch (error) {
+        console.error('Auth verification failed:', error.message);
+        if (error.response?.status === 401) {
+          // Token is dead — log out silently
+          authService.logout();
+          useAuthStore.getState().clearUser();
+          setIsLoggedIn(false);
+        } else {
+          // Network error — stay logged in, local data is already rendering
+          console.log('[Apex Auth] Network error during background auth check — continuing with local session');
+          const cachedUser = useAuthStore.getState().user;
+          if (cachedUser && !cachedUser.user_type) setNeedsOnboarding(true);
         }
       }
-      setLoading(false);
     };
 
     checkAuth();
