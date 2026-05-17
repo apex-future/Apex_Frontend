@@ -1,11 +1,12 @@
 import React, { useContext, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Heart, Eye, Bookmark, Trash, X } from "lucide-react";
+import { Heart, Eye, Bookmark, Trash, X, Info } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
 import ConfirmModal from '../ui/ConfirmModal';
 import { BookContext } from '../../context/BookContextInstance';
 import useSpaceStore from '../../store/spaceStore';
+import useThemeStore from '../../store/themeStore';
 
 const statusStyles = {
     literature: 'bg-blue-100 text-blue-600',
@@ -20,11 +21,13 @@ export default function BookCard({ book, onClick }) {
     const navigate = useNavigate();
     const { toggleFavorite, toggleBookmarkedBook, deleteBookFromShelves } = useContext(BookContext) || {};
     const { spaces, addBookToSpace, removeBookFromSpace } = useSpaceStore();
+    const { resolvedTheme } = useThemeStore();
 
     // State for modals
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showSpaceModal, setShowSpaceModal] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
+    const [syncPopover, setSyncPopover] = useState(null); // null | 'pending' | 'failed'
 
     const handleDetailsClick = (e) => {
         e.stopPropagation();
@@ -85,38 +88,106 @@ export default function BookCard({ book, onClick }) {
     return (
         <div
             onClick={() => onClick && onClick(book.id)}
-            className="group relative flex flex-col p-4 bg-card-glass backdrop-blur-md border border-border-default rounded-card transition-all duration-300 cursor-pointer hover:border-text-tertiary  shadow-sm"
+            className="group relative flex flex-col p-4 bg-card-glass backdrop-blur-md border border-border-default rounded-card transition-all duration-300 cursor-pointer hover:border-text-tertiary shadow-sm"
         >
             <div className="flex flex-row gap-4">
                 {/* Cover - Left Side */}
-                <div className="relative w-28 h-40 rounded-lg overflow-hidden shadow-sm bg-white flex-shrink-0">
-                    {book.cover ? (
-                        <img
-                            src={book.cover}
-                            alt={book.title}
-                            className="w-full h-full object-cover group-hover:-rotate-6 transition-transform duration-300"
-                        />
-                    ) : (
-                        <BookCover
-                            title={book.title}
-                            author={book.author}
-                            className="w-full h-full group-hover:-rotate-6 transition-transform duration-300"
-                        />
-                    )}
+                <div className="relative w-28 h-40 flex-shrink-0">
+                    {/* Inner image container — overflow-hidden clips the hover rotation */}
+                    <div className="w-full h-full rounded-lg overflow-hidden shadow-sm bg-white">
+                        {book.cover ? (
+                            <img
+                                src={book.cover}
+                                alt={book.title}
+                                className="w-full h-full object-cover group-hover:-rotate-6 transition-transform duration-300"
+                            />
+                        ) : (
+                            <BookCover
+                                title={book.title}
+                                author={book.author}
+                                className="w-full h-full group-hover:-rotate-6 transition-transform duration-300"
+                            />
+                        )}
 
-                    {/* Uploading overlay — shows while book is being uploaded to Supabase */}
-                    {book.isUploading && (
-                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center rounded-lg gap-1">
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span className="text-white text-[9px] font-bold uppercase tracking-wider">Uploading</span>
-                      </div>
-                    )}
+                        {/* Uploading overlay — shows while book is being uploaded to Supabase */}
+                        {book.isUploading && (
+                          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center rounded-lg gap-1">
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <span className="text-white text-[9px] font-bold uppercase tracking-wider">Uploading</span>
+                          </div>
+                        )}
 
-                    {/* Status Badge */}
-                    <span className={`absolute top-1 left-1 text-[8px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${statusStyles[book.status] || 'bg-gray-100'}`}>
-                        {book.status}
-                    </span>
+                        {/* Status Badge */}
+                        <span className={`absolute top-1 left-1 text-[8px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${statusStyles[book.status] || 'bg-gray-100'}`}>
+                            {book.status}
+                        </span>
+                    </div>
+
+                    {/* Sync status indicator — outside the clipping wrapper so it's never hidden */}
+                    {(book.sync_status === 'pending' || book.sync_status === 'failed') && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSyncPopover(prev => prev ? null : book.sync_status);
+                        }}
+                        className={`absolute -top-1 -left-1 z-20 w-5 h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[#08090C] transition-transform hover:scale-125
+                          ${book.sync_status === 'pending' ? 'bg-amber-400 text-white' : 'bg-red-500 text-white'}`}
+                        title={book.sync_status === 'pending' ? 'Syncing soon' : 'Sync failed'}
+                      >
+                        <Info size={11} strokeWidth={2.5} />
+                      </button>
+                    )}
                 </div>
+
+                {/* Sync popover — portaled to body so it's above all cards */}
+                {syncPopover && createPortal(
+                  <div className={resolvedTheme}>
+                  <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-150"
+                    onClick={(e) => { e.stopPropagation(); setSyncPopover(null); }}
+                  >
+                    <div
+                      className="w-full max-w-[280px] rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+                      style={{ backgroundColor: 'rgb(var(--bg-elevated))', border: '1px solid rgb(var(--border-default))' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Header accent bar */}
+                      <div className={`h-1 w-full ${syncPopover === 'pending' ? 'bg-gradient-to-r from-amber-400 to-orange-400' : 'bg-gradient-to-r from-red-500 to-rose-400'}`} />
+
+                      <div className="p-5">
+                        {/* Icon + Title */}
+                        <div className="flex items-center gap-2.5 mb-3">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${syncPopover === 'pending' ? 'bg-amber-400/15 text-amber-400' : 'bg-red-500/15 text-red-400'}`}>
+                            <Info size={16} strokeWidth={2} />
+                          </div>
+                          <h4 className="text-sm font-bold" style={{ color: 'rgb(var(--text-primary))' }}>
+                            {syncPopover === 'pending' ? 'Syncing soon' : 'Sync failed'}
+                          </h4>
+                        </div>
+
+                        {/* Body */}
+                        <p className="text-[12px] leading-relaxed" style={{ color: 'rgb(var(--text-tertiary))' }}>
+                          {syncPopover === 'pending'
+                            ? 'This book will sync automatically when your connection is stable. Your highlights and progress are safe locally.'
+                            : 'Unable to sync after several attempts. Try again on a stable connection, or delete and re-upload the book.'}
+                        </p>
+                      </div>
+
+                      {/* Dismiss button */}
+                      <div className="px-5 pb-4">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setSyncPopover(null); }}
+                          className="w-full py-2.5 text-xs font-semibold rounded-xl transition-colors"
+                          style={{ color: 'rgb(var(--text-tertiary))', backgroundColor: 'rgb(var(--bg-subtle))' }}
+                        >
+                          Got it
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  </div>,
+                  document.body
+                )}
 
                 {/* Info - Right Side */}
                 <div className="flex-1 flex flex-col justify-between min-w-0">

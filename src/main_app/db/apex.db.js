@@ -176,4 +176,24 @@ db.version(14).stores({
   exam_reminders: '++id, local_id, supabaseId, examName, examDate, isActive, bookSpaceSupabaseId, synced, createdAt, updatedAt',
 });
 
+// Version 15: Add sync_status + sync_retry_count fields to books
+// sync_status drives sync indicator dots on book cards
+// sync_retry_count persists retry attempts across app sessions
+db.version(15).stores({
+  // Only books changes — sync_status added to the index list
+  // All other tables are unchanged; omitting them from stores() is correct Dexie behaviour
+  books: '++id, local_id, recordId, title, author, fileType, fileSize, coverImage, totalPages, uploadedAt, lastReadAt, synced, supabaseId, last_modified, outline, sync_status',
+}).upgrade(async tx => {
+  console.log('[Apex DB] v15 migration: adding sync_status and sync_retry_count to books');
+  await tx.table('books').toCollection().modify(book => {
+    if (book.supabaseId) {
+      book.sync_status = 'synced';
+    } else {
+      book.sync_status = 'pending';
+    }
+    book.sync_retry_count = 0;
+  });
+  console.log('[Apex DB] v15 migration complete');
+});
+
 export default db;

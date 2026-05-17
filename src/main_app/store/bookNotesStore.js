@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import db from '../db/apex.db';
+import syncService from '../services/syncService';
 
 /** Deduplicate an array of notes by local_id, keeping the last occurrence. */
 function dedupeNotes(arr) {
@@ -30,7 +31,7 @@ const useBookNotesStore = create((set, get) => ({
     }
   },
 
-  // Save or update a note (upsert by local_id)
+  // Save or update a note (upsert by local_id) — syncs to Supabase via syncService
   saveNote: async (noteData) => {
     const {
       local_id,
@@ -62,14 +63,37 @@ const useBookNotesStore = create((set, get) => ({
     }
 
     try {
+      // Check for existing Dexie record to get supabaseId for update path
       const existing = await db.book_notes.where('local_id').equals(noteEntry.local_id).first();
 
       let id;
       if (existing) {
         id = existing.id;
         await db.book_notes.update(id, noteEntry);
+
+        // Sync update to Supabase (fire-and-forget)
+        syncService.updateBookNote(existing.supabaseId, id, {
+          title: noteEntry.title,
+          content: noteEntry.content,
+          template: noteEntry.template,
+          word_count: noteEntry.word_count,
+        }).catch(err => console.error('[bookNotesStore] Supabase update failed:', err));
       } else {
         id = await db.book_notes.add(noteEntry);
+
+        // Sync new note to Supabase (fire-and-forget)
+        // saveBookNote will detect the existing Dexie record (by local_id) and
+        // only perform the Supabase API call, then update Dexie with the supabaseId
+        syncService.saveBookNote(noteEntry.bookId, {
+          ...noteEntry,
+          _supabase_book_id: noteData._supabase_book_id,
+        }).then(result => {
+          // Update Dexie with supabaseId if the sync succeeded
+          if (result?.supabaseId) {
+            db.book_notes.update(id, { supabaseId: result.supabaseId, synced: true })
+              .catch(() => {});
+          }
+        }).catch(err => console.error('[bookNotesStore] Supabase save failed:', err));
       }
 
       // Replace any existing entry with the same local_id then deduplicate
@@ -83,12 +107,14 @@ const useBookNotesStore = create((set, get) => ({
     }
   },
 
-  // Delete a note by local_id — removes from Dexie and from in-memory state
+  // Delete a note by local_id — removes from Dexie, Supabase, and in-memory state
   deleteNote: async (localId) => {
     try {
       const record = await db.book_notes.where('local_id').equals(localId).first();
       if (record) {
-        await db.book_notes.delete(record.id);
+        // Delete from both Dexie and Supabase via syncService
+        syncService.deleteBookNote(record.supabaseId, record.id)
+          .catch(err => console.error('[bookNotesStore] Supabase delete failed:', err));
       }
       set({ notes: get().notes.filter(n => n.local_id !== localId) });
     } catch (error) {

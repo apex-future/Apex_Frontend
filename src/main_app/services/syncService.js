@@ -278,6 +278,7 @@ const syncService = {
           highlights: new Date().toISOString(),
           bookmarks: new Date().toISOString(),
           tabs: new Date().toISOString(),
+          book_notes: new Date().toISOString(),
           book_spaces: new Date().toISOString(),
           exam_reminders: new Date().toISOString(),
           server_time: new Date().toISOString(),
@@ -290,7 +291,7 @@ const syncService = {
       if (import.meta.env.DEV) console.log('[Apex Sync] Last synced at:', lastSyncedAt || 'never (first sync on this device)');
 
       // Step 3: Decide action per table — no client clock involved
-      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'tabs', 'book_spaces', 'exam_reminders'];
+      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'tabs', 'book_notes', 'book_spaces', 'exam_reminders'];
       const decisions = {};
 
       for (const table of tables) {
@@ -381,7 +382,7 @@ const syncService = {
           const localSupabaseIds = new Set(currentLocalBooks.map(b => b.supabaseId).filter(Boolean));
 
           // Clean up related records for books that no longer exist locally
-          const allTables = ['bookmarks', 'highlights', 'reading_progress', 'tabs'];
+          const allTables = ['bookmarks', 'highlights', 'reading_progress', 'tabs', 'book_notes'];
           for (const table of allTables) {
             try {
               const records = await db[table].toArray();
@@ -473,6 +474,19 @@ const syncService = {
           }));
           for (const m of mapped) { delete m.id; }
           await db.tabs.bulkAdd(mapped);
+        }
+
+        // ── BOOK NOTES ──
+        if (tablesToPull.includes('book_notes') && pulledData.book_notes?.length > 0) {
+          if (import.meta.env.DEV) console.log('[Apex Sync] Pulling book_notes:', pulledData.book_notes.length);
+          await db.book_notes.clear();
+          const mapped = pulledData.book_notes.map(n => ({
+            ...mapSnakeToCamel(n),
+            supabaseId: n.id,
+            synced: true,
+          }));
+          for (const m of mapped) { delete m.id; }
+          await db.book_notes.bulkAdd(mapped);
         }
 
         // ── BOOK SPACES ──
@@ -677,7 +691,7 @@ const syncService = {
         }
       } else {
         // Book hasn't synced yet — queue for later
-        if (import.meta.env.DEV) console.warn('Book not synced to Supabase yet, queuing highlight');
+        console.log('[Apex Sync] Blocking activity sync — book not yet synced, queuing');
         await this._queueForSync('upload', 'highlights', localId, {
           _dexie_book_id: bookId, // Will need to resolve later
           highlighted_text: dexieRecord.highlightedText,
@@ -827,6 +841,7 @@ const syncService = {
           });
         }
       } else {
+        console.log('[Apex Sync] Blocking activity sync — book not yet synced, queuing');
         await this._queueForSync('upload', 'reading_progress', existing?.local_id || localId, {
           _dexie_book_id: bookId,
           current_page: progressData.current_page,
@@ -928,6 +943,7 @@ const syncService = {
           });
         }
       } else {
+        console.log('[Apex Sync] Blocking activity sync — book not yet synced, queuing');
         await this._queueForSync('upload', 'bookmarks', localId, {
           _dexie_book_id: bookId,
           page_number: dexieRecord.pageNumber,
@@ -1010,7 +1026,7 @@ const syncService = {
         }
       } else {
         // Book not synced yet — queue with dexie book id for later resolution
-        if (import.meta.env.DEV) console.warn('[Apex] Book not synced yet — queuing tab');
+        console.log('[Apex Sync] Blocking activity sync — book not yet synced, queuing');
         await this._queueForSync('upload', 'tabs', localId, {
           _dexie_book_id: bookId,
           text: dexieRecord.text,
@@ -1067,6 +1083,156 @@ const syncService = {
         if (import.meta.env.DEV) console.log('[Apex] Tab deleted from Supabase:', supabaseId);
       } catch (err) {
         if (import.meta.env.DEV) console.error('[Apex] Failed to delete tab from Supabase:', err);
+      }
+    }
+  },
+
+  // ============================================
+  // DIRECT SAVE — BOOK NOTES (Category A)
+  // ============================================
+  saveBookNote: async function (bookId, noteData) {
+    const localId = noteData.local_id || generateLocalId();
+    const now = new Date().toISOString();
+
+    // Build Dexie record
+    const dexieRecord = {
+      bookId,
+      local_id: localId,
+      title: noteData.title || 'Untitled',
+      content: noteData.content || '',
+      template: noteData.template || 'blank',
+      word_count: noteData.word_count || 0,
+      createdAt: noteData.createdAt || now,
+      updatedAt: now,
+      synced: false,
+      supabaseId: noteData.supabaseId || null,
+    };
+
+    // Step 1: Upsert in Dexie
+    const existing = await db.book_notes.where('local_id').equals(localId).first();
+    let dexieId;
+    if (existing) {
+      dexieId = existing.id;
+      await db.book_notes.update(dexieId, dexieRecord);
+    } else {
+      dexieId = await db.book_notes.add(dexieRecord);
+    }
+    if (import.meta.env.DEV) console.log('[Apex] Book note saved to Dexie:', dexieId);
+
+    // Step 2: If online, resolve Supabase book UUID and save/update
+    if (navigator.onLine) {
+      const supabaseBookId = await this._resolveBookId(bookId, noteData._supabase_book_id);
+      if (supabaseBookId) {
+        try {
+          let response;
+          if (noteData.supabaseId) {
+            // Update existing note on Supabase
+            response = await apiClient.put(`/api/book-notes/${noteData.supabaseId}`, {
+              title: dexieRecord.title,
+              content: dexieRecord.content,
+              template: dexieRecord.template,
+              word_count: dexieRecord.word_count,
+              updated_at: now,
+            });
+          } else {
+            // Create new note on Supabase
+            response = await apiClient.post(`/api/books/${supabaseBookId}/book-notes`, {
+              title: dexieRecord.title,
+              content: dexieRecord.content,
+              template: dexieRecord.template,
+              word_count: dexieRecord.word_count,
+              local_id: localId,
+            });
+          }
+          await db.book_notes.update(dexieId, {
+            supabaseId: response.data.id,
+            synced: true,
+          });
+          if (import.meta.env.DEV) console.log('[Apex] Book note saved to Supabase:', response.data.id);
+          this._triggerDebouncedFlush();
+          return { ...dexieRecord, id: dexieId, supabaseId: response.data.id };
+        } catch (err) {
+          if (import.meta.env.DEV) console.error('[Apex] Failed to save book note to Supabase:', err);
+          await this._queueForSync('upload', 'book_notes', localId, {
+            book_id: supabaseBookId,
+            title: dexieRecord.title,
+            content: dexieRecord.content,
+            template: dexieRecord.template,
+            word_count: dexieRecord.word_count,
+          });
+        }
+      } else {
+        // Book not synced yet — queue with dexie book id for later resolution
+        console.log('[Apex Sync] Blocking activity sync — book not yet synced, queuing book note');
+        await this._queueForSync('upload', 'book_notes', localId, {
+          _dexie_book_id: bookId,
+          title: dexieRecord.title,
+          content: dexieRecord.content,
+          template: dexieRecord.template,
+          word_count: dexieRecord.word_count,
+        });
+      }
+    } else {
+      // Offline — queue for later
+      if (import.meta.env.DEV) console.log('[Apex] Offline — book note queued for sync');
+      await this._queueForSync('upload', 'book_notes', localId, {
+        _dexie_book_id: bookId,
+        title: dexieRecord.title,
+        content: dexieRecord.content,
+        template: dexieRecord.template,
+        word_count: dexieRecord.word_count,
+      });
+    }
+
+    return { ...dexieRecord, id: dexieId };
+  },
+
+  updateBookNote: async function (supabaseId, dexieId, updateData) {
+    const now = new Date().toISOString();
+
+    // Update Dexie immediately
+    const dexieUpdate = {
+      ...updateData,
+      updatedAt: now,
+      synced: false,
+    };
+    await db.book_notes.update(dexieId, dexieUpdate);
+    if (import.meta.env.DEV) console.log('[Apex] Book note updated in Dexie:', dexieId);
+
+    // If online and synced, update Supabase
+    if (navigator.onLine && supabaseId) {
+      try {
+        await apiClient.put(`/api/book-notes/${supabaseId}`, {
+          title: updateData.title,
+          content: updateData.content,
+          template: updateData.template,
+          word_count: updateData.word_count,
+          updated_at: now,
+        });
+        await db.book_notes.update(dexieId, { synced: true });
+        if (import.meta.env.DEV) console.log('[Apex] Book note updated in Supabase:', supabaseId);
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('[Apex] Failed to update book note in Supabase:', err);
+      }
+    }
+  },
+
+  deleteBookNote: async function (supabaseId, dexieId) {
+    // Delete from Dexie immediately
+    if (dexieId) {
+      await db.book_notes.delete(dexieId).catch(err =>
+        { if (import.meta.env.DEV) console.error('[Apex] Failed to delete book note from Dexie:', err); }
+      );
+      if (import.meta.env.DEV) console.log('[Apex] Book note deleted from Dexie:', dexieId);
+    }
+
+    // If online and synced, delete from Supabase
+    if (navigator.onLine && supabaseId) {
+      try {
+        await apiClient.delete(`/api/book-notes/${supabaseId}`);
+        if (import.meta.env.DEV) console.log('[Apex] Book note deleted from Supabase:', supabaseId);
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('[Apex] Failed to delete book note from Supabase:', err);
       }
     }
   },
@@ -1191,6 +1357,161 @@ const syncService = {
   },
 
   // ============================================
+  // BOOK RETRY QUEUE — exponential backoff for failed uploads
+  //
+  // Lifecycle:
+  //   Phase 1 (in-session):  3 timed retries at 30s → 2min → 5min
+  //   Phase 2 (app re-entry): 2 more attempts, one per app open
+  //   After 5 total retries (3 + 2) the book is permanently failed
+  //
+  // sync_retry_count is persisted in Dexie so reentry retries survive refresh.
+  // _bookRetryQueue (in-memory Map) only tracks active timeoutHandles to
+  // prevent duplicate concurrent timers — it is NOT the source of truth for
+  // attempt counts.
+  // ============================================
+
+  // In-memory map: dexieBookId → timeoutHandle (for deduplication only)
+  _bookRetryQueue: new Map(),
+
+  /**
+   * Schedule the next in-session backoff retry for a book.
+   * Called once after the initial upload fails. The retry chain is
+   * self-contained: each timeout callback either succeeds, schedules
+   * the next retry, or marks the book as failed. No other code path
+   * should call _scheduleBookRetry for the same book.
+   */
+  _scheduleBookRetry: async function(dexieBookId) {
+    const BACKOFF_DELAYS = [30_000, 120_000, 300_000]; // 30s, 2min, 5min
+    const MAX_IN_SESSION = 3;
+
+    // Prevent duplicate timers for the same book
+    const existingHandle = this._bookRetryQueue.get(dexieBookId);
+    if (existingHandle) {
+      console.log('[Apex Sync] Retry already scheduled for dexieId:', dexieBookId, '— skipping');
+      return;
+    }
+
+    // Read persistent retry count from Dexie
+    const book = await db.books.get(dexieBookId);
+    if (!book) return;
+    if (book.supabaseId) return; // already synced
+    if (book.sync_status === 'failed') return; // already exhausted
+
+    const retryCount = book.sync_retry_count || 0;
+
+    if (retryCount >= MAX_IN_SESSION) {
+      // In-session retries exhausted → mark as failed
+      console.log('[Apex Sync] In-session retries exhausted (' + retryCount + '/' + MAX_IN_SESSION + ') for:', book.title);
+      this._bookRetryQueue.delete(dexieBookId);
+      await db.books.update(dexieBookId, { sync_status: 'failed', sync_retry_count: retryCount });
+      return;
+    }
+
+    const delay = BACKOFF_DELAYS[retryCount];
+    console.log('[Apex Sync] Scheduling book retry', (retryCount + 1), 'of', MAX_IN_SESSION, 'in', delay / 1000, 's for:', book.title);
+
+    const timeoutHandle = setTimeout(async () => {
+      // Timer fired — remove handle from dedup map immediately
+      this._bookRetryQueue.delete(dexieBookId);
+
+      if (!navigator.onLine) {
+        console.log('[Apex Sync] Retry fired but offline — will retry when back online for:', book.title);
+        // Don't reschedule — the online listener will pick it up
+        return;
+      }
+
+      // Re-read book state (it may have changed while waiting)
+      const freshBook = await db.books.get(dexieBookId);
+      if (!freshBook) {
+        console.log('[Apex Sync] Book deleted during retry wait — cancelling for dexieId:', dexieBookId);
+        return;
+      }
+      if (freshBook.supabaseId) {
+        console.log('[Apex Sync] Book already synced during retry wait — cancelling for:', freshBook.title);
+        return;
+      }
+      if (freshBook.sync_status === 'failed') {
+        console.log('[Apex Sync] Book already marked failed — cancelling retry for:', freshBook.title);
+        return;
+      }
+      if (!freshBook.fileBlob) {
+        console.log('[Apex Sync] No fileBlob — cannot retry upload for:', freshBook.title);
+        await db.books.update(dexieBookId, { sync_status: 'failed' });
+        return;
+      }
+
+      const currentRetry = (freshBook.sync_retry_count || 0) + 1;
+      console.log('[Apex Sync] Retrying book upload, attempt', currentRetry, 'for:', freshBook.title);
+
+      // Persist the incremented count BEFORE the attempt
+      await db.books.update(dexieBookId, { sync_retry_count: currentRetry });
+
+      const file = new File([freshBook.fileBlob], freshBook.title, { type: freshBook.fileType || 'application/pdf' });
+      const result = await this.uploadBook(file, freshBook.title, freshBook.author || 'Unknown', dexieBookId);
+
+      if (result) {
+        console.log('[Apex Sync] Book retry succeeded for:', freshBook.title);
+        await db.books.update(dexieBookId, { sync_status: 'synced', sync_retry_count: currentRetry });
+      } else {
+        console.log('[Apex Sync] Book retry', currentRetry, 'failed for:', freshBook.title);
+        if (currentRetry >= MAX_IN_SESSION) {
+          console.log('[Apex Sync] In-session retries exhausted — marking failed for:', freshBook.title);
+          await db.books.update(dexieBookId, { sync_status: 'failed', sync_retry_count: currentRetry });
+        } else {
+          // Schedule the next backoff retry (recursive, but deduped by the Map check)
+          await this._scheduleBookRetry(dexieBookId);
+        }
+      }
+    }, delay);
+
+    this._bookRetryQueue.set(dexieBookId, timeoutHandle);
+  },
+
+  /**
+   * App-reentry retry: called once on init() for books that failed in a
+   * previous session. Gives 2 extra attempts (sync_retry_count 3→4, 4→5).
+   * After sync_retry_count reaches 5, the book is permanently abandoned.
+   */
+  _attemptReentryRetries: async function() {
+    const MAX_TOTAL_RETRIES = 5; // 3 in-session + 2 reentry
+
+    const failedBooks = await db.books
+      .filter(b => b.sync_status === 'failed' && !b.supabaseId && !!b.fileBlob)
+      .toArray();
+
+    for (const book of failedBooks) {
+      const retryCount = book.sync_retry_count || 0;
+
+      if (retryCount >= MAX_TOTAL_RETRIES) {
+        console.log('[Apex Sync] Reentry: book permanently failed (retry count:', retryCount, ') —', book.title);
+        continue;
+      }
+
+      if (!navigator.onLine) {
+        console.log('[Apex Sync] Reentry: offline — skipping retry for:', book.title);
+        continue;
+      }
+
+      const nextRetry = retryCount + 1;
+      console.log('[Apex Sync] Reentry retry', (nextRetry - 3), 'of 2 for:', book.title, '(total attempt', nextRetry, ')');
+
+      // Mark as pending during this attempt
+      await db.books.update(book.id, { sync_status: 'pending', sync_retry_count: nextRetry });
+
+      const file = new File([book.fileBlob], book.title, { type: book.fileType || 'application/pdf' });
+      const result = await this.uploadBook(file, book.title, book.author || 'Unknown', book.id);
+
+      if (result) {
+        console.log('[Apex Sync] Reentry retry succeeded for:', book.title);
+        await db.books.update(book.id, { sync_status: 'synced', sync_retry_count: nextRetry });
+      } else {
+        console.log('[Apex Sync] Reentry retry failed for:', book.title, '— attempt', nextRetry, 'of', MAX_TOTAL_RETRIES);
+        await db.books.update(book.id, { sync_status: 'failed', sync_retry_count: nextRetry });
+      }
+    }
+  },
+
+  // ============================================
   // PUSH SYNC — flush sync_queue to Supabase
   // ============================================
   pushSync: async function () {
@@ -1226,6 +1547,13 @@ const syncService = {
           .where('local_id').equals(item.local_id)
           .first();
 
+        // Skip books that are already marked as failed — retry queue handles those
+        if (localBook?.sync_status === 'failed') {
+          if (import.meta.env.DEV) console.log('[Apex Sync] Skipping failed book in pushSync — retry queue owns this:', localBook.title);
+          await db.sync_queue.update(item.id, { status: 'failed' });
+          continue;
+        }
+
         if (import.meta.env.DEV) console.log('[Apex Sync] Processing offline book upload:', {
           local_id: item.local_id,
           title: localBook?.title,
@@ -1259,10 +1587,17 @@ const syncService = {
           filePath: result?.file_path,
         });
 
-        await db.sync_queue.update(item.id, {
-          status: result ? 'synced' : 'pending',
-          attempts: result ? item.attempts : (item.attempts || 0) + 1,
-        });
+        if (result) {
+          await db.sync_queue.update(item.id, { status: 'synced' });
+          await db.books.update(localBook.id, { sync_status: 'synced' });
+        } else {
+          await db.sync_queue.update(item.id, {
+            status: 'pending',
+            attempts: (item.attempts || 0) + 1,
+          });
+          // Schedule backoff retries — _scheduleBookRetry is the sole owner
+          await this._scheduleBookRetry(localBook.id);
+        }
       }
 
       // CRITICAL: Books are handled exclusively via uploadBook() above (Path 1)
@@ -1445,7 +1780,28 @@ const syncService = {
       this.pushSync();
     });
 
+    window.addEventListener('online', async () => {
+      console.log('[Apex Sync] Back online — checking for pending book uploads');
+      const pendingBooks = await db.books
+        .filter(b => b.sync_status === 'pending' && !b.supabaseId)
+        .toArray();
+      for (const book of pendingBooks) {
+        if (!this._bookRetryQueue.has(book.id)) {
+          console.log('[Apex Sync] Scheduling retry for unqueued pending book:', book.title);
+          await this._scheduleBookRetry(book.id);
+        }
+      }
+    });
+
     this.triggerSync = () => this._triggerDebouncedFlush();
+
+    // App-reentry retries: give failed books 2 more chances across app opens
+    // Runs once per app load, after a small delay to let auth finish
+    setTimeout(() => {
+      if (navigator.onLine) {
+        this._attemptReentryRetries();
+      }
+    }, 5000);
   },
 
   // ============================================
