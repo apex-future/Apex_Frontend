@@ -27,6 +27,7 @@ import GlobalAnalytics from './components/analytics/GlobalAnalytics';
 import NotebooksPage from './pages/NotebooksPage';
 import NotebookDetailPage from './pages/NotebookDetailPage';
 import NoteEditorPage from './pages/NoteEditorPage';
+import NotificationDrawer from './components/notifications/NotificationDrawer';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
@@ -37,10 +38,13 @@ function MainApp({ onLogout }) {
   const [asideIsOpen, setAsideIsOpen] = useState(true);
   // isMobileOpen: State variable specifically for the mobile slide-over sidebar visibility.
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const { toasts, removeToast } = useToast();
   const asideToggle = {
     closeAside: () => setAsideIsOpen(false),
     openAside: () => setAsideIsOpen(true),
+    isNotificationOpen,
+    setIsNotificationOpen
   };
 
   const location = useLocation();
@@ -97,6 +101,10 @@ function MainApp({ onLogout }) {
           <DuplicateBookModal
             isOpen={showDuplicateModal}
             onClose={() => setShowDuplicateModal(false)}
+          />
+          <NotificationDrawer 
+            isOpen={isNotificationOpen} 
+            onClose={() => setIsNotificationOpen(false)} 
           />
           <ToastContainer toasts={toasts} removeToast={removeToast} />
         </NavBarProvider>

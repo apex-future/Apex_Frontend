@@ -1,7 +1,8 @@
-import { Home, Plus, User, TrendingUp } from 'lucide-react'
+import { Home, Plus, User, TrendingUp, Bell } from 'lucide-react'
 import React, { useContext, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BookContext } from '../../../context/BookContextInstance';
+import { NavBarContext } from './NavBarContextInstance';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -10,6 +11,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 function BottomNavBar() {
   const { addBookToShelf } = useContext(BookContext);
+  const { setIsNotificationOpen } = useContext(NavBarContext) || {};
   const navRef = useRef(null);
 
   useGSAP(() => {
@@ -78,7 +80,15 @@ function BottomNavBar() {
         </label>
       </div>
 
-
+      <button
+        onClick={() => setIsNotificationOpen && setIsNotificationOpen(true)}
+        className="p-2 hover:bg-neutral-100/50 dark:hover:bg-white/10 rounded-full transition-all relative flex flex-col items-center group"
+      >
+        <div className="relative">
+          <Bell size={20} className="text-[#404040] dark:text-zinc-400" />
+          <span className="absolute top-0 right-0 w-2 h-2 bg-accent-primary rounded-full border-2 border-white dark:border-zinc-900" />
+        </div>
+      </button>
 
       <NavLink
         to="/profile"
