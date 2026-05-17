@@ -80,15 +80,7 @@ function BottomNavBar() {
         </label>
       </div>
 
-      <button
-        onClick={() => setIsNotificationOpen && setIsNotificationOpen(true)}
-        className="p-2 hover:bg-neutral-100/50 dark:hover:bg-white/10 rounded-full transition-all relative flex flex-col items-center group"
-      >
-        <div className="relative">
-          <Bell size={20} className="text-[#404040] dark:text-zinc-400" />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-accent-primary rounded-full border-2 border-white dark:border-zinc-900" />
-        </div>
-      </button>
+
 
       <NavLink
         to="/profile"
