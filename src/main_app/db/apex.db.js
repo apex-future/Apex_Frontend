@@ -196,4 +196,12 @@ db.version(15).stores({
   console.log('[Apex DB] v15 migration complete');
 });
 
+// Version 16: Add page_visits table for per-page reading visit tracking
+// Each row = one page visited for ≥5s foreground time. Used to compute progress_today.
+db.version(16).stores({
+  page_visits: '++id, local_id, bookId, supabaseBookId, pageNumber, visitedAt, synced',
+}).upgrade(async tx => {
+  console.log('[Apex DB] v16: page_visits table added');
+});
+
 export default db;
