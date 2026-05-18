@@ -124,12 +124,21 @@ function Dictionary() {
                         <h3 className="text-lg font-bold text-red-900 mb-2">
                             {error.includes('internet') ? 'You\'re offline' : 'Word not found'}
                         </h3>
-                        <p className="text-red-700 font-medium">
+                        <p className="text-red-700 font-medium mb-4">
                             {error.includes('internet')
                                 ? 'Connect to the internet to look up new words. Previously looked up words are available offline.'
                                 : `Sorry, we couldn't find a definition for "${word}". Please try another word.`
                             }
                         </p>
+                        {!error.includes('internet') && (
+                            <button
+                                onClick={() => navigate('/ai', { state: { initialPrompt: `Can you define the word "${word}" for me?` } })}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-xl transition-all font-bold text-sm shadow-sm"
+                            >
+                                <Sparkles size={18} className="text-purple-600" />
+                                Ask Cleo instead
+                            </button>
+                        )}
                     </div>
                 )}
 

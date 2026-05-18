@@ -200,7 +200,19 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                         </p>
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-red-500 font-medium font-sans italic">"{selection}" not found.</p>
+                                    <div className="flex flex-col items-center gap-4 text-center mt-2">
+                                        <p className="text-sm text-red-500 font-medium font-sans italic">"{selection}" not found in standard dictionary.</p>
+                                        <button
+                                            onClick={() => {
+                                                setShowDict(false);
+                                                if (onAskAI) onAskAI();
+                                            }}
+                                            className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition-all border border-purple-200 shadow-sm font-bold text-sm"
+                                        >
+                                            <Sparkles size={16} className="text-purple-600" />
+                                            Ask Cleo to define it
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         ) : definition && (
