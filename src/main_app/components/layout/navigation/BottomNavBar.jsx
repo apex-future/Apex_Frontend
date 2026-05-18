@@ -1,7 +1,8 @@
-import { Home, Plus, User, TrendingUp } from 'lucide-react'
+import { Home, Plus, User, TrendingUp, Bell } from 'lucide-react'
 import React, { useContext, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BookContext } from '../../../context/BookContextInstance';
+import { NavBarContext } from './NavBarContextInstance';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -10,6 +11,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 function BottomNavBar() {
   const { addBookToShelf } = useContext(BookContext);
+  const { setIsNotificationOpen } = useContext(NavBarContext) || {};
   const navRef = useRef(null);
 
   useGSAP(() => {

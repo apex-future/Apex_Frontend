@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 // Import Lucide icons for visual representation in the navigation
-import { Sparkle, Home, X, Book, Pen, NotebookPen, Cog, WholeWord, Menu, LogOut, Sun, Moon, Monitor, User, TrendingUp } from 'lucide-react';
-// Import navigation hooks and components from react-router-dom
+import { Sparkle, Home, X, Book, Pen, NotebookPen, Cog, WholeWord, Menu, LogOut, Sun, Moon, Monitor, User, TrendingUp, Bell } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useContext } from 'react';
+import { NavBarContext } from './NavBarContextInstance';
 import useThemeStore from '../../../store/themeStore';
 import logoLight from "../../../../assets/logo/logo-light-removebg-preview.png";
 import logoDark from "../../../../assets/logo/logo-dark-removebg-preview.png";
@@ -12,11 +13,10 @@ import logoDark from "../../../../assets/logo/logo-dark-removebg-preview.png";
  * Provides side navigation with support for both desktop (collapsible/sticky) and mobile (slide-over) layouts.
  */
 function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
-  // useLocation: Hook to track the current URL, used for custom active state logic (especially hash handling)
   const location = useLocation();
-  // isExpanded: State to toggle between the full-width (expanded) and icon-only (collapsed) sidebar views
   const [isExpanded, setIsExpanded] = useState(true);
   const { theme, setTheme } = useThemeStore();
+  const { setIsNotificationOpen } = useContext(NavBarContext) || {};
 
   // toggleNavLink: Flips the expansion state of the sidebar
   const toggleNavLink = () => {
@@ -197,6 +197,31 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                   <Monitor size={16} />
                 </button>
               </div>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  if (setIsNotificationOpen) setIsNotificationOpen(true);
+                  if (isMobileOpen) closeMobileNav();
+                }}
+                className={`flex items-center p-3 rounded-xl transition-all duration-300 w-full
+                  ${!isExpanded ? 'justify-center' : 'gap-3'}
+                  text-text-secondary hover:bg-bg-subtle hover:text-text-primary`}
+                title={!isExpanded ? 'Notifications' : ''}
+              >
+                <div className="relative">
+                  <Bell size={20} className="flex-shrink-0 transition-colors z-10" />
+                  <span className="absolute top-0 right-0 w-2 h-2 bg-accent-primary rounded-full border-2 border-bg-elevated" />
+                </div>
+                <span
+                  className={`
+                    whitespace-nowrap transition-all duration-300 text-sm z-10 text-left
+                    ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
+                  `}
+                >
+                  Notifications
+                </span>
+              </button>
             </li>
             <li>
               <NavLink
