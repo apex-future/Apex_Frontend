@@ -6,12 +6,19 @@ import React, { useState, useEffect } from 'react';
  * @param {number} speed - Milliseconds per character (default: 30)
  * @param {number} delay - Initial delay before starting (default: 0)
  * @param {boolean} showCursor - Whether to show the blinking cursor
+ * @param {boolean} skipAnimation - If true, displays full text immediately without animation
  */
-const Typewriter = ({ text = '', speed = 30, delay = 0, showCursor = false }) => {
-    const [displayedText, setDisplayedText] = useState('');
-    const [isComplete, setIsComplete] = useState(false);
+const Typewriter = ({ text = '', speed = 30, delay = 0, showCursor = false, skipAnimation = false }) => {
+    const [displayedText, setDisplayedText] = useState(skipAnimation ? text : '');
+    const [isComplete, setIsComplete] = useState(skipAnimation);
 
     useEffect(() => {
+        if (skipAnimation) {
+            setDisplayedText(text);
+            setIsComplete(true);
+            return;
+        }
+
         // Reset if text changes
         setDisplayedText('');
         setIsComplete(false);
@@ -32,7 +39,7 @@ const Typewriter = ({ text = '', speed = 30, delay = 0, showCursor = false }) =>
         }, delay);
 
         return () => clearTimeout(startTimeout);
-    }, [text, speed, delay]);
+    }, [text, speed, delay, skipAnimation]);
 
     return (
         <span>
