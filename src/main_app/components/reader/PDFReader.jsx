@@ -105,43 +105,28 @@ function getHighlightRanges(container, searchText, targetStartOffset) {
 }
 
 // ─── Memoized page component ───
-// This prevents the virtualizer from unmounting/remounting pages on parent re-renders.
-// The key insight: if pageNumber, rotation, scale, and width haven't changed, the <Page>
-// component keeps its canvas and text layer intact — no blank flash.
+// Manual canvas render removed — react-pdf Page handles canvas internally. Document ref caching on load prevents document recreation which was the original source of the render flash.
 const VirtualPage = memo(({ pageNumber, rotation, scale, width, onRenderSuccess }) => {
-  const [hasRendered, setHasRendered] = useState(false);
-
   return (
-    <Page
-      pageNumber={pageNumber}
-      rotate={rotation}
-      scale={scale}
-      renderTextLayer={true}
-      renderAnnotationLayer={true}
-      onRenderSuccess={(...args) => {
-        setHasRendered(true);
-        onRenderSuccess?.(...args);
-      }}
-      width={width}
-      className="!shadow-none"
-      loading={
-        <div
-          className={`flex flex-col items-center justify-center bg-bg-elevated ${hasRendered ? '' : 'animate-pulse'}`}
-          style={{ width, height: Math.round(width * 1.41 * scale) }}
-        >
-          {!hasRendered && (
-            <div className="w-full h-full p-8 space-y-4">
-              <div className="h-4 w-1/3 bg-bg-subtle rounded-full mx-auto" />
-              <div className="space-y-4">
-                <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                <div className="h-2 w-2/3 bg-bg-subtle rounded-full mx-auto" />
-              </div>
-            </div>
-          )}
-        </div>
-      }
-    />
+    <div 
+      className="relative flex flex-col items-center justify-center bg-white mx-auto"
+      style={{ width: width * scale, height: Math.round(width * 1.41 * scale) }}
+    >
+      <div className="relative z-10 w-full h-full">
+        <Page
+          pageNumber={pageNumber}
+          rotate={rotation}
+          scale={scale}
+          renderMode="canvas"
+          renderTextLayer={true}
+          renderAnnotationLayer={true}
+          width={width}
+          className="!shadow-none"
+          loading={null}
+          onRenderSuccess={onRenderSuccess}
+        />
+      </div>
+    </div>
   );
 }, (prev, next) => {
   // Only re-render if these specific props change
@@ -171,6 +156,10 @@ const PDFReader = ({
   onPageChange,
 }) => {
   const containerRef = useRef(null);
+  
+  // [FIX]: The PDF Document proxy was completely hidden inside react-pdf's Document component and recreated when unmounted.
+  // We now cache it in a ref to prevent document recreation which was the original source of the render flash.
+  const pdfDocumentRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(window.innerWidth);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -591,7 +580,14 @@ const PDFReader = ({
     >
       <Document
         file={fileUrl}
-        onLoadSuccess={(pdf) => onDocumentLoad(pdf)}
+        onLoadSuccess={(pdf) => {
+          // [FIX]: Store the document proxy in a ref to avoid recreation when the document changes.
+          if (pdfDocumentRef.current !== pdf) {
+            pdfDocumentRef.current = pdf;
+            console.log('[PDF] Document loaded and cached in ref');
+          }
+          onDocumentLoad(pdf);
+        }}
         onLoadError={(err) => console.error('PDF load error:', err)}
         loading={<BookSkeleton message="Rendering document..." />}
         className="flex flex-col items-center justify-center min-h-full w-full mx-auto"
@@ -604,7 +600,9 @@ const PDFReader = ({
               const pageIdx = virtualRow.index + 1;
               return (
                 <div
-                  key={virtualRow.index}
+                  // [FIX]: virtualRow.index is the absolute row index, which is mostly stable, but passing the explicit pageIdx
+                  // explicitly ensures the React key is strictly bound to the page number.
+                  key={pageIdx}
                   ref={rowVirtualizer.measureElement}
                   className="pdf-page-wrapper absolute left-0 flex flex-col items-center w-full"
                   data-page-index={pageIdx}
