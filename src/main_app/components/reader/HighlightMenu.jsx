@@ -224,14 +224,23 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                             <span className="text-[10px] font-black uppercase text-text-tertiary bg-bg-subtle px-1.5 py-0.5 rounded tracking-wider">{m.partOfSpeech}</span>
                                             <div className="h-px flex-1 bg-bg-subtle" />
                                         </div>
-                                        <p className="text-[15px] text-text-secondary leading-relaxed font-medium font-sans">
-                                            {m.definitions?.[0]?.definition}
-                                        </p>
-                                        {m.definitions?.[0]?.example && (
-                                            <p className="text-[13px] text-text-tertiary mt-2 font-sans italic border-l-2 border-border-default pl-3">
-                                                "{m.definitions[0].example}"
-                                            </p>
-                                        )}
+                                        <ul className="space-y-3">
+                                            {(m.definitions || []).slice(0, 3).map((def, defIdx) => (
+                                                <li key={defIdx} className="flex gap-3">
+                                                    <span className="text-accent-primary font-bold opacity-40 text-sm mt-0.5">{defIdx + 1}.</span>
+                                                    <div>
+                                                        <p className="text-[15px] text-text-secondary leading-relaxed font-medium font-sans">
+                                                            {def.definition}
+                                                        </p>
+                                                        {def.example && (
+                                                            <p className="text-[13px] text-text-tertiary mt-1 font-sans italic border-l-2 border-border-default pl-3">
+                                                                "{def.example}"
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
                                     </div>
                                 ))}
                                 {onSaveWord && bookId && (
