@@ -40,10 +40,18 @@ const dictionaryService = {
       throw new Error('Connect to internet to look up new words');
     }
 
-    // Step 3: Fetch from backend (backend checks Supabase cache then external API)
+    // Step 3: Fetch directly from Free Dictionary API to bypass backend dependency
     try {
-      const response = await apiClient.get(`/api/dictionary/${encodeURIComponent(cleanWord)}`);
-      const definition = response.data;
+      const fetchResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`);
+      
+      if (!fetchResponse.ok) {
+        if (fetchResponse.status === 404) {
+          throw new Error('Word not found');
+        }
+        throw new Error(`Dictionary API error: ${fetchResponse.statusText}`);
+      }
+
+      const definition = await fetchResponse.json();
 
       // Step 4: Save to Dexie cache
       try {
@@ -65,13 +73,13 @@ const dictionaryService = {
         if (import.meta.env.DEV) console.warn('Failed to save to Dexie cache:', cacheErr);
       }
 
-      // Step 5: Fire-and-forget: save to history
+      // Step 5: Fire-and-forget: save to history via backend (if backend is running)
       this.saveToHistory(cleanWord, definition, lookupType, bookId);
 
       return definition;
     } catch (err) {
-      if (err.response?.status === 404) {
-        throw new Error('Word not found');
+      if (err.message === 'Word not found') {
+        throw err;
       }
       throw new Error(err.message || 'Failed to look up word');
     }
