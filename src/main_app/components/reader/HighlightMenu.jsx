@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff, StickyNote, Save, Wand2 } from 'lucide-react';
+import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff, StickyNote, Save, Wand2, Layers, AlertCircle } from 'lucide-react';
 import dictionaryService from '../../services/dictionaryService';
 
 function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose }) {
@@ -11,17 +11,38 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     const [tabText, setTabText] = useState('');
     const [tabSaved, setTabSaved] = useState(false);
     const [wordSaved, setWordSaved] = useState(false);
+    const [showFlashcards, setShowFlashcards] = useState(false);
+    const [flashcardCount, setFlashcardCount] = useState(5);
+    const [flashcardError, setFlashcardError] = useState('');
 
     const toggleDict = (val) => {
         setShowDict(val);
         setShowTab(false);
+        setShowFlashcards(false);
         onDictToggle?.(val);
     };
 
     const toggleTab = (val) => {
         setShowTab(val);
         setShowDict(false);
+        setShowFlashcards(false);
         onDictToggle?.(val);
+    };
+
+    const toggleFlashcards = (val) => {
+        setShowFlashcards(val);
+        setShowDict(false);
+        setShowTab(false);
+        onDictToggle?.(val);
+        
+        if (val) {
+            const wordCount = selection.trim().split(/\s+/).length;
+            if (wordCount < 15) {
+                setFlashcardError(`You only highlighted ${wordCount} word${wordCount === 1 ? '' : 's'}. Please highlight at least a full sentence or paragraph (15+ words) to generate meaningful flashcards.`);
+            } else {
+                setFlashcardError('');
+            }
+        }
     };
 
     const handleCloseModal = () => {
@@ -91,7 +112,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
 
     let menuStyle = {};
 
-    if (showDict || showTab) {
+    if (showDict || showTab || showFlashcards) {
         menuStyle = {
             top: '50%',
             left: '50%',
@@ -123,7 +144,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
             aria-label="Text action menu"
         >
             <div className="bg-bg-elevated border border-border-default shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
-                {!showDict && !showTab ? (
+                {!showDict && !showTab && !showFlashcards ? (
                     <div className="flex flex-col">
                         <div className="flex items-center p-1.5 gap-1">
                             <button
@@ -162,6 +183,16 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             >
                                 <Wand2 size={20} className="text-text-secondary group-hover:text-emerald-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Simplify</span>
+                            </button>
+
+                            <div className="w-[1px] h-8 bg-border-default/50" />
+
+                            <button
+                                onClick={() => toggleFlashcards(true)}
+                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
+                            >
+                                <Layers size={20} className="text-text-secondary group-hover:text-rose-600 transition-colors" />
+                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Cards</span>
                             </button>
                         </div>
 
@@ -271,7 +302,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             </div>
                         )}
                     </div>
-                ) : (
+                ) : showTab ? (
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Add Tab</h3>
@@ -307,11 +338,71 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             </button>
                         </div>
                     </div>
-                )}
+                ) : showFlashcards ? (
+                    <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] font-sans flex items-center gap-2">
+                                <Layers size={14} /> Flashcards
+                            </h3>
+                            <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
+                                <X size={16} className="text-text-tertiary" />
+                            </button>
+                        </div>
+
+                        {flashcardError ? (
+                            <div className="bg-red-50/50 border border-red-100 p-4 rounded-xl flex flex-col items-center text-center gap-3">
+                                <AlertCircle size={24} className="text-red-500" />
+                                <p className="text-sm text-red-700 font-medium">{flashcardError}</p>
+                                <button
+                                    onClick={handleCloseModal}
+                                    className="mt-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-bold transition-colors"
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-5">
+                                <div className="bg-bg-subtle/50 p-3 rounded-xl border border-border-default/50">
+                                    <p className="text-[11px] text-text-tertiary font-bold uppercase tracking-wider mb-1 opacity-50">Source Material</p>
+                                    <p className="text-sm text-text-secondary line-clamp-3 italic">"{selection}"</p>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 block">
+                                        Number of Cards: <span className="text-rose-500 text-base">{flashcardCount}</span>
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min="3"
+                                        max="10"
+                                        value={flashcardCount}
+                                        onChange={(e) => setFlashcardCount(parseInt(e.target.value))}
+                                        className="w-full accent-rose-500"
+                                    />
+                                    <div className="flex justify-between text-[10px] text-text-tertiary font-bold mt-1">
+                                        <span>3</span>
+                                        <span>10</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        // TODO: Pass logic up to open Flashcard Player
+                                        console.log("Generate", flashcardCount, "cards from", selection);
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white rounded-xl text-sm font-bold transition-all shadow-md active:scale-95"
+                                >
+                                    <Sparkles size={18} />
+                                    Generate Cards
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                ) : null}
             </div>
 
             {/* Arrow — hide on mobile as it might not align well with dynamic float, and hide when centered */}
-            {!isMobile && !showDict && !showTab && (
+            {!isMobile && !showDict && !showTab && !showFlashcards && (
                 <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white mx-auto" />
             )}
 
