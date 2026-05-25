@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff, StickyNote, Save, Wand2, Layers, AlertCircle } from 'lucide-react';
 import dictionaryService from '../../services/dictionaryService';
 
-function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose }) {
+function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose, onGenerateFlashcards }) {
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -36,7 +36,8 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         onDictToggle?.(val);
         
         if (val) {
-            const wordCount = selection.trim().split(/\s+/).length;
+            const safeSelection = selection || '';
+            const wordCount = safeSelection.trim().split(/\s+/).length;
             if (wordCount < 15) {
                 setFlashcardError(`You only highlighted ${wordCount} word${wordCount === 1 ? '' : 's'}. Please highlight at least a full sentence or paragraph (15+ words) to generate meaningful flashcards.`);
             } else {
@@ -387,8 +388,9 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
 
                                 <button
                                     onClick={() => {
-                                        // TODO: Pass logic up to open Flashcard Player
-                                        console.log("Generate", flashcardCount, "cards from", selection);
+                                        if (onGenerateFlashcards) {
+                                            onGenerateFlashcards(selection, flashcardCount);
+                                        }
                                     }}
                                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white rounded-xl text-sm font-bold transition-all shadow-md active:scale-95"
                                 >

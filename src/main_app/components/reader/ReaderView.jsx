@@ -27,6 +27,7 @@ import ReaderDictionary from './reading_navigations/reading_layout/ReaderDiction
 import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
 import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
+import FlashcardModal from './FlashcardModal';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
@@ -108,6 +109,9 @@ function ReaderView() {
     // Notebook and Note Editor state
     const [notebookPanel, setNotebookPanel] = useState(false);
     const [noteEditor, setNoteEditor] = useState(null); // stores noteId or 'new'
+    
+    // Flashcard feature state
+    const [activeFlashcardSession, setActiveFlashcardSession] = useState(null); // { selection, count }
 
     const openPageStrip = useCallback(() => {
         setNavState('none');
@@ -1063,6 +1067,10 @@ function ReaderView() {
                         onSimplify={handleSimplify}
                         onDictToggle={setIsDictOpen}
                         onAddNote={readerControls.addTab}
+                        onGenerateFlashcards={(selection, count) => {
+                            setShowHighlightMenu(false);
+                            setActiveFlashcardSession({ selection, count });
+                        }}
                     />
                 )}
 
@@ -1075,6 +1083,16 @@ function ReaderView() {
                         error={activeSimplification.error}
                         onRetry={handleRetrySimplify}
                         onClose={() => setShowSimplifyModal(false)}
+                    />
+                )}
+
+                {/* Flashcard Modal */}
+                {activeFlashcardSession && (
+                    <FlashcardModal
+                        selection={activeFlashcardSession.selection}
+                        count={activeFlashcardSession.count}
+                        bookId={bookId}
+                        onClose={() => setActiveFlashcardSession(null)}
                     />
                 )}
 

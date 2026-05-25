@@ -390,8 +390,12 @@ const PDFReader = ({
                 if (useCSSHighlight) {
                     const safeColor = color.replace(/[^a-zA-Z0-9]/g, '');
                     const highlightName = `apex-simplified-${safeColor}-${ranges.length}`;
-                    const highlight = new Highlight(...ranges);
-                    CSS.highlights.set(highlightName, highlight);
+                    try {
+                        const highlight = new Highlight(...ranges);
+                        CSS.highlights.set(highlightName, highlight);
+                    } catch (e) {
+                        console.warn('[Apex Highlight] Failed to apply simplified CSS highlight:', e);
+                    }
                     // CSS Highlight API only supports background-color and color,
                     // so we use a transparent background and render underline via fallback overlay
                 }
@@ -466,9 +470,13 @@ const PDFReader = ({
                 const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
                 const safeColor = color.replace(/[^a-zA-Z0-9]/g, '');
                 const highlightName = `apex-hl-${safeColor}`;
-                const highlight = new Highlight(...ranges);
-                CSS.highlights.set(highlightName, highlight);
-                styleText += `::highlight(${highlightName}) { background-color: ${displayColor}; color: transparent; }\n`;
+                try {
+                    const highlight = new Highlight(...ranges);
+                    CSS.highlights.set(highlightName, highlight);
+                    styleText += `::highlight(${highlightName}) { background-color: ${displayColor}; color: transparent; }\n`;
+                } catch (e) {
+                    console.warn('[Apex Highlight] Failed to apply CSS highlight (range detached):', e);
+                }
             }
             let styleEl = document.getElementById('apex-css-highlights');
             if (!styleEl) {
