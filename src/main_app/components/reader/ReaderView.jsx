@@ -28,6 +28,7 @@ import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCirc
 import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
 import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
 import usePageVisitTracker from '../../hooks/usePageVisitTracker';
+import { useReadingTimeTracker } from '../../hooks/useReadingTimeTracker';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
@@ -138,6 +139,15 @@ function ReaderView() {
         supabaseBookId: book?.supabaseId,
         currentPage: pageNumber,
         totalPages: numPages || book?.totalPages,
+        isEnabled: !!book?.supabaseId,
+    });
+
+    // ============================================
+    // READING TIME TRACKER — minute-tick accumulation
+    // ============================================
+    useReadingTimeTracker({
+        bookId: book?.id,
+        supabaseBookId: book?.supabaseId,
         isEnabled: !!book?.supabaseId,
     });
 

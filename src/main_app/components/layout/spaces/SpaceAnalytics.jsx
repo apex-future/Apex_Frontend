@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BookCover from '../../books/BookCover';
 import apiClient from '../../../services/apiClient';
-import { CoverageCard, QuizCard, CalendarActivityCard } from './SpaceAnalyticsParts';
+import { CoverageCard, StudyTimeCard, QuizCard, CalendarActivityCard } from './SpaceAnalyticsParts';
 
 // --- HELPER ---
 function formatRelativeTime(isoString) {
@@ -175,6 +175,13 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                 <div className="sa-left" style={{ display:'flex', flexDirection:'column', gap: 20 }}>
                     <div className="sa-card-limit">
                         <CoverageCard enrichedBooks={enrichedBooks} />
+                    </div>
+                    <div className="sa-card-limit">
+                        <StudyTimeCard
+                            weeklyTime={analyticsData?.weekly_time ?? []}
+                            rawActivity={analyticsData?.recent_activity || []}
+                            spaceBooks={space?.books}
+                        />
                     </div>
                     <div className="sa-card-limit">
                         <QuizCard 
