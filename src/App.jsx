@@ -19,7 +19,6 @@ import OnboardingPage from './landing_page/OnboardingPage';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
-  const [hydrating, setHydrating] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
@@ -92,82 +91,59 @@ function App() {
   // }, []);
 
   useEffect(() => {
-    // Initialize theme
-    useThemeStore.getState().initTheme();
-
     const checkAuth = async () => {
-      // Initialize sync service (listeners, debounced functions)
       syncService.init();
 
-      if (authService.isAuthenticated()) {
-        try {
-          // Verify token is still valid
-          const user = await authService.me();
-          // Store user in Zustand immediately
-          useAuthStore.getState().setUser(user);
+      if (!authService.isAuthenticated()) {
+        setLoading(false);
+        return;
+      }
 
-          // Seed streak store from Supabase data on app load
-          // seedFromSupabase only overwrites local if Supabase is more recent
-          useStudyStore.getState().seedFromSupabase(user);
-          console.log('[Apex Streak] Store seeded from Supabase');
+      // User has a token — render immediately from local Dexie data
+      // Apply theme before render to prevent flash
+      useThemeStore.getState().initTheme();
 
-          // Check if streak is broken (lastActiveDate is not today/yesterday)
-          // Resets streakCount to 0 immediately so StreakBadge shows the correct value
-          useStudyStore.getState().checkStreakIntegrity();
+      setIsLoggedIn(true);
+      setLoading(false);
 
-          // Seed settings store from Supabase
-          if (user.settings) {
-            useSettingsStore.getState().seedFromSupabase(user.settings);
-            console.log('[Apex Settings] Store seeded from Supabase');
+      // Everything below runs in the background — nothing here blocks render
+      try {
+        const user = await authService.me();
+        useAuthStore.getState().setUser(user);
 
-            // Apply theme from settings
-            const savedTheme = user.settings.theme;
-            if (savedTheme) {
-              useThemeStore.getState().setTheme(savedTheme);
-            }
-          }
+        useStudyStore.getState().seedFromSupabase(user);
+        console.log('[Apex Streak] Store seeded from Supabase');
+        useStudyStore.getState().checkStreakIntegrity();
 
-          // Check if existing user needs onboarding
-          if (!user.user_type) {
-            setNeedsOnboarding(true);
-          }
+        if (user.settings) {
+          useSettingsStore.getState().seedFromSupabase(user.settings);
+          console.log('[Apex Settings] Store seeded from Supabase');
+          const savedTheme = user.settings.theme;
+          if (savedTheme) useThemeStore.getState().setTheme(savedTheme);
+        }
 
-          setIsLoggedIn(true);
+        if (!user.user_type) {
+          setNeedsOnboarding(true);
+        }
 
-          // Run full data pull if online
-          if (navigator.onLine) {
-            setHydrating(true);
-            try {
-              await syncService.pullAllUserData();
-              await syncService.pushSync();
-            } catch (err) {
-              console.error('Pull sync failed, continuing with local data:', err.message);
-            } finally {
-              setHydrating(false);
-            }
-          }
-        } catch (error) {
-          console.error("Auth verification failed:", error.message);
-          // Only log out if it's a 401 Unauthorized
-          if (error.response?.status === 401) {
-            authService.logout();
-            useAuthStore.getState().clearUser();
-            setIsLoggedIn(false);
-          } else {
-            // Network error or 500 — keep them logged in locally using cached data
-            console.log("[Apex Auth] Network or server error during auth check, proceeding with local session.");
-            
-            // Re-use cached user if available
-            const cachedUser = useAuthStore.getState().user;
-            if (cachedUser && !cachedUser.user_type) {
-              setNeedsOnboarding(true);
-            }
-            
-            setIsLoggedIn(true);
-          }
+        if (navigator.onLine) {
+          console.log('[Apex] Sync running in background');
+          syncService.pullAllUserData()
+            .then(() => syncService.pushSync())
+            .catch((err) => console.error('Pull sync failed, continuing with local data:', err.message));
+        }
+      } catch (error) {
+        console.error('Auth verification failed:', error.message);
+        if (error.response?.status === 401) {
+          authService.logout();
+          useAuthStore.getState().clearUser();
+          setIsLoggedIn(false);
+        } else {
+          console.log('[Apex Auth] Network error during background auth check — continuing with local session');
+          const cachedUser = useAuthStore.getState().user;
+          if (cachedUser && !cachedUser.user_type) setNeedsOnboarding(true);
         }
       }
-      setLoading(false);
     };
 
     checkAuth();
@@ -207,18 +183,11 @@ function App() {
     }
     setIsLoggedIn(true);
 
-    // Pull all data from Supabase for this user
+    // Pull all data from Supabase for this user (non-blocking — app already rendered)
     if (navigator.onLine) {
-      setHydrating(true);
-      try {
-        await syncService.pullAllUserData();
-        // Also migrate any pre-account local data
-        await syncService.migrateLocalData();
-      } catch (err) {
-        console.error('Post-login sync failed:', err.message);
-      } finally {
-        setHydrating(false);
-      }
+      syncService.pullAllUserData()
+        .then(() => syncService.migrateLocalData())
+        .catch((err) => console.error('Post-login sync failed:', err.message));
     }
   };
 
@@ -232,8 +201,8 @@ function App() {
     setNeedsOnboarding(false);
   };
 
-  // Show loading screen during initial auth check OR during data hydration
-  if (loading || hydrating) {
+  // Show loading screen only during initial auth token check
+  if (loading) {
     return showLandingLoader ? <LandingLoadingScreen /> : <ApexLoadingScreen />;
   }
 

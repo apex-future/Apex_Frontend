@@ -4,6 +4,14 @@ All notable changes to Apex are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
 
+## [1.9.2] - 2026-05-26
+### Fixed
+- App entry is immediate for authenticated users — renders from local Dexie data without waiting on network
+- Removed `hydrating` loading gate; token verification and cloud sync run in the background after render
+- Post-login sync is non-blocking (`.then().catch()` instead of `await`)
+
+---
+
 ## [1.9.1] - 2026-04-22
 ### Fixed
 - index.html no longer cached at Vercel CDN edge — users see new deploys immediately
