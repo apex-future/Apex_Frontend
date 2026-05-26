@@ -16,17 +16,17 @@ function FlashcardModal({ selection, count, onClose, bookId }) {
             try {
                 // Simulate network delay
                 await new Promise(resolve => setTimeout(resolve, 2000));
-                
+
                 // TODO: Replace with actual Groq API call
                 // Example format:
                 // const response = await fetch('https://api.groq.com/openai/v1/chat/completions', { ... })
-                
+
                 const dummyCards = Array.from({ length: count }, (_, i) => ({
                     id: i,
                     front: `Generated Question ${i + 1} based on: "${selection.substring(0, 30)}..."`,
                     back: `This is the generated answer for question ${i + 1}. You can flip the card to see this.`
                 }));
-                
+
                 setCards(dummyCards);
             } catch (err) {
                 setError(err.message || 'Failed to generate flashcards. Please try again.');
@@ -86,12 +86,12 @@ function FlashcardModal({ selection, count, onClose, bookId }) {
                     ) : cards.length > 0 ? (
                         <>
                             {/* 3D Flippable Card */}
-                            <div 
+                            <div
                                 className="w-full max-w-md aspect-[4/3] cursor-pointer group"
                                 onClick={() => setIsFlipped(!isFlipped)}
                             >
                                 <div className={`relative w-full h-full transition-all duration-500 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
-                                    
+
                                     {/* Front */}
                                     <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-border-default flex flex-col p-8 items-center justify-center text-center hover:shadow-rose-500/20 transition-shadow">
                                         <div className="absolute top-4 left-4 flex items-center gap-2 opacity-50">
@@ -122,19 +122,19 @@ function FlashcardModal({ selection, count, onClose, bookId }) {
 
                             {/* Controls */}
                             <div className="flex items-center justify-between w-full max-w-md mt-10">
-                                <button 
+                                <button
                                     onClick={handlePrev}
                                     disabled={currentIndex === 0}
                                     className="p-3 rounded-full bg-bg-primary border border-border-default hover:bg-bg-subtle disabled:opacity-30 transition-all active:scale-95"
                                 >
                                     <ChevronLeft size={24} className="text-text-secondary" />
                                 </button>
-                                
+
                                 <div className="text-sm font-bold text-text-tertiary font-sans tracking-widest">
                                     <span className="text-text-primary">{currentIndex + 1}</span> / {cards.length}
                                 </div>
 
-                                <button 
+                                <button
                                     onClick={handleNext}
                                     disabled={currentIndex === cards.length - 1}
                                     className="p-3 rounded-full bg-bg-primary border border-border-default hover:bg-bg-subtle disabled:opacity-30 transition-all active:scale-95"
@@ -146,8 +146,9 @@ function FlashcardModal({ selection, count, onClose, bookId }) {
                     ) : null}
                 </div>
             </div>
-            
-            <style dangerouslySetInnerHTML={{__html: `
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 .preserve-3d { transform-style: preserve-3d; }
                 .backface-hidden { backface-visibility: hidden; }
                 .rotate-y-180 { transform: rotateY(180deg); }
