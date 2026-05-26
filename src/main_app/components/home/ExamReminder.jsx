@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Edit2, AlarmClock, Calendar, BookOpen, X, Type, Trash2, Pause, Play, ChevronLeft, ChevronRight, Plus, Link, Sparkles, Trophy, Target, Zap, Bell, ChevronDown, Check } from 'lucide-react';
 import useStudyStore from '../../store/studyStore';
@@ -54,12 +54,20 @@ const ExamReminder = () => {
     const { spaces, updateSpace } = useSpaceStore();
     const navigate = useNavigate();
 
-    // Combine multi exams array with legacy fallback
-    const examsList = (exams && exams.length > 0) ? exams : (examDate ? [{ id: 'legacy', name: examName, date: examDate, isPaused: false }] : []);
+    // Combine multi exams array with legacy fallback (memoized — inline [] recreated every render)
+    const examsList = useMemo(
+        () => (exams && exams.length > 0)
+            ? exams
+            : (examDate ? [{ id: 'legacy', name: examName, date: examDate, isPaused: false }] : []),
+        [exams, examDate, examName]
+    );
 
     // States
     const [currentIndex, setCurrentIndex] = useState(0);
     const activeExam = examsList[currentIndex] || null;
+    const activeExamId = activeExam?.id ?? null;
+    const activeExamDate = activeExam?.date ?? '';
+    const activeExamName = activeExam?.name ?? '';
     const [isEditing, setIsEditing] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const { resolvedTheme } = useThemeStore();
@@ -73,17 +81,19 @@ const ExamReminder = () => {
     const linkedSpaces = customSpaces.filter(s => selectedSpaceIds.includes(s.id));
 
     useEffect(() => {
-        if (activeExam) {
-            setTempDate(activeExam.date || '');
-            setTempName(activeExam.name || '');
-            const linked = customSpaces.filter(s => s.examDate === activeExam.date || (s.isLinkedToExam && !s.examDate));
+        if (activeExamId) {
+            setTempDate(activeExamDate);
+            setTempName(activeExamName);
+            const linked = spaces.filter(
+                s => !s.isSystem && (s.examDate === activeExamDate || (s.isLinkedToExam && !s.examDate))
+            );
             setSelectedSpaceIds(linked.map(s => s.id));
         } else {
             setTempDate('');
             setTempName('');
             setSelectedSpaceIds([]);
         }
-    }, [activeExam, isEditing]);
+    }, [activeExamId, activeExamDate, activeExamName, isEditing, spaces]);
 
     const calculateDaysLeft = () => {
         if (!activeExam?.date) return null;

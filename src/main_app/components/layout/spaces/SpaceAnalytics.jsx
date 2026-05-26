@@ -2,7 +2,16 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BookCover from '../../books/BookCover';
 import apiClient from '../../../services/apiClient';
-import { CoverageCard, QuizCard, CalendarActivityCard } from './SpaceAnalyticsParts';
+import { CoverageCard, StudyTimeCard, QuizCard, CalendarActivityCard } from './SpaceAnalyticsParts';
+
+const EMPTY_WEEKLY_TIME = [];
+const EMPTY_RECENT_ACTIVITY = [];
+const DEFAULT_QUIZ_STATS = {
+    attempts_count: 0,
+    average_score: 0,
+    best_score: 0,
+    book_trends: { overall: [] },
+};
 
 // --- HELPER ---
 function formatRelativeTime(isoString) {
@@ -26,22 +35,28 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
     const [analyticsError, setAnalyticsError] = useState(null);
     const [retryCount, setRetryCount] = useState(0);
 
-    useEffect(() => {
-        if (!space?.books) return;
-
-        // Extract Supabase UUIDs from the space's books — skip unsynced local-only books
-        const bookIds = space.books
+    // Stable key — space.books is a new array whenever shelves recompute in BookContext
+    const analyticsBookIdsKey = useMemo(() => {
+        if (!space?.books?.length) return '';
+        return space.books
             .map(b => b.supabaseId || b.recordId)
-            .filter(Boolean);
+            .filter(Boolean)
+            .sort()
+            .join(',');
+    }, [space?.books]);
 
-        console.log('[SpaceAnalytics] Book UUIDs for analytics:', bookIds);
-
-        if (bookIds.length === 0) {
+    useEffect(() => {
+        if (!analyticsBookIdsKey) {
+            if (!space?.books) return;
             console.log('[SpaceAnalytics] No synced books in space — skipping fetch');
             setAnalyticsData(null);
             setAnalyticsLoading(false);
             return;
         }
+
+        const bookIds = analyticsBookIdsKey.split(',');
+
+        console.log('[SpaceAnalytics] Book UUIDs for analytics:', bookIds);
 
         const fetchAnalytics = async () => {
             setAnalyticsLoading(true);
@@ -61,7 +76,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
         };
 
         fetchAnalytics();
-    }, [space?.books, retryCount]);
+    }, [analyticsBookIdsKey, retryCount]);
 
     // Merge per-book analytics into the books array from props
     // space.books provides title and local id; analyticsData provides real stats
@@ -96,12 +111,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
         return { h, m };
     }, [totalMinutes]);
 
-    const quizStats = analyticsData?.quiz_stats ?? {
-        attempts_count: 0,
-        average_score: 0,
-        best_score: 0,
-        book_trends: { overall: [] }
-    };
+    const quizStats = analyticsData?.quiz_stats ?? DEFAULT_QUIZ_STATS;
 
     // Map book_trends keys: backend uses supabase UUIDs, TrendMaker uses local book ids
     // Backend now returns [{score, date}, ...] objects per book
@@ -177,6 +187,13 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                         <CoverageCard enrichedBooks={enrichedBooks} />
                     </div>
                     <div className="sa-card-limit">
+                        <StudyTimeCard
+                            weeklyTime={analyticsData?.weekly_time ?? EMPTY_WEEKLY_TIME}
+                            rawActivity={analyticsData?.recent_activity ?? EMPTY_RECENT_ACTIVITY}
+                            spaceBooks={space?.books}
+                        />
+                    </div>
+                    <div className="sa-card-limit">
                         <QuizCard 
                             enrichedBooks={enrichedBooks} 
                             quizStats={quizStats} 
@@ -192,7 +209,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                         <CalendarActivityCard 
                             streakHistory={streakHistory}
                             currentStreak={currentStreak}
-                            rawActivity={analyticsData?.recent_activity || []}
+                            rawActivity={analyticsData?.recent_activity ?? EMPTY_RECENT_ACTIVITY}
                             spaceBooks={space?.books}
                         />
                     </div>

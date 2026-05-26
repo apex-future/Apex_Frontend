@@ -25,6 +25,21 @@ export default function useGreeting(firstName) {
     const now = new Date();
     const hour = now.getHours();
 
+    // 1. Check if we already have a session-locked greeting
+    const sessionKey = 'apex-session-greeting-locked';
+    try {
+      const stored = sessionStorage.getItem(sessionKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Only return if it's the same user (or generic)
+        if (parsed.firstName === firstName) {
+          return parsed.data;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse stored greeting", e);
+    }
+
     // ── Helper: today as YYYY-MM-DD (local) ────────────────────────
     const todayStr = (() => {
       const y = now.getFullYear();
@@ -97,21 +112,19 @@ export default function useGreeting(firstName) {
       signalKey = timeOfDay;
     }
 
-    // ── Rotate within bucket using sessionStorage ──────────────────
-    const storageKey = `apex-greeting-${signalKey}`;
+    // ── Pick one and stick with it for the session ──────────────────
+    // We check if we already picked one for this signalKey in this session
+    const rotationKey = `apex-greeting-idx-${signalKey}`;
     let index;
     try {
-      const stored = sessionStorage.getItem(storageKey);
-      if (stored !== null) {
-        // Next message in the rotation
-        index = (parseInt(stored, 10) + 1) % bucket.length;
+      const storedIdx = sessionStorage.getItem(rotationKey);
+      if (storedIdx !== null) {
+        index = parseInt(storedIdx, 10) % bucket.length;
       } else {
-        // First visit this session — pick random
         index = Math.floor(Math.random() * bucket.length);
+        sessionStorage.setItem(rotationKey, String(index));
       }
-      sessionStorage.setItem(storageKey, String(index));
     } catch {
-      // sessionStorage unavailable (SSR, privacy mode) — random fallback
       index = Math.floor(Math.random() * bucket.length);
     }
 
@@ -124,10 +137,22 @@ export default function useGreeting(firstName) {
         .replace(/\bX\b/g, dynamicX)
         .replace(/\bE\b/g, closestExamName);
 
-    return {
+    const finalResult = {
       greeting: replacePlaceholders(selected.greeting),
       talk: replacePlaceholders(selected.talk),
     };
+
+    // Store for the rest of the session to avoid changes on route changes
+    try {
+      sessionStorage.setItem(sessionKey, JSON.stringify({
+        firstName,
+        data: finalResult
+      }));
+    } catch (e) {
+      // ignore storage errors
+    }
+
+    return finalResult;
   }, [firstName, streakCount, lastActiveDate, exams]);
 
   return result;

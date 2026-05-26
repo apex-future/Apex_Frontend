@@ -27,7 +27,6 @@ import ReaderDictionary from './reading_navigations/reading_layout/ReaderDiction
 import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
 import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
-import FlashcardModal from './FlashcardModal';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
@@ -132,6 +131,26 @@ function ReaderView() {
         setAiModal(false);
         setQuizModal(false);
     }, []);
+
+    // ============================================
+    // PAGE VISIT TRACKER — 5s foreground visit recording
+    // ============================================
+    usePageVisitTracker({
+        bookId: book?.id,
+        supabaseBookId: book?.supabaseId,
+        currentPage: pageNumber,
+        totalPages: numPages || book?.totalPages,
+        isEnabled: !!book?.supabaseId,
+    });
+
+    // ============================================
+    // READING TIME TRACKER — minute-tick accumulation
+    // ============================================
+    useReadingTimeTracker({
+        bookId: book?.id,
+        supabaseBookId: book?.supabaseId,
+        isEnabled: !!book?.supabaseId,
+    });
 
     // ============================================
     // 1-MINUTE READING TIMER — Streak & Space Tracking

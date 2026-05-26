@@ -5,38 +5,43 @@ import apiClient from '../../services/apiClient';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
+const EMPTY_BOOKS = [];
+
 function GlobalAnalytics() {
     const navigate = useNavigate();
     console.log('[GlobalAnalytics] Component mounting...');
     
     const context = React.useContext(BookContext);
-    const books = context?.books || [];
+    const books = context?.books ?? EMPTY_BOOKS;
     const [analyticsData, setAnalyticsData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const analyticsBookIdsKey = useMemo(() => (
+        books
+            .map(b => b?.supabaseId || b?.recordId)
+            .filter(Boolean)
+            .sort()
+            .join(',')
+    ), [books]);
+
     useEffect(() => {
-        console.log('[GlobalAnalytics] useEffect running with books:', books.length);
-        
-        if (!books || books.length === 0) {
-            console.log('[GlobalAnalytics] No books found yet, setting loading to false.');
+        console.log('[GlobalAnalytics] useEffect running, bookIds key:', analyticsBookIdsKey || '(none)');
+
+        if (!analyticsBookIdsKey) {
+            console.log('[GlobalAnalytics] No synced books — skipping fetch');
+            setAnalyticsData(null);
             setLoading(false);
             return;
         }
 
+        const bookIds = analyticsBookIdsKey.split(',');
+
         const fetchGlobalAnalytics = async () => {
             setLoading(true);
+            setError(null);
             try {
-                const bookIds = books
-                    .map(b => b?.supabaseId || b?.recordId)
-                    .filter(Boolean);
-
                 console.log('[GlobalAnalytics] Fetching analytics for IDs:', bookIds);
-
-                if (bookIds.length === 0) {
-                    setLoading(false);
-                    return;
-                }
 
                 const response = await apiClient.post('/api/spaces/analytics', { book_ids: bookIds });
                 console.log('[GlobalAnalytics] Received data:', response.data);
@@ -101,7 +106,7 @@ function GlobalAnalytics() {
         };
 
         fetchGlobalAnalytics();
-    }, [books]);
+    }, [analyticsBookIdsKey]);
 
     // Robust stats normalization
     const stats = useMemo(() => {

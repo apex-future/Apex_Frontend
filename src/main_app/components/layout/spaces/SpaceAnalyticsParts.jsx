@@ -136,34 +136,7 @@ export const PARTS_STYLES = (
       .quiz-pill-value { font-size: 18px; }
     }
 
-    .total-time-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      margin-top: 24px;
-      padding-top: 20px;
-      border-top: 1px solid rgb(var(--border-default) / 0.4);
-    }
-    .total-time-value {
-      font-size: 24px;
-      font-weight: 900;
-      color: #7F77DD;
-      letter-spacing: -0.03em;
-      line-height: 1;
-    }
-    .total-time-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: rgb(var(--text-tertiary));
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-top: 4px;
-    }
-    @media (min-width: 768px) {
-      .total-time-value { font-size: 32px; }
-      .total-time-label { font-size: 11px; }
-    }
+
 
     .cal-cell {
       aspect-ratio: 1;
@@ -184,7 +157,7 @@ export const PARTS_STYLES = (
 );
 
 // ═══════════════════════════════════════
-// Card 1 — Course Coverage & Time
+// Card 1 — Course Coverage
 // ═══════════════════════════════════════
 export const CoverageCard = React.memo(({ enrichedBooks }) => {
   const [sortMode, setSortMode] = useState('most');
@@ -203,14 +176,13 @@ export const CoverageCard = React.memo(({ enrichedBooks }) => {
     }
   }, [enrichedBooks, sortMode]);
 
-  const totalMins = enrichedBooks.reduce((s, b) => s + (b.timeSpent || 0), 0);
   const sorts = [['most', 'Most read'], ['least', 'Least read'], ['recent', 'Recent'], ['az', 'A–Z']];
 
   return (
     <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, padding: 24 }}>
       {PARTS_STYLES}
       <div className="cc-header">
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))', letterSpacing: '-0.01em' }}>Course coverage & time</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))', letterSpacing: '-0.01em' }}>Course coverage</span>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
           {sorts.map(([k, label]) => (
             <button key={k} onClick={() => setSortMode(k)} style={{
@@ -238,23 +210,274 @@ export const CoverageCard = React.memo(({ enrichedBooks }) => {
                 <div style={{ height: 3, borderRadius: 3, background: 'rgb(var(--bg-subtle))', marginTop: 6, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${pct}%`, background: '#7F77DD', borderRadius: 3, transition: 'width 0.4s ease' }} />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                <div style={{ marginTop: 4 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: '#7F77DD' }}>{pct}%</span>
-                  <span style={{ fontSize: 10, color: 'rgb(var(--text-tertiary))' }}>{fmtTime(book.timeSpent)}</span>
                 </div>
               </div>
             </div>
           );
         })}
       </div>
+    </div>
+  );
+});
 
-      <div className="total-time-container">
-        <span className="total-time-value">{fmtTime(totalMins)}</span>
-        <span className="total-time-label">Total study time</span>
+// ═══════════════════════════════════════
+// Card 1b — Study Time This Week
+// ═══════════════════════════════════════
+export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], spaceBooks = [] }) => {
+  const dayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const todayJS = new Date();
+  const todayLabel = todayJS.toLocaleDateString('en-US', { weekday: 'short' });
+  const todayIdx = dayOrder.indexOf(todayLabel);
+
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = last week, etc.
+  const [selectedDayIdx, setSelectedDayIdx] = useState(todayIdx >= 0 ? todayIdx : 0);
+  const [collapsed, setCollapsed] = useState({ Morning: false, Afternoon: false, Evening: true });
+
+  // Compute Monday of the viewed week
+  const dow = todayJS.getDay(); // 0=Sun
+  const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(todayJS.getFullYear(), todayJS.getMonth(), todayJS.getDate() + mondayOffset + (weekOffset * 7));
+  const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+
+  const isCurrentWeek = weekOffset === 0;
+  const isFutureWeek = weekOffset > 0;
+
+  const fmtWeekDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const weekRange = `${fmtWeekDate(monday)} – ${fmtWeekDate(sunday)}`;
+
+  // Reset selected day when changing weeks
+  const prevWeek = () => { setWeekOffset(w => w - 1); setSelectedDayIdx(6); setCollapsed({ Morning: false, Afternoon: false, Evening: true }); };
+  const nextWeek = () => {
+    if (isFutureWeek) return;
+    setWeekOffset(w => w + 1);
+    setSelectedDayIdx(w => weekOffset + 1 === 0 ? (todayIdx >= 0 ? todayIdx : 0) : 0);
+    setCollapsed({ Morning: false, Afternoon: false, Evening: true });
+  };
+
+  // For non-current weeks, weeklyTime doesn't apply — show zeros
+  const displayWeeklyTime = isCurrentWeek
+    ? weeklyTime
+    : dayOrder.map(d => ({ day: d, minutes: 0 }));
+
+  // Actual date string for selected day
+  const selectedDate = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + selectedDayIdx);
+  const selectedDateStr = toDateStr(selectedDate);
+  const todayStr = toDateStr(todayJS);
+
+  const selectedDayLabel = useMemo(() => {
+    if (selectedDateStr === todayStr) return 'Today';
+    const yesterday = new Date(todayJS); yesterday.setDate(todayJS.getDate() - 1);
+    if (selectedDateStr === toDateStr(yesterday)) return 'Yesterday';
+    return selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  }, [selectedDateStr, todayStr]);
+
+  // Filter reading events for selected day
+  const dayReadingSessions = useMemo(() => {
+    if (!rawActivity) return [];
+    return rawActivity
+      .filter(ev => ev.type === 'reading' && ev.timestamp?.slice(0, 10) === selectedDateStr)
+      .map(ev => {
+        const book = spaceBooks?.find(b => (b.supabaseId || b.recordId) === ev.book_id);
+        const pages = parseInt(ev.detail) || 0;
+        return {
+          ...ev,
+          bookTitle: book?.title || 'Unknown Book',
+          estimatedMins: Math.round(pages * 0.5),
+          hour: new Date(ev.timestamp).getHours(),
+        };
+      });
+  }, [rawActivity, selectedDateStr, spaceBooks]);
+
+  const dayTotalMins = dayReadingSessions.reduce((s, ev) => s + ev.estimatedMins, 0);
+
+  // Group by segment → bundle by book
+  const segments = useMemo(() => {
+    const segs = { Morning: [], Afternoon: [], Evening: [] };
+    dayReadingSessions.forEach(ev => {
+      if (ev.hour < 12) segs.Morning.push(ev);
+      else if (ev.hour < 18) segs.Afternoon.push(ev);
+      else segs.Evening.push(ev);
+    });
+    const bundleByBook = (events) => {
+      const byBook = {};
+      events.forEach(ev => {
+        if (!byBook[ev.bookTitle]) byBook[ev.bookTitle] = { bookTitle: ev.bookTitle, totalMins: 0 };
+        byBook[ev.bookTitle].totalMins += ev.estimatedMins;
+      });
+      return Object.values(byBook);
+    };
+    return {
+      Morning: bundleByBook(segs.Morning),
+      Afternoon: bundleByBook(segs.Afternoon),
+      Evening: bundleByBook(segs.Evening),
+    };
+  }, [dayReadingSessions]);
+
+  // Histogram values
+  const totalMins = displayWeeklyTime.reduce((s, d) => s + d.minutes, 0);
+  const maxMins = Math.max(...displayWeeklyTime.map(d => d.minutes), 1);
+  const CHART_H = 80;
+  const Y_LABEL_W = 28;
+  const topTick = Math.ceil(maxMins / 30) * 30 || 30;
+  const yTicks = [0, Math.round(topTick / 2), topTick];
+
+  const segMeta = [
+    { name: 'Morning', range: '12:00 AM – 12:00 PM', dot: '#7F77DD' },
+    { name: 'Afternoon', range: '12:00 PM – 6:00 PM', dot: '#E5C07B' },
+    { name: 'Evening', range: '6:00 PM – 12:00 AM', dot: '#534AB7' },
+  ];
+
+  const toggleSeg = (name) => setCollapsed(p => ({ ...p, [name]: !p[name] }));
+
+  return (
+    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, padding: 24 }}>
+      {PARTS_STYLES}
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 2 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))', letterSpacing: '-0.01em' }}>
+          Study time this week
+        </span>
+        <span style={{ fontSize: 18, fontWeight: 900, color: '#7F77DD', letterSpacing: '-0.03em', lineHeight: 1 }}>
+          {fmtTime(totalMins)}
+        </span>
+      </div>
+      <span style={{ fontSize: 10, fontWeight: 500, color: 'rgb(var(--text-tertiary))', letterSpacing: '0.02em' }}>
+        {weekRange}
+      </span>
+
+      {/* Chart area */}
+      <div style={{ marginTop: 16, display: 'flex', alignItems: 'stretch' }}>
+        <div style={{ width: Y_LABEL_W, flexShrink: 0, position: 'relative', height: CHART_H }}>
+          {yTicks.map(tick => (
+            <span key={tick} style={{
+              position: 'absolute', bottom: `${(tick / topTick) * 100}%`, right: 4,
+              transform: 'translateY(50%)', fontSize: 9, fontWeight: 600,
+              color: 'rgb(var(--text-tertiary))', lineHeight: 1,
+            }}>
+              {tick === 0 ? '' : `${tick}m`}
+            </span>
+          ))}
+        </div>
+        <div style={{ flex: 1, position: 'relative', height: CHART_H }}>
+          {yTicks.map(tick => (
+            <div key={`g-${tick}`} style={{
+              position: 'absolute', left: 0, right: 0,
+              bottom: `${(tick / topTick) * 100}%`,
+              borderTop: tick === 0
+                ? '1px solid rgb(var(--text-tertiary) / 0.2)'
+                : '1px dashed rgb(var(--text-tertiary) / 0.1)',
+            }} />
+          ))}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: '100%', position: 'relative', zIndex: 2, paddingLeft: 4, paddingRight: 4 }}>
+            {displayWeeklyTime.map((d, i) => {
+              const isSelected = i === selectedDayIdx;
+              const isFutureDay = isCurrentWeek && dayOrder.indexOf(d.day) > todayIdx;
+              const h = maxMins > 0 ? (d.minutes / topTick) * CHART_H : 0;
+              const barColor = (d.minutes === 0 || isFutureDay)
+                ? 'rgb(var(--bg-subtle))'
+                : isSelected ? '#534AB7' : '#AFA9EC';
+              const clickable = !isFutureDay && !isFutureWeek;
+              return (
+                <div key={d.day} onClick={() => clickable && setSelectedDayIdx(i)}
+                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', cursor: clickable ? 'pointer' : 'default' }}>
+                  {d.minutes > 0 && !isFutureDay && (
+                    <span style={{ fontSize: 9, fontWeight: 700, color: barColor, marginBottom: 3 }}>{fmtTime(d.minutes)}</span>
+                  )}
+                  <div style={{
+                    width: '100%', maxWidth: 32,
+                    height: Math.max(h, d.minutes > 0 && !isFutureDay ? 4 : 0),
+                    background: barColor, borderRadius: '4px 4px 0 0', transition: 'height 0.3s ease',
+                  }} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Day labels + week navigation */}
+      <div style={{ display: 'flex', alignItems: 'center', marginTop: 6 }}>
+        <button onClick={prevWeek} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgb(var(--text-tertiary))', flexShrink: 0, width: Y_LABEL_W, display: 'flex', justifyContent: 'center' }}>
+          <ChevronLeft size={14} />
+        </button>
+        <div style={{ flex: 1, display: 'flex' }}>
+          {displayWeeklyTime.map((d, i) => {
+            const isFutureDay = isCurrentWeek && dayOrder.indexOf(d.day) > todayIdx;
+            const clickable = !isFutureDay && !isFutureWeek;
+            return (
+              <div key={d.day} onClick={() => clickable && setSelectedDayIdx(i)}
+                style={{
+                  flex: 1, textAlign: 'center', fontSize: 9, cursor: clickable ? 'pointer' : 'default',
+                  fontWeight: i === selectedDayIdx ? 700 : 500,
+                  color: i === selectedDayIdx ? '#7F77DD' : 'rgb(var(--text-tertiary))',
+                }}>
+                {d.day}
+              </div>
+            );
+          })}
+        </div>
+        <button onClick={nextWeek} disabled={isFutureWeek} style={{ background: 'none', border: 'none', cursor: isFutureWeek ? 'default' : 'pointer', padding: 2, color: isFutureWeek ? 'rgb(var(--text-tertiary) / 0.3)' : 'rgb(var(--text-tertiary))', flexShrink: 0, width: 20, display: 'flex', justifyContent: 'center' }}>
+          <ChevronRight size={14} />
+        </button>
+      </div>
+
+      {/* ── Daily Reading Log ── */}
+      <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid rgb(var(--border-default) / 0.4)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#7F77DD', fontStyle: 'italic' }}>
+            {selectedDayLabel}
+          </span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'rgb(var(--text-tertiary))' }}>
+            {dayTotalMins > 0 ? `${fmtTime(dayTotalMins)} studied` : ''}
+          </span>
+        </div>
+
+        {dayReadingSessions.length === 0 ? (
+          <p style={{ fontSize: 11, color: 'rgb(var(--text-tertiary))', textAlign: 'center', padding: '16px 0' }}>No reading sessions recorded.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {segMeta.map(seg => {
+              const items = segments[seg.name] || [];
+              if (items.length === 0) return null;
+              const isOpen = !collapsed[seg.name];
+              return (
+                <div key={seg.name}>
+                  <button onClick={() => toggleSeg(seg.name)} style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0',
+                    background: 'none', border: 'none', cursor: 'pointer', color: 'rgb(var(--text-primary))',
+                  }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: seg.dot, flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, flex: 1, textAlign: 'left' }}>{seg.name}</span>
+                    <span style={{ fontSize: 9, color: 'rgb(var(--text-tertiary))', fontWeight: 500 }}>{seg.range}</span>
+                    <span style={{ fontSize: 9, color: 'rgb(var(--text-tertiary))', fontWeight: 600, marginLeft: 4 }}>{items.length}</span>
+                    <ChevronDown size={12} style={{ color: 'rgb(var(--text-tertiary))', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+                  </button>
+                  {isOpen && (
+                    <div style={{ paddingLeft: 20, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {items.map((item, idx) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#AFA9EC', flexShrink: 0 }} />
+                          <span style={{ fontSize: 11, color: 'rgb(var(--text-secondary))' }}>
+                            {item.bookTitle}
+                            <span style={{ color: 'rgb(var(--text-tertiary))' }}> · {fmtTime(item.totalMins)}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
 });
+
 
 // ═══════════════════════════════════════
 // Card 2 — Quiz Performance
@@ -471,37 +694,67 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
     { name: 'Evening', range: '6:00 PM – 12:00 AM', dot: '#534AB7' },
   ];
 
-  const renderEvents = (events, segName) => {
-    // Separate highlights from other events
-    const highlights = events.filter(e => e.type === 'highlight');
-    const others = events.filter(e => e.type !== 'highlight');
+  function bundleEvents(events) {
+    const quizEvents = events.filter(e => e.type === 'quiz');
+    const bundleable = events.filter(e => e.type !== 'quiz');
 
-    // Group highlights by book
-    const hlByBook = {};
-    highlights.forEach(h => {
-      const t = h.bookTitle || 'Unknown';
-      hlByBook[t] = (hlByBook[t] || 0) + 1;
+    // Group by book + normalised type
+    const groups = {};
+    bundleable.forEach(e => {
+      const typeKey = ['note', 'manual_note'].includes(e.type) ? 'note'
+        : ['ai_explanation', 'ai'].includes(e.type) ? 'ai'
+        : e.type; // 'highlight', 'reading'
+      const key = `${typeKey}||${e.bookTitle || 'Unknown'}`;
+      if (!groups[key]) {
+        groups[key] = { type: typeKey, bookTitle: e.bookTitle || 'Unknown', count: 0, earliest: e.timestamp };
+      }
+      groups[key].count += typeKey === 'reading'
+        ? (parseInt(e.detail) || 1)
+        : 1;
+      if (e.timestamp < groups[key].earliest) groups[key].earliest = e.timestamp;
     });
+
+    const bundled = Object.values(groups).map(g => {
+      let label;
+      if (g.type === 'note') label = `${g.count} ${g.count === 1 ? 'note' : 'notes'} added`;
+      else if (g.type === 'highlight') label = `${g.count} ${g.count === 1 ? 'highlight' : 'highlights'} made`;
+      else if (g.type === 'ai') label = `${g.count} ${g.count === 1 ? 'explanation' : 'explanations'} used`;
+      else if (g.type === 'reading') label = `${g.count} ${g.count === 1 ? 'page' : 'pages'} read`;
+      else label = g.type;
+      return { ...g, label, isBundle: true };
+    });
+
+    const quizFormatted = quizEvents.map(e => ({
+      ...e,
+      label: e.detail || 'Quiz completed',
+      isBundle: false,
+    }));
+
+    return [...bundled, ...quizFormatted].sort((a, b) =>
+      new Date(a.earliest || a.timestamp) - new Date(b.earliest || b.timestamp)
+    );
+  }
+
+  const renderEvents = (events) => {
+    const bundles = bundleEvents(events);
+    console.log('[ActivityLog] Bundled', events.length, 'events into', bundles.length, 'entries');
 
     return (
       <div style={{ paddingLeft: 20, paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {Object.entries(hlByBook).map(([bookTitle, count]) => (
-          <div key={`hl-${bookTitle}`} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#AFA9EC', flexShrink: 0 }} />
-            <span style={{ fontSize: 11, color: 'rgb(var(--text-secondary))' }}>{count} highlights made · {bookTitle}</span>
-          </div>
-        ))}
-        {others.map((ev, i) => {
-          const time = fmtClockTime(ev.timestamp);
+        {bundles.map((b, i) => {
           let dotColor = '#7F77DD';
-          if (ev.type === 'note' || ev.type === 'manual_note') dotColor = '#10B981';
+          if (b.type === 'note' || b.type === 'manual_note') dotColor = '#10B981';
+          if (b.type === 'quiz') dotColor = '#E5C07B';
+          if (b.type === 'reading') dotColor = '#AFA9EC';
+
           return (
-            <div key={`${ev.type}-${i}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-              <span style={{ fontSize: 10, color: 'rgb(var(--text-tertiary))', minWidth: 56, flexShrink: 0, fontWeight: 500 }}>{time}</span>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0, marginTop: 4 }} />
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
               <span style={{ fontSize: 11, color: 'rgb(var(--text-secondary))' }}>
-                {ev.type === 'quiz' ? ev.detail : ev.type === 'note' || ev.type === 'manual_note' ? (ev.detail || 'Note added') : (ev.detail || 'Reading session')}
-                {ev.bookTitle && <span style={{ color: 'rgb(var(--text-tertiary))' }}> · {ev.bookTitle}</span>}
+                {b.label}
+                {b.bookTitle && (
+                  <span style={{ color: 'rgb(var(--text-tertiary))' }}> · {b.bookTitle}</span>
+                )}
               </span>
             </div>
           );

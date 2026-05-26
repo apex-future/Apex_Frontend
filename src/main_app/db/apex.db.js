@@ -196,4 +196,20 @@ db.version(15).stores({
   console.log('[Apex DB] v15 migration complete');
 });
 
+// Version 16: Add page_visits table for per-page reading visit tracking
+// Each row = one page visited for ≥5s foreground time. Used to compute progress_today.
+db.version(16).stores({
+  page_visits: '++id, local_id, bookId, supabaseBookId, pageNumber, visitedAt, synced',
+}).upgrade(async tx => {
+  console.log('[Apex DB] v16: page_visits table added');
+});
+
+// Version 17: Add book_reading_time table for real reading time tracking
+// Each row = one day's accumulated minutes for a given book. Synced to Supabase via sync queue.
+db.version(17).stores({
+  book_reading_time: '++id, bookId, supabaseBookId, date, minutes, synced',
+}).upgrade(async () => {
+  console.log('[Apex DB] v17: book_reading_time table added');
+});
+
 export default db;
