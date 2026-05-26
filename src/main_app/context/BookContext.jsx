@@ -8,6 +8,7 @@ import { BookContext } from './BookContextInstance.jsx';
 
 export const BookProvider = ({ children }) => {
   const [shelves, setShelves] = useState(initialShelves);
+  const [booksLoading, setBooksLoading] = useState(true);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   // Memoize books array to avoid recreating it on every shelf update
@@ -173,6 +174,8 @@ export const BookProvider = ({ children }) => {
         }
       } catch (error) {
         console.error("Failed to load books from Dexie:", error);
+      } finally {
+        setBooksLoading(false);
       }
     };
     loadBooks();
@@ -1040,6 +1043,7 @@ export const BookProvider = ({ children }) => {
     <BookContext.Provider value={{
       shelves,
       books,
+      booksLoading,
       addBookToShelf,
       downloadMissingFile,
       updateBookProgress,

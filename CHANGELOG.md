@@ -4,6 +4,13 @@ All notable changes to Apex are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
 
+## [1.9.3] - 2026-05-26
+### Improved
+- Home library shows skeleton placeholders while Dexie loads books — no flash of empty state on startup
+- `LastReadCard` shows a matching skeleton until initial book load completes
+
+---
+
 ## [1.9.2] - 2026-05-26
 ### Fixed
 - App entry is immediate for authenticated users — renders from local Dexie data without waiting on network
