@@ -50,6 +50,9 @@ function BookDetails() {
 
     const handleConfirmAddToSpace = async () => {
         if (!book) return;
+        // Close modal immediately so user doesn't see states change while syncing
+        setShowSpaceModal(false);
+
         // Sync Custom Spaces
         for (const space of spaces.filter(s => !s.isSystem)) {
             const wasIn = space.bookIds.includes(book.id);
@@ -61,8 +64,6 @@ function BookDetails() {
                 await removeBookFromSpace(space.id, book.id);
             }
         }
-        
-        setShowSpaceModal(false);
     };
 
     const tabs = [

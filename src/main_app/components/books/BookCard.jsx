@@ -58,6 +58,9 @@ export default function BookCard({ book, onClick }) {
     };
 
     const handleConfirmAddToSpace = async () => {
+        // Close modal immediately so user doesn't see states change while syncing
+        setShowSpaceModal(false);
+
         // Sync Custom Spaces
         for (const space of spaces.filter(s => !s.isSystem)) {
             const wasIn = space.bookIds.includes(book.id);
@@ -69,8 +72,6 @@ export default function BookCard({ book, onClick }) {
                 await removeBookFromSpace(space.id, book.id);
             }
         }
-        
-        setShowSpaceModal(false);
     };
 
     const handleDeleteClick = (e) => {
