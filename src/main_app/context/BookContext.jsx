@@ -17,7 +17,6 @@ export const BookProvider = ({ children }) => {
     return spaces.map(space => {
       const spaceBooks = allBooks.filter(b => {
         if (space.id === 'favorites') return b.isFavorite;
-        if (space.id === 'bookmarks') return b.isBookmarked;
         if (space.id === 'active-reading') {
           const isOrphaned = b.shelfName && !currentSpaceNames.includes(b.shelfName);
           return b.shelfName === 'Active Reading' || !b.shelfName || isOrphaned;
@@ -36,7 +35,6 @@ export const BookProvider = ({ children }) => {
       const prevShelves = spaces.map(space => {
         const spaceBooks = prevBooks.filter(b => {
           if (space.id === 'favorites') return b.isFavorite;
-          if (space.id === 'bookmarks') return b.isBookmarked;
           if (space.id === 'active-reading') {
             const isOrphaned = b.shelfName && !currentSpaceNames.includes(b.shelfName);
             return b.shelfName === 'Active Reading' || !b.shelfName || isOrphaned;

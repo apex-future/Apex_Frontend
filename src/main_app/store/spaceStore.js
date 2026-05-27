@@ -7,7 +7,6 @@ import apiClient from '../services/apiClient';
 const SYSTEM_SPACES = [
   { id: 'active-reading', name: 'Active Reading', isSystem: true, bookIds: [], examDate: null, goals: [], activitySummaries: { timeSpent: 0, pagesRead: 0 } },
   { id: 'favorites', name: 'Favorites', isSystem: true, bookIds: [], examDate: null, goals: [], activitySummaries: { timeSpent: 0, pagesRead: 0 } },
-  { id: 'bookmarks', name: 'Bookmarks', isSystem: true, bookIds: [], examDate: null, goals: [], activitySummaries: { timeSpent: 0, pagesRead: 0 } },
 ];
 
 const useSpaceStore = create(
@@ -335,6 +334,15 @@ const useSpaceStore = create(
     }),
     {
       name: 'apex-space-storage',
+      merge: (persistedState, currentState) => {
+        if (persistedState && Array.isArray(persistedState.spaces)) {
+          persistedState.spaces = persistedState.spaces.filter(s => s.id !== 'bookmarks');
+        }
+        return {
+          ...currentState,
+          ...persistedState,
+        };
+      }
     }
   )
 );

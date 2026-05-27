@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { Heart, Bookmark, Trash2, X } from 'lucide-react'
+import { Heart, Trash2, X } from 'lucide-react'
 import BookCover from '../../books/BookCover'
 import useSpaceStore from '../../../store/spaceStore'
 import useThemeStore from '../../../store/themeStore'
@@ -129,11 +129,6 @@ function Shelf({ shelves }) {
                       {book.isFavorite && (
                         <div className="bg-red-500 text-white rounded-full p-0.5 shadow-sm">
                           <Heart size={8} fill="currentColor" />
-                        </div>
-                      )}
-                      {book.isBookmarked && (
-                        <div className="bg-accent-primary text-white rounded-full p-0.5 shadow-sm">
-                          <Bookmark size={8} fill="currentColor" />
                         </div>
                       )}
                     </div>
