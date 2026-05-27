@@ -115,9 +115,6 @@ function App() {
         useStudyStore.getState().seedFromSupabase(user);
         console.log('[Apex Streak] Store seeded from Supabase');
         useStudyStore.getState().checkStreakIntegrity();
-        useStudyStore.getState().seedFromSupabase(user);
-        console.log('[Apex Streak] Store seeded from Supabase');
-        useStudyStore.getState().checkStreakIntegrity();
 
         if (user.settings) {
           useSettingsStore.getState().seedFromSupabase(user.settings);
@@ -125,16 +122,7 @@ function App() {
           const savedTheme = user.settings.theme;
           if (savedTheme) useThemeStore.getState().setTheme(savedTheme);
         }
-        if (user.settings) {
-          useSettingsStore.getState().seedFromSupabase(user.settings);
-          console.log('[Apex Settings] Store seeded from Supabase');
-          const savedTheme = user.settings.theme;
-          if (savedTheme) useThemeStore.getState().setTheme(savedTheme);
-        }
 
-        if (!user.user_type) {
-          setNeedsOnboarding(true);
-        }
         if (!user.user_type) {
           setNeedsOnboarding(true);
         }
@@ -199,11 +187,7 @@ function App() {
     setIsLoggedIn(true);
 
     // Pull all data from Supabase for this user (non-blocking — app already rendered)
-    // Pull all data from Supabase for this user (non-blocking — app already rendered)
     if (navigator.onLine) {
-      syncService.pullAllUserData()
-        .then(() => syncService.migrateLocalData())
-        .catch((err) => console.error('Post-login sync failed:', err.message));
       syncService.pullAllUserData()
         .then(() => syncService.migrateLocalData())
         .catch((err) => console.error('Post-login sync failed:', err.message));
@@ -222,38 +206,36 @@ function App() {
 
   // Show loading screen only during initial auth token check
   if (loading) {
-    // Show loading screen only during initial auth token check
-    if (loading) {
-      return showLandingLoader ? <LandingLoadingScreen /> : <ApexLoadingScreen />;
-    }
-
-    // Show onboarding for existing users who haven't personalized yet
-    if (isLoggedIn && needsOnboarding) {
-      return <OnboardingPage onComplete={handleOnboardingComplete} />;
-    }
-
-    return (
-      <div className="min-h-screen">
-        <Routes>
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/accessibility" element={<AccessibilityPage />} />
-          {!isLoggedIn ? (
-            <>
-              <Route path="/" element={<LandingPage onLogin={handleLogin} deferredPrompt={deferredPrompt} />} />
-              <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
-              <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-              {/* Redirect any other logged-out route to landing */}
-              <Route path="*" element={<Navigate to="/" />} />
-            </>
-          ) : (
-            <>
-              {/* When logged in, MainApp takes over root and handles all sub-routes */}
-              <Route path="/*" element={<MainApp onLogout={handleLogout} />} />
-            </>
-          )}
-        </Routes>
-      </div>
-    )
+    return showLandingLoader ? <LandingLoadingScreen /> : <ApexLoadingScreen />;
   }
 
-  export default App
+  // Show onboarding for existing users who haven't personalized yet
+  if (isLoggedIn && needsOnboarding) {
+    return <OnboardingPage onComplete={handleOnboardingComplete} />;
+  }
+
+  return (
+    <div className="min-h-screen">
+      <Routes>
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/accessibility" element={<AccessibilityPage />} />
+        {!isLoggedIn ? (
+          <>
+            <Route path="/" element={<LandingPage onLogin={handleLogin} deferredPrompt={deferredPrompt} />} />
+            <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
+            <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+            {/* Redirect any other logged-out route to landing */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </>
+        ) : (
+          <>
+            {/* When logged in, MainApp takes over root and handles all sub-routes */}
+            <Route path="/*" element={<MainApp onLogout={handleLogout} />} />
+          </>
+        )}
+      </Routes>
+    </div>
+  );
+}
+
+export default App;
