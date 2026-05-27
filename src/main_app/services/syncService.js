@@ -281,6 +281,7 @@ const syncService = {
           book_notes: new Date().toISOString(),
           book_spaces: new Date().toISOString(),
           exam_reminders: new Date().toISOString(),
+          book_reading_time: new Date().toISOString(),
           server_time: new Date().toISOString(),
         };
         serverTime = new Date().toISOString();
@@ -291,7 +292,7 @@ const syncService = {
       if (import.meta.env.DEV) console.log('[Apex Sync] Last synced at:', lastSyncedAt || 'never (first sync on this device)');
 
       // Step 3: Decide action per table — no client clock involved
-      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'tabs', 'book_notes', 'book_spaces', 'exam_reminders'];
+      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'tabs', 'book_notes', 'book_spaces', 'exam_reminders', 'book_reading_time'];
       const decisions = {};
 
       for (const table of tables) {
@@ -587,6 +588,45 @@ const syncService = {
           }));
           useStudyStore.getState().setExams(examsMapped);
           console.log('[Apex Sync] studyStore exams rehydrated:', examsMapped.length);
+        }
+
+        // ── BOOK READING TIME ──
+        if (tablesToPull.includes('book_reading_time') && pulledData.book_reading_time?.length > 0) {
+          console.log('[SyncPull] Merging book_reading_time:', pulledData.book_reading_time.length, 'rows from Supabase');
+          
+          for (const row of pulledData.book_reading_time) {
+            // Find matching local row by supabaseBookId + date
+            const existing = await db.book_reading_time
+              .where('date').equals(row.date)
+              .filter(r => r.supabaseBookId === row.book_id)
+              .first();
+
+            if (!existing) {
+              // Row exists in Supabase but not locally — add it
+              await db.book_reading_time.add({
+                bookId: null,  // local bookId unknown at pull time — set to null
+                supabaseBookId: row.book_id,
+                date: row.date,
+                minutes: row.minutes,
+                synced: 1,
+              });
+              console.log('[SyncPull] book_reading_time: added new row for book', row.book_id, 'date', row.date);
+            } else {
+              // Row exists locally — take the higher value (Supabase wins if it has more)
+              // This handles the case where another device flushed more minutes
+              if (row.minutes > existing.minutes) {
+                await db.book_reading_time.update(existing.id, {
+                  minutes: row.minutes,
+                  synced: 1,
+                });
+                console.log('[SyncPull] book_reading_time: updated local row —', existing.minutes, '→', row.minutes);
+              } else {
+                console.log('[SyncPull] book_reading_time: local row ahead or equal — keeping local value');
+              }
+            }
+          }
+          
+          console.log('[SyncPull] book_reading_time merge complete');
         }
 
         // ── AI CONVERSATIONS (Category B — always pull, no conflict resolution) ──
@@ -1668,8 +1708,8 @@ const syncService = {
           queue: batch.map(item => ({
             action: item.action,
             table_name: item.tableName,
-            local_id: item.local_id,
-            record_id: item.recordId,
+            local_id: String(item.local_id),
+            record_id: item.recordId ? String(item.recordId) : null,
             payload: { ...item.payload, local_queue_id: item.id }
           }))
         };
@@ -1683,19 +1723,23 @@ const syncService = {
             for (const item of synced) {
               const tableName = item.tableName || 'books';
               try {
-                let localRecord = await db[tableName]
-                  .where('local_id').equals(item.local_id)
-                  .first()
-                  .catch(() => null);
-
-                // Fallback: try by supabaseId if local_id lookup fails
-                if (!localRecord && item.record_id) {
-                  const bySupabaseId = await db[tableName]
-                    .where('supabaseId').equals(item.record_id)
+                let localRecord = null;
+                // book_reading_time has no local_id index and doesn't map to a specific Supabase row ID
+                if (tableName !== 'book_reading_time') {
+                  localRecord = await db[tableName]
+                    .where('local_id').equals(item.local_id)
                     .first()
                     .catch(() => null);
-                  if (bySupabaseId) {
-                    localRecord = bySupabaseId;
+
+                  // Fallback: try by supabaseId if local_id lookup fails
+                  if (!localRecord && item.record_id) {
+                    const bySupabaseId = await db[tableName]
+                      .where('supabaseId').equals(item.record_id)
+                      .first()
+                      .catch(() => null);
+                    if (bySupabaseId) {
+                      localRecord = bySupabaseId;
+                    }
                   }
                 }
 

@@ -17,6 +17,8 @@ import QuizView from './QuizView';
 import apiClient from '../../services/apiClient';
 import syncService from '../../services/syncService';
 import useToast from '../../hooks/useToast';
+import usePageVisitTracker from '../../hooks/usePageVisitTracker';
+import { useReadingTimeTracker } from '../../hooks/useReadingTimeTracker';
 import HighlightMenu from './HighlightMenu';
 import SimplifyModal from './SimplifyModal';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
@@ -192,10 +194,6 @@ function ReaderView() {
                 // Always runs — reading time and space activity are not streak-gated
                 if (activeSpaceId) {
                     logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
-                }
-
-                if (book?.id) {
-                    syncService.incrementReadingTime(book.id);
                 }
 
                 // Streak fires once per day only
