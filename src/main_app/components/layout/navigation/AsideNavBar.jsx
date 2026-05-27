@@ -109,7 +109,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
         </div>
 
         {/* Navigation Links: flex-1 ensures this section takes up the available vertical space */}
-        <nav className="flex-1 flex flex-col justify-between p-4 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 flex flex-col justify-between p-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
           <ul className="flex flex-col gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
