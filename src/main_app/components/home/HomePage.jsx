@@ -8,7 +8,7 @@ import TopNavBar from "../layout/navigation/TopNavBar";
 import { BookContext } from "../../context/BookContextInstance";
 
 function HomePage({ setIsMobileOpen }) {
-  const { books, addBookToShelf, handleBookClick } = useContext(BookContext);
+  const { books, booksLoading, addBookToShelf, handleBookClick } = useContext(BookContext);
   const { setActiveSpace } = useSpaceStore();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ function HomePage({ setIsMobileOpen }) {
       {!searchQuery && (
         <>
           <Header />
-          <FeaturedSlider lastReadBook={lastReadBook} />
+          <FeaturedSlider lastReadBook={lastReadBook} isLoading={booksLoading} />
         </>
       )}
 
