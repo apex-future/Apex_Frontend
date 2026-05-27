@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
-import { ArrowLeft, Heart, Share2, FolderPlus, CheckCircle2, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Heart, Share2, FolderPlus, CheckCircle2, Trash2, X, Edit2 } from 'lucide-react';
 import useSpaceStore from '../../store/spaceStore';
 import useThemeStore from '../../store/themeStore';
 
@@ -313,8 +313,8 @@ function BookDetails() {
                                 onClick={handleConfirmAddToSpace}
                                 className="w-full py-3.5 px-4 bg-accent-primary hover:bg-accent-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-accent-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                             >
-                                <FolderPlus size={18} fill="currentColor" />
-                                <span>Add to Bookspace</span>
+                                {isInAnySpace ? <Edit2 size={18} fill="currentColor" /> : <FolderPlus size={18} fill="currentColor" />}
+                                <span>{isInAnySpace ? "Edit" : "Add to Bookspace"}</span>
                             </button>
                         </div>
                     </div>
