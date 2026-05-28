@@ -1,7 +1,11 @@
-import { Menu, Search, Plus } from 'lucide-react'
+import { Menu, Search, Plus, Bell } from 'lucide-react'
 import StreakBadge from '../../ui/StreakBadge';
+import { useContext } from 'react';
+import { NavBarContext } from './NavBarContextInstance';
 
 function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
+  const { setIsNotificationOpen } = useContext(NavBarContext) || {};
+
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -62,6 +66,18 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
               <span className="hidden md:inline text-sm font-medium">Upload</span>
             </label>
           </div>
+
+          <button
+            onClick={() => setIsNotificationOpen && setIsNotificationOpen(true)}
+            className="hidden md:flex items-center justify-center p-2 rounded-full hover:bg-bg-subtle text-text-secondary hover:text-text-primary transition-all"
+            aria-label="Notifications"
+            title="Notifications"
+          >
+            <div className="relative flex items-center justify-center">
+              <Bell size={20} className="flex-shrink-0 transition-colors z-10" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-accent-primary rounded-full border-[1.5px] border-bg-elevated" />
+            </div>
+          </button>
 
           <div className="streak-wrapper h-full flex items-center">
             <StreakBadge />
