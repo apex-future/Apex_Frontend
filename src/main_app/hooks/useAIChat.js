@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { streamExplain, streamAsk } from '../services/aiService';
 import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
 import db from '../db/apex.db';
@@ -16,11 +16,18 @@ export default function useAIChat(options = {}) {
   const [sessionId, setSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   
+  // Ref for the abort controller to allow cancelling active requests
+  const abortControllerRef = React.useRef(null);
+  
   const createNewChat = useCallback(() => {
     setMessages([]);
     setSessionId(Date.now());
     setError(null);
     setIsStreaming(false);
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+    }
   }, []);
 
   // Load history on mount
@@ -161,6 +168,12 @@ export default function useAIChat(options = {}) {
     if (!text.trim() || isStreaming) return;
     setError(null);
 
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     const activeSessionId = sessionId || Date.now();
     if (!sessionId) setSessionId(activeSessionId);
 
@@ -174,8 +187,6 @@ export default function useAIChat(options = {}) {
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }));
 
-      // Resolve bookId to a Supabase UUID string if it's a local integer
-      // Prevents 22P02 Postgres errors for the remote ai_conversations insert
       let resolvedBookId = null;
       if (bookId) {
         if (typeof bookId === 'string' && bookId.includes('-')) {
@@ -194,18 +205,26 @@ export default function useAIChat(options = {}) {
         bookId: resolvedBookId,
         chatType: scope === 'general' ? 'general' : 'in_reader',
         conversationHistory: history,
-      });
+      }, controller.signal);
 
       await consumeStream(response, activeSessionId);
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      if (err.name !== 'AbortError') {
+        setError(err.message || 'Something went wrong. Please try again.');
+      }
       setIsStreaming(false);
     }
-  }, [isStreaming, messages, consumeStream, sessionId]);
+  }, [isStreaming, messages, consumeStream, sessionId, bookId, scope]);
 
   const sendExplain = useCallback(async (selectedText, context, bookTitle, displayContent) => {
     if (!selectedText.trim() || isStreaming) return;
     setError(null);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     const activeSessionId = sessionId || Date.now();
     if (!sessionId) setSessionId(activeSessionId);
@@ -240,14 +259,16 @@ export default function useAIChat(options = {}) {
         bookId: resolvedBookId,
         chatType: 'in_reader',
         conversationHistory: history,
-      });
+      }, controller.signal);
 
       await consumeStream(response, activeSessionId);
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      if (err.name !== 'AbortError') {
+        setError(err.message || 'Something went wrong. Please try again.');
+      }
       setIsStreaming(false);
     }
-  }, [isStreaming, messages, consumeStream, sessionId]);
+  }, [isStreaming, messages, consumeStream, sessionId, bookId]);
 
   const switchChat = useCallback((session) => {
     if (isStreaming) return;
@@ -268,6 +289,14 @@ export default function useAIChat(options = {}) {
     }
   }, [sessionId, createNewChat, loadHistory]);
 
+  const stopGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+    }
+    setIsStreaming(false);
+  }, []);
+
   return {
     messages,
     isStreaming,
@@ -276,6 +305,7 @@ export default function useAIChat(options = {}) {
     chatHistory,
     sendMessage,
     sendExplain,
+    stopGeneration,
     createNewChat,
     switchChat,
     deleteSession,

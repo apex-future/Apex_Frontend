@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { X, Send, Sparkle, Info, RotateCcw, Trash2, AlertCircle, Highlighter, User, SquarePen, MessageSquare, History, ArrowLeft, BookOpen } from 'lucide-react'
+import { X, Send, Sparkle, Info, RotateCcw, Trash2, AlertCircle, Highlighter, User, SquarePen, MessageSquare, History, ArrowLeft, BookOpen, Square } from 'lucide-react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
@@ -13,6 +13,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
     sessionId,
     chatHistory,
     sendMessage,
+    stopGeneration,
     createNewChat,
     switchChat,
     deleteSession,
@@ -317,14 +318,18 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
                 style={{ height: '44px' }}
               />
               <button
-                type='submit'
-                disabled={!inputValue.trim() || isStreaming}
-                className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center flex-shrink-0 self-end mb-0.5 ${inputValue.trim() && !isStreaming
+                type={isStreaming ? 'button' : 'submit'}
+                disabled={!inputValue.trim() && !isStreaming}
+                onClick={isStreaming ? stopGeneration : undefined}
+                className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center flex-shrink-0 self-end mb-0.5 ${isStreaming
+                  ? 'bg-red-50 text-red-500 shadow-xl shadow-red-500/10 hover:bg-red-100 hover:scale-110 active:scale-95 border border-red-200'
+                  : inputValue.trim()
                   ? 'bg-accent-primary text-bg-elevated shadow-xl shadow-accent-primary/20 hover:scale-110 active:scale-95'
                   : 'bg-slate-300 text-text-tertiary cursor-not-allowed'
                   }`}
+                title={isStreaming ? "Stop generation" : "Send message"}
               >
-                <Send size={20} />
+                {isStreaming ? <Square size={16} fill="currentColor" /> : <Send size={20} />}
               </button>
             </div>
           </form>

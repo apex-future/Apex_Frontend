@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { Send, ArrowLeft, User, Sparkle, RotateCcw, Trash2, AlertCircle, Plus, MessageSquare, PanelRightOpen, PanelRightClose, MoreVertical, X, SquarePen, BookOpen } from 'lucide-react'
+import { Send, ArrowLeft, User, Sparkle, RotateCcw, Trash2, AlertCircle, Plus, MessageSquare, PanelRightOpen, PanelRightClose, MoreVertical, X, SquarePen, BookOpen, Square } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -18,6 +18,7 @@ function ApexAI() {
         createNewChat,
         switchChat,
         deleteSession,
+        stopGeneration,
         retry,
     } = useAIChat();
 
@@ -257,14 +258,18 @@ function ApexAI() {
                                 style={{ height: '48px' }}
                             />
                             <button
-                                type='submit'
-                                disabled={!inputValue.trim() || isStreaming}
-                                className={`p-3 rounded-full transition-all flex items-center justify-center flex-shrink-0 self-end mb-0.5 ${inputValue.trim() && !isStreaming
+                                type={isStreaming ? 'button' : 'submit'}
+                                disabled={!inputValue.trim() && !isStreaming}
+                                onClick={isStreaming ? stopGeneration : undefined}
+                                className={`p-3 rounded-full transition-all flex items-center justify-center flex-shrink-0 self-end mb-0.5 ${isStreaming
+                                    ? 'bg-red-50 text-red-500 shadow-lg shadow-red-500/10 hover:bg-red-100 border border-red-200 hover:-translate-y-0.5 active:translate-y-0'
+                                    : inputValue.trim()
                                     ? 'bg-accent-primary text-bg-elevated shadow-lg shadow-accent-primary/20 hover:bg-accent-hover hover:-translate-y-0.5 active:translate-y-0'
                                     : 'bg-bg-subtle text-text-placeholder cursor-not-allowed'
                                     }`}
+                                title={isStreaming ? "Stop generation" : "Send message"}
                             >
-                                <Send size={22} />
+                                {isStreaming ? <Square size={16} fill="currentColor" /> : <Send size={22} />}
                             </button>
                         </div>
                     </form>
