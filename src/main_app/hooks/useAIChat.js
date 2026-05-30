@@ -182,9 +182,6 @@ export default function useAIChat(options = {}) {
     setMessages(newMessages);
     setIsStreaming(true);
 
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }));
 
@@ -235,9 +232,6 @@ export default function useAIChat(options = {}) {
 
     setMessages(newMessages);
     setIsStreaming(true);
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
 
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }));
