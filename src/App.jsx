@@ -100,11 +100,18 @@ function App() {
         return;
       }
 
+<<<<<<< HEAD
       // User has a token — render immediately from whatever is cached locally
       // Apply theme from localStorage before render so there's no flash
       useThemeStore.getState().initTheme();
 
       // Unblock the app immediately — Dexie has the data, render it
+=======
+      // User has a token — render immediately from local Dexie data
+      // Apply theme before render to prevent flash
+      useThemeStore.getState().initTheme();
+
+>>>>>>> 164a53671c7dcfa78cfde50a1906475aef151f3e
       setIsLoggedIn(true);
       setLoading(false);
 
@@ -137,12 +144,18 @@ function App() {
       } catch (error) {
         console.error('Auth verification failed:', error.message);
         if (error.response?.status === 401) {
+<<<<<<< HEAD
           // Token is dead — log out silently
+=======
+>>>>>>> 164a53671c7dcfa78cfde50a1906475aef151f3e
           authService.logout();
           useAuthStore.getState().clearUser();
           setIsLoggedIn(false);
         } else {
+<<<<<<< HEAD
           // Network error — stay logged in, local data is already rendering
+=======
+>>>>>>> 164a53671c7dcfa78cfde50a1906475aef151f3e
           console.log('[Apex Auth] Network error during background auth check — continuing with local session');
           const cachedUser = useAuthStore.getState().user;
           if (cachedUser && !cachedUser.user_type) setNeedsOnboarding(true);

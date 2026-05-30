@@ -1,7 +1,11 @@
 {
   "name": "apex",
   "private": true,
+<<<<<<< HEAD
   "version": "2.1.1",
+=======
+  "version": "1.9.3",
+>>>>>>> 164a53671c7dcfa78cfde50a1906475aef151f3e
   "type": "module",
   "scripts": {
     "dev": "vite",

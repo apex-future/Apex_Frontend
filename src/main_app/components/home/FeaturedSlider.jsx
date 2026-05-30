@@ -4,7 +4,7 @@ import ExamReminder from './ExamReminder';
 import LastReadCard from './LastReadCard';
 import StreakCard from './StreakCard';
 
-const FeaturedSlider = ({ lastReadBook }) => {
+const FeaturedSlider = ({ lastReadBook, isLoading }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isLarge, setIsLarge] = useState(window.innerWidth >= 1024);
     const scrollRef = useRef(null);
@@ -18,7 +18,7 @@ const FeaturedSlider = ({ lastReadBook }) => {
 
     // Slide definition based on screen size
     const slides = [
-        { id: 'lastRead', component: <LastReadCard book={lastReadBook} /> },
+        { id: 'lastRead', component: <LastReadCard book={lastReadBook} isLoading={isLoading} /> },
         ...(isLarge 
             ? [{ 
                 id: 'combined', 
