@@ -103,6 +103,7 @@ function App() {
       // User has a token — render immediately from local Dexie data
       // Apply theme before render to prevent flash
       useThemeStore.getState().initTheme();
+
       setIsLoggedIn(true);
       setLoading(false);
 
@@ -234,7 +235,7 @@ function App() {
         )}
       </Routes>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

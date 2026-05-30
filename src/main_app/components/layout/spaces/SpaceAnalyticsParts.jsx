@@ -291,29 +291,66 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
   }, [rawActivity, selectedDateStr, spaceBooks]);
 
   const dayTotalMins = dayReadingSessions.reduce((s, ev) => s + ev.estimatedMins, 0);
+  const actualDayTotalMins = displayWeeklyTime[selectedDayIdx]?.minutes || 0;
 
   // Group by segment → bundle by book
   const segments = useMemo(() => {
     const segs = { Morning: [], Afternoon: [], Evening: [] };
+    
+    const actualDayData = displayWeeklyTime[selectedDayIdx] || {};
+    const actualByBook = actualDayData.by_book || {};
+
+    // Calculate the total estimated minutes PER BOOK for the day
+    const estimatedTotalByBook = {};
     dayReadingSessions.forEach(ev => {
+      estimatedTotalByBook[ev.book_id] = (estimatedTotalByBook[ev.book_id] || 0) + ev.estimatedMins;
+    });
+
+    // Proportional distribution: scale the rough page-based estimates
+    // so they perfectly sum up to the true logged reading time for that specific book.
+    const scaledSessions = dayReadingSessions.map(ev => {
+      let scaledMins = ev.estimatedMins;
+      const actualBookMins = actualByBook[ev.book_id] || 0;
+      const estimatedBookMins = estimatedTotalByBook[ev.book_id] || 0;
+
+      if (actualBookMins > 0) {
+        if (estimatedBookMins > 0) {
+          scaledMins = ev.estimatedMins * (actualBookMins / estimatedBookMins);
+        } else {
+          // If a book has 0 estimated mins but actual mins > 0, just divide evenly among its sessions
+          const bookSessionsCount = dayReadingSessions.filter(s => s.book_id === ev.book_id).length;
+          scaledMins = actualBookMins / (bookSessionsCount || 1);
+        }
+      } else {
+        // If actualBookMins is 0 (or missing, e.g. deleted from Supabase), it should be 0!
+        scaledMins = 0;
+      }
+      
+      return { ...ev, scaledMins };
+    });
+
+    scaledSessions.forEach(ev => {
       if (ev.hour < 12) segs.Morning.push(ev);
       else if (ev.hour < 18) segs.Afternoon.push(ev);
       else segs.Evening.push(ev);
     });
+
     const bundleByBook = (events) => {
       const byBook = {};
       events.forEach(ev => {
         if (!byBook[ev.bookTitle]) byBook[ev.bookTitle] = { bookTitle: ev.bookTitle, totalMins: 0 };
-        byBook[ev.bookTitle].totalMins += ev.estimatedMins;
+        byBook[ev.bookTitle].totalMins += ev.scaledMins;
       });
-      return Object.values(byBook);
+      // Round the scaled values here for display
+      return Object.values(byBook).map(b => ({ ...b, totalMins: Math.round(b.totalMins) }));
     };
+
     return {
       Morning: bundleByBook(segs.Morning),
       Afternoon: bundleByBook(segs.Afternoon),
       Evening: bundleByBook(segs.Evening),
     };
-  }, [dayReadingSessions]);
+  }, [dayReadingSessions, actualDayTotalMins, dayTotalMins]);
 
   // Histogram values
   const totalMins = displayWeeklyTime.reduce((s, d) => s + d.minutes, 0);
@@ -431,7 +468,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
             {selectedDayLabel}
           </span>
           <span style={{ fontSize: 11, fontWeight: 600, color: 'rgb(var(--text-tertiary))' }}>
-            {dayTotalMins > 0 ? `${fmtTime(dayTotalMins)} studied` : ''}
+            {actualDayTotalMins > 0 ? `${fmtTime(actualDayTotalMins)} studied` : ''}
           </span>
         </div>
 

@@ -212,4 +212,11 @@ db.version(17).stores({
   console.log('[Apex DB] v17: book_reading_time table added');
 });
 
+// Version 18: Add compound indexes to book_reading_time
+db.version(18).stores({
+  book_reading_time: '++id, bookId, supabaseBookId, date, [bookId+date], [supabaseBookId+date], minutes, synced',
+}).upgrade(async () => {
+  console.log('[Apex DB] v18: book_reading_time compound indexes added');
+});
+
 export default db;

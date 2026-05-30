@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Heart, Eye, Bookmark, Trash, X, Info } from "lucide-react";
+import { Heart, Eye, FolderPlus, Trash, X, Info, Edit2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
 import ConfirmModal from '../ui/ConfirmModal';
@@ -22,6 +22,7 @@ export default function BookCard({ book, onClick }) {
     const { toggleFavorite, toggleBookmarkedBook, deleteBookFromShelves } = useContext(BookContext) || {};
     const { spaces, addBookToSpace, removeBookFromSpace } = useSpaceStore();
     const { resolvedTheme } = useThemeStore();
+    const isInAnySpace = spaces.filter(s => !s.isSystem).some(s => s.bookIds.includes(book.id));
 
     // State for modals
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -43,7 +44,6 @@ export default function BookCard({ book, onClick }) {
         e.stopPropagation();
         // Pre-fill with current spaces the book is in
         const currentIds = [];
-        if (book.isBookmarked) currentIds.push('general');
         spaces.filter(s => !s.isSystem).forEach(s => {
             if (s.bookIds.includes(book.id)) currentIds.push(s.id);
         });
@@ -58,11 +58,8 @@ export default function BookCard({ book, onClick }) {
     };
 
     const handleConfirmAddToSpace = async () => {
-        // Sync Bookmark state
-        const shouldBeBookmarked = selectedIds.includes('general');
-        if (shouldBeBookmarked !== book.isBookmarked && toggleBookmarkedBook) {
-            toggleBookmarkedBook(book.id);
-        }
+        // Close modal immediately so user doesn't see states change while syncing
+        setShowSpaceModal(false);
 
         // Sync Custom Spaces
         for (const space of spaces.filter(s => !s.isSystem)) {
@@ -75,8 +72,6 @@ export default function BookCard({ book, onClick }) {
                 await removeBookFromSpace(space.id, book.id);
             }
         }
-        
-        setShowSpaceModal(false);
     };
 
     const handleDeleteClick = (e) => {
@@ -227,9 +222,10 @@ export default function BookCard({ book, onClick }) {
                         </button>
                         <button
                             onClick={handleBookmarkClick}
-                            className={`transition-colors ${book.isBookmarked ? 'text-accent-primary' : 'text-gray-400 hover:text-accent-primary'}`}
+                            className={`transition-colors ${isInAnySpace ? 'text-accent-primary' : 'text-gray-400 hover:text-accent-primary'}`}
+                            title="Add to Bookspace"
                         >
-                            <Bookmark size={20} fill={book.isBookmarked ? 'currentColor' : 'none'} />
+                            <FolderPlus size={20} fill={isInAnySpace ? 'currentColor' : 'none'} />
                         </button>
                         <button
                             onClick={handleDeleteClick}
@@ -289,24 +285,6 @@ export default function BookCard({ book, onClick }) {
                         </div>
                         
                         <div className="p-3 max-h-[50vh] overflow-y-auto space-y-1 custom-scrollbar">
-                            {/* General Bookmarks */}
-                            <div 
-                                className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all group ${selectedIds.includes('general') ? 'bg-accent-primary/5 border border-accent-primary/20' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 border border-transparent'}`}
-                                onClick={() => toggleSelection('general')}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-xl transition-colors ${selectedIds.includes('general') ? 'bg-accent-primary/10 text-accent-primary' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'}`}>
-                                        <Bookmark size={18} fill={selectedIds.includes('general') ? 'currentColor' : 'none'} />
-                                    </div>
-                                    <span className="font-semibold text-neutral-700 dark:text-neutral-200 text-sm block">General Bookmarks</span>
-                                </div>
-                                <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${selectedIds.includes('general') ? 'bg-accent-primary border-accent-primary' : 'border-neutral-300 dark:border-neutral-600 group-hover:border-accent-primary/50'}`}>
-                                    {selectedIds.includes('general') && <span className="text-white text-[10px] font-bold">✓</span>}
-                                </div>
-                            </div>
-
-                            <div className="h-px bg-neutral-100 dark:bg-neutral-800 my-2 mx-3" />
-
                             {/* Custom Spaces */}
                             {spaces.filter(s => !s.isSystem).map(space => {
                                 const isSelected = selectedIds.includes(space.id);
@@ -332,7 +310,7 @@ export default function BookCard({ book, onClick }) {
                             {spaces.filter(s => !s.isSystem).length === 0 && (
                                 <div className="text-center py-8 px-4">
                                     <div className="w-12 h-12 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <Bookmark size={20} className="text-neutral-400" />
+                                        <FolderPlus size={20} className="text-neutral-400" />
                                     </div>
                                     <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">No custom spaces yet</p>
                                     <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Create spaces to organize your library.</p>
@@ -346,8 +324,8 @@ export default function BookCard({ book, onClick }) {
                                 onClick={handleConfirmAddToSpace}
                                 className="w-full py-3.5 px-4 bg-accent-primary hover:bg-accent-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-accent-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                             >
-                                <Bookmark size={18} fill="currentColor" />
-                                <span>Add to Bookspace</span>
+                                {isInAnySpace ? <Edit2 size={18} fill="currentColor" /> : <FolderPlus size={18} fill="currentColor" />}
+                                <span>{isInAnySpace ? "Edit" : "Add to Bookspace"}</span>
                             </button>
                         </div>
                     </div>

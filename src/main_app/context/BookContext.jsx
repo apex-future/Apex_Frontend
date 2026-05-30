@@ -17,7 +17,6 @@ export const BookProvider = ({ children }) => {
     return spaces.map(space => {
       const spaceBooks = allBooks.filter(b => {
         if (space.id === 'favorites') return b.isFavorite;
-        if (space.id === 'bookmarks') return b.isBookmarked;
         if (space.id === 'active-reading') {
           const isOrphaned = b.shelfName && !currentSpaceNames.includes(b.shelfName);
           return b.shelfName === 'Active Reading' || !b.shelfName || isOrphaned;
@@ -36,7 +35,6 @@ export const BookProvider = ({ children }) => {
       const prevShelves = spaces.map(space => {
         const spaceBooks = prevBooks.filter(b => {
           if (space.id === 'favorites') return b.isFavorite;
-          if (space.id === 'bookmarks') return b.isBookmarked;
           if (space.id === 'active-reading') {
             const isOrphaned = b.shelfName && !currentSpaceNames.includes(b.shelfName);
             return b.shelfName === 'Active Reading' || !b.shelfName || isOrphaned;
@@ -76,10 +74,10 @@ export const BookProvider = ({ children }) => {
           // Reconstruct File objects from stored ArrayBuffers
           const hydratedBooks = storedBooks.map(b => {
             if (b.fileBlob && !b.file) {
-              const fileExt = b.fileType === 'application/epub+zip' ? '.epub' : 
-                          b.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' : 
-                          b.fileType === 'application/msword' ? '.doc' : 
-                          '.pdf';
+              const fileExt = b.fileType === 'application/epub+zip' ? '.epub' :
+                b.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' :
+                  b.fileType === 'application/msword' ? '.doc' :
+                    '.pdf';
               const file = new File([b.fileBlob], b.title + fileExt, { type: b.fileType || 'application/pdf' });
               return { ...b, file };
             }
@@ -416,10 +414,10 @@ export const BookProvider = ({ children }) => {
       }
 
       // Reconstruct the File object for the UI
-      const fileExt = book.fileType === 'application/epub+zip' ? '.epub' : 
-                   book.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' : 
-                   book.fileType === 'application/msword' ? '.doc' : 
-                   '.pdf';
+      const fileExt = book.fileType === 'application/epub+zip' ? '.epub' :
+        book.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' :
+          book.fileType === 'application/msword' ? '.doc' :
+            '.pdf';
       const fileName = book.title + fileExt;
       const fileType = blob.type || book.fileType || 'application/pdf';
       const file = new File([blob], fileName, { type: fileType });
@@ -774,7 +772,7 @@ export const BookProvider = ({ children }) => {
       }
 
       // Delete the book by integer id
-      await db.books.delete(targetId).catch(() => {});
+      await db.books.delete(targetId).catch(() => { });
       console.log('[Apex] Dexie delete complete for bookId:', targetId);
 
       // Step 5: Delete from Supabase directly (not via sync queue)
@@ -926,7 +924,7 @@ export const BookProvider = ({ children }) => {
     if (typeof highlightId === 'number') {
       highlightRecord = await db.highlights.get(highlightId).catch(() => null);
     }
-    
+
     // Fallback lookups
     if (!highlightRecord) {
       if (typeof highlightId === 'string' && highlightId.includes('-')) {

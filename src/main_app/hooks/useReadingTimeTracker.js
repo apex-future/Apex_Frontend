@@ -3,6 +3,7 @@ import db from '../db/apex.db';
 
 const MIN_SESSION_SECONDS = 60; // discard fragments under 1 minute
 const TICK_INTERVAL_MS = 60000; // 1 minute
+const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 /**
  * useReadingTimeTracker
@@ -21,6 +22,9 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
   const tickIntervalRef = useRef(null);
   const visibilityPausedRef = useRef(false);
   const sessionStartRef = useRef(null);
+  // Refs for heartbeat and delta tracking
+  const heartbeatRef = useRef(null);
+  const lastFlushedMinutesRef = useRef(0);
 
   function getTodayStr() {
     const d = new Date();
@@ -32,7 +36,7 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
     const today = getTodayStr();
     try {
       const existing = await db.book_reading_time
-        .where({ bookId, date: today }).first();
+        .where('[bookId+date]').equals([bookId, today]).first();
       if (existing) {
         await db.book_reading_time.update(existing.id, {
           minutes: existing.minutes + 1,
@@ -58,31 +62,37 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
     const today = getTodayStr();
     try {
       const record = await db.book_reading_time
-        .where({ bookId, date: today }).first();
+        .where('[bookId+date]').equals([bookId, today]).first();
       if (!record || record.minutes < 1) {
         console.log('[ReadingTimeTracker] Nothing to flush — under 1 minute');
         return;
       }
-      if (record.synced === 1) {
-        console.log('[ReadingTimeTracker] Already synced for today — skipping flush');
+      // Compute delta since last flush
+      const delta = record.minutes - lastFlushedMinutesRef.current;
+      if (delta <= 0) {
+        console.log('[ReadingTimeTracker] No new minutes since last flush — skipping');
         return;
       }
       await db.sync_queue.add({
         action: 'increment',
         tableName: 'book_reading_time',
-        local_id: record.id,
+        // Use a UUID for local_id to avoid collisions
+        local_id: crypto.randomUUID(),
         recordId: null,
         payload: {
           book_id: supabaseBookId,
           date: today,
-          minutes: record.minutes,
+          minutes: delta, // send only delta
         },
         createdAt: new Date().toISOString(),
         attempts: 0,
         status: 'pending',
       });
+      // Update last flushed marker
+      lastFlushedMinutesRef.current = record.minutes;
+      console.log('[ReadingTimeTracker] Flushed delta of', delta, 'minutes (total today:', record.minutes, ') for book', supabaseBookId);
+      // Keep synced flag for backward compatibility but set to 1
       await db.book_reading_time.update(record.id, { synced: 1 });
-      console.log('[ReadingTimeTracker] Flushed', record.minutes, 'minutes to sync queue for book', supabaseBookId);
     } catch (err) {
       console.error('[ReadingTimeTracker] Flush failed:', err);
     }
@@ -111,7 +121,37 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
   useEffect(() => {
     if (!isEnabled || !bookId || !supabaseBookId) return;
 
+    // Seed lastFlushedMinutesRef from local Dexie record.
+    // This ensures that if the user already accumulated minutes earlier today,
+    // we don't re-send them as a new delta on the next heartbeat.
+    async function seedLastFlushed() {
+      try {
+        const today = getTodayStr();
+        const record = await db.book_reading_time
+          .where('[bookId+date]').equals([bookId, today]).first();
+        if (record && record.minutes > 0) {
+          lastFlushedMinutesRef.current = record.minutes;
+          console.log('[ReadingTimeTracker] Seeded lastFlushed from Dexie:', record.minutes);
+        } else {
+          lastFlushedMinutesRef.current = 0;
+          console.log('[ReadingTimeTracker] No existing Dexie record for today — starting delta from 0');
+        }
+      } catch (err) {
+        console.warn('[ReadingTimeTracker] Could not seed lastFlushed — defaulting to 0');
+        lastFlushedMinutesRef.current = 0;
+      }
+    }
+
+    seedLastFlushed();
     startTick();
+
+    // Heartbeat flush — every 5 minutes during active reading
+    heartbeatRef.current = setInterval(async () => {
+      if (!visibilityPausedRef.current) {
+        console.log('[ReadingTimeTracker] Heartbeat flush firing');
+        await flushSessionToQueue();
+      }
+    }, HEARTBEAT_INTERVAL_MS);
 
     function handleVisibilityChange() {
       if (document.visibilityState === 'hidden') {
@@ -120,7 +160,6 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
         flushSessionToQueue();
       } else {
         visibilityPausedRef.current = false;
-        console.log('[ReadingTimeTracker] Resumed — app visible');
       }
     }
 
@@ -135,6 +174,11 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
       stopTick();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Cleanup heartbeat interval
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
       // Session end — flush whatever accumulated
       flushSessionToQueue();
       console.log('[ReadingTimeTracker] Cleanup — session ended for book', bookId);

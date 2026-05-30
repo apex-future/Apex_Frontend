@@ -109,7 +109,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
         </div>
 
         {/* Navigation Links: flex-1 ensures this section takes up the available vertical space */}
-        <nav className="flex-1 flex flex-col justify-between p-4 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 flex flex-col justify-between p-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
           <ul className="flex flex-col gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -198,31 +198,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                 </button>
               </div>
             </li>
-            <li>
-              <button
-                onClick={() => {
-                  if (setIsNotificationOpen) setIsNotificationOpen(true);
-                  if (isMobileOpen) closeMobileNav();
-                }}
-                className={`flex items-center p-3 rounded-xl transition-all duration-300 w-full
-                  ${!isExpanded ? 'justify-center' : 'gap-3'}
-                  text-text-secondary hover:bg-bg-subtle hover:text-text-primary`}
-                title={!isExpanded ? 'Notifications' : ''}
-              >
-                <div className="relative">
-                  <Bell size={20} className="flex-shrink-0 transition-colors z-10" />
-                  <span className="absolute top-0 right-0 w-2 h-2 bg-accent-primary rounded-full border-2 border-bg-elevated" />
-                </div>
-                <span
-                  className={`
-                    whitespace-nowrap transition-all duration-300 text-sm z-10 text-left
-                    ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
-                  `}
-                >
-                  Notifications
-                </span>
-              </button>
-            </li>
+
             <li>
               <NavLink
                 to="/profile"
