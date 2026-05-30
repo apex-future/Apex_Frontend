@@ -8,12 +8,8 @@ import TopNavBar from "../layout/navigation/TopNavBar";
 import { BookContext } from "../../context/BookContextInstance";
 
 function HomePage({ setIsMobileOpen }) {
-<<<<<<< HEAD
-  const { books, addBookToShelf, handleBookClick } = useContext(BookContext);
-  const { setActiveSpace } = useSpaceStore();
-=======
   const { books, booksLoading, addBookToShelf, handleBookClick } = useContext(BookContext);
->>>>>>> 164a53671c7dcfa78cfde50a1906475aef151f3e
+  const { setActiveSpace } = useSpaceStore();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 

@@ -9,6 +9,7 @@ import { pdfjs } from 'react-pdf';
 export const BookProvider = ({ children }) => {
   const { spaces, addBookToSpace, removeBookFromSpace } = useSpaceStore();
   const [allBooks, setAllBooks] = useState([]);
+  const [booksLoading, setBooksLoading] = useState(true);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   const shelves = useMemo(() => {
@@ -205,6 +206,8 @@ export const BookProvider = ({ children }) => {
         }
       } catch (error) {
         console.error("Failed to load books from Dexie:", error);
+      } finally {
+        setBooksLoading(false);
       }
     };
     loadBooks();
@@ -1138,6 +1141,7 @@ export const BookProvider = ({ children }) => {
     <BookContext.Provider value={{
       shelves,
       books,
+      booksLoading,
       addBookToShelf,
       downloadMissingFile,
       updateBookProgress,
