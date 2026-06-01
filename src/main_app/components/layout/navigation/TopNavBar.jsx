@@ -1,9 +1,9 @@
-import { Menu, Search, Plus, Bell } from 'lucide-react'
+import { Menu, Plus, Bell, Crown } from 'lucide-react'
 import StreakBadge from '../../ui/StreakBadge';
 import { useContext } from 'react';
 import { NavBarContext } from './NavBarContextInstance';
 
-function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
+function TopNavBar({ setIsMobileOpen, onUpload }) {
   const { setIsNotificationOpen } = useContext(NavBarContext) || {};
 
   const handleFileChange = (e) => {
@@ -15,8 +15,20 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
     }
   };
   return (
-    <nav className='sticky top-0 z-40 w-full p-2 py-4 bg-bg-elevated/80 backdrop-blur-md border-border-subtle'>
+    <nav className='sticky top-0 z-40 w-full px-4 md:px-8 py-4 bg-bg-elevated/80 backdrop-blur-md border-border-subtle relative'>
       <div className="nav-wrapper flex justify-between w-full p-0 md:p-1 items-center gap-3">
+
+        {/* Go Pro Premium Badge - Desktop Only (Left Side) */}
+        <button 
+          className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-yellow-500/15 border border-amber-500/30 hover:border-amber-400/60 text-amber-400 hover:text-amber-300 transition-all duration-300 hover:shadow-[0_0_12px_rgba(245,158,11,0.25)] group"
+          aria-label="Go Pro"
+          title="Go Pro"
+        >
+          <Crown size={15} className="fill-amber-500/20 text-amber-500 group-hover:scale-110 transition-transform duration-300" />
+          <span className="text-xs font-semibold tracking-wide uppercase">
+            Go Pro
+          </span>
+        </button>
 
         {/* Mobile Menu Button - Only visible on mobile */}
         <button
@@ -27,26 +39,20 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
           <Menu size={24} className="text-text-primary" />
         </button>
 
-        {/* Search Bar - Glassmorphic with Thick Border */}
-        {/* Search Bar - Responsive */}
-        <form
-          className="search-bar flex justify-end md:justify-center items-center gap-2 w-full md:max-w-2xl mx-auto flex-1"
-          onSubmit={(e) => e.preventDefault()}
-        >
-          <div className="relative w-full flex items-center bg-card-glass backdrop-blur-md border-2 border-border-default rounded-full hover:border-text-tertiary focus-within:border-accent-primary transition-all shadow-sm">
-            <Search className='absolute left-3 md:left-4 text-text-tertiary pointer-events-none' size={18} />
-            <input
-              type="text"
-              className="w-full pl-10 md:pl-11 pr-4 py-2 md:py-2.5 rounded-full placeholder:text-sm placeholder:text-text-placeholder focus:outline-none bg-transparent text-text-primary text-sm md:text-base"
-              placeholder='Search books...'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </form>
-
         {/* Upload & Streak Group */}
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-2 md:gap-3 ml-auto">
+          
+          {/* Go Pro Premium Badge - Mobile Only (Right Side, beside Bell) */}
+          <button 
+            className="flex md:hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-yellow-500/15 border border-amber-500/30 hover:border-amber-400/60 text-amber-400 hover:text-amber-300 transition-all duration-300 hover:shadow-[0_0_12px_rgba(245,158,11,0.25)] group"
+            aria-label="Go Pro"
+            title="Go Pro"
+          >
+            <Crown size={15} className="fill-amber-500/20 text-amber-500 group-hover:scale-110 transition-transform duration-300" />
+            <span className="text-xs font-semibold tracking-wide uppercase">
+              Go Pro
+            </span>
+          </button>
           
           {/* Upload Button - Responsive */}
           <div className="md:flex hidden items-center h-full">
@@ -69,7 +75,7 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
 
           <button
             onClick={() => setIsNotificationOpen && setIsNotificationOpen(true)}
-            className="hidden md:flex items-center justify-center p-2 rounded-full hover:bg-bg-subtle text-text-secondary hover:text-text-primary transition-all"
+            className="flex items-center justify-center p-2 rounded-full hover:bg-bg-subtle text-text-secondary hover:text-text-primary transition-all"
             aria-label="Notifications"
             title="Notifications"
           >

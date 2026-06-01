@@ -50,8 +50,6 @@ function HomePage({ setIsMobileOpen }) {
       <TopNavBar
         setIsMobileOpen={setIsMobileOpen}
         onUpload={onUpload}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
       />
 
       {/* Only show Header and Slider when not searching */}
@@ -66,6 +64,8 @@ function HomePage({ setIsMobileOpen }) {
         books={filteredBooks}
         onBookClick={handleBookNavigate}
         isSearching={!!searchQuery}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
     </div>
   )

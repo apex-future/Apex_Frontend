@@ -1,4 +1,4 @@
-import { Home, Plus, User, TrendingUp, Bell, ScrollText } from 'lucide-react'
+import { Home, Plus, User, ScrollText } from 'lucide-react'
 import React, { useContext, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BookContext } from '../../../context/BookContextInstance';
@@ -93,18 +93,6 @@ function BottomNavBar() {
           <Plus className='text-white' size={24} />
         </label>
       </div>
-
-      <button
-        onClick={() => {
-          if (setIsNotificationOpen) setIsNotificationOpen(true);
-        }}
-        className="p-2 hover:bg-neutral-100/50 dark:hover:bg-white/10 rounded-full transition-all relative flex flex-col items-center group text-[#404040] dark:text-zinc-400"
-      >
-        <div className="relative">
-          <Bell size={20} />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-accent-primary rounded-full border-2 border-white dark:border-zinc-900" />
-        </div>
-      </button>
 
       <NavLink
         to="/profile"
