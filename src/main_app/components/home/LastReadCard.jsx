@@ -9,7 +9,7 @@ const LastReadCard = ({ book, isLoading }) => {
         return (
             <div className="w-full h-full flex flex-col">
                 <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Last Read</h2>
-                <div className="bg-card-glass backdrop-blur-md rounded-card p-4 border border-border-default shadow-sm min-h-[14rem] flex-1 flex flex-col justify-between">
+                <div className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 rounded-card p-4 min-h-[14rem] flex-1 flex flex-col justify-between">
                     <div className="flex gap-4 md:gap-8 flex-1 mb-4">
                         {/* Cover skeleton */}
                         <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md flex-shrink-0 bg-white/5 animate-pulse" />
@@ -42,7 +42,7 @@ const LastReadCard = ({ book, isLoading }) => {
         return (
             <div className="w-full h-full flex flex-col">
                 <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Last Read</h2>
-                <div className="bg-card-glass backdrop-blur-md rounded-card p-4 border border-border-default min-h-[14rem] flex-1 flex items-center justify-center shadow-sm">
+                <div className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 rounded-card p-4 min-h-[14rem] flex-1 flex items-center justify-center">
                     <p className="text-text-tertiary font-medium">No recent books</p>
                 </div>
             </div>
@@ -55,7 +55,7 @@ const LastReadCard = ({ book, isLoading }) => {
         <div className="w-full h-full flex flex-col">
             <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Last Read</h2>
             <div
-                className="bg-card-glass backdrop-blur-md rounded-card p-4 border border-border-default transition-all duration-300 group overflow-hidden shadow-sm relative min-h-[14rem] flex-1 flex flex-col justify-between"
+                className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 rounded-card p-4 transition-all duration-300 group overflow-hidden relative min-h-[14rem] flex-1 flex flex-col justify-between"
             >
                 <div className="flex gap-4 md:gap-8 w-full overflow-hidden flex-1 mb-4">
                     <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-sm flex-shrink-0 bg-bg-subtle border border-border-subtle group-hover:scale-[1.02] transition-transform duration-300">

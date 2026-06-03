@@ -31,7 +31,7 @@ const CardContainer = ({ children, onClick, className = '', title = '', activeEx
         </div>
         <div
             onClick={onClick}
-            className={`bg-card-glass backdrop-blur-xl rounded-card p-4 px-6 border-2 border-border-default transition-all duration-500 group relative min-h-[14rem] flex-1 flex flex-col cursor-pointer ${className} ${isEditing ? 'overflow-visible z-[60]' : 'overflow-hidden'} ${(activeExam?.isPaused && !isEditing) ? 'opacity-70 grayscale-[0.3]' : ''}`}
+            className={`bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 transition-all duration-500 group relative min-h-[14rem] flex-1 flex flex-col cursor-pointer rounded-card p-4 px-6 ${className} ${isEditing ? 'overflow-visible z-[60]' : 'overflow-hidden'} ${(activeExam?.isPaused && !isEditing) ? 'opacity-70 grayscale-[0.3]' : ''}`}
         >
             {/* Background effects layer - clipped */}
             <div className="absolute inset-0 rounded-card overflow-hidden pointer-events-none">
