@@ -24,11 +24,11 @@ const StreakCard = () => {
     };
 
     return (
-        <div className="w-full">
-            <h2 className='text-lg sm:text-xl px-2 font-bold text-text-primary mb-4 tracking-tight'>Activity Streak</h2>
+        <div className="w-full h-full flex flex-col">
+            <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Activity Streak</h2>
             <div 
                 onClick={() => navigate('/streak')}
-                className="bg-card-glass backdrop-blur-xl rounded-card p-4 px-6 border-2 border-border-default hover:border-orange-500/40 hover:shadow-xl hover:shadow-black/5 transition-all duration-500 group overflow-hidden shadow-xl shadow-black/5 relative h-48 xs:h-60 sm:h-64 flex flex-col justify-center items-center cursor-pointer"
+                className="bg-card-glass backdrop-blur-xl rounded-card p-4 px-6 border-2 border-border-default hover:border-orange-500/40 hover:shadow-xl hover:shadow-black/5 transition-all duration-500 group overflow-hidden shadow-xl shadow-black/5 relative min-h-[14rem] flex-1 flex flex-col justify-center items-center cursor-pointer"
             >
                 
                 {/* Background Icon Asset - Matched with ExamReminder */}

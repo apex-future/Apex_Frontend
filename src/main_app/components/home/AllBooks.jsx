@@ -106,7 +106,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
   };
 
   return (
-    <section className='all-book-section py-10 px-6 sm:px-8 lg:px-12 mt-8 mb-12'>
+    <section className='all-book-section pt-4 pb-10 px-6 sm:px-8 lg:px-12 mt-2 mb-12'>
       <div className="flex justify-between items-center mb-6 relative">
         {/* Title and Counter (Stacked layout, smaller text) */}
         <div className="flex flex-col select-none">

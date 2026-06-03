@@ -54,10 +54,10 @@ function HomePage({ setIsMobileOpen }) {
 
       {/* Only show Header and Slider when not searching */}
       {!searchQuery && (
-        <>
+        <div className="flex flex-col gap-2">
           <Header />
           <FeaturedSlider lastReadBook={lastReadBook} isLoading={booksLoading} />
-        </>
+        </div>
       )}
 
       <AllBooks

@@ -7,10 +7,10 @@ const LastReadCard = ({ book, isLoading }) => {
 
     if (isLoading) {
         return (
-            <div className="w-full">
-                <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
-                <div className="bg-card-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 border-2 border-border-default shadow-md">
-                    <div className="flex gap-4 md:gap-8">
+            <div className="w-full h-full flex flex-col">
+                <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Last Read</h2>
+                <div className="bg-card-glass backdrop-blur-md rounded-card p-4 border border-border-default shadow-sm min-h-[14rem] flex-1 flex flex-col justify-between">
+                    <div className="flex gap-4 md:gap-8 flex-1 mb-4">
                         {/* Cover skeleton */}
                         <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md flex-shrink-0 bg-white/5 animate-pulse" />
                         {/* Info skeleton */}
@@ -28,6 +28,11 @@ const LastReadCard = ({ book, isLoading }) => {
                             </div>
                         </div>
                     </div>
+                    {/* Skeleton buttons */}
+                    <div className="flex gap-3 w-full">
+                        <div className="flex-1 h-8 rounded-xl bg-white/5 animate-pulse" />
+                        <div className="flex-1 h-8 rounded-xl bg-white/5 animate-pulse" />
+                    </div>
                 </div>
             </div>
         );
@@ -36,8 +41,8 @@ const LastReadCard = ({ book, isLoading }) => {
     if (!book) {
         return (
             <div className="w-full h-full flex flex-col">
-                <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
-                <div className="bg-card-glass backdrop-blur-xl rounded-card p-6 md:p-8 border-2 border-border-default h-full min-h-[160px] flex items-center justify-center shadow-md">
+                <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Last Read</h2>
+                <div className="bg-card-glass backdrop-blur-md rounded-card p-4 border border-border-default min-h-[14rem] flex-1 flex items-center justify-center shadow-sm">
                     <p className="text-text-tertiary font-medium">No recent books</p>
                 </div>
             </div>
@@ -47,14 +52,13 @@ const LastReadCard = ({ book, isLoading }) => {
     const currentBook = book;
 
     return (
-        <div className="w-full">
-            <h2 className='text-lg sm:text-xl px-2 font-semibold text-text-primary mb-4 tracking-tight'>Last Read</h2>
+        <div className="w-full h-full flex flex-col">
+            <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Last Read</h2>
             <div
-                onClick={() => currentBook && navigate(`/reader/${currentBook.id}`)}
-                className={`bg-card-glass backdrop-blur-xl rounded-card p-6 md:p-8 border-2 border-border-default hover:border-accent-primary/40 hover:shadow-md transition-all duration-500 group overflow-hidden ${currentBook ? 'cursor-pointer' : ''} shadow-md relative`}
+                className="bg-card-glass backdrop-blur-md rounded-card p-4 border border-border-default transition-all duration-300 group overflow-hidden shadow-sm relative min-h-[14rem] flex-1 flex flex-col justify-between"
             >
-                <div className="flex gap-4 md:gap-8 w-full overflow-hidden">
-                    <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-md flex-shrink-0 bg-bg-subtle border border-border-subtle group-hover:scale-[1.02] transition-transform duration-300">
+                <div className="flex gap-4 md:gap-8 w-full overflow-hidden flex-1 mb-4">
+                    <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-sm flex-shrink-0 bg-bg-subtle border border-border-subtle group-hover:scale-[1.02] transition-transform duration-300">
                         {currentBook.cover ? (
                             <img src={currentBook.cover} alt="Book cover" className="w-full h-full object-cover" />
                         ) : (
@@ -87,6 +91,22 @@ const LastReadCard = ({ book, isLoading }) => {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Bottom buttons row */}
+                <div className="flex gap-3 w-full">
+                    <button 
+                        onClick={() => navigate(`/reader/${currentBook.id}`)}
+                        className="flex-1 py-2 px-4 rounded-xl font-bold text-xs bg-accent-primary text-white hover:brightness-110 active:scale-95 transition-all shadow-md shadow-accent-primary/20 text-center"
+                    >
+                        Continue
+                    </button>
+                    <button 
+                        onClick={() => navigate(`/book/${currentBook.id}`)}
+                        className="flex-1 py-2 px-4 rounded-xl font-bold text-xs bg-bg-subtle hover:bg-bg-elevated text-text-secondary border border-border-default active:scale-95 transition-all text-center"
+                    >
+                        Practice
+                    </button>
                 </div>
             </div>
         </div>

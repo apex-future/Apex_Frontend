@@ -1,7 +1,7 @@
-import { Menu, Plus, Bell, Crown } from 'lucide-react'
-import StreakBadge from '../../ui/StreakBadge';
+import { Menu, Plus, Bell, Crown } from 'lucide-react';
 import { useContext } from 'react';
 import { NavBarContext } from './NavBarContextInstance';
+import CharacterImg from '../../../../assets/Characters/Character1.png';
 
 function TopNavBar({ setIsMobileOpen, onUpload }) {
   const { setIsNotificationOpen } = useContext(NavBarContext) || {};
@@ -15,7 +15,7 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
     }
   };
   return (
-    <nav className='sticky top-0 z-40 w-full px-4 md:px-8 py-4 bg-bg-elevated/80 backdrop-blur-md border-border-subtle relative'>
+    <nav className='sticky top-0 z-40 w-full px-4 md:px-8 py-2 md:py-3 bg-bg-elevated/80 backdrop-blur-md border-border-subtle relative'>
       <div className="nav-wrapper flex justify-between w-full p-0 md:p-1 items-center gap-3">
 
         {/* Go Pro Premium Badge - Desktop Only (Left Side) */}
@@ -85,8 +85,8 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
             </div>
           </button>
 
-          <div className="streak-wrapper h-full flex items-center">
-            <StreakBadge />
+          <div className="h-full flex items-center pl-1 sm:pl-2">
+            <img src={CharacterImg} alt="Profile" className="w-8 h-8 rounded-full border border-white/10 bg-white/5 object-cover cursor-pointer hover:opacity-80 transition-opacity" />
           </div>
         </div>
 

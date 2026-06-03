@@ -9,8 +9,8 @@ import { showToastGlobal } from '../../hooks/useToast';
 import examBgPattern from '../../../assets/exam-bg-pattern.png';
 const CardContainer = ({ children, onClick, className = '', title = '', activeExam, isEditing, examsList, currentIndex, onAdd }) => (
     <div className="w-full h-full relative group/container flex flex-col">
-        <div className="flex justify-between items-center mb-3 px-2">
-            <h2 className='text-lg sm:text-xl font-bold text-text-primary tracking-tight'>{title || activeExam?.name || 'Exam Timer'}</h2>
+        <div className="flex justify-between items-center mb-2 px-2">
+            <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary'>{title || activeExam?.name || 'Exam Timer'}</h2>
             
             <div className="flex items-center gap-3">
                 {examsList?.length > 1 && !isEditing && (
