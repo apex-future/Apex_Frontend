@@ -8,6 +8,7 @@ import CTA from "./components/CTA.jsx"
 import Footer from "./components/Footer.jsx"
 import PWAPrompt from './components/PWAPrompt'
 import LandingLoadingScreen from './components/LandingLoadingScreen.jsx'
+import Lenis from 'lenis'
 
 function LandingPage({ onLogin, deferredPrompt }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +32,26 @@ function LandingPage({ onLogin, deferredPrompt }) {
       return () => window.removeEventListener('load', handleLoad);
     }
   }, []);
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    })
+
+    function raf(time) {
+      lenis.raf(time)
+      requestAnimationFrame(raf)
+    }
+
+    const rafId = requestAnimationFrame(raf)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      lenis.destroy()
+    }
+  }, [])
 
   return (
     <>
