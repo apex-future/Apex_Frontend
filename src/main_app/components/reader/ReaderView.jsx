@@ -425,7 +425,8 @@ function ReaderView() {
                         selectionRef.current = {
                             text,
                             x: rect.left + rect.width / 2,
-                            y: rect.top
+                            y: rect.top,
+                            bottom: rect.bottom
                         };
                         console.log('[Apex Performance] Selection captured via Ref');
                     }
@@ -440,14 +441,16 @@ function ReaderView() {
             }
         };
 
-        // Debounced handler for mobile to prevent flickering
+        // Hide the menu immediately when user starts interacting (dragging/highlighting) again
+        const handleInteractionStart = (e) => {
+            if (e.target.closest('.highlight-menu-container')) return;
+            setShowHighlightMenu(false);
+        };
+
+        // Debounced handler to prevent menu from popping up while user is actively highlighting
         const handleSelectionUpdate = () => {
-            if (isTouchDevice) {
-                clearTimeout(selDebounceRef.current);
-                selDebounceRef.current = setTimeout(processSelection, 150);
-            } else {
-                processSelection();
-            }
+            clearTimeout(selDebounceRef.current);
+            selDebounceRef.current = setTimeout(processSelection, 400);
         };
 
         const handleSelectionChangeRaw = () => {
@@ -469,6 +472,8 @@ function ReaderView() {
         document.addEventListener('touchstart', handleTouchStart, { passive: false });
         document.addEventListener('touchmove', handleTouchMove, { passive: false });
         document.addEventListener('touchend', handleTouchEnd);
+        document.addEventListener('mousedown', handleInteractionStart);
+        document.addEventListener('touchstart', handleInteractionStart);
 
         return () => {
             clearTimeout(selDebounceRef.current);
@@ -477,6 +482,8 @@ function ReaderView() {
             document.removeEventListener('touchstart', handleTouchStart);
             document.removeEventListener('touchmove', handleTouchMove);
             document.removeEventListener('touchend', handleTouchEnd);
+            document.removeEventListener('mousedown', handleInteractionStart);
+            document.removeEventListener('touchstart', handleInteractionStart);
         };
     }, [scale, isDictOpen, getSelectionRect]);
 
@@ -723,7 +730,11 @@ function ReaderView() {
                 {showHighlightMenu && (
                     <HighlightMenu
                         selection={selectionRef.current.text}
-                        position={{ x: selectionRef.current.x, y: selectionRef.current.y }}
+                        position={{ 
+                            x: selectionRef.current.x, 
+                            y: selectionRef.current.y,
+                            bottom: selectionRef.current.bottom
+                        }}
                         onAskAI={() => {
                             setAiModal(true);
                             setShowHighlightMenu(false);
