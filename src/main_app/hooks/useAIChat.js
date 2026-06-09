@@ -166,7 +166,7 @@ export default function useAIChat(options = {}) {
     }
   }, [persistChat]);
 
-  const sendMessage = useCallback(async (text, bookTitle, displayContent) => {
+  const sendMessage = useCallback(async (text, bookTitle, displayContent, highlightContext) => {
     if (!text.trim() || isStreaming) return;
     setError(null);
 
@@ -179,7 +179,12 @@ export default function useAIChat(options = {}) {
     const activeSessionId = sessionId || Date.now();
     if (!sessionId) setSessionId(activeSessionId);
 
-    const userMsg = { id: Date.now(), role: 'user', content: (displayContent || text).trim() };
+    const userMsg = { 
+      id: Date.now(), 
+      role: 'user', 
+      content: (displayContent || text).trim(),
+      ...(highlightContext && { highlightContext })
+    };
     const aiPlaceholder = { id: Date.now() + 1, role: 'ai', content: '' };
 
     const newMessages = [...messages, userMsg, aiPlaceholder];
@@ -232,7 +237,12 @@ export default function useAIChat(options = {}) {
     if (!sessionId) setSessionId(activeSessionId);
 
     const aiPlaceholder = { id: Date.now(), role: 'ai', content: '' };
-    const userMsg = displayContent ? { id: Date.now() - 1, role: 'user', content: displayContent.trim() } : null;
+    const userMsg = displayContent ? { 
+      id: Date.now() - 1, 
+      role: 'user', 
+      content: displayContent.trim(),
+      highlightContext: selectedText
+    } : null;
     
     const newMessages = userMsg ? [...messages, userMsg, aiPlaceholder] : [...messages, aiPlaceholder];
     

@@ -29,6 +29,29 @@ export function cleanUserMessage(content) {
 }
 
 /**
+ * Parses a user message content to extract highlighted context and the question.
+ */
+export function extractContextAndQuestion(content) {
+  if (!content) return { context: null, question: '' };
+  
+  const prefix = "I'm asking about this text:";
+  if (content.startsWith(prefix)) {
+    const questionMarker = "\n\nMy question: ";
+    const questionIndex = content.indexOf(questionMarker);
+    if (questionIndex !== -1) {
+      // Extract context between quotes
+      let contextPart = content.substring(prefix.length, questionIndex).trim();
+      if (contextPart.startsWith('"') && contextPart.endsWith('"')) {
+        contextPart = contextPart.substring(1, contextPart.length - 1);
+      }
+      const questionPart = content.substring(questionIndex + questionMarker.length).trim();
+      return { context: contextPart, question: questionPart };
+    }
+  }
+  return { context: null, question: content };
+}
+
+/**
  * Returns a cleaned chat title, extracting from the first user message
  * if the stored title contains the hidden prompt context prefix.
  */

@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { Send, ArrowLeft, User, Sparkle, RotateCcw, Trash2, AlertCircle, Plus, MessageSquare, PanelRightOpen, PanelRightClose, MoreVertical, X, SquarePen, BookOpen, Square } from 'lucide-react'
+import { Send, ArrowLeft, User, Sparkle, RotateCcw, Trash2, AlertCircle, Plus, MessageSquare, PanelRightOpen, PanelRightClose, MoreVertical, X, SquarePen, BookOpen, Square, Highlighter } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../hooks/useAIChat'
 import TypingIndicator from './TypingIndicator'
-import { cleanUserMessage, getChatTitle } from '../../utils/aiUtils'
+import { cleanUserMessage, getChatTitle, extractContextAndQuestion } from '../../utils/aiUtils'
 
 function ApexAI() {
     const navigate = useNavigate();
@@ -179,11 +179,8 @@ function ApexAI() {
 
                                     {/* Message Bubble - Centered for AI, right-aligned for User */}
                                     <div className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}>
-                                        <div className={`max-w-[95%] md:max-w-[85%] px-6 py-4 text-[15px] leading-relaxed ${msg.role === 'user'
-                                            ? 'bg-text-primary text-bg-elevated rounded-3xl rounded-tr-none shadow-sm ring-1 ring-border-default'
-                                            : 'bg-card-glass backdrop-blur-md text-text-primary rounded-3xl rounded-tl-none border border-border-default shadow-sm'
-                                            }`}>
-                                            {msg.role === 'ai' ? (
+                                        {msg.role === 'ai' ? (
+                                            <div className="max-w-[95%] md:max-w-[85%] px-6 py-4 text-[15px] leading-relaxed bg-card-glass backdrop-blur-md text-text-primary rounded-3xl rounded-tl-none border border-border-default shadow-sm">
                                                 <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-base max-w-none prose-p:my-6 prose-headings:mt-8 prose-headings:mb-4 prose-li:my-3 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-8 prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-4 prose-th:border prose-th:border-border-default prose-td:p-4 prose-td:border prose-td:border-border-default'>
                                                     {msg.content ? (
                                                         <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
@@ -191,10 +188,27 @@ function ApexAI() {
                                                         isStreaming && <TypingIndicator />
                                                     )}
                                                 </div>
-                                            ) : (
-                                                <p className='whitespace-pre-wrap'>{cleanUserMessage(msg.content)}</p>
-                                            )}
-                                        </div>
+                                            </div>
+                                        ) : (() => {
+                                            const { context: parsedContext, question } = extractContextAndQuestion(msg.content);
+                                            const context = msg.highlightContext || parsedContext;
+                                            return (
+                                                <div className="flex flex-col gap-2 w-full max-w-[95%] md:max-w-[85%] items-end">
+                                                    {context && (
+                                                        <div className="p-3.5 bg-bg-elevated border border-border-default border-l-4 border-l-accent-primary text-text-secondary rounded-2xl rounded-tr-sm text-xs leading-relaxed w-full italic font-sans shadow-sm">
+                                                            <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] mb-1.5 opacity-90 text-accent-primary">
+                                                                <Highlighter size={12} className="text-accent-primary" />
+                                                                Highlight Context
+                                                            </div>
+                                                            <p className="line-clamp-4 leading-relaxed">"{context}"</p>
+                                                        </div>
+                                                    )}
+                                                    <div className="px-5 py-3.5 text-[15px] leading-relaxed bg-card-glass backdrop-blur-md border border-border-default text-text-primary rounded-3xl rounded-tr-sm shadow-sm text-left inline-block">
+                                                        <p className='whitespace-pre-wrap'>{question}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
                                         {msg.role === 'ai' && (
                                             <p className='text-[10px] text-text-tertiary font-medium tracking-tight mt-3 text-center opacity-60'>
                                                 This is AI and can make mistake double-check your answers
