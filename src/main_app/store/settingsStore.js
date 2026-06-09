@@ -10,6 +10,8 @@ import apiClient from '../services/apiClient';
 const useSettingsStore = create(
   persist(
     (set, get) => ({
+      settingsLastSyncedAt: null,  // server-generated updated_at from last successful save
+
       // ── Appearance ──
       theme: 'system',
 
@@ -73,7 +75,7 @@ const useSettingsStore = create(
             scrollOrientation, scrollAnimation,
           } = get();
 
-          await apiClient.patch('/api/settings', {
+          const response = await apiClient.patch('/api/settings', {
             theme,
             auto_save_progress: autoSaveProgress,
             page_animations: pageAnimations,
@@ -83,7 +85,11 @@ const useSettingsStore = create(
             scroll_orientation: scrollOrientation,
             scroll_animation: scrollAnimation,
           });
-          if (import.meta.env.DEV) console.log('[Apex Settings] Synced to Supabase');
+          if (response.data?.updated_at) {
+            set({ settingsLastSyncedAt: response.data.updated_at });
+            if (import.meta.env.DEV) console.log('[Apex Settings] Sync anchor updated:', response.data.updated_at);
+          }
+          if (import.meta.env.DEV) console.log('[Apex Settings] Synced to Supabase successfully');
         } catch (err) {
           if (import.meta.env.DEV) console.error('[Apex Settings] Failed to sync to Supabase:', err);
         }
@@ -95,14 +101,28 @@ const useSettingsStore = create(
        */
       seedFromSupabase: (data) => {
         if (!data) return;
-        // If offline, trust the locally persisted settings over the cached /me response.
-        // The /me response when offline is either unavailable or comes from a stale token.
-        // Zustand persist already saved the last known good settings to localStorage.
-        if (!navigator.onLine) {
-          if (import.meta.env.DEV) console.log('[Apex Settings] Offline — keeping local persisted settings');
+
+        const cloudUpdatedAt = data.updated_at || null;
+        const lastSyncedAt = get().settingsLastSyncedAt || null;
+
+        // Cloud wins only if its updated_at is strictly newer than our last sync anchor
+        // This means another device saved settings more recently than we did
+        // If no anchor exists (fresh device) — cloud always wins
+        // If no cloud timestamp — skip seed, local is safer
+        if (!cloudUpdatedAt) {
+          if (import.meta.env.DEV) console.log('[Apex Settings] No cloud timestamp — keeping local settings');
           return;
         }
-        if (import.meta.env.DEV) console.log('[Apex Settings] Seeding from Supabase');
+
+        if (lastSyncedAt && cloudUpdatedAt <= lastSyncedAt) {
+          if (import.meta.env.DEV) console.log('[Apex Settings] Local settings are current — skipping cloud seed',
+            '(cloud:', cloudUpdatedAt, 'lastSynced:', lastSyncedAt, ')');
+          return;
+        }
+
+        if (import.meta.env.DEV) console.log('[Apex Settings] Cloud settings are newer — seeding',
+          '(cloud:', cloudUpdatedAt, 'lastSynced:', lastSyncedAt || 'never', ')');
+
         set({
           theme: data.theme || 'system',
           autoSaveProgress: data.auto_save_progress ?? true,
@@ -116,6 +136,7 @@ const useSettingsStore = create(
           },
           scrollOrientation: data.scroll_orientation || 'vertical',
           scrollAnimation: data.scroll_animation || 'none',
+          settingsLastSyncedAt: cloudUpdatedAt,
         });
       },
 

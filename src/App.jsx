@@ -117,9 +117,7 @@ function App() {
 
         if (user.settings) {
           useSettingsStore.getState().seedFromSupabase(user.settings);
-          console.log('[Apex Settings] Store seeded from Supabase');
-          const savedTheme = user.settings.theme;
-          if (savedTheme) useThemeStore.getState().setTheme(savedTheme);
+          if (import.meta.env.DEV) console.log('[Apex Settings] Seed attempted from cloud');
         }
 
         if (!user.user_type) {
