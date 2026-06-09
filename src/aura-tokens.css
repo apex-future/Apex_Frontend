@@ -30,11 +30,11 @@
 .dark {
 
   /* ── Surfaces ── */
-  --surface-base:    13 13 15;    /* #0D0D0F — deepest background */
-  --surface-card:    20 20 22;    /* #141416 — card background    */
-  --surface-raised:  28 28 31;    /* #1C1C1F — elevated cards     */
-  --surface-sunken:  10 10 12;    /* #0A0A0C — inputs, wells      */
-  --surface-overlay: 22 22 26;    /* #16161A — bottom sheets      */
+  --surface-base:    38 38 42;     /* #26262A — lighter dark grey */
+  --surface-card:    28 28 32;     /* #1C1C20 — card, darker than base */
+  --surface-raised:  22 22 26;     /* #16161A — modals, darkest */
+  --surface-sunken:  18 18 22;     /* #121216 — inputs, wells */
+  --surface-overlay: 24 24 28;     /* #18181C — bottom sheets */
 
   /* ── Text ── */
   --text-primary:     250 250 250;  /* #FAFAFA */
@@ -110,11 +110,11 @@
 .light {
 
   /* ── Surfaces ── */
-  --surface-base:    245 245 247;  /* #F5F5F7 — Apple-grey base    */
-  --surface-card:    255 255 255;  /* #FFFFFF — card background     */
-  --surface-raised:  255 255 255;  /* #FFFFFF — stronger shadow     */
-  --surface-sunken:  235 235 237;  /* #EBEBED — inputs, wells       */
-  --surface-overlay: 255 255 255;  /* #FFFFFF — bottom sheets       */
+  --surface-base:    242 240 235;  /* #F2F0EB — warm off-white */
+  --surface-card:    228 226 220;  /* #E4E2DC — card, visibly darker */
+  --surface-raised:  215 213 207;  /* #D7D5CF — modals, darkest */
+  --surface-sunken:  250 249 246;  /* #FAF9F6 — inputs, lighter */
+  --surface-overlay: 234 232 226;  /* #EAE8E2 — bottom sheets */
 
   /* ── Text ── */
   --text-primary:     10  10  10;   /* #0A0A0A */

@@ -93,7 +93,7 @@ function MainApp({ onLogout }) {
   }, [location.pathname])
 
   return (
-    <div className={`flex relative min-h-screen bg-bg-elevated ${resolvedTheme}`}>
+    <div className={`flex relative min-h-screen bg-bg-primary ${resolvedTheme}`}>
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>

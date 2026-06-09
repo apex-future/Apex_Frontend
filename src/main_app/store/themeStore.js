@@ -14,7 +14,8 @@ const useThemeStore = create((set, get) => ({
             const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
             set({ resolvedTheme: systemTheme });
         } else {
-            set({ resolvedTheme: theme });
+            const resolved = theme && theme.includes('dark') ? 'dark' : 'light';
+            set({ resolvedTheme: resolved });
         }
     },
     initTheme: () => {
