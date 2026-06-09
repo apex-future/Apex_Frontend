@@ -84,11 +84,15 @@ const useStudyStore = create(
 
         if (import.meta.env.DEV) console.log('[Apex Streak] Updated:', { newStreak, newLongest, today });
 
-        // Sync to Supabase if online
         if (navigator.onLine) {
           get().syncStreakToSupabase();
+        } else {
+          // Queue the streak fire for when we reconnect
+          // Store as a flag — we just need to know a sync is needed, not the full payload
+          // The store already persists the updated state via zustand/persist
+          localStorage.setItem('apex_streak_sync_pending', 'true');
+          console.log('[Apex Streak] Offline — streak queued for sync on reconnect');
         }
-        // If offline — persisted locally via zustand/persist, syncs on next online
       },
 
       /**
@@ -151,27 +155,15 @@ const useStudyStore = create(
             streak_history: streakHistory,
           });
 
-          // Server returns its validated date — correct local store if it was wrong
-          if (response.data?.last_active_date &&
-              response.data.last_active_date !== lastActiveDate) {
-            if (import.meta.env.DEV) console.log('[Apex Streak] Server corrected last_active_date:',
-              lastActiveDate, '→', response.data.last_active_date);
-            set({ lastActiveDate: response.data.last_active_date });
-          }
-
-          // Also correct any future dates from streak_history using server_date
-          if (response.data?.server_date && streakHistory.length > 0) {
-            const serverDate = new Date(response.data.server_date);
-            const sanitized = streakHistory.filter(entry => {
-              const entryDate = new Date(entry);
-              const daysAhead = (entryDate - serverDate) / (1000 * 60 * 60 * 24);
-              return daysAhead <= 1; // Remove anything more than 1 day in the future
+          if (response.data) {
+            set({
+              streakCount: response.data.current_streak,
+              longestStreak: response.data.longest_streak,
+              lastActiveDate: response.data.last_active_date,
+              streakHistory: response.data.streak_history,
             });
-            if (sanitized.length !== streakHistory.length) {
-              if (import.meta.env.DEV) console.log('[Apex Streak] Removed', streakHistory.length - sanitized.length,
-                'future dates from local streak history');
-              set({ streakHistory: sanitized });
-            }
+            localStorage.removeItem('apex_streak_sync_pending');
+            if (import.meta.env.DEV) console.log('[Apex Streak] Server merge applied to local store');
           }
 
           if (import.meta.env.DEV) console.log('[Apex Streak] Synced to Supabase successfully');
@@ -192,23 +184,37 @@ const useStudyStore = create(
           streak_history,
         } = supabaseData;
 
-        const localLastActive = get().lastActiveDate;
-        const localStreak = get().streakCount;
-        const supabaseLastActive = last_active_date;
-        const supabaseStreak = current_streak || 0;
+        const localDate = get().lastActiveDate || '';
+        const cloudDate = last_active_date || '';
+        const cloudWins = cloudDate > localDate;
 
-        // Only seed if Supabase data is more recent than local
-        // This prevents overwriting a streak earned offline
-        if (supabaseStreak > localStreak || (supabaseLastActive && supabaseLastActive > (localLastActive || ''))) {
-          if (import.meta.env.DEV) console.log('[Apex Streak] Seeding from Supabase — more recent data found');
-          set({
-            streakCount: supabaseStreak,
-            longestStreak: longest_streak || 0,
-            lastActiveDate: last_active_date || null,
-            streakHistory: streak_history || [],
-          });
-        } else {
-          if (import.meta.env.DEV) console.log('[Apex Streak] Local streak data is more recent — keeping local');
+        // Streak count comes from whichever side has the more recent date —
+        // it is live state, not a lifetime record. Only longest_streak uses max().
+        const mergedStreakCount = cloudWins ? (current_streak || 0) : (get().streakCount || 0);
+        const mergedLongestStreak = Math.max(get().longestStreak || 0, longest_streak || 0);
+        const mergedLastActiveDate = (cloudWins ? cloudDate : localDate) || null;
+        const mergedStreakHistory = Array.from(new Set([...get().streakHistory || [], ...(streak_history || [])])).sort();
+
+        set({
+          streakCount: mergedStreakCount,
+          longestStreak: mergedLongestStreak,
+          lastActiveDate: mergedLastActiveDate,
+          streakHistory: mergedStreakHistory,
+        });
+
+        if (import.meta.env.DEV) console.log(
+          '[Apex Streak] seedFromSupabase merged — streak:',
+          cloudWins ? current_streak : get().streakCount,
+          'history:', mergedStreakHistory.length, 'days',
+          'authority:', cloudWins ? 'cloud' : 'local'
+        );
+      },
+
+      flushPendingStreakSync: async () => {
+        const pending = localStorage.getItem('apex_streak_sync_pending');
+        if (pending === 'true' && navigator.onLine) {
+          console.log('[Apex Streak] Flushing pending offline streak sync');
+          await get().syncStreakToSupabase();
         }
       },
 

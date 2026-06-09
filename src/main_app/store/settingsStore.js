@@ -95,6 +95,13 @@ const useSettingsStore = create(
        */
       seedFromSupabase: (data) => {
         if (!data) return;
+        // If offline, trust the locally persisted settings over the cached /me response.
+        // The /me response when offline is either unavailable or comes from a stale token.
+        // Zustand persist already saved the last known good settings to localStorage.
+        if (!navigator.onLine) {
+          if (import.meta.env.DEV) console.log('[Apex Settings] Offline — keeping local persisted settings');
+          return;
+        }
         if (import.meta.env.DEV) console.log('[Apex Settings] Seeding from Supabase');
         set({
           theme: data.theme || 'system',
