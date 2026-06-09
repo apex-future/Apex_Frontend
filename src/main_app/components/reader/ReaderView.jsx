@@ -369,6 +369,7 @@ function ReaderView() {
     const isSelectingRef = useRef(false);
     const [selectionLock, setSelectionLock] = useState(false);
     const selectionLockRef = useRef(false);
+    const ignoreSelectionChangeRef = useRef(false);
 
     // Selection monitoring logic
     useEffect(() => {
@@ -449,7 +450,28 @@ function ReaderView() {
 
         // Debounced handler to prevent menu from popping up while user is actively highlighting
         const handleSelectionUpdate = () => {
+            if (ignoreSelectionChangeRef.current) return;
             clearTimeout(selDebounceRef.current);
+
+            const activeSel = window.getSelection();
+            const text = activeSel?.toString().trim() || '';
+
+            if (text !== lastSelTextRef.current) {
+                if (text === '') {
+                    // Selection cleared. Only hide if dict/note is not open.
+                    if (!isDictOpen) {
+                        setShowHighlightMenu(false);
+                    }
+                } else {
+                    // User is actively highlighting new text or dragging handles.
+                    // Always hide the menu (and close dict/note if they were open to revert to highlight menu).
+                    if (isDictOpen) {
+                        setIsDictOpen(false);
+                    }
+                    setShowHighlightMenu(false);
+                }
+            }
+
             selDebounceRef.current = setTimeout(processSelection, 400);
         };
 
@@ -736,6 +758,7 @@ function ReaderView() {
                             bottom: selectionRef.current.bottom
                         }}
                         onAskAI={() => {
+                            window.getSelection()?.removeAllRanges();
                             setAiModal(true);
                             setShowHighlightMenu(false);
                             setIsDictOpen(false);
@@ -747,7 +770,16 @@ function ReaderView() {
                         bookId={book?.id}
                         onSaveWord={addSavedWord}
                         onHighlight={handleHighlight}
-                        onDictToggle={setIsDictOpen}
+                        onDictToggle={(val) => {
+                            setIsDictOpen(val);
+                            if (val) {
+                                ignoreSelectionChangeRef.current = true;
+                                window.getSelection()?.removeAllRanges();
+                                setTimeout(() => {
+                                    ignoreSelectionChangeRef.current = false;
+                                }, 50);
+                            }
+                        }}
                         onAddNote={readerControls.addNote}
                     />
                 )}
