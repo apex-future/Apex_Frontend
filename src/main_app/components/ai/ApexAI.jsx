@@ -5,6 +5,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../hooks/useAIChat'
 import TypingIndicator from './TypingIndicator'
+import { cleanUserMessage, getChatTitle } from '../../utils/aiUtils'
 
 function ApexAI() {
     const navigate = useNavigate();
@@ -104,7 +105,7 @@ function ApexAI() {
                         </button>
                         
                         <h1 className='text-sm font-bold tracking-tight text-slate-900 dark:text-white/80 truncate max-w-[200px] md:max-w-md'>
-                            {chatHistory.find(c => c.id === sessionId)?.title || "Apex AI Companion"}
+                            {chatHistory.find(c => c.id === sessionId) ? getChatTitle(chatHistory.find(c => c.id === sessionId)) : "Apex AI Companion"}
                             {chatHistory.find(c => c.id === sessionId)?.scope && chatHistory.find(c => c.id === sessionId)?.scope !== 'general' && (
                                 <span className='text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-bg-dark-elevated px-2 py-0.5 rounded-full flex items-center gap-1.5 border border-slate-200'>
                                     <BookOpen size={12} /> {chatHistory.find(c => c.id === sessionId)?.scope}
@@ -191,7 +192,7 @@ function ApexAI() {
                                                     )}
                                                 </div>
                                             ) : (
-                                                <p className='whitespace-pre-wrap'>{msg.content}</p>
+                                                <p className='whitespace-pre-wrap'>{cleanUserMessage(msg.content)}</p>
                                             )}
                                         </div>
                                         {msg.role === 'ai' && (
@@ -317,7 +318,7 @@ function ApexAI() {
                                         className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-slate-50 text-slate-600'}`}
                                     >
                                         <MessageSquare size={16} className={sessionId === item.id ? 'text-accent-primary' : 'text-slate-400'} />
-                                        <span className='flex-1 truncate text-sm'>{item.title || 'New Chat'}</span>
+                                        <span className='flex-1 truncate text-sm'>{getChatTitle(item)}</span>
                                         <button 
                                             onClick={(e) => {
                                                 e.stopPropagation();

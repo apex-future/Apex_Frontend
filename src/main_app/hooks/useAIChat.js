@@ -3,6 +3,7 @@ import { streamExplain, streamAsk } from '../services/aiService';
 import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
 import db from '../db/apex.db';
 import useSettingsStore from '../store/settingsStore';
+import { cleanUserMessage } from '../utils/aiUtils';
 
 /**
  * useAIChat — Custom hook for streaming AI chat interactions with persistence.
@@ -77,8 +78,9 @@ export default function useAIChat(options = {}) {
 
     // Determine a title based on the first user message
     const firstUserMsg = currentMessages.find(m => m.role === 'user');
-    const title = firstUserMsg 
-      ? (firstUserMsg.content.slice(0, 40) + (firstUserMsg.content.length > 40 ? '...' : ''))
+    const cleanContent = firstUserMsg ? cleanUserMessage(firstUserMsg.content) : '';
+    const title = cleanContent 
+      ? (cleanContent.slice(0, 40) + (cleanContent.length > 40 ? '...' : ''))
       : 'New Chat';
 
     const chatDoc = {

@@ -4,6 +4,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
 import TypingIndicator from '../../../ai/TypingIndicator'
+import { cleanUserMessage, getChatTitle } from '../../../../utils/aiUtils'
 
 function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
   const {
@@ -152,7 +153,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
                                     <BookOpen size={14} />
                                 </div>
                                 <div className="flex-1 min-w-0 flex flex-col">
-                                    <span className='truncate text-xs font-medium leading-tight'>{item.title || 'New Chat'}</span>
+                                    <span className='truncate text-xs font-medium leading-tight'>{getChatTitle(item)}</span>
                                     {item.scope && item.scope !== 'general' && (
                                         <span className='text-[9px] text-text-tertiary truncate mt-0.5 flex items-center gap-1'>
                                             {item.scope}
@@ -231,7 +232,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId }) {
                           )}
                         </div>
                       ) : (
-                        <p className='whitespace-pre-wrap'>{msg.content}</p>
+                        <p className='whitespace-pre-wrap'>{cleanUserMessage(msg.content)}</p>
                       )}
                     </div>
                     {msg.role === 'ai' && (

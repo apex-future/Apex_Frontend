@@ -4,6 +4,7 @@ import apiClient from './apiClient';
 import authService from './authService';
 import useAuthStore from '../store/authStore';
 import useSettingsStore from '../store/settingsStore';
+import { cleanUserMessage } from '../utils/aiUtils';
 
 // Helper: generate a local ID
 function generateLocalId() {
@@ -421,8 +422,9 @@ const syncService = {
             const timeMs = new Date(row.created_at).getTime();
             const groupId = row.chat_type === 'general' ? 'general' : row.book_id;
             if (!groupId) continue;
-            const title = row.query_text
-              ? (row.query_text.slice(0, 40) + (row.query_text.length > 40 ? '...' : ''))
+            const cleanedQueryText = cleanUserMessage(row.query_text);
+            const title = cleanedQueryText
+              ? (cleanedQueryText.slice(0, 40) + (cleanedQueryText.length > 40 ? '...' : ''))
               : 'Sync Chat';
             const scope = groupId === 'general' ? 'general' : (bookTitles[groupId] || 'Unknown Book');
             await saveChat({
@@ -431,7 +433,7 @@ const syncService = {
               scope,
               updatedAt: new Date(timeMs).toISOString(),
               messages: [
-                { id: timeMs, role: 'user', content: row.query_text },
+                { id: timeMs, role: 'user', content: cleanedQueryText },
                 { id: timeMs + 1, role: 'ai', content: row.ai_response }
               ]
             });
