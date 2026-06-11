@@ -12,6 +12,15 @@ function Dictionary() {
     const [historyLoading, setHistoryLoading] = useState(true);
     const navigate = useNavigate();
 
+    const [offlineReady, setOfflineReady] = useState(false);
+    const [downloadingOffline, setDownloadingOffline] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState(0);
+    const [offlineError, setOfflineError] = useState(null);
+
+    useEffect(() => {
+        dictionaryService.checkOfflineDictionaryStatus().then(setOfflineReady);
+    }, []);
+
     // Load history from backend on mount (Category B — online only)
     useEffect(() => {
         const loadHistory = async () => {
@@ -66,6 +75,20 @@ function Dictionary() {
         if (!url) return;
         const audio = new Audio(url);
         audio.play();
+    };
+
+    const handleDownloadOfflineDictionary = async () => {
+        setDownloadingOffline(true);
+        setOfflineError(null);
+        setDownloadProgress(0);
+        try {
+            await dictionaryService.downloadOfflineDictionary(setDownloadProgress);
+            setOfflineReady(true);
+        } catch (err) {
+            setOfflineError(err.message);
+        } finally {
+            setDownloadingOffline(false);
+        }
     };
 
     return (
@@ -165,6 +188,53 @@ function Dictionary() {
                     </div>
                 )}
 
+                {/* Offline Dictionary Settings */}
+                {!loading && (
+                    <div className="mt-10 p-6 bg-card-glass backdrop-blur-md border-2 border-border-default rounded-3xl animate-in fade-in slide-in-from-bottom-2">
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-base font-bold text-text-primary flex items-center gap-2">
+                                <WifiOff size={18} className="text-accent-primary" />
+                                Offline Dictionary Support
+                            </h4>
+                            {offlineReady ? (
+                                <span className="text-xs font-bold text-green-600 bg-green-100 px-3 py-1 rounded-xl uppercase tracking-wider">Ready</span>
+                            ) : (
+                                <span className="text-xs font-bold text-slate-500 bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-xl uppercase tracking-wider">Not Downloaded</span>
+                            )}
+                        </div>
+                        <p className="text-sm text-text-secondary mb-5 leading-relaxed font-medium">
+                            Download the offline dictionary (~6MB) to look up definitions without an internet connection. Previously looked up words are cached, but downloading this package ensures complete dictionary support. Note: Audio pronunciations are not available offline.
+                        </p>
+                        
+                        {!downloadingOffline && (
+                            <button 
+                                onClick={handleDownloadOfflineDictionary}
+                                className="px-6 py-3 bg-accent-primary hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-accent-primary/20 active:scale-95"
+                            >
+                                {offlineReady ? 'Update Offline Package' : 'Download Offline Package'}
+                            </button>
+                        )}
+                        
+                        {downloadingOffline && (
+                            <div className="space-y-3">
+                                <div className="h-3 w-full bg-border-default rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-accent-primary transition-all duration-300" 
+                                        style={{ width: `${downloadProgress}%` }}
+                                    />
+                                </div>
+                                <p className="text-xs text-center text-text-tertiary font-bold uppercase tracking-wider">
+                                    Downloading... {downloadProgress}%
+                                </p>
+                            </div>
+                        )}
+
+                        {offlineError && (
+                            <p className="text-sm text-red-500 mt-3 font-medium">{offlineError}</p>
+                        )}
+                    </div>
+                )}
+
                 {definition && !loading && (
                     <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
                         {/* Word and Phonetics */}
@@ -189,7 +259,7 @@ function Dictionary() {
 
                         {/* Meanings */}
                         <div className="space-y-8">
-                            {(definition.meanings || []).map((meaning, idx) => (
+                            {(definition.meanings || []).slice(0, 3).map((meaning, idx) => (
                                 <div key={idx} className="bg-card-glass backdrop-blur-md border-2 border-border-default rounded-3xl p-6 md:p-8 hover:border-text-tertiary transition-all shadow-sm">
                                     <div className="flex items-center gap-4 mb-6">
                                         <span className="text-sm font-bold uppercase tracking-[0.2em] text-accent-primary">
@@ -212,6 +282,15 @@ function Dictionary() {
                                                             <p className="text-sm text-text-tertiary italic pl-4 border-l-2 border-accent-primary/20">
                                                                 "{def.example}"
                                                             </p>
+                                                        )}
+                                                        {def.synonyms?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                                {def.synonyms.slice(0, 6).map((syn, synIdx) => (
+                                                                    <span key={synIdx} className="px-2.5 py-1 bg-accent-primary/5 text-accent-primary text-xs font-semibold rounded-lg">
+                                                                        {syn}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>

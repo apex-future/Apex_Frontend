@@ -160,7 +160,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
             aria-label="Text action menu"
         >
             {/* Arrow when menu is placed below the text (pointing up) */}
-            {!isMobile && !showDict && !showNote && showBelow && (
+            {!isMobile && !showDict && !showTab && showBelow && (
                 <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-bg-elevated mx-auto" />
             )}
 
@@ -248,7 +248,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                     <div className="flex flex-col items-center gap-2 text-center">
                                         <WifiOff size={24} className="text-amber-500" />
                                         <p className="text-sm text-amber-700 font-medium font-sans">
-                                            Connect to internet to look up new words
+                                            {error}
                                         </p>
                                     </div>
                                 ) : (
@@ -300,6 +300,15 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                                             <p className="text-[13px] text-text-tertiary mt-1 font-sans italic border-l-2 border-border-default pl-3">
                                                                 "{def.example}"
                                                             </p>
+                                                        )}
+                                                        {def.synonyms?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                                                {def.synonyms.slice(0, 4).map((syn, synIdx) => (
+                                                                    <span key={synIdx} className="text-[11px] font-semibold text-accent-primary bg-accent-primary/10 px-1.5 py-0.5 rounded">
+                                                                        {syn}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </li>

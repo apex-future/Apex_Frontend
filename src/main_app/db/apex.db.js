@@ -219,4 +219,11 @@ db.version(18).stores({
   console.log('[Apex DB] v18: book_reading_time compound indexes added');
 });
 
+// Version 19: Add offline_dictionary table for local lookups
+db.version(19).stores({
+  offline_dictionary: 'word',
+}).upgrade(async () => {
+  console.log('[Apex DB] v19: offline_dictionary table added');
+});
+
 export default db;
