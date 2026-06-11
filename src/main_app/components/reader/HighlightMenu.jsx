@@ -112,6 +112,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     const isMobile = window.innerWidth < 640;
 
     let menuStyle = {};
+    let showBelow = false;
 
     if (showDict || showTab || showFlashcards) {
         menuStyle = {
@@ -123,27 +124,46 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
             maxHeight: '85vh' // avoid covering edges on small screens
         };
     } else {
+        const spaceAbove = position.y;
+        const spaceBelow = window.innerHeight - (position.bottom || position.y);
+        
+        // Smart repositioning: move highlight menu to the part with more space
+        showBelow = spaceBelow > spaceAbove;
+
+        const leftPos = isMobile
+            ? Math.min(window.innerWidth - 310, Math.max(10, position.x - 150))
+            : Math.min(window.innerWidth - 300, Math.max(10, position.x - 100));
+
         menuStyle = isMobile
             ? {
-                top: `${Math.max(80, position.y - 100)}px`,
-                left: `${Math.min(window.innerWidth - 310, Math.max(10, position.x - 150))}px`,
+                left: `${leftPos}px`,
                 width: '300px'
             }
             : {
-                top: `${Math.max(10, position.y - 120)}px`,
-                left: `${Math.min(window.innerWidth - 300, Math.max(10, position.x - 100))}px`,
+                left: `${leftPos}px`,
             };
+
+        if (showBelow) {
+            menuStyle.top = `${(position.bottom || position.y) + 25}px`;
+        } else {
+            menuStyle.bottom = `${window.innerHeight - position.y + 25}px`;
+        }
     }
 
     return (
         <div
-            className={`fixed z-[300] animate-in fade-in duration-200 pointer-events-auto ${isMobile ? 'zoom-in-95' : 'zoom-in'}`}
+            className={`highlight-menu-container fixed z-[300] animate-in fade-in duration-200 pointer-events-auto ${isMobile ? 'zoom-in-95' : 'zoom-in'}`}
             style={menuStyle}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-label="Text action menu"
         >
+            {/* Arrow when menu is placed below the text (pointing up) */}
+            {!isMobile && !showDict && !showNote && showBelow && (
+                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-bg-elevated mx-auto" />
+            )}
+
             <div className="bg-bg-elevated border border-border-default shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
                 {!showDict && !showTab && !showFlashcards ? (
                     <div className="flex flex-col">
@@ -403,9 +423,9 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                 ) : null}
             </div>
 
-            {/* Arrow — hide on mobile as it might not align well with dynamic float, and hide when centered */}
-            {!isMobile && !showDict && !showTab && !showFlashcards && (
-                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white mx-auto" />
+            {/* Arrow when menu is placed above the text (pointing down) */}
+            {!isMobile && !showDict && !showTab && !showFlashcards && !showBelow && (
+                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-bg-elevated mx-auto" />
             )}
 
             <style dangerouslySetInnerHTML={{

@@ -3,6 +3,7 @@ import { streamExplain, streamAsk } from '../services/aiService';
 import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
 import db from '../db/apex.db';
 import useSettingsStore from '../store/settingsStore';
+import { cleanUserMessage } from '../utils/aiUtils';
 
 /**
  * useAIChat — Custom hook for streaming AI chat interactions with persistence.
@@ -75,8 +76,9 @@ export default function useAIChat(options = {}) {
 
     // Determine a title based on the first user message
     const firstUserMsg = currentMessages.find(m => m.role === 'user');
-    const title = firstUserMsg
-      ? (firstUserMsg.content.slice(0, 40) + (firstUserMsg.content.length > 40 ? '...' : ''))
+    const cleanContent = firstUserMsg ? cleanUserMessage(firstUserMsg.content) : '';
+    const title = cleanContent 
+      ? (cleanContent.slice(0, 40) + (cleanContent.length > 40 ? '...' : ''))
       : 'New Chat';
 
     const chatDoc = {
@@ -162,7 +164,7 @@ export default function useAIChat(options = {}) {
     }
   }, [persistChat]);
 
-  const sendMessage = useCallback(async (text, bookTitle, displayContent, pageImageBase64 = null) => {
+  const sendMessage = useCallback(async (text, bookTitle, displayContent, highlightContext, pageImageBase64 = null) => {
     if (!text.trim() || isStreaming) return;
     setError(null);
 
@@ -175,7 +177,12 @@ export default function useAIChat(options = {}) {
     const activeSessionId = sessionId || Date.now();
     if (!sessionId) setSessionId(activeSessionId);
 
-    const userMsg = { id: Date.now(), role: 'user', content: (displayContent || text).trim() };
+    const userMsg = { 
+      id: Date.now(), 
+      role: 'user', 
+      content: (displayContent || text).trim(),
+      ...(highlightContext && { highlightContext })
+    };
     const aiPlaceholder = { id: Date.now() + 1, role: 'ai', content: '' };
 
     const newMessages = [...messages, userMsg, aiPlaceholder];
@@ -226,8 +233,12 @@ export default function useAIChat(options = {}) {
     if (!sessionId) setSessionId(activeSessionId);
 
     const aiPlaceholder = { id: Date.now(), role: 'ai', content: '' };
-    const userMsg = displayContent ? { id: Date.now() - 1, role: 'user', content: displayContent.trim() } : null;
-
+    const userMsg = displayContent ? { 
+      id: Date.now() - 1, 
+      role: 'user', 
+      content: displayContent.trim(),
+      highlightContext: selectedText
+    } : null;
     const newMessages = userMsg ? [...messages, userMsg, aiPlaceholder] : [...messages, aiPlaceholder];
 
     setMessages(newMessages);
