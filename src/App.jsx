@@ -93,8 +93,6 @@ function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      syncService.init();
-
       if (!authService.isAuthenticated()) {
         setLoading(false);
         return;
