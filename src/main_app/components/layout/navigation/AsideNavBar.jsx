@@ -52,24 +52,27 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
       {/* Sidebar: Main container for the navigation links */}
       <aside
         className={`
-          bg-bg-elevated/90 backdrop-blur-xl border-r border-border-default/80
+          bg-bg-subtle/90 dark:bg-bg-elevated/95 backdrop-blur-xl
           shadow-sm z-50
           transition-all duration-300 ease-in-out
-          flex flex-col max-h-screen
-          rounded-r-xl
-          /* Layout Switching: Fixed on small screens, Sticky within flow on md+ screens */
-          fixed md:sticky top-0 left-0 bottom-0 md:bottom-auto md:left-auto md:translate-x-0
+          flex flex-col
           
-          /* Mobile Visibility: Moves off-screen based on isMobileOpen state */
+          /* Mobile layout: fixed, attached to left edge */
+          fixed inset-y-0 left-0 w-64 md:w-auto
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+          
+          /* Desktop layout: floating card with top, bottom, and left margins */
           md:translate-x-0
+          md:sticky md:top-4 md:my-4 md:ml-4 md:h-[calc(100vh-2rem)]
+          rounded-r-xl md:rounded-[2rem]
+          border-r md:border border-border-default/8 dark:border-neutral-800/60
           
           /* Dynamic Width: Swaps between 64 and 20 based on isExpanded state */
-          ${isExpanded ? 'w-64' : 'w-20'}
+          ${isExpanded ? 'md:w-64' : 'md:w-20'}
         `}
       >
         {/* Sidebar Header: Contains the close button (mobile) or the toggle button (desktop) */}
-        <div className={`flex items-center h-16 px-4 border-b border-border-default flex-shrink-0 ${!isExpanded ? 'justify-center' : 'justify-between'}`}>
+        <div className={`flex items-center h-16 px-4 border-b border-border-default/8 dark:border-neutral-800/50 flex-shrink-0 ${!isExpanded ? 'justify-center' : 'justify-between'}`}>
           {isExpanded && (
             <div className="logo-wrapper flex items-center">
               <img
@@ -149,7 +152,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                 font-medium relative group w-full
                 ${!isExpanded ? 'justify-center' : 'gap-3'}
                 ${isActive
-                  ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default shadow-sm'
+                  ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default/8 dark:border-neutral-800/50 shadow-sm'
                   : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
                 }
               `;
@@ -172,26 +175,26 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
           </ul>
 
           {/* Footer Navigation Section: Separated by a border, used for settings or low-priority links */}
-          <ul className="border-t border-border-default pt-4 mt-4 space-y-2">
+          <ul className="border-t border-border-default/8 dark:border-neutral-800/50 pt-4 mt-4 space-y-2">
             <li className="flex justify-center mb-2 px-1">
-              <div className={`flex ${isExpanded ? 'flex-row' : 'flex-col'} bg-bg-elevated/50 p-1 rounded-xl border border-border-default shadow-inner gap-1 transition-all duration-300 w-fit justify-center items-center`}>
+              <div className={`flex ${isExpanded ? 'flex-row' : 'flex-col'} bg-bg-elevated/50 p-1 rounded-xl border border-border-default/8 dark:border-neutral-800/50 shadow-inner gap-1 transition-all duration-300 w-fit justify-center items-center`}>
                 <button
                   onClick={() => setTheme('light')}
-                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default/8 dark:border-neutral-800/50' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                   title="Light Theme"
                 >
                   <Sun size={16} />
                 </button>
                 <button
                   onClick={() => setTheme('dark')}
-                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'dark' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'dark' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default/8 dark:border-neutral-800/50' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                   title="Dark Theme"
                 >
                   <Moon size={16} />
                 </button>
                 <button
                   onClick={() => setTheme('system')}
-                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'system' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'system' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default/8 dark:border-neutral-800/50' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                   title="System Default"
                 >
                   <Monitor size={16} />
@@ -205,7 +208,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                 className={`flex items-center p-3 rounded-xl transition-all duration-300 
                   ${!isExpanded ? 'justify-center' : 'gap-3'}
                   ${location.pathname === '/profile'
-                    ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default shadow-sm'
+                    ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default/8 dark:border-neutral-800/50 shadow-sm'
                     : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
                   }`}
                 title={!isExpanded ? 'Profile' : ''}
@@ -231,7 +234,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                 className={`flex items-center p-3 rounded-xl transition-all duration-300 
                   ${!isExpanded ? 'justify-center' : 'gap-3'}
                   ${location.pathname === '/settings'
-                    ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default shadow-sm'
+                    ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default/8 dark:border-neutral-800/50 shadow-sm'
                     : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
                   }`}
                 title={!isExpanded ? 'Settings' : ''}

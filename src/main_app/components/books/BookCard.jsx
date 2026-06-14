@@ -125,7 +125,7 @@ export default function BookCard({ book, onClick }) {
                           e.stopPropagation();
                           setSyncPopover(prev => prev ? null : book.sync_status);
                         }}
-                        className={`absolute -top-1 -left-1 z-20 w-5 h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[#08090C] transition-transform hover:scale-125
+                        className={`absolute -top-1 -left-1 z-20 w-5 h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[#1C1C20] transition-transform hover:scale-125
                           ${book.sync_status === 'pending' ? 'bg-amber-400 text-white' : 'bg-red-500 text-white'}`}
                         title={book.sync_status === 'pending' ? 'Syncing soon' : 'Sync failed'}
                       >
