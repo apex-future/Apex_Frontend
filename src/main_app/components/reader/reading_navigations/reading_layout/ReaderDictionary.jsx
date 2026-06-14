@@ -8,6 +8,15 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    const [offlineReady, setOfflineReady] = useState(false);
+    const [downloadingOffline, setDownloadingOffline] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState(0);
+    const [offlineError, setOfflineError] = useState(null);
+
+    useEffect(() => {
+        dictionaryService.checkOfflineDictionaryStatus().then(setOfflineReady);
+    }, [isOpen]);
+
     useEffect(() => {
         if (isOpen && initialWord?.trim()) {
             setWord(initialWord.trim());
@@ -42,6 +51,20 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
         if (!url) return;
         const audio = new Audio(url);
         audio.play();
+    };
+
+    const handleDownloadOfflineDictionary = async () => {
+        setDownloadingOffline(true);
+        setOfflineError(null);
+        setDownloadProgress(0);
+        try {
+            await dictionaryService.downloadOfflineDictionary(setDownloadProgress);
+            setOfflineReady(true);
+        } catch (err) {
+            setOfflineError(err.message);
+        } finally {
+            setDownloadingOffline(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -129,7 +152,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                             </div>
 
                             <div className="space-y-6">
-                                {definition.meanings.slice(0, 2).map((meaning, idx) => (
+                                {definition.meanings.slice(0, 3).map((meaning, idx) => (
                                     <div key={idx} className="space-y-3">
                                         <div className="flex items-center gap-3">
                                             <span className="text-[10px] font-black uppercase tracking-widest text-accent-primary bg-accent-primary/10 px-2 py-0.5 rounded">
@@ -137,13 +160,43 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                             </span>
                                             <div className="h-px flex-1 bg-border-default"></div>
                                         </div>
-                                        <p className="text-base text-text-secondary leading-relaxed font-medium font-sans">
-                                            {meaning.definitions[0].definition}
-                                        </p>
-                                        {meaning.definitions[0].example && (
-                                            <p className="text-sm text-text-tertiary italic pl-4 border-l-2 border-border-default font-sans">
-                                                "{meaning.definitions[0].example}"
-                                            </p>
+                                        <ul className="space-y-4">
+                                            {(meaning.definitions || []).slice(0, 3).map((def, defIdx) => (
+                                                <li key={defIdx} className="flex gap-3">
+                                                    <span className="text-accent-primary font-bold opacity-40 text-sm mt-0.5">{defIdx + 1}.</span>
+                                                    <div>
+                                                        <p className="text-base text-text-secondary leading-relaxed font-medium font-sans">
+                                                            {def.definition}
+                                                        </p>
+                                                        {def.example && (
+                                                            <p className="text-sm text-text-tertiary italic pl-4 border-l-2 border-border-default font-sans mt-2">
+                                                                "{def.example}"
+                                                            </p>
+                                                        )}
+                                                        {def.synonyms?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                {def.synonyms.slice(0, 5).map((syn, synIdx) => (
+                                                                    <span key={synIdx} className="text-xs font-semibold text-accent-primary bg-accent-primary/10 px-2 py-0.5 rounded-md">
+                                                                        {syn}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        {meaning.synonyms?.length > 0 && (
+                                            <div className="pt-3 border-t border-border-default/50">
+                                                <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">Synonyms</p>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {meaning.synonyms.slice(0, 5).map((syn, synIdx) => (
+                                                        <span key={synIdx} className="text-xs font-semibold text-accent-primary bg-accent-primary/10 px-2 py-0.5 rounded-md">
+                                                            {syn}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 ))}
@@ -155,6 +208,53 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                         <div className="py-12 text-center opacity-40">
                             <Book size={48} className="mx-auto mb-4" strokeWidth={1} />
                             <p className="text-sm font-medium font-sans">Enter a word to see its definition.</p>
+                        </div>
+                    )}
+
+                    {/* Offline Dictionary Settings */}
+                    {!loading && (
+                        <div className="mt-8 p-4 bg-bg-subtle rounded-2xl border border-border-default animate-in fade-in slide-in-from-bottom-2">
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                                    <WifiOff size={16} className="text-accent-primary" />
+                                    Offline Dictionary
+                                </h4>
+                                {offlineReady ? (
+                                    <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-1 rounded-lg uppercase tracking-wider">Ready</span>
+                                ) : (
+                                    <span className="text-[10px] font-bold text-slate-500 bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded-lg uppercase tracking-wider">Not Downloaded</span>
+                                )}
+                            </div>
+                            <p className="text-xs text-text-secondary mb-4 leading-relaxed font-medium">
+                                Download the offline dictionary (~6MB) to look up words without an internet connection. Note: Audio pronunciations are not available offline.
+                            </p>
+                            
+                            {!downloadingOffline && (
+                                <button 
+                                    onClick={handleDownloadOfflineDictionary}
+                                    className="w-full py-2.5 bg-bg-elevated border-2 border-border-default hover:border-accent-primary hover:text-accent-primary text-text-secondary text-sm font-bold rounded-xl transition-all shadow-sm"
+                                >
+                                    {offlineReady ? 'Update Dictionary' : 'Download Dictionary'}
+                                </button>
+                            )}
+                            
+                            {downloadingOffline && (
+                                <div className="space-y-2">
+                                    <div className="h-2 w-full bg-border-default rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-accent-primary transition-all duration-300" 
+                                            style={{ width: `${downloadProgress}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-center text-text-tertiary font-bold uppercase tracking-wider">
+                                        Downloading... {downloadProgress}%
+                                    </p>
+                                </div>
+                            )}
+
+                            {offlineError && (
+                                <p className="text-xs text-red-500 mt-2 font-medium">{offlineError}</p>
+                            )}
                         </div>
                     )}
                 </div>

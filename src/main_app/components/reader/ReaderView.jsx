@@ -680,6 +680,7 @@ function ReaderView() {
     const isSelectingRef = useRef(false);
     const [selectionLock, setSelectionLock] = useState(false);
     const selectionLockRef = useRef(false);
+    const ignoreSelectionChangeRef = useRef(false);
 
     // Selection monitoring logic
     useEffect(() => {
@@ -758,7 +759,8 @@ function ReaderView() {
                             text,
                             x: rect.left + rect.width / 2,
                             y: rect.top,
-                            startOffset: foundOffset !== -1 ? foundOffset : null
+                            startOffset: foundOffset !== -1 ? foundOffset : null,
+                            bottom: rect.bottom
                         };
                         selectionRef.current = newData;
                         setSelectionData(newData);
@@ -775,14 +777,37 @@ function ReaderView() {
             }
         };
 
-        // Debounced handler for mobile to prevent flickering
+        // Hide the menu immediately when user starts interacting (dragging/highlighting) again
+        const handleInteractionStart = (e) => {
+            if (e.target.closest('.highlight-menu-container')) return;
+            setShowHighlightMenu(false);
+        };
+
+        // Debounced handler to prevent menu from popping up while user is actively highlighting
         const handleSelectionUpdate = () => {
-            if (isTouchDevice) {
-                clearTimeout(selDebounceRef.current);
-                selDebounceRef.current = setTimeout(processSelection, 150);
-            } else {
-                processSelection();
+            if (ignoreSelectionChangeRef.current) return;
+            clearTimeout(selDebounceRef.current);
+
+            const activeSel = window.getSelection();
+            const text = activeSel?.toString().trim() || '';
+
+            if (text !== lastSelTextRef.current) {
+                if (text === '') {
+                    // Selection cleared. Only hide if dict/note is not open.
+                    if (!isDictOpen) {
+                        setShowHighlightMenu(false);
+                    }
+                } else {
+                    // User is actively highlighting new text or dragging handles.
+                    // Always hide the menu (and close dict/note if they were open to revert to highlight menu).
+                    if (isDictOpen) {
+                        setIsDictOpen(false);
+                    }
+                    setShowHighlightMenu(false);
+                }
             }
+
+            selDebounceRef.current = setTimeout(processSelection, 400);
         };
 
         const handleSelectionChangeRaw = () => {
@@ -804,6 +829,8 @@ function ReaderView() {
         document.addEventListener('touchstart', handleTouchStart, { passive: false });
         document.addEventListener('touchmove', handleTouchMove, { passive: false });
         document.addEventListener('touchend', handleTouchEnd);
+        document.addEventListener('mousedown', handleInteractionStart);
+        document.addEventListener('touchstart', handleInteractionStart);
 
         return () => {
             clearTimeout(selDebounceRef.current);
@@ -812,6 +839,8 @@ function ReaderView() {
             document.removeEventListener('touchstart', handleTouchStart);
             document.removeEventListener('touchmove', handleTouchMove);
             document.removeEventListener('touchend', handleTouchEnd);
+            document.removeEventListener('mousedown', handleInteractionStart);
+            document.removeEventListener('touchstart', handleInteractionStart);
         };
     }, [scale, isDictOpen, getSelectionRect]);
 
@@ -1067,9 +1096,14 @@ function ReaderView() {
                 {/* Highlight Menu */}
                 {showHighlightMenu && (
                     <HighlightMenu
-                        selection={selectionData.text}
-                        position={{ x: selectionData.x, y: selectionData.y }}
+                        selection={selectionRef.current.text}
+                        position={{ 
+                            x: selectionRef.current.x, 
+                            y: selectionRef.current.y,
+                            bottom: selectionRef.current.bottom
+                        }}
                         onAskAI={() => {
+                            window.getSelection()?.removeAllRanges();
                             setAiModal(true);
                             setShowHighlightMenu(false);
                             setIsDictOpen(false);
@@ -1082,7 +1116,16 @@ function ReaderView() {
                         onSaveWord={addSavedWord}
                         onHighlight={handleHighlight}
                         onSimplify={handleSimplify}
-                        onDictToggle={setIsDictOpen}
+                        onDictToggle={(val) => {
+                            setIsDictOpen(val);
+                            if (val) {
+                                ignoreSelectionChangeRef.current = true;
+                                window.getSelection()?.removeAllRanges();
+                                setTimeout(() => {
+                                    ignoreSelectionChangeRef.current = false;
+                                }, 50);
+                            }
+                        }}
                         onAddNote={readerControls.addTab}
                         onGenerateFlashcards={(selection, count) => {
                             setShowHighlightMenu(false);

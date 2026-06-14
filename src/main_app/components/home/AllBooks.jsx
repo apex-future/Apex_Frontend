@@ -7,18 +7,18 @@ function BookCardSkeleton() {
   return (
     <div className="flex flex-row gap-4 p-4 bg-card-glass backdrop-blur-md border border-border-default rounded-2xl shadow-sm">
       {/* Cover skeleton */}
-      <div className="w-28 h-40 rounded-lg flex-shrink-0 bg-white/5 animate-pulse" />
+      <div className="w-28 h-40 rounded-lg flex-shrink-0 bg-neutral-200 dark:bg-bg-subtle animate-pulse" />
       {/* Info skeleton */}
       <div className="flex-1 flex flex-col justify-between py-1">
         <div className="flex flex-col gap-2">
-          <div className="h-5 w-3/4 rounded-full bg-white/5 animate-pulse" />
-          <div className="h-3 w-1/2 rounded-full bg-white/5 animate-pulse" />
-          <div className="mt-3 h-1 w-full rounded-full bg-white/5 animate-pulse" />
-          <div className="h-3 w-1/3 rounded-full bg-white/5 animate-pulse" />
+          <div className="h-5 w-3/4 rounded-full bg-neutral-200 dark:bg-bg-subtle animate-pulse" />
+          <div className="h-3 w-1/2 rounded-full bg-neutral-200 dark:bg-bg-subtle animate-pulse" />
+          <div className="mt-3 h-1 w-full rounded-full bg-neutral-200 dark:bg-bg-subtle animate-pulse" />
+          <div className="h-3 w-1/3 rounded-full bg-neutral-200 dark:bg-bg-subtle animate-pulse" />
         </div>
         <div className="flex justify-end gap-3 pt-2">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="w-5 h-5 rounded-full bg-white/5 animate-pulse" />
+            <div key={i} className="w-5 h-5 rounded-full bg-neutral-200 dark:bg-bg-subtle animate-pulse" />
           ))}
         </div>
       </div>

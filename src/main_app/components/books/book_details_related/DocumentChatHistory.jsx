@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import EmptyState from '../../layout/placeholders/EmptyState';
 import { getAllChats } from '../../../utils/db';
 import { MessageSquare, Loader2 } from 'lucide-react';
+import { cleanUserMessage, stripMarkdown, getChatTitle } from '../../../utils/aiUtils';
 
 function DocumentChatHistory({ book }) {
     const [chatHistory, setChatHistory] = useState([]);
@@ -56,7 +57,8 @@ function DocumentChatHistory({ book }) {
         if (!chat.messages || chat.messages.length === 0) return 'No messages';
         const lastMsg = chat.messages[chat.messages.length - 1];
         const content = lastMsg.content || '';
-        return content.length > 100 ? content.slice(0, 100) + '...' : content;
+        const cleaned = lastMsg.role === 'user' ? cleanUserMessage(content) : stripMarkdown(content);
+        return cleaned.length > 100 ? cleaned.slice(0, 100) + '...' : cleaned;
     };
 
     const getMessageCount = (chat) => {
@@ -72,7 +74,7 @@ function DocumentChatHistory({ book }) {
                     </div>
                     <div className="flex flex-col gap-1 min-w-0 flex-1">
                         <h2 className='text-text-primary dark:text-text-primary-dark font-semibold group-hover:text-accent-primary transition-colors truncate'>
-                            {chat.title || 'New Chat'}
+                            {getChatTitle(chat)}
                         </h2>
                         <p className='text-text-tertiary dark:text-text-tertiary-dark text-sm line-clamp-2'>{getLastMessage(chat)}</p>
                         <div className="flex items-center gap-3 mt-1">

@@ -118,9 +118,7 @@ function App() {
 
         if (user.settings) {
           useSettingsStore.getState().seedFromSupabase(user.settings);
-          console.log('[Apex Settings] Store seeded from Supabase');
-          const savedTheme = user.settings.theme;
-          if (savedTheme) useThemeStore.getState().setTheme(savedTheme);
+          if (import.meta.env.DEV) console.log('[Apex Settings] Seed attempted from cloud');
         }
 
         if (!user.user_type) {
@@ -130,7 +128,16 @@ function App() {
         if (navigator.onLine) {
           console.log('[Apex] Sync running in background');
           syncService.pullAllUserData()
-            .then(() => syncService.pushSync())
+            .then(() => {
+              // Re-seed streak from the fuller cloud data that just arrived
+              const freshUser = useAuthStore.getState().user;
+              if (freshUser) {
+                useStudyStore.getState().seedFromSupabase(freshUser);
+                useStudyStore.getState().checkStreakIntegrity();
+                console.log('[Apex Streak] Re-seeded from full pull data');
+              }
+              return syncService.pushSync();
+            })
             .catch((err) => console.error('Pull sync failed, continuing with local data:', err.message));
         }
       } catch (error) {
@@ -155,11 +162,8 @@ function App() {
   // Sync offline streak changes when device comes back online
   useEffect(() => {
     const handleOnline = () => {
-      const { streakCount, lastActiveDate } = useStudyStore.getState();
-      if (lastActiveDate) {
-        console.log('[Apex Streak] Back online — syncing streak to Supabase');
-        useStudyStore.getState().syncStreakToSupabase();
-      }
+      console.log('[Apex Streak] Back online — flushing pending streak sync');
+      useStudyStore.getState().flushPendingStreakSync();
     };
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);

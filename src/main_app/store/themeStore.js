@@ -7,6 +7,11 @@ const useThemeStore = create((set, get) => ({
         localStorage.setItem('theme', theme);
         set({ theme });
         get().updateResolvedTheme();
+        // Keep settingsStore in sync so theme persists to Supabase
+        // Import is done inline to avoid circular dependency
+        import('../store/settingsStore').then(({ default: useSettingsStore }) => {
+            useSettingsStore.getState().updateSetting('theme', theme);
+        });
     },
     updateResolvedTheme: () => {
         const { theme } = get();
