@@ -5,6 +5,25 @@ import authService from './authService';
  * All streaming endpoints return a ReadableStream reader for SSE consumption.
  */
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL || ''}/api/ai`;
+const FETCH_TIMEOUT_MS = 30000; // 30s — fail fast when backend is unreachable
+
+/**
+ * Combine an optional user-abort signal with a timeout signal so fetch
+ * never hangs forever when the backend is down.
+ */
+function buildSignal(userSignal) {
+  const timeoutSignal = AbortSignal.timeout(FETCH_TIMEOUT_MS);
+  if (!userSignal) return timeoutSignal;
+  // AbortSignal.any is supported in all modern browsers (Chrome 116+, Safari 17.4+)
+  if (typeof AbortSignal.any === 'function') {
+    return AbortSignal.any([userSignal, timeoutSignal]);
+  }
+  // Fallback for older browsers — prefer the user signal but add a manual timeout
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new DOMException('The operation timed out.', 'TimeoutError')), FETCH_TIMEOUT_MS);
+  userSignal.addEventListener('abort', () => { clearTimeout(timer); controller.abort(userSignal.reason); }, { once: true });
+  return controller.signal;
+}
 
 /**
  * Helper to get default headers with auth token.
@@ -26,22 +45,30 @@ const getHeaders = (contentType = 'application/json') => {
  * Returns a Response object whose body is an SSE stream.
  */
 export async function streamExplain({ selectedText, context, bookTitle, bookId, chatType, conversationHistory = [] }, signal) {
-  const response = await fetch(`${API_BASE}/explain`, {
-    method: 'POST',
-    headers: getHeaders(),
-    signal,
-    body: JSON.stringify({
-      selected_text: selectedText,
-      context: context || null,
-      book_title: bookTitle || null,
-      book_id: bookId || null,
-      chat_type: chatType || 'in_reader',
-      conversation_history: conversationHistory.map(msg => ({
-        role: msg.role === 'ai' ? 'model' : msg.role,
-        content: msg.content,
-      })),
-    }),
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/explain`, {
+      method: 'POST',
+      headers: getHeaders(),
+      signal: buildSignal(signal),
+      body: JSON.stringify({
+        selected_text: selectedText,
+        context: context || null,
+        book_title: bookTitle || null,
+        book_id: bookId || null,
+        chat_type: chatType || 'in_reader',
+        conversation_history: conversationHistory.map(msg => ({
+          role: msg.role === 'ai' ? 'model' : msg.role,
+          content: msg.content,
+        })),
+      }),
+    });
+  } catch (err) {
+    if (err.name === 'TimeoutError') {
+      throw new Error('Server is not responding. Please check your connection and try again.');
+    }
+    throw err;
+  }
 
   if (!response.ok) {
     const errorMsg = `Explain request failed: ${response.status}`;
@@ -58,22 +85,30 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
  */
 export async function streamAsk({ message, bookTitle, bookId, chatType, conversationHistory = [], pageImageBase64 = null }, signal) {
   if (import.meta.env.DEV) console.log('[Apex Cleo Debug] streamAsk — pageImageBase64 length:', pageImageBase64?.length);
-  const response = await fetch(`${API_BASE}/ask`, {
-    method: 'POST',
-    headers: getHeaders(),
-    signal,
-    body: JSON.stringify({
-      message,
-      book_title: bookTitle || null,
-      book_id: bookId || null,
-      chat_type: chatType || 'general',
-      conversation_history: conversationHistory.map(msg => ({
-        role: msg.role === 'ai' ? 'model' : msg.role,
-        content: msg.content,
-      })),
-      page_image_base64: pageImageBase64 || null,
-    }),
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/ask`, {
+      method: 'POST',
+      headers: getHeaders(),
+      signal: buildSignal(signal),
+      body: JSON.stringify({
+        message,
+        book_title: bookTitle || null,
+        book_id: bookId || null,
+        chat_type: chatType || 'general',
+        conversation_history: conversationHistory.map(msg => ({
+          role: msg.role === 'ai' ? 'model' : msg.role,
+          content: msg.content,
+        })),
+        page_image_base64: pageImageBase64 || null,
+      }),
+    });
+  } catch (err) {
+    if (err.name === 'TimeoutError') {
+      throw new Error('Server is not responding. Please check your connection and try again.');
+    }
+    throw err;
+  }
 
   if (!response.ok) {
     const errorMsg = `Ask request failed: ${response.status}`;

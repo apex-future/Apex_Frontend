@@ -7,6 +7,7 @@ import useStudyStore from '../../../../store/studyStore'
 import apiClient from '../../../../services/apiClient'
 import TypingIndicator from '../../../ai/TypingIndicator'
 import Orb from '../../../ui/Orb'
+import { cleanUserMessage, getChatTitle, extractContextAndQuestion } from '../../../../utils/aiUtils'
 
 function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, numPages, examName }) {
   const {
@@ -182,7 +183,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
             fullPrompt = `${displayContent}${examContext}`;
         }
         if (import.meta.env.DEV) console.log('[Apex Cleo Debug] Sending image — length:', pageImageRef.current?.length, 'isImagePdf:', isImagePdfRef.current);
-        sendMessage(fullPrompt, bookTitle, displayContent, pageImageRef.current);
+        sendMessage(fullPrompt, bookTitle, displayContent, activeContext, pageImageRef.current);
     } else {
         // Text fallback — inject page text into prompt
         const pageContext = pageTextRef.current
@@ -194,9 +195,10 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
         } else {
             fullPrompt = `${displayContent}${pageContext}${examContext}`;
         }
-        sendMessage(fullPrompt, bookTitle, displayContent, null);
+        sendMessage(fullPrompt, bookTitle, displayContent, activeContext, null);
     }
     setInputValue('');
+    setActiveContext(null);
     if (inputRef.current) {
       inputRef.current.style.height = '44px';
     }
@@ -317,7 +319,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                                     <BookOpen size={14} />
                                 </div>
                                 <div className="flex-1 min-w-0 flex flex-col">
-                                    <span className='truncate text-xs font-medium leading-tight'>{item.title || 'New Chat'}</span>
+                                    <span className='truncate text-xs font-medium leading-tight'>{getChatTitle(item)}</span>
                                     {item.scope && item.scope !== 'general' && (
                                         <span className='text-[9px] text-text-tertiary truncate mt-0.5 flex items-center gap-1'>
                                             {item.scope}
@@ -398,22 +400,36 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                   </div>
 
                   <div className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}>
-                    <div className={`max-w-[95%] px-6 py-5 text-[15px] leading-relaxed ${msg.role === 'user'
-                      ? 'bg-text-primary text-bg-elevated rounded-card rounded-tr-none shadow-sm ring-1 ring-border-default'
-                      : 'bg-bg-elevated text-text-primary'
-                      }`}>
                       {msg.role === 'ai' ? (
-                        <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-sm max-w-none prose-p:my-4 prose-headings:mt-6 prose-headings:mb-3 prose-li:my-2 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-6 prose-table:w-full prose-table:border-collapse prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-3 prose-th:border prose-th:border-border-default prose-td:p-3 prose-td:border prose-td:border-border-default'>
-                          {msg.content ? (
-                            <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
-                          ) : (
-                            isStreaming && <TypingIndicator />
-                          )}
+                        <div className="max-w-[95%] px-6 py-5 text-[15px] leading-relaxed bg-bg-elevated text-text-primary">
+                          <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-sm max-w-none prose-p:my-4 prose-headings:mt-6 prose-headings:mb-3 prose-li:my-2 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-6 prose-table:w-full prose-table:border-collapse prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-3 prose-th:border prose-th:border-border-default prose-td:p-3 prose-td:border prose-td:border-border-default'>
+                            {msg.content ? (
+                              <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
+                            ) : (
+                              isStreaming && <TypingIndicator />
+                            )}
+                          </div>
                         </div>
-                      ) : (
-                        <p className='whitespace-pre-wrap'>{msg.content}</p>
-                      )}
-                    </div>
+                      ) : (() => {
+                        const { context: parsedContext, question } = extractContextAndQuestion(msg.content);
+                        const context = msg.highlightContext || parsedContext;
+                        return (
+                          <div className="flex flex-col gap-2 w-full items-end">
+                            {context && (
+                              <div className="max-w-[95%] p-3.5 bg-bg-elevated border border-border-default border-l-4 border-l-accent-primary text-text-secondary rounded-2xl rounded-tr-sm text-xs leading-relaxed italic font-sans shadow-sm w-full">
+                                <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] mb-1.5 opacity-90 text-accent-primary">
+                                  <Highlighter size={12} className="text-accent-primary" />
+                                  Highlight Context
+                                </div>
+                                <p className="line-clamp-4 leading-relaxed">"{context}"</p>
+                              </div>
+                            )}
+                            <div className="max-w-[95%] px-5 py-3.5 text-[15px] leading-relaxed bg-bg-elevated border border-border-default text-text-primary rounded-3xl rounded-tr-sm shadow-sm text-left inline-block">
+                              <p className='whitespace-pre-wrap'>{question}</p>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     {msg.role === 'ai' && (
                       <p className='text-[9px] text-text-tertiary font-bold tracking-tight uppercase text-center mt-3 opacity-60'>
                         This is AI and can make mistake double-check your answers
@@ -462,7 +478,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                 <X size={14} />
               </button>
             </div>
-            <p className='text-[12px] text-text-secondary leading-relaxed italic line-clamp-3 pl-3 border-l-2 border-blue-100'>
+            <p className='text-[12px] text-text-secondary leading-relaxed italic line-clamp-3 pl-3 border-l-2 border-accent-primary/50'>
               "{activeContext}"
             </p>
           </div>
