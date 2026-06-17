@@ -177,21 +177,23 @@ function NotebookDetailPage() {
   return (
     <div className="min-h-screen bg-bg-elevated w-full overflow-x-hidden">
       {/* Header — standard Apex glassmorphic pattern */}
-      <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between gap-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group shrink-0"
-          >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          </button>
+      <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] shrink-0">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+            >
+              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+            </button>
+          </div>
 
           {/* Centre — two-line block */}
-          <div className="flex-1 text-center min-w-0">
+          <div className="px-5 py-2.5 rounded-[20px] bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-center min-w-0 flex-1 max-w-md">
             <div className="flex items-center justify-center gap-1.5 text-xs text-text-secondary tracking-wide">
               <span>Notes</span>
               <span className="opacity-40">/</span>
-              <span className="truncate max-w-[200px] font-bold text-text-primary">{bookTitle}</span>
+              <span className="truncate max-w-[150px] md:max-w-[200px] font-bold text-text-primary">{bookTitle}</span>
             </div>
             <p className="text-[11px] text-text-tertiary mt-0.5">
               {notesCount} notes · {tabsCount} tabs
@@ -199,7 +201,7 @@ function NotebookDetailPage() {
           </div>
 
           {/* Right spacer for balance */}
-          <div className="w-10 shrink-0" />
+          <div className="w-[42px] shrink-0" />
         </div>
       </div>
 

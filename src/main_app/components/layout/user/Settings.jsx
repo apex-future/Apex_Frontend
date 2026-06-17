@@ -133,16 +133,22 @@ function Settings({ onLogout }) {
     return (
         <div className='w-full min-h-screen bg-bg-primary overflow-y-auto pb-24'>
             {/* Header */}
-            <div className="sticky top-0 z-50 bg-bg-primary/80 backdrop-blur-xl border-b border-border-default">
-                <div className="flex items-center justify-between p-4 max-w-3xl mx-auto">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-bg-subtle rounded-xl transition-all"
-                    >
-                        <ArrowLeft className='text-text-primary' size={24} />
-                    </button>
-                    <h2 className='text-lg font-bold font-display text-text-primary absolute left-1/2 -translate-x-1/2'>Settings</h2>
-                    <div className="w-10"></div> {/* Spacer for centering */}
+            <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+                <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+                    <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+                        >
+                            <ArrowLeft className='text-text-primary' size={24} />
+                        </button>
+                    </div>
+
+                    <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <h2 className='text-base md:text-lg font-bold font-display text-text-primary'>Settings</h2>
+                    </div>
+
+                    <div className="w-[46px]" /> {/* Spacer for centering */}
                 </div>
             </div>
 

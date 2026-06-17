@@ -64,18 +64,22 @@ function TabsPage() {
     return (
         <div className='min-h-screen bg-bg-elevated w-full overflow-x-hidden'>
             {/* Page Header - Glassmorphic with Dark Adaptation */}
-            <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-                <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group"
-                    >
-                        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                    </button>
+            <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+                <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+                    <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+                        >
+                            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+                        </button>
+                    </div>
 
-                    <h3 className='text-xl font-bold font-display text-text-primary'>Tabs</h3>
+                    <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <h3 className='text-base md:text-lg font-bold font-display text-text-primary'>Tabs</h3>
+                    </div>
 
-                    <div className="w-10" />
+                    <div className="w-[42px]" />
                 </div>
             </div>
 

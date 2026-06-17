@@ -66,17 +66,19 @@ function SpaceDetail() {
   return (
     <div className='w-full min-h-screen pb-20'>
       {/* Page Header - Matching BookSpaces style */}
-      <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group"
-          >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          </button>
+      <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+            >
+              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+            </button>
+          </div>
 
-          <div className="text-center flex flex-col items-center">
-            <h3 className='text-xl font-bold font-display text-text-primary'>{selectedShelf.name}</h3>
+          <div className="px-5 py-2.5 rounded-[20px] bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-center flex flex-col items-center">
+            <h3 className='text-base font-bold font-display text-text-primary'>{selectedShelf.name}</h3>
             <div className="flex items-center gap-3 mt-1">
                <p className="text-xs text-text-tertiary font-medium">{selectedShelf.books?.length || 0} {selectedShelf.books?.length === 1 ? 'book' : 'books'}</p>
                {linkedExam && (
@@ -91,15 +93,17 @@ function SpaceDetail() {
           </div>
 
           {!selectedShelf.isSystem ? (
-            <button
-              onClick={() => setIsAddingBooks(true)}
-              className="p-2 hover:bg-accent-primary/10 text-accent-primary rounded-xl transition-all"
-              title="Add Books to Space"
-            >
-              <Plus size={20} />
-            </button>
+            <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+              <button
+                onClick={() => setIsAddingBooks(true)}
+                className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-accent-primary rounded-full transition-all flex items-center justify-center"
+                title="Add Books to Space"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
           ) : (
-            <div className="w-10" />
+            <div className="w-[42px]" />
           )}
         </div>
       </div>

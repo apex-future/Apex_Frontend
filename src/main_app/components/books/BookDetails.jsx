@@ -105,17 +105,21 @@ function BookDetails() {
     return (
         <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500 font-sans">
             {/* Page Header */}
-            <div className="relative flex justify-between items-center py-4 px-2">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated rounded-lg transition-all group"
-                >
-                    <ArrowLeft size={20} className="text-text-primary dark:text-text-primary-dark group-hover:-translate-x-1 transition-transform" />
-                </button>
+            <div className="relative flex justify-between items-center py-4 px-2 gap-3">
+                <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+                    >
+                        <ArrowLeft size={20} className="text-text-primary group-hover:-translate-x-1 transition-transform" />
+                    </button>
+                </div>
 
-                <h3 className='text-lg font-semibold text-text-tertiary dark:text-text-tertiary-dark tracking-tight'>Book Details</h3>
+                <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    <h3 className='text-base font-bold font-display text-text-primary'>Book Details</h3>
+                </div>
 
-                <div className="w-9" />
+                <div className="w-[42px]" />
             </div>
 
             <div className="flex flex-col pt-8 items-start">

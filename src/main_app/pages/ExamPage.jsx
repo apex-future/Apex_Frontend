@@ -145,24 +145,30 @@ const ExamPage = () => {
     return (
         <div className={`min-h-screen bg-bg-primary pb-20 ${resolvedTheme}`}>
             {/* Standardized Sticky Header */}
-            <header className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-                <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 flex items-center justify-between">
-                    <button 
-                        onClick={() => navigate(-1)} 
-                        className="p-2.5 hover:bg-neutral-100 dark:hover:bg-bg-subtle text-text-secondary rounded-xl transition-all group"
-                    >
-                        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                    </button>
+            <header className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+                <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+                    <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <button 
+                            onClick={() => navigate(-1)} 
+                            className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+                        >
+                            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+                        </button>
+                    </div>
 
-                    <h3 className='text-xl font-bold font-display text-text-primary'>Exam Reminders</h3>
+                    <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <h3 className='text-base md:text-lg font-bold font-display text-text-primary'>Exam Reminders</h3>
+                    </div>
 
-                    <button 
-                        onClick={() => { setSelectedExam(null); setIsEditModalOpen(true); }}
-                        className="p-2.5 bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20 rounded-xl transition-all"
-                        title="Create New Exam"
-                    >
-                        <Plus size={20} />
-                    </button>
+                    <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <button 
+                            onClick={() => { setSelectedExam(null); setIsEditModalOpen(true); }}
+                            className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-accent-primary rounded-full transition-all flex items-center justify-center"
+                            title="Create New Exam"
+                        >
+                            <Plus size={20} />
+                        </button>
+                    </div>
                 </div>
             </header>
 

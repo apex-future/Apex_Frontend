@@ -98,17 +98,19 @@ function ApexAI() {
                     <Orb hoverIntensity={0.5} rotateOnHover={true} hue={280} forceHoverState={true} />
                 </div>
                 {/* Header */}
-                <header className='flex items-center justify-between px-6 py-4 border-b border-border-default bg-card-glass/80 backdrop-blur-md relative z-10 flex-shrink-0'>
-                    <div className='flex items-center gap-4 flex-1 min-w-0'>
+                <header className='flex items-center justify-between px-6 py-3 relative z-10 flex-shrink-0 gap-3'>
+                    <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex-shrink-0">
                         <button
                             onClick={() => navigate(-1)}
-                            className='p-2 hover:bg-bg-subtle rounded-lg transition-colors text-text-tertiary flex-shrink-0'
+                            className='p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center'
                             title="Back"
                         >
-                            <ArrowLeft size={20} />
+                            <ArrowLeft size={20} className="text-text-primary" />
                         </button>
-                        
-                        <h1 className='text-sm font-bold tracking-tight text-slate-900 dark:text-white/80 truncate max-w-[200px] md:max-w-md'>
+                    </div>
+
+                    <div className="px-5 py-2.5 rounded-[20px] bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex-1 min-w-0 flex items-center justify-center gap-2">
+                        <h1 className='text-sm font-bold tracking-tight text-slate-900 dark:text-white/80 truncate max-w-[200px] md:max-w-md flex items-center gap-2 justify-center'>
                             {chatHistory.find(c => c.id === sessionId) ? getChatTitle(chatHistory.find(c => c.id === sessionId)) : "Cleo"}
                             {chatHistory.find(c => c.id === sessionId)?.scope && chatHistory.find(c => c.id === sessionId)?.scope !== 'general' && (
                                 <span className='text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-bg-dark-elevated px-2 py-0.5 rounded-full flex items-center gap-1.5 border border-slate-200'>
@@ -118,17 +120,17 @@ function ApexAI() {
                         </h1>
                     </div>
 
-                    <div className='flex items-center gap-2'>
+                    <div className="px-2 py-1.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center gap-2 flex-shrink-0">
                         <button
                             onClick={handleCreateNewChat}
-                            className='p-2 hover:bg-bg-subtle rounded-lg transition-colors text-accent-primary'
+                            className='p-2 hover:bg-white/20 dark:hover:bg-white/10 rounded-full transition-colors text-accent-primary'
                             title="New Chat"
                         >
                             <SquarePen size={20} />
                         </button>
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className='p-2 hover:bg-bg-subtle rounded-lg transition-colors text-text-tertiary'
+                            className='p-2 hover:bg-white/20 dark:hover:bg-white/10 rounded-full transition-colors text-text-tertiary'
                             title={sidebarOpen ? "Close history" : "Open history"}
                         >
                             {sidebarOpen ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
