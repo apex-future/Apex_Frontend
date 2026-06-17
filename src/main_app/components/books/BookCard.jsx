@@ -83,7 +83,7 @@ export default function BookCard({ book, onClick }) {
     return (
         <div
             onClick={() => onClick && onClick(book.id)}
-            className="group relative flex flex-col p-4 bg-card-glass backdrop-blur-md border border-border-default rounded-card transition-all duration-300 cursor-pointer hover:border-text-tertiary shadow-sm"
+            className="group relative flex flex-col p-4 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-card transition-all duration-300 cursor-pointer shadow-sm"
         >
             <div className="flex flex-row gap-4">
                 {/* Cover - Left Side */}
@@ -193,7 +193,7 @@ export default function BookCard({ book, onClick }) {
                         <p className="text-sm text-text-tertiary mb-3 text-left">by {book.author || "N/A"}</p>
 
                         {/* Progress Bar */}
-                        <div className="w-full bg-border-default rounded-full h-1">
+                        <div className="w-full bg-black/5 dark:bg-white/5 rounded-full h-1">
                             <div
                                 className="bg-accent-primary h-1 rounded-full transition-all duration-500"
                                 style={{ width: `${book.progress}%` }}

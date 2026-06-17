@@ -67,8 +67,8 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
           rounded-r-xl md:rounded-[2rem]
           border-r md:border border-border-default/8 dark:border-neutral-800/60
           
-          /* Dynamic Width: Swaps between 64 and 20 based on isExpanded state */
-          ${isExpanded ? 'md:w-64' : 'md:w-20'}
+          /* Dynamic Width: Swaps between 20% and 20 based on isExpanded state */
+          ${isExpanded ? 'md:w-[20%] md:min-w-[270px]' : 'md:w-20'}
         `}
       >
         {/* Sidebar Header: Contains the close button (mobile) or the toggle button (desktop) */}

@@ -58,7 +58,7 @@ const LastReadCard = ({ book, isLoading }) => {
                 className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 rounded-card p-4 transition-all duration-300 group overflow-hidden relative min-h-[14rem] flex-1 flex flex-col justify-between"
             >
                 <div className="flex gap-4 md:gap-8 w-full overflow-hidden flex-1 mb-4">
-                    <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-sm flex-shrink-0 bg-bg-subtle border border-border-subtle group-hover:scale-[1.02] transition-transform duration-300">
+                    <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-sm flex-shrink-0 bg-bg-subtle group-hover:scale-[1.02] transition-transform duration-300">
                         {currentBook.cover ? (
                             <img src={currentBook.cover} alt="Book cover" className="w-full h-full object-cover" />
                         ) : (
@@ -83,7 +83,7 @@ const LastReadCard = ({ book, isLoading }) => {
                                     {currentBook.progress || 0}%
                                 </span>
                             </div>
-                            <div className="w-full bg-border-default rounded-full h-1 overflow-hidden">
+                            <div className="w-full bg-black/5 dark:bg-white/5 rounded-full h-1 overflow-hidden">
                                 <div
                                     className="bg-accent-primary h-full rounded-full transition-all duration-700 ease-out"
                                     style={{ width: `${currentBook.progress || 0}%` }}
@@ -103,7 +103,7 @@ const LastReadCard = ({ book, isLoading }) => {
                     </button>
                     <button 
                         onClick={() => navigate(`/book/${currentBook.id}`)}
-                        className="flex-1 py-2 px-4 rounded-xl font-bold text-xs bg-bg-subtle hover:bg-bg-elevated text-text-secondary border border-border-default active:scale-95 transition-all text-center"
+                        className="flex-1 py-2 px-4 rounded-xl font-bold text-xs bg-bg-subtle hover:bg-bg-elevated text-text-secondary border-t border-black/10 dark:border-white/10 shadow-sm active:scale-95 transition-all text-center"
                     >
                         Practice
                     </button>

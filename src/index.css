@@ -6,12 +6,12 @@
 
 @layer base {
     :root {
-        --bg-primary: 245 245 247;
-        /* #F5F5F7 */
+        --bg-primary: 248 247 245;
+        /* #F8F7F5 */
         --bg-elevated: 255 255 255;
         /* #FFFFFF */
-        --bg-subtle: 235 235 240;
-        /* #EBEBF0 */
+        --bg-subtle: 242 240 235;
+        /* #F2F0EB */
 
         --text-primary: 10 10 10;
         /* #0A0A0A */

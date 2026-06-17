@@ -88,7 +88,7 @@ const FeaturedSlider = ({ lastReadBook, isLoading }) => {
                             className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
                                 i === currentIndex 
                                     ? 'w-12 bg-accent-primary animate-pulse-subtle' 
-                                    : 'w-8 bg-border-default hover:bg-text-tertiary hover:w-16'
+                                    : 'w-8 bg-black/5 dark:bg-white/5 hover:bg-text-tertiary hover:w-16'
                             }`}
                             aria-label={`Go to slide ${i + 1}`}
                         />

@@ -58,14 +58,14 @@ const StreakCard = () => {
                                 <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wider ${index === currentDay ? 'text-orange-500' : 'text-text-tertiary'}`}>
                                     {day}
                                 </span>
-                                <div className={`size-7 md:size-9 lg:size-8 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
+                                <div className={`size-7 md:size-9 lg:size-8 rounded-full flex items-center justify-center transition-all duration-500 ${
                                     hasStreak
                                         ? isToday
-                                          ? 'bg-orange-500 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)] ring-2 ring-orange-500/30 ring-offset-2 dark:ring-offset-neutral-900 shadow-md scale-110'
-                                          : 'bg-orange-500 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
+                                          ? 'bg-orange-500 border-2 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)] ring-2 ring-orange-500/30 ring-offset-2 dark:ring-offset-neutral-900 shadow-md scale-110'
+                                          : 'bg-orange-500 border-2 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
                                         : isToday
-                                        ? 'bg-transparent border-orange-500 text-orange-500 shadow-sm ring-2 ring-offset-2 ring-orange-500/20 dark:ring-offset-neutral-900'
-                                        : 'bg-bg-subtle border-border-default text-text-tertiary'
+                                        ? 'bg-transparent border-2 border-orange-500 text-orange-500 shadow-sm ring-2 ring-offset-2 ring-orange-500/20 dark:ring-offset-neutral-900'
+                                        : 'bg-bg-primary text-text-tertiary'
                                 }`}>
                                     {hasStreak ? (
                                         <Flame size={isToday ? 14 : 12} className="fill-current" />

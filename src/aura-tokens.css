@@ -108,12 +108,11 @@
    Same shadow values — slightly reduced opacity for light.
 ───────────────────────────────────────────────────────────── */
 .light {
-
   /* ── Surfaces ── */
-  --surface-base:    242 240 235;  /* #F2F0EB — warm off-white */
-  --surface-card:    228 226 220;  /* #E4E2DC — card, visibly darker */
-  --surface-raised:  215 213 207;  /* #D7D5CF — modals, darkest */
-  --surface-sunken:  250 249 246;  /* #FAF9F6 — inputs, lighter */
+  --surface-base: 245 245 245;  /* #F5F5F5 — pure neutral off-white */
+  --surface-card: 232 232 232;  /* #E8E8E8 — card, visibly darker gray */
+  --surface-raised: 215 213 207;  /* #D7D5CF — modals, darkest */
+  --surface-sunken: 250 249 246;  /* #FAF9F6 — inputs, lighter */
   --surface-overlay: 234 232 226;  /* #EAE8E2 — bottom sheets */
 
   /* ── Text ── */

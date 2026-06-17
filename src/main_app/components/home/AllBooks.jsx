@@ -5,7 +5,7 @@ import { BookContext } from '../../context/BookContextInstance';
 
 function BookCardSkeleton() {
   return (
-    <div className="flex flex-row gap-4 p-4 bg-card-glass backdrop-blur-md border border-border-default rounded-2xl shadow-sm">
+    <div className="flex flex-row gap-4 p-4 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-2xl shadow-sm">
       {/* Cover skeleton */}
       <div className="w-28 h-40 rounded-lg flex-shrink-0 bg-neutral-200 dark:bg-bg-subtle animate-pulse" />
       {/* Info skeleton */}

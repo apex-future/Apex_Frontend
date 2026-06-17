@@ -141,9 +141,8 @@ function StreakPage() {
           </div>
         </div>
 
-        {/* Calendar Section (Centered, max-w-550px) */}
         <div className="max-w-[550px] mx-auto w-full">
-          <div className="bg-card-glass backdrop-blur-xl rounded-3xl border-2 border-border-default p-5 sm:p-6 shadow-sm">
+          <div className="bg-bg-subtle dark:bg-bg-primary border-t border-black/10 dark:border-white/10 rounded-3xl p-5 sm:p-6 shadow-sm">
             {/* Month header with navigation */}
             <div className="flex items-center justify-between mb-5">
               <button

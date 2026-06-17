@@ -15,78 +15,92 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
     }
   };
   return (
-    <nav className='sticky top-0 z-40 w-full px-4 md:px-8 py-2 md:py-3 bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-b border-border-default/8 dark:border-neutral-800/50 relative'>
-      <div className="nav-wrapper flex justify-between w-full p-0 md:p-1 items-center gap-3">
+    <nav className='sticky top-0 z-40 w-full px-4 md:px-8 py-3'>
+      <div className="nav-wrapper flex justify-between w-full items-center gap-3">
 
-        {/* Go Pro Premium Badge - Desktop Only (Left Side) */}
-        <button 
-          className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-yellow-500/15 border border-amber-500/30 hover:border-amber-400/60 text-amber-400 hover:text-amber-300 transition-all duration-300 hover:shadow-[0_0_12px_rgba(245,158,11,0.25)] group"
-          aria-label="Go Pro"
-          title="Go Pro"
-        >
-          <Crown size={15} className="fill-amber-500/20 text-amber-500 group-hover:scale-110 transition-transform duration-300" />
-          <span className="text-xs font-semibold tracking-wide uppercase">
-            Go Pro
-          </span>
-        </button>
-
-        {/* Mobile Menu Button - Only visible on mobile */}
-        <button
-          onClick={() => setIsMobileOpen(true)}
-          className="md:hidden z-40 p-2 rounded-lg hover:bg-bg-subtle transition-all"
-          aria-label="Open menu"
-        >
-          <Menu size={24} className="text-text-primary" />
-        </button>
-
-        {/* Upload & Streak Group */}
-        <div className="flex items-center gap-2 md:gap-3 ml-auto">
-          
-          {/* Go Pro Premium Badge - Mobile Only (Right Side, beside Bell) */}
-          <button 
-            className="flex md:hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-yellow-500/15 border border-amber-500/30 hover:border-amber-400/60 text-amber-400 hover:text-amber-300 transition-all duration-300 hover:shadow-[0_0_12px_rgba(245,158,11,0.25)] group"
-            aria-label="Go Pro"
-            title="Go Pro"
-          >
-            <Crown size={15} className="fill-amber-500/20 text-amber-500 group-hover:scale-110 transition-transform duration-300" />
-            <span className="text-xs font-semibold tracking-wide uppercase">
-              Go Pro
-            </span>
-          </button>
-          
-          {/* Upload Button - Responsive */}
-          <div className="md:flex hidden items-center h-full">
-            <input
-              type="file"
-              id="top-nav-upload"
-              className="hidden"
-              onChange={handleFileChange}
-              accept=".pdf,.epub,.docx,.doc"
-              multiple
-            />
-            <label
-              htmlFor="top-nav-upload"
-              className="flex items-center justify-center gap-2 px-2.5 md:px-4 py-2.5 bg-accent-primary hover:bg-accent-hover text-white rounded-full transition-all cursor-pointer shadow-sm md:w-auto"
+        {/* Left Elements (No glassmorphic wrapper, free standing) */}
+        <div className="flex items-center gap-3">
+          {/* Go Pro Premium Badge - Desktop Only (Left Side) */}
+          <div className="hidden md:flex items-center px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <button 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-amber-400 hover:text-amber-300 transition-all duration-300 group"
+              aria-label="Go Pro"
+              title="Go Pro"
             >
-              <Plus size={18} />
-              <span className="hidden md:inline text-sm font-medium">Upload</span>
-            </label>
+              <Crown size={15} className="fill-amber-500/20 text-amber-500 group-hover:scale-110 transition-transform duration-300" />
+              <span className="text-xs font-semibold tracking-wide uppercase">
+                Go Pro
+              </span>
+            </button>
           </div>
 
+          {/* Mobile Menu Button - Only visible on mobile */}
           <button
-            onClick={() => setIsNotificationOpen && setIsNotificationOpen(true)}
-            className="flex items-center justify-center p-2 rounded-full hover:bg-bg-subtle text-text-secondary hover:text-text-primary transition-all"
-            aria-label="Notifications"
-            title="Notifications"
+            onClick={() => setIsMobileOpen(true)}
+            className="md:hidden z-40 p-2 rounded-lg hover:bg-bg-subtle/50 dark:hover:bg-white/5 transition-all text-text-primary"
+            aria-label="Open menu"
           >
-            <div className="relative flex items-center justify-center">
-              <Bell size={20} className="flex-shrink-0 transition-colors z-10" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-accent-primary rounded-full border-[1.5px] border-bg-subtle dark:border-bg-elevated" />
-            </div>
+            <Menu size={24} />
           </button>
+        </div>
 
-          <div className="h-full flex items-center pl-1 sm:pl-2">
-            <img src={CharacterImg} alt="Profile" className="w-8 h-8 rounded-full border border-white/10 bg-white/5 object-cover cursor-pointer hover:opacity-80 transition-opacity" />
+        {/* Right Elements Group */}
+        <div className="flex items-center gap-3 ml-auto">
+          
+          {/* Go Pro Premium Badge - Mobile Only */}
+          <div className="flex md:hidden items-center px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <button 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-amber-400 hover:text-amber-300 transition-all duration-300 group"
+              aria-label="Go Pro"
+              title="Go Pro"
+            >
+              <Crown size={15} className="fill-amber-500/20 text-amber-500 group-hover:scale-110 transition-transform duration-300" />
+              <span className="text-xs font-semibold tracking-wide uppercase">
+                Go Pro
+              </span>
+            </button>
+          </div>
+          
+          {/* Glassmorphic Pill container for upload button, notification bell, profile picture icon */}
+          <div className="flex items-center gap-3.5 md:gap-5 px-4 py-2 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            
+            {/* Upload Button */}
+            <div className="flex items-center h-full">
+              <input
+                type="file"
+                id="top-nav-upload"
+                className="hidden"
+                onChange={handleFileChange}
+                accept=".pdf,.epub,.docx,.doc"
+                multiple
+              />
+              <label
+                htmlFor="top-nav-upload"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-accent-primary hover:bg-accent-hover text-white rounded-full transition-all cursor-pointer shadow-sm text-sm font-semibold"
+              >
+                <Plus size={18} />
+                <span className="hidden md:inline">Upload</span>
+              </label>
+            </div>
+
+            {/* Notification Bell */}
+            <button
+              onClick={() => setIsNotificationOpen && setIsNotificationOpen(true)}
+              className="flex items-center justify-center p-2 rounded-full hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary hover:text-text-primary transition-all"
+              aria-label="Notifications"
+              title="Notifications"
+            >
+              <div className="relative flex items-center justify-center">
+                <Bell size={22} className="flex-shrink-0 transition-colors" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-accent-primary rounded-full border border-bg-subtle dark:border-bg-elevated" />
+              </div>
+            </button>
+
+            {/* Profile Picture */}
+            <div className="flex items-center">
+              <img src={CharacterImg} alt="Profile" className="w-9 h-9 rounded-full border border-white/20 bg-white/5 object-cover cursor-pointer hover:opacity-80 transition-opacity" />
+            </div>
+
           </div>
         </div>
 
