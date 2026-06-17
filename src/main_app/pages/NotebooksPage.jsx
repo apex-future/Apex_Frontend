@@ -243,7 +243,7 @@ function NotebooksPage() {
             {filteredNotebooks.map((nb) => (
               <div
                 key={nb.bookId}
-                className="flex flex-col bg-card-glass backdrop-blur-xl border border-border-default rounded-[32px] overflow-hidden hover:-translate-y-2 transition-all duration-500 group cursor-pointer aspect-[3/4.2]"
+                className="flex flex-col bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-[32px] overflow-hidden hover:-translate-y-2 transition-all duration-500 group cursor-pointer aspect-[3/4.2] shadow-sm hover:shadow-md"
                 onClick={() => navigate(`/notes/${nb.bookId}`)}
               >
                 {/* Book Header Section */}

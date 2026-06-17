@@ -44,7 +44,7 @@ function BottomNavBar() {
   return (
     <div
       ref={navRef}
-      className='fixed bottom-8 md:hidden left-1/2 -translate-x-1/2 flex justify-between w-[92%] sm:w-[64%] max-w-[400px] z-[100] min-h-12 border-2 border-border-default dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full items-center p-2 px-4 shadow-2xl shadow-neutral-400/20 dark:shadow-none'
+      className='fixed bottom-0 left-0 right-0 md:hidden flex justify-between w-full z-[100] min-h-14 border-t border-black/10 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xl items-center p-2 px-8 shadow-sm'
     >
       <NavLink
         to="/"

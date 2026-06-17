@@ -94,7 +94,7 @@ function Shelf({ shelves }) {
           <div
             onClick={() => navigate(`/space/${shelf.id}`)}
             key={index}
-            className='group flex flex-col border-2 border-border-default rounded-card bg-neutral-100/40 relative h-64 transition-all duration-500 overflow-hidden cursor-pointer hover:border-accent-primary/30 hover:shadow-xl hover:shadow-accent-primary/5'
+            className='group flex flex-col border-t border-black/10 dark:border-white/10 rounded-card bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md relative h-64 transition-all duration-500 overflow-hidden cursor-pointer shadow-sm hover:shadow-md'
           >
 
             {/* Book Stack Container: Positioned behind the info panel with a more subtle pop-up */}

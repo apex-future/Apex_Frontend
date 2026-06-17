@@ -19,21 +19,8 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
       <div className="nav-wrapper flex justify-between w-full items-center gap-3">
 
         {/* Left Elements (No glassmorphic wrapper, free standing) */}
+        {/* Left Elements (No glassmorphic wrapper, free standing) */}
         <div className="flex items-center gap-3">
-          {/* Go Pro Premium Badge - Desktop Only (Left Side) */}
-          <div className="hidden md:flex items-center px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-            <button 
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-amber-400 hover:text-amber-300 transition-all duration-300 group"
-              aria-label="Go Pro"
-              title="Go Pro"
-            >
-              <Crown size={15} className="fill-amber-500/20 text-amber-500 group-hover:scale-110 transition-transform duration-300" />
-              <span className="text-xs font-semibold tracking-wide uppercase">
-                Go Pro
-              </span>
-            </button>
-          </div>
-
           {/* Mobile Menu Button - Only visible on mobile */}
           <button
             onClick={() => setIsMobileOpen(true)}
@@ -42,13 +29,9 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
           >
             <Menu size={24} />
           </button>
-        </div>
 
-        {/* Right Elements Group */}
-        <div className="flex items-center gap-3 ml-auto">
-          
-          {/* Go Pro Premium Badge - Mobile Only */}
-          <div className="flex md:hidden items-center px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+          {/* Go Pro Premium Badge */}
+          <div className="flex items-center px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             <button 
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-amber-400 hover:text-amber-300 transition-all duration-300 group"
               aria-label="Go Pro"
@@ -60,12 +43,16 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
               </span>
             </button>
           </div>
+        </div>
+
+        {/* Right Elements Group */}
+        <div className="flex items-center gap-3 ml-auto">
           
           {/* Glassmorphic Pill container for upload button, notification bell, profile picture icon */}
           <div className="flex items-center gap-3.5 md:gap-5 px-4 py-2 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             
-            {/* Upload Button */}
-            <div className="flex items-center h-full">
+            {/* Upload Button - Hidden on mobile */}
+            <div className="hidden md:flex items-center h-full">
               <input
                 type="file"
                 id="top-nav-upload"

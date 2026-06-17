@@ -110,7 +110,7 @@ function StreakPage() {
           <div className="grid grid-cols-3 md:flex md:flex-col gap-2 md:gap-5 h-full">
 
             {/* Current Streak Stat Box */}
-            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-2xl border-2 border-border-default p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 hover:border-orange-500/30 transition-all group">
+            <div className="relative overflow-hidden bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md rounded-2xl border-t border-black/10 dark:border-white/10 p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 shadow-sm hover:shadow-md transition-all group">
               <div className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-4 size-16 sm:size-20 md:size-28 text-orange-500/10 rotate-12 group-hover:text-orange-500/20 group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 pointer-events-none ease-in-out">
                 <Flame size="100%" strokeWidth={1} />
               </div>
@@ -121,7 +121,7 @@ function StreakPage() {
             </div>
 
             {/* Longest Streak Stat Box */}
-            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-2xl border-2 border-border-default p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 hover:border-amber-500/30 transition-all group">
+            <div className="relative overflow-hidden bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md rounded-2xl border-t border-black/10 dark:border-white/10 p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 shadow-sm hover:shadow-md transition-all group">
               <div className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-4 size-16 sm:size-20 md:size-28 text-amber-500/10 rotate-12 group-hover:text-amber-500/20 group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 pointer-events-none ease-in-out">
                 <Trophy size="100%" strokeWidth={1} />
               </div>
@@ -132,7 +132,7 @@ function StreakPage() {
             </div>
 
             {/* Days Tracked Stat Box */}
-            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-2xl border-2 border-border-default p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 hover:border-blue-500/30 transition-all group">
+            <div className="relative overflow-hidden bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md rounded-2xl border-t border-black/10 dark:border-white/10 p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 shadow-sm hover:shadow-md transition-all group">
               <div className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-4 size-16 sm:size-20 md:size-28 text-blue-500/10 rotate-12 group-hover:text-blue-500/20 group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 pointer-events-none ease-in-out">
                 <Calendar size="100%" strokeWidth={1} />
               </div>

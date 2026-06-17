@@ -353,7 +353,7 @@ const ExamCard = ({ exam, linkedSpaces, onEdit, onDelete, onTogglePause }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={`group bg-bg-elevated border-2 border-border-default rounded-[2.5rem] p-6 sm:p-8 flex flex-col transition-all hover:shadow-2xl hover:shadow-accent-primary/5 hover:border-accent-primary/20 relative overflow-hidden h-full ${isPaused ? 'opacity-80' : ''}`}
+            className={`group bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-[2.5rem] p-6 sm:p-8 flex flex-col transition-all shadow-sm hover:shadow-md relative overflow-hidden h-full ${isPaused ? 'opacity-80' : ''}`}
         >
             {/* Ambient Background Glow */}
             <div className={`absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-16 blur-3xl opacity-30 transition-all duration-700 pointer-events-none bg-gradient-to-br ${moodAmbientBg}`} />

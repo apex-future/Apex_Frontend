@@ -122,7 +122,7 @@ function Dictionary() {
                             value={word}
                             onChange={(e) => setWord(e.target.value)}
                             placeholder="Search for a word..."
-                            className="w-full h-16 pl-6 pr-6 bg-card-glass backdrop-blur-md border-2 border-border-default rounded-2xl text-lg font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm placeholder:text-sm group-hover:border-text-tertiary"
+                            className="w-full h-16 pl-6 pr-6 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl text-lg font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm placeholder:text-sm group-hover:border-accent-primary/30"
                         />
                         <button
                             type="submit"
@@ -181,7 +181,7 @@ function Dictionary() {
                                         setWord(prevWord);
                                         fetchDefinition(prevWord);
                                     }}
-                                    className="px-4 py-2 bg-white dark:bg-bg-dark-elevated border-2 border-border-default rounded-xl text-text-secondary hover:border-accent-primary hover:text-accent-primary transition-all font-medium"
+                                    className="px-4 py-2 bg-white dark:bg-bg-dark-elevated border border-black/10 dark:border-white/10 rounded-xl text-text-secondary hover:border-accent-primary hover:text-accent-primary transition-all font-medium"
                                 >
                                     {prevWord}
                                 </button>
@@ -192,7 +192,7 @@ function Dictionary() {
 
                 {/* Offline Dictionary Settings */}
                 {!loading && (
-                    <div className="mt-10 p-6 bg-card-glass backdrop-blur-md border-2 border-border-default rounded-3xl animate-in fade-in slide-in-from-bottom-2">
+                    <div className="mt-10 p-6 bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-3xl shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-base font-bold text-text-primary flex items-center gap-2">
                                 <WifiOff size={18} className="text-accent-primary" />
@@ -262,7 +262,7 @@ function Dictionary() {
                         {/* Meanings */}
                         <div className="space-y-8">
                             {(definition.meanings || []).slice(0, 3).map((meaning, idx) => (
-                                <div key={idx} className="bg-card-glass backdrop-blur-md border-2 border-border-default rounded-3xl p-6 md:p-8 hover:border-text-tertiary transition-all shadow-sm">
+                                <div key={idx} className="bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-3xl p-6 md:p-8 hover:shadow-md transition-all shadow-sm">
                                     <div className="flex items-center gap-4 mb-6">
                                         <span className="text-sm font-bold uppercase tracking-[0.2em] text-accent-primary">
                                             {meaning.partOfSpeech}
