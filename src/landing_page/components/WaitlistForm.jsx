@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Lock, Send, CheckCircle2, AlertCircle, User, Mail } from 'lucide-react';
+import { Lock, PaperPlaneRight, CheckCircle, WarningCircle, User, EnvelopeSimple } from '@phosphor-icons/react';
 import student1 from '../../assets/students/student1.jpg';
 import student2 from '../../assets/students/student2.jpg';
 import student3 from '../../assets/students/student3.jpg';
@@ -125,7 +125,7 @@ function WaitlistForm({ onLogin }) {
         <div className='mb-4'>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50">
-              <User size={18} />
+              <User size={18} weight="regular" />
             </div>
             <input
               type="text"
@@ -147,7 +147,7 @@ function WaitlistForm({ onLogin }) {
         <div className='mb-4'>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50">
-              <Mail size={18} />
+              <EnvelopeSimple size={18} weight="regular" />
             </div>
             <input
               type="email"
@@ -169,7 +169,7 @@ function WaitlistForm({ onLogin }) {
         <div className='mb-6'>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50">
-              <Lock size={18} />
+              <Lock size={18} weight="regular" />
             </div>
             <input
               type="password"

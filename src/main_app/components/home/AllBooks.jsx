@@ -1,5 +1,5 @@
 import React, { useContext, useState, useMemo, useRef, useEffect } from 'react';
-import { Bookmark, SearchX, Search, SlidersHorizontal, X, Check } from 'lucide-react';
+import { BookmarkSimple, MagnifyingGlass, Sliders, X, Check } from '@phosphor-icons/react';
 import BookCard from '../books/BookCard';
 import { BookContext } from '../../context/BookContextInstance';
 
@@ -127,7 +127,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
           {/* Expandable Search Input Container */}
           <div className="flex items-center">
             <div className={`flex items-center transition-all duration-300 ease-in-out ${isSearchOpen ? 'w-48 sm:w-64 border-accent-primary bg-card-glass px-3 py-1.5' : 'w-0 border-transparent bg-transparent overflow-hidden'} border-2 rounded-full backdrop-blur-md relative`}>
-              <Search className={`text-text-placeholder mr-2 ${isSearchOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`} size={16} />
+              <MagnifyingGlass className={`text-text-placeholder mr-2 ${isSearchOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`} size={16} weight="regular" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -141,7 +141,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
                   onClick={() => setSearchQuery('')}
                   className="text-text-tertiary hover:text-text-primary p-0.5 rounded-full"
                 >
-                  <X size={14} />
+                  <X size={16} weight="regular" />
                 </button>
               )}
             </div>
@@ -152,7 +152,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
               className={`p-2.5 rounded-full transition-all ${isSearchOpen ? 'bg-accent-primary/10 text-accent-primary' : 'bg-bg-subtle text-text-secondary hover:text-text-primary'} hover:scale-105 active:scale-95 ml-1`}
               title={isSearchOpen ? "Close Search" : "Search Library"}
             >
-              {isSearchOpen && !searchQuery ? <X size={18} /> : <Search size={18} />}
+              {isSearchOpen && !searchQuery ? <X size={18} /> : <MagnifyingGlass size={18} />}
             </button>
           </div>
 
@@ -163,7 +163,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
               className={`p-2.5 rounded-full transition-all ${isFilterOpen || activeFilter !== 'all' || activeSort !== 'recent' ? 'bg-accent-primary text-white shadow-md' : 'bg-bg-subtle text-text-secondary hover:text-text-primary'} hover:scale-105 active:scale-95`}
               title="Filter & Sort"
             >
-              <SlidersHorizontal size={18} />
+              <Sliders size={20} weight="regular" />
             </button>
 
             {/* Dropdown Menu - Glassmorphic */}
@@ -218,7 +218,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
                           className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left text-xs transition-all ${isSelected ? 'bg-accent-primary/5 text-accent-primary font-bold' : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'}`}
                         >
                           <span>{s.label}</span>
-                          {isSelected && <Check size={14} className="text-accent-primary" />}
+                          {isSelected && <Check size={14} weight="regular" className="text-accent-primary" />}
                         </button>
                       );
                     })}
@@ -241,7 +241,8 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
         isSearching ? (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
             <div className="w-20 h-20 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-6 text-text-tertiary">
-              <SearchX size={32} />
+              {/* migrated from lucide: SearchX */}
+              <MagnifyingGlass size={32} />
             </div>
             <h3 className="text-2xl font-display font-bold text-text-primary mb-2">No matching books</h3>
             <p className="text-gray-500 max-w-xs mx-auto">
@@ -271,7 +272,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
         ) : (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
             <div className="w-20 h-20 bg-accent-primary/10 rounded-full flex items-center justify-center mb-6 text-accent-primary">
-              <Bookmark size={32} />
+              <BookmarkSimple size={32} />
             </div>
             <h3 className="text-2xl font-display font-bold text-text-primary mb-2">Your library is empty</h3>
             <p className="text-gray-500 max-w-xs mx-auto mb-8">

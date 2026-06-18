@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff, StickyNote, Save, Wand2, Layers, AlertCircle } from 'lucide-react';
+import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, BookmarkSimple, Check, WifiSlash, Note, FloppyDisk, MagicWand, Stack, WarningCircle } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
 
 function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose, onGenerateFlashcards }) {
@@ -172,7 +172,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 onClick={() => fetchDefinition(selection)}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
-                                <Book size={20} className="text-text-secondary group-hover:text-blue-600 transition-colors" />
+                                <Book size={20} weight="fill" className="text-text-secondary group-hover:text-blue-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Define</span>
                             </button>
 
@@ -182,7 +182,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 onClick={onAskAI}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
-                                <Sparkles size={20} className="text-text-secondary group-hover:text-purple-600 transition-colors" />
+                                <Sparkle size={20} weight="fill" className="text-text-secondary group-hover:text-purple-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask</span>
                             </button>
 
@@ -192,7 +192,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 onClick={() => toggleTab(true)}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
-                                <StickyNote size={20} className="text-text-secondary group-hover:text-amber-600 transition-colors" />
+                                <Note size={20} weight="fill" className="text-text-secondary group-hover:text-amber-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Tab</span>
                             </button>
 
@@ -202,7 +202,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 onClick={() => onSimplify?.()}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
-                                <Wand2 size={20} className="text-text-secondary group-hover:text-emerald-600 transition-colors" />
+                                <MagicWand size={20} weight="fill" className="text-text-secondary group-hover:text-emerald-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Simplify</span>
                             </button>
 
@@ -212,7 +212,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 onClick={() => toggleFlashcards(true)}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
-                                <Layers size={20} className="text-text-secondary group-hover:text-rose-600 transition-colors" />
+                                <Stack size={20} weight="fill" className="text-text-secondary group-hover:text-rose-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Cards</span>
                             </button>
                         </div>
@@ -234,19 +234,19 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Dictionary</h3>
                             <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
-                                <X size={16} className="text-text-tertiary" />
+                                <X size={16} weight="bold" className="text-text-tertiary" />
                             </button>
                         </div>
 
                         {loading ? (
                             <div className="flex items-center justify-center py-8">
-                                <Loader2 size={28} className="animate-spin text-blue-500 opacity-60" />
+                                <Spinner size={28} weight="bold" className="animate-spin text-blue-500 opacity-60" />
                             </div>
                         ) : error ? (
                             <div className="py-6">
                                 {error.includes('internet') ? (
                                     <div className="flex flex-col items-center gap-2 text-center">
-                                        <WifiOff size={24} className="text-amber-500" />
+                                        <WifiSlash size={24} weight="bold" className="text-amber-500" />
                                         <p className="text-sm text-amber-700 font-medium font-sans">
                                             {error}
                                         </p>
@@ -261,7 +261,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                             }}
                                             className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition-all border border-purple-200 shadow-sm font-bold text-sm"
                                         >
-                                            <Sparkles size={16} className="text-purple-600" />
+                                            <Sparkle size={16} weight="fill" className="text-purple-600" />
                                             Ask Cleo to define it
                                         </button>
                                     </div>
@@ -276,7 +276,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                             onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)}
                                             className="w-8 h-8 rounded-full bg-accent-subtle flex items-center justify-center text-blue-500 hover:bg-accent-subtle transition-all hover:scale-110"
                                         >
-                                            <Volume2 size={18} />
+                                            <SpeakerHigh size={18} weight="fill" />
                                         </button>
                                     )}
                                 </div>
@@ -325,7 +325,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                             : 'bg-text-primary text-bg-elevated hover:bg-black active:scale-[0.98]'
                                             }`}
                                     >
-                                        {wordSaved ? <Check size={18} /> : <BookmarkPlus size={18} />}
+                                        {wordSaved ? <Check size={18} weight="bold" /> : <BookmarkSimple size={18} weight="bold" />}
                                         {wordSaved ? 'Word Saved' : 'Save to Vocabulary'}
                                     </button>
                                 )}
@@ -337,7 +337,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Add Tab</h3>
                             <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
-                                <X size={16} className="text-text-tertiary" />
+                                <X size={16} weight="bold" className="text-text-tertiary" />
                             </button>
                         </div>
 
@@ -363,7 +363,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                     : 'bg-accent-primary text-white hover:bg-accent-primary/90 active:scale-[0.98] disabled:opacity-50'
                                     }`}
                             >
-                                {tabSaved ? <Check size={18} /> : <Save size={18} />}
+                                {tabSaved ? <Check size={18} weight="bold" /> : <FloppyDisk size={18} weight="bold" />}
                                 {tabSaved ? 'Tab Saved' : 'Save Tab'}
                             </button>
                         </div>
@@ -372,16 +372,16 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] font-sans flex items-center gap-2">
-                                <Layers size={14} /> Flashcards
+                                <Stack size={14} weight="fill" /> Flashcards
                             </h3>
                             <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
-                                <X size={16} className="text-text-tertiary" />
+                                <X size={16} weight="bold" className="text-text-tertiary" />
                             </button>
                         </div>
 
                         {flashcardError ? (
                             <div className="bg-red-50/50 border border-red-100 p-4 rounded-xl flex flex-col items-center text-center gap-3">
-                                <AlertCircle size={24} className="text-red-500" />
+                                <WarningCircle size={24} weight="bold" className="text-red-500" />
                                 <p className="text-sm text-red-700 font-medium">{flashcardError}</p>
                                 <button
                                     onClick={handleCloseModal}
@@ -423,7 +423,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                     }}
                                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white rounded-xl text-sm font-bold transition-all shadow-md active:scale-95"
                                 >
-                                    <Sparkles size={18} />
+                                    <Sparkle size={18} weight="fill" />
                                     Generate Cards
                                 </button>
                             </div>

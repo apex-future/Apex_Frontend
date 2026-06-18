@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Maximize, Minimize, NotebookPen, Settings, WholeWord } from 'lucide-react'
+import { ArrowLeft, BookmarkSimple, DotsThreeVertical, CornersOut, LockKey, LockKeyOpen, ArrowsOut, ArrowsIn, Notebook, Gear, TextAa } from '@phosphor-icons/react';
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookClick }) {
@@ -73,14 +73,14 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
             onClick={() => navigate('/')}
             className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
           >
-            <ArrowLeft size={18} strokeWidth={2} />
+            <ArrowLeft size={18} weight="bold" />
           </button>
           
           <button
             onClick={(e) => { e.stopPropagation(); setPageSettings?.(true); }}
             className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
           >
-            <Settings size={18} strokeWidth={2} />
+            <Gear size={18} weight="bold" />
           </button>
         </div>
         <div className='flex items-start sm:items-center gap-2 sm:gap-3'>
@@ -96,10 +96,8 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
               onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
               title={isBookmarked ? 'Remove page bookmark' : 'Bookmark this page'}
             >
-              <Bookmark
-                strokeWidth={2}
                 size={18}
-                className={`transition-all duration-200 ${isBookmarked ? 'fill-accent-primary' : 'fill-none'}`}
+                weight={isBookmarked ? "fill" : "bold"}
               />
             </button>
 
@@ -108,7 +106,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
               className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
               onClick={onDotsClick}
             >
-              <EllipsisVertical strokeWidth={2} size={18} />
+              <DotsThreeVertical size={18} weight="bold" />
             </button>
           </div>
         </div>
@@ -127,7 +125,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
               onClick={(e) => { e.stopPropagation(); onToggleDictionary?.(); }}
               title="Dictionary Search"
             >
-              <WholeWord strokeWidth={2} size={18} />
+              <TextAa size={18} weight="bold" />
             </button>
 
             <button
@@ -135,7 +133,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
               onClick={(e) => { e.stopPropagation(); onNotebookClick?.(); }}
               title="Notebook"
             >
-              <NotebookPen strokeWidth={2} size={18} />
+              <Notebook size={18} weight="bold" />
             </button>
           </div>
 
@@ -150,9 +148,8 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
               onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
               title={locked ? 'Unlock scroll' : 'Lock scroll'}
             >
-              {locked
-                ? <Lock strokeWidth={2} size={18} />
-                : <LockOpen strokeWidth={2} size={18} />
+                ? <LockKey size={18} weight="bold" />
+                : <LockKeyOpen size={18} weight="bold" />
               }
             </button>
 
@@ -163,7 +160,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
                 onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
                 title="Fit to screen (reset zoom)"
               >
-                <Fullscreen strokeWidth={2} size={18} />
+                <CornersOut size={18} weight="bold" />
               </button>
 
               {/* Browser Fullscreen — makes app occupy entire window */}
@@ -172,10 +169,9 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
                 onClick={handleFullScreen}
                 title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
               >
-                {isFullScreen ? (
-                  <Minimize strokeWidth={2} size={18} />
+                  <ArrowsIn size={18} weight="bold" />
                 ) : (
-                  <Maximize strokeWidth={2} size={18} />
+                  <ArrowsOut size={18} weight="bold" />
                 )}
               </button>
             </div>

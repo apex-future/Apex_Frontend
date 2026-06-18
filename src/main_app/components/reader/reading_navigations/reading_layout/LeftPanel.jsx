@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
-import { List, Bookmark, X, ChevronLeft, ChevronDown, Highlighter, Wand2 } from 'lucide-react'
+import { List, BookmarkSimple, X, CaretLeft, CaretDown, HighlighterCircle, MagicWand } from '@phosphor-icons/react'
 import BookmarksView from './BookmarksView'
 import HighlightsView from './HighlightsView'
 import SimplifiedView from './SimplifiedView'
 
 const NAV_ITEMS = [
   { id: 'toc', icon: List, label: 'Table of Contents' },
-  { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
-  { id: 'highlights', icon: Highlighter, label: 'Highlights' },
-  { id: 'simplified', icon: Wand2, label: 'Simplified' },
+  { id: 'bookmarks', icon: BookmarkSimple, label: 'Bookmarks' },
+  { id: 'highlights', icon: HighlighterCircle, label: 'Highlights' },
+  { id: 'simplified', icon: MagicWand, label: 'Simplified' },
 ];
 
 function TocItems({ items, onJump, depth = 0 }) {
@@ -44,9 +44,9 @@ function TocItems({ items, onJump, depth = 0 }) {
             >
               {/* Chevron for collapsible parents */}
               {hasChildren && (
-                <ChevronDown
+                <CaretDown
                   size={13}
-                  strokeWidth={2.5}
+                  weight="bold"
                   className={`shrink-0 text-text-tertiary transition-transform duration-200 ${
                     isCollapsed ? '-rotate-90' : 'rotate-0'
                   }`}
@@ -121,7 +121,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
             onClick={() => setActiveSection(null)}
             className="flex items-center gap-2 text-base font-bold text-text-primary hover:text-accent-primary transition-colors"
           >
-            <ChevronLeft size={18} strokeWidth={2.5} />
+            <CaretLeft size={18} weight="bold" />
             {NAV_ITEMS.find(n => n.id === activeSection)?.label}
           </button>
         ) : (
@@ -131,7 +131,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
           onClick={() => setLeftPanel(false)}
           className="p-2 rounded-full bg-bg-subtle hover:bg-bg-subtle transition-all text-text-tertiary hover:text-text-secondary"
         >
-          <X size={18} strokeWidth={2} />
+          <X size={18} weight="bold" />
         </button>
       </div>
 
@@ -158,7 +158,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
                   className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-text-secondary bg-bg-subtle/50 hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full border border-transparent hover:border-accent-primary/10 group"
                 >
                   <div className="w-10 h-10 rounded-full bg-bg-elevated shadow-sm flex items-center justify-center text-text-tertiary group-hover:text-accent-primary transition-colors">
-                    <ItemIcon size={20} strokeWidth={2} />
+                    <ItemIcon size={20} weight="bold" />
                   </div>
                   <span className="flex-1 tracking-tight">{label}</span>
                   {/* Show count badge */}
@@ -179,7 +179,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
             {(!tocOutline || tocOutline.length === 0) && (
               <div className='flex flex-col items-center justify-center py-12 px-4 text-center'>
                 <div className='w-12 h-12 rounded-2xl bg-bg-subtle flex items-center justify-center mb-3'>
-                  <List size={22} className='text-text-tertiary' strokeWidth={1.5} />
+                  <List size={22} weight="bold" className='text-text-tertiary' />
                 </div>
                 <p className='text-sm font-semibold text-text-secondary'>No Table of Contents</p>
                 <p className='text-xs text-text-tertiary mt-1 max-w-[200px]'>

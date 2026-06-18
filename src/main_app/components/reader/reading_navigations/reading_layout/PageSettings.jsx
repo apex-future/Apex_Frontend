@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { X, ChevronLeft, ArrowUpDown, ArrowLeftRight, Settings, Sliders } from 'lucide-react'
+import { X, CaretLeft, ArrowsVertical, ArrowsHorizontal, Gear, SlidersHorizontal } from '@phosphor-icons/react';
 import useSettingsStore from '../../../../store/settingsStore';
 
 function PageSettings({ setPageSettings, readerControls }) {
@@ -18,7 +18,7 @@ function PageSettings({ setPageSettings, readerControls }) {
   };
 
   const sections = [
-    { id: 'orientation', label: 'Scroll Orientation', icon: Sliders }
+    { id: 'orientation', label: 'Scroll Orientation', icon: SlidersHorizontal }
   ];
 
   return (
@@ -33,12 +33,12 @@ function PageSettings({ setPageSettings, readerControls }) {
             onClick={() => setActiveSection(null)}
             className="flex items-center gap-2 text-base font-bold text-text-primary hover:text-accent-primary transition-colors"
           >
-            <ChevronLeft size={18} strokeWidth={2.5} />
+            <CaretLeft size={18} weight="bold" />
             {activeSection === 'orientation' ? 'Scroll Orientation' : 'Settings'}
           </button>
         ) : (
           <div className="flex items-center gap-2">
-            <Settings size={18} className="text-text-tertiary" />
+            <Gear size={18} weight="bold" className="text-text-tertiary" />
             <h2 className="text-xs font-black text-text-tertiary tracking-[0.2em] uppercase">Settings</h2>
           </div>
         )}
@@ -46,7 +46,7 @@ function PageSettings({ setPageSettings, readerControls }) {
           onClick={() => setPageSettings(false)}
           className="p-2 rounded-full bg-bg-subtle hover:bg-bg-subtle transition-all text-text-tertiary hover:text-text-secondary"
         >
-          <X size={18} strokeWidth={2} />
+          <X size={18} weight="bold" />
         </button>
       </div>
 
@@ -126,7 +126,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                     scrollOrientation === 'vertical' ? 'bg-accent-primary text-bg-elevated' : 'bg-bg-elevated text-text-tertiary group-hover:text-text-secondary'
                   }`}>
-                    <ArrowUpDown size={20} strokeWidth={2.5} />
+                    <ArrowsVertical size={20} weight="bold" />
                   </div>
                   <span className="text-xs font-bold tracking-tight">Up & Down</span>
                 </button>
@@ -142,7 +142,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                     scrollOrientation === 'horizontal' ? 'bg-accent-primary text-bg-elevated' : 'bg-bg-elevated text-text-tertiary group-hover:text-text-secondary'
                   }`}>
-                    <ArrowLeftRight size={20} strokeWidth={2.5} />
+                    <ArrowsHorizontal size={20} weight="bold" />
                   </div>
                   <span className="text-xs font-bold tracking-tight">Left & Right</span>
                 </button>

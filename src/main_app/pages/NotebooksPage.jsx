@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { BookContext } from '../context/BookContextInstance';
 import useBookNotesStore from '../store/bookNotesStore';
 import {
-  ArrowLeft, Search, Star, Pencil, ChevronRight,
-  BookOpen, FileText, Bookmark, X, AlignLeft
-} from 'lucide-react';
+  ArrowLeft, MagnifyingGlass, Star, PencilSimple, CaretRight,
+  BookOpen, FileText, BookmarkSimple, X, TextAlignLeft
+} from '@phosphor-icons/react';
 
 // Extract plain text preview from JSONB content blocks
 function getContentPreview(content) {
@@ -169,7 +169,7 @@ function NotebooksPage() {
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
             >
-              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+              <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
             </button>
           </div>
 
@@ -200,7 +200,7 @@ function NotebooksPage() {
           </div>
 
           <div className="relative w-full md:w-72 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary" size={18} />
+            <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary" size={18} weight="bold" />
             <input
               type="text"
               placeholder="Search notebooks..."
@@ -213,7 +213,7 @@ function NotebooksPage() {
 
         {notebooksData.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-black/10 dark:border-white/10 rounded-card">
-            <BookOpen size={32} className="text-text-placeholder mb-4" />
+            <BookOpen size={32} weight="fill" className="text-text-placeholder mb-4" />
             <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No notebooks yet</h3>
             <button onClick={() => navigate('/')} className="mt-4 bg-accent-primary text-white px-8 py-3 rounded-xl font-bold">Go to Library</button>
           </div>
@@ -221,19 +221,19 @@ function NotebooksPage() {
           <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-black/10 dark:border-white/10 rounded-card">
             {activeFilter === 'starred' ? (
               <>
-                <Star size={32} className="text-text-placeholder mb-4" />
+                <Star size={32} weight="fill" className="text-text-placeholder mb-4" />
                 <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No starred notebooks</h3>
                 <p className="text-text-secondary">Star your favorite notebooks to see them here.</p>
               </>
             ) : searchQuery.trim() ? (
               <>
-                <Search size={32} className="text-text-placeholder mb-4" />
+                <MagnifyingGlass size={32} weight="bold" className="text-text-placeholder mb-4" />
                 <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No results found</h3>
                 <p className="text-text-secondary">We couldn't find any notebooks matching "{searchQuery}".</p>
               </>
             ) : (
               <>
-                <BookOpen size={32} className="text-text-placeholder mb-4" />
+                <BookOpen size={32} weight="fill" className="text-text-placeholder mb-4" />
                 <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No notebooks found</h3>
               </>
             )}
@@ -289,7 +289,7 @@ function NotebooksPage() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center text-text-placeholder opacity-40">
-                      <FileText size={40} strokeWidth={1} />
+                      <FileText size={40} strokeWidth={1} weight="fill" />
                       <p className="text-xs mt-3 font-medium">Empty notebook</p>
                     </div>
                   )}
@@ -317,14 +317,14 @@ function NotebooksPage() {
                         onClick={(e) => { e.stopPropagation(); toggleStar(nb.bookId); }}
                         className={`p-2 rounded-xl transition-all ${nb.isStarred ? 'text-amber-400 bg-amber-400/10' : 'text-text-tertiary hover:bg-bg-subtle'}`}
                       >
-                        <Star size={15} fill={nb.isStarred ? 'currentColor' : 'none'} />
+                        <Star size={15} weight={nb.isStarred ? 'fill' : 'regular'} />
                       </button>
 
                       <button 
                         onClick={(e) => { e.stopPropagation(); openRenameModal(nb.bookId, nb.bookTitle); }}
                         className="p-2 text-text-tertiary hover:text-accent-primary transition-colors rounded-xl"
                       >
-                        <Pencil size={14} />
+                        <PencilSimple size={14} weight="bold" />
                       </button>
                     </div>
                   </div>

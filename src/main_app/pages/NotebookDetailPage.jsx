@@ -3,9 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { BookContext } from '../context/BookContextInstance';
 import useBookNotesStore from '../store/bookNotesStore';
 import {
-  ArrowLeft, Plus, FileText, Bookmark, AlignLeft,
-  Highlighter, Pen, Search, Trash2, AlertTriangle
-} from 'lucide-react';
+  ArrowLeft, Plus, FileText, BookmarkSimple, TextAlignLeft,
+  Highlighter, PencilSimple, MagnifyingGlass, Trash, Warning
+} from '@phosphor-icons/react';
 
 function formatDate(isoString) {
   if (!isoString) return '';
@@ -81,7 +81,7 @@ function DeleteConfirmModal({ noteTitle, onConfirm, onCancel }) {
       >
         {/* Icon */}
         <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center">
-          <AlertTriangle size={22} className="text-red-500" />
+          <Warning size={22} weight="fill" className="text-red-500" />
         </div>
 
         {/* Copy */}
@@ -184,7 +184,7 @@ function NotebookDetailPage() {
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
             >
-              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+              <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
             </button>
           </div>
 
@@ -214,7 +214,7 @@ function NotebookDetailPage() {
             onClick={() => navigate(`/notes/${bookId}/new`)}
             className="flex items-center gap-2 bg-accent-primary text-white text-sm font-bold px-6 py-3 rounded-2xl hover:bg-accent-primary/90 active:scale-95 transition-all shadow-lg shadow-accent-primary/20"
           >
-            <Plus size={18} />
+            <Plus size={18} weight="bold" />
             New Note
           </button>
         </div>
@@ -235,7 +235,7 @@ function NotebookDetailPage() {
              </div>
           ) : notes.length === 0 ? (
             <div className="border border-dashed border-border-default rounded-card p-10 text-center flex flex-col items-center gap-3">
-              <FileText size={28} className="text-text-placeholder" />
+              <FileText size={28} weight="fill" className="text-text-placeholder" />
               <h4 className="font-display text-lg font-bold text-text-primary">No notes yet</h4>
               <p className="text-sm text-text-secondary">Tap New Note to start writing.</p>
             </div>
@@ -285,14 +285,14 @@ function NotebookDetailPage() {
                         </span>
                         {/* Word count */}
                         <span className="text-[11px] text-text-tertiary flex items-center gap-1">
-                          <AlignLeft size={11} /> {wordCount} words
+                          <TextAlignLeft size={11} weight="bold" /> {wordCount} words
                         </span>
                         <button
                           onClick={(e) => requestDelete(e, note.local_id)}
                           title="Delete note"
                           className="p-1.5 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all"
                         >
-                          <Trash2 size={13} />
+                          <Trash size={13} weight="bold" />
                         </button>
                       </div>
 
@@ -326,7 +326,7 @@ function NotebookDetailPage() {
           {/* Tabs list */}
           {tabs.length === 0 ? (
             <div className="border border-dashed border-border-default rounded-card p-10 text-center flex flex-col items-center gap-3">
-              <Bookmark size={28} className="text-text-placeholder" />
+              <BookmarkSimple size={28} weight="fill" className="text-text-placeholder" />
               <h4 className="font-display text-lg font-bold text-text-primary">No tabs yet</h4>
               <p className="text-sm text-text-secondary">Highlight text while reading to create tabs.</p>
             </div>
@@ -347,11 +347,11 @@ function NotebookDetailPage() {
                       {/* Note type badge */}
                       {isHighlight ? (
                         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md">
-                          <Highlighter size={10} /> Highlight
+                          <Highlighter size={10} weight="bold" /> Highlight
                         </span>
                       ) : (
                         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-md">
-                          <Pen size={10} /> Manual
+                          <PencilSimple size={10} weight="bold" /> Manual
                         </span>
                       )}
 
@@ -368,7 +368,7 @@ function NotebookDetailPage() {
                           className="p-1.5 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all"
                           title="Delete tab"
                         >
-                          <Trash2 size={13} />
+                          <Trash size={13} weight="bold" />
                         </button>
                       </div>
                     </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame } from 'lucide-react';
+import { Flame } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import useStudyStore from '../../store/studyStore';
 
@@ -15,6 +15,7 @@ const StreakBadge = () => {
     >
       <Flame
         size={18}
+        weight="fill"
         className={`transition-transform group-hover:scale-110 ${
           streakCount > 0
             ? 'text-orange-500 fill-orange-500'

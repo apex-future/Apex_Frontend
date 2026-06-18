@@ -1,4 +1,4 @@
-import { Home, Plus, User, ScrollText } from 'lucide-react'
+import { House, Plus, User, Scroll } from '@phosphor-icons/react'
 import React, { useContext, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BookContext } from '../../../context/BookContextInstance';
@@ -52,7 +52,10 @@ function BottomNavBar() {
       >
         {({ isActive }) => (
           <>
-            <Home size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040] dark:text-zinc-400'} />
+            {isActive
+              ? <House size={20} weight="fill" className="text-accent-primary" />
+              : <House size={20} weight="bold" className="text-[#404040] dark:text-zinc-400" />
+            }
             {isActive && (
               <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
             )}
@@ -66,7 +69,11 @@ function BottomNavBar() {
       >
         {({ isActive }) => (
           <>
-            <ScrollText size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040] dark:text-zinc-400'} />
+            {/* migrated from lucide: ScrollText */}
+            {isActive
+              ? <Scroll size={20} weight="fill" className="text-accent-primary" />
+              : <Scroll size={20} weight="bold" className="text-[#404040] dark:text-zinc-400" />
+            }
             {isActive && (
               <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
             )}
@@ -90,7 +97,7 @@ function BottomNavBar() {
           htmlFor="nav-upload"
           className='bg-accent-primary hover:bg-accent-hover size-11 rounded-full shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center transform'
         >
-          <Plus className='text-white' size={24} />
+          <Plus className='text-white' size={24} weight="bold" />
         </label>
       </div>
 
@@ -100,7 +107,10 @@ function BottomNavBar() {
       >
         {({ isActive }) => (
           <>
-            <User size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040] dark:text-zinc-400'} />
+            {isActive
+              ? <User size={20} weight="fill" className="text-accent-primary" />
+              : <User size={20} weight="bold" className="text-[#404040] dark:text-zinc-400" />
+            }
             {isActive && (
               <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
             )}

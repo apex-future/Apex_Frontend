@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Copy, AlertCircle } from 'lucide-react';
+import { X, Copy, WarningCircle } from '@phosphor-icons/react';
 
 /**
  * DuplicateBookModal:
@@ -17,20 +17,20 @@ function DuplicateBookModal({ isOpen, onClose }) {
         {/* Header/Banner Area */}
         <div className="h-24 bg-gradient-to-br from-accent-primary/10 to-accent-subtle/30 flex items-center justify-center relative">
           <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-accent-primary">
-            <Copy size={32} />
+            <Copy size={32} weight="fill" />
           </div>
           <button 
             onClick={onClose}
             className="absolute top-4 right-4 p-2 hover:bg-white/50 rounded-full transition-all text-text-tertiary"
           >
-            <X size={20} />
+            <X size={20} weight="bold" />
           </button>
         </div>
 
         {/* Content Area */}
         <div className="p-8 pt-6 flex flex-col items-center text-center">
           <div className="flex items-center gap-2 mb-2">
-            <AlertCircle size={16} className="text-accent-primary" />
+            <WarningCircle size={16} weight="fill" className="text-accent-primary" />
             <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent-pressed">Duplicate Found</span>
           </div>
           <h2 className="text-2xl font-bold font-display text-text-primary mb-3">Book already there</h2>

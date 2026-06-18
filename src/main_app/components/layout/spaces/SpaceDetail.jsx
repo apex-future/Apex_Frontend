@@ -1,13 +1,13 @@
 import React, { useContext, useMemo, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Plus, Clock, FileText, Calendar, X, Check } from 'lucide-react'
+import { ArrowLeft, BookOpen, Plus, Clock, FileText, Calendar, X, Check, Trophy } from '@phosphor-icons/react';
 import { BookContext } from "../../../context/BookContextInstance"
 import useSpaceStore from '../../../store/spaceStore'
 import useStudyStore from '../../../store/studyStore'
 import BookCard from '../../books/BookCard'
 import BookCover from '../../books/BookCover'
 import useQuizStore from '../../../store/quizStore'
-import { Trophy } from 'lucide-react'
+
 import SpaceAnalytics from './SpaceAnalytics'
 
 /**
@@ -73,7 +73,7 @@ function SpaceDetail() {
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
             >
-              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+              <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
             </button>
           </div>
 
@@ -85,7 +85,7 @@ function SpaceDetail() {
                    <div 
                      className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-accent-primary/10 text-accent-primary px-2.5 py-1 rounded-full border border-accent-primary/20"
                    >
-                     <Calendar size={10} strokeWidth={3} />
+                     <Calendar size={10} weight="bold" />
                      <span>{linkedExam.name} <span className="mx-0.5 opacity-40">•</span> {new Date(linkedExam.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                    </div>
                )}
@@ -99,7 +99,7 @@ function SpaceDetail() {
                 className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-accent-primary rounded-full transition-all flex items-center justify-center"
                 title="Add Books to Space"
               >
-                <Plus size={20} />
+                <Plus size={20} weight="bold" />
               </button>
             </div>
           ) : (
@@ -146,7 +146,7 @@ function SpaceDetail() {
                                onClick={() => { setIsAddingBooks(false); setSelectedBooksToAdd([]); }} 
                                className="p-2 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all"
                              >
-                               <X size={20} />
+                               <X size={20} weight="bold" />
                              </button>
                           </div>
                           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide py-4 px-1">
@@ -170,7 +170,7 @@ function SpaceDetail() {
                                   
                                   {isSelected && (
                                     <div className="absolute -top-2 -right-2 bg-accent-primary text-white rounded-full p-1 shadow-md scale-in-center z-10">
-                                      <Check size={14} strokeWidth={4} />
+                                      <Check size={14} weight="bold" />
                                     </div>
                                   )}
                                   
@@ -222,7 +222,7 @@ function SpaceDetail() {
                         ) : (
                           <div className="flex flex-col items-center justify-center py-20 text-center">
                             <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-6 border border-border-default">
-                              <BookOpen className="text-text-tertiary" size={40} />
+                              <BookOpen className="text-text-tertiary" size={40} weight="fill" />
                             </div>
                             <h3 className="text-xl font-bold text-text-primary">Empty Space</h3>
                             <p className="text-text-tertiary mt-2 max-w-sm">No books in this collection yet. Click the + button above to add books to this space.</p>

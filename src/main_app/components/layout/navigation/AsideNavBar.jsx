@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // Import Lucide icons for visual representation in the navigation
-import { Sparkle, Home, X, Book, Pen, NotebookPen, Cog, WholeWord, Menu, LogOut, Sun, Moon, Monitor, User, TrendingUp, Bell } from 'lucide-react';
+import { Sparkle, House, X, Book, Notebook, Gear, TextAa, List, Sun, Moon, Monitor, User, TrendUp } from '@phosphor-icons/react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
 import { NavBarContext } from './NavBarContextInstance';
@@ -30,12 +30,12 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
 
   // navItems: Configuration array for the links to be displayed in the primary navigation list
   const navItems = [
-    { icon: Home, label: 'Home', path: '/' },
+    { icon: House, label: 'Home', path: '/' },
     { icon: Book, label: 'Book Spaces', path: '/spaces' },
-    { icon: WholeWord, label: 'Dictionary', path: '/dictionary' },
+    { icon: TextAa, label: 'Dictionary', path: '/dictionary' }, // migrated from lucide: WholeWord
     { icon: Sparkle, label: 'Cleo', path: '/ai' },
-    { icon: NotebookPen, label: 'Notebook', path: '/notes' },
-    { icon: TrendingUp, label: 'Analytics', path: '/analytics' },
+    { icon: Notebook, label: 'Notebook', path: '/notes' }, // migrated from lucide: NotebookPen
+    { icon: TrendUp, label: 'Analytics', path: '/analytics' }, // migrated from lucide: TrendingUp
   ];
 
   return (
@@ -96,7 +96,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                 className="md:hidden p-2 hover:bg-bg-subtle rounded-lg transition-colors"
                 aria-label="Close menu"
               >
-                <X size={20} className="text-text-primary" />
+                <X size={20} weight="regular" className="text-text-primary" />
               </button>
             )}
 
@@ -106,7 +106,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
               className="hidden md:flex items-center justify-center p-2 hover:bg-bg-subtle rounded-lg transition-colors"
               aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
             >
-              <Menu size={20} className="text-text-primary" />
+              <List size={20} weight="regular" className="text-text-primary" />
             </button>
           </div>
         </div>
@@ -131,8 +131,9 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
 
               const itemContent = (
                 <>
-                  <Icon
+                <Icon
                     size={20}
+                    weight={isActive ? 'fill' : 'regular'}
                     className={`flex-shrink-0 transition-colors z-10`}
                   />
                   <span
@@ -183,21 +184,21 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                   className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default/8 dark:border-neutral-800/50' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                   title="Light Theme"
                 >
-                  <Sun size={16} />
+                  <Sun size={16} weight="regular" />
                 </button>
                 <button
                   onClick={() => setTheme('dark')}
                   className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'dark' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default/8 dark:border-neutral-800/50' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                   title="Dark Theme"
                 >
-                  <Moon size={16} />
+                  <Moon size={16} weight="regular" />
                 </button>
                 <button
                   onClick={() => setTheme('system')}
                   className={`p-2 rounded-lg transition-all flex items-center justify-center ${theme === 'system' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default/8 dark:border-neutral-800/50' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                   title="System Default"
                 >
-                  <Monitor size={16} />
+                  <Monitor size={16} weight="regular" />
                 </button>
               </div>
             </li>
@@ -216,6 +217,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
               >
                 <User
                   size={20}
+                  weight={location.pathname === '/profile' ? 'fill' : 'regular'}
                   className={`flex-shrink-0 transition-colors z-10`}
                 />
                 <span
@@ -240,8 +242,9 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                 title={!isExpanded ? 'Settings' : ''}
                 onClick={() => isMobileOpen && closeMobileNav()}
               >
-                <Cog
+                <Gear
                   size={20}
+                  weight={location.pathname === '/settings' ? 'fill' : 'regular'}
                   className={`flex-shrink-0 transition-colors z-10`}
                 />
                 <span

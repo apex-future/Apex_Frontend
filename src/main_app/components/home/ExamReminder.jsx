@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit2, AlarmClock, Calendar, BookOpen, X, Type, Trash2, Pause, Play, ChevronLeft, ChevronRight, Plus, Link, Sparkles, Trophy, Target, Zap, Bell, ChevronDown, Check } from 'lucide-react';
+import { PencilSimple, Alarm, CalendarBlank, BookOpen, X, TextT, Trash, Pause, Play, CaretLeft, CaretRight, Plus, Link, Sparkle, Trophy, Target, Lightning, Bell, CaretDown, Check } from '@phosphor-icons/react';
 import useStudyStore from '../../store/studyStore';
 import useSpaceStore from '../../store/spaceStore';
 import useThemeStore from '../../store/themeStore';
@@ -24,7 +24,7 @@ const CardContainer = ({ children, onClick, className = '', title = '', activeEx
                         className="p-1.5 hover:bg-accent-primary/10 text-accent-primary rounded-xl transition-all active:scale-90"
                         title="Add New Exam"
                     >
-                        <Plus size={18} strokeWidth={3} />
+                        <Plus size={18} weight="bold" />
                     </button>
                 )}
             </div>
@@ -283,7 +283,7 @@ const ExamReminder = () => {
                             onClick={() => setIsEditing(false)}
                             className="p-2.5 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all"
                         >
-                            <X size={20} />
+                            <X size={20} weight="bold" />
                         </button>
                     </div>
 
@@ -298,7 +298,7 @@ const ExamReminder = () => {
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1">Exam Title</label>
                                 <div className="flex bg-bg-elevated border-2 border-border-default rounded-2xl px-5 py-4 items-center gap-4 focus-within:border-accent-primary/40 transition-all group shadow-sm">
-                                    <Type size={20} className="text-text-tertiary group-focus-within:text-accent-primary" />
+                                    <TextT size={20} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary" />
                                     <input 
                                         type="text" 
                                         value={tempName} 
@@ -311,7 +311,7 @@ const ExamReminder = () => {
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1">Deadline Date</label>
                                 <div className="flex bg-bg-elevated border-2 border-border-default rounded-2xl px-5 py-4 items-center gap-4 focus-within:border-accent-primary/40 transition-all group shadow-sm">
-                                    <Calendar size={20} className="text-text-tertiary group-focus-within:text-accent-primary" />
+                                    <CalendarBlank size={20} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary" />
                                     <input 
                                         type="date" 
                                         value={tempDate} 
@@ -345,7 +345,7 @@ const ExamReminder = () => {
                                                 className={`p-4 rounded-3xl border-2 transition-all cursor-pointer flex items-center gap-4 group/item ${isSelected ? 'border-accent-primary bg-accent-primary/10 shadow-lg shadow-accent-primary/10' : 'border-border-default bg-bg-elevated hover:border-accent-primary/30'}`}
                                             >
                                                 <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${isSelected ? 'bg-accent-primary/20 text-accent-primary scale-110' : 'bg-bg-subtle text-text-tertiary group-hover/item:text-accent-primary'}`}>
-                                                    <BookOpen size={20} />
+                                                    <BookOpen size={20} weight="regular" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className={`text-sm font-black truncate ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>{sp.name}</p>
@@ -354,7 +354,7 @@ const ExamReminder = () => {
                                                     </p>
                                                 </div>
                                                 <div className={`size-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-accent-primary bg-accent-primary' : 'border-border-default'}`}>
-                                                    {isSelected && <Check size={14} className="text-white" />}
+                                                    {isSelected && <Check size={14} weight="bold" className="text-white" />}
                                                 </div>
                                             </div>
                                         );
@@ -399,7 +399,7 @@ const ExamReminder = () => {
                 />
                 <div className="relative w-full max-w-md bg-bg-elevated/95 backdrop-blur-2xl rounded-[2.5rem] border-2 border-border-default shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 fade-in duration-300">
                     <div className="size-16 bg-red-500/10 rounded-[2rem] flex items-center justify-center text-red-500 mb-6">
-                        <Trash2 size={32} />
+                        <Trash size={32} weight="regular" />
                     </div>
                     <h2 className="text-2xl font-black text-text-primary tracking-tight mb-2">Delete Reminder?</h2>
                     <p className="text-sm font-bold text-text-tertiary mb-8">This will permanently remove the reminder for <span className="text-text-primary">"{activeExam?.name}"</span> and unlink its study spaces.</p>
@@ -445,11 +445,11 @@ const ExamReminder = () => {
                 {!activeExam ? (
                     <>
                         <div className="absolute -bottom-10 -left-10 size-60 text-accent-primary/5 rotate-12 group-hover:rotate-6 transition-all duration-1000 pointer-events-none">
-                            <AlarmClock size="100%" strokeWidth={1} />
+                            <Alarm size="100%" weight="thin" />
                         </div>
                         <div className="flex flex-col items-center justify-center w-full h-full relative z-10 text-center gap-6">
                             <div className="size-16 bg-accent-primary/10 rounded-[2rem] flex items-center justify-center text-accent-primary shadow-inner border border-accent-primary/20 group-hover:scale-110 transition-transform">
-                                <Plus size={32} />
+                                <Plus size={32} weight="bold" />
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black text-text-primary tracking-tight mb-2">Set Exam Deadline</h3>
@@ -467,8 +467,8 @@ const ExamReminder = () => {
                                 <div className="flex gap-2 items-center flex-1">
                                     {examsList.length > 1 && (
                                         <div className="flex gap-1.5 mr-2">
-                                            <button onClick={prevExam} className="p-1.5 bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-xl shadow-sm border border-border-default text-text-secondary hover:text-accent-primary transition-all active:scale-90"><ChevronLeft size={14}/></button>
-                                            <button onClick={nextExam} className="p-1.5 bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-xl shadow-sm border border-border-default text-text-secondary hover:text-accent-primary transition-all active:scale-90"><ChevronRight size={14}/></button>
+                                            <button onClick={prevExam} className="p-1.5 bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-xl shadow-sm border border-border-default text-text-secondary hover:text-accent-primary transition-all active:scale-90"><CaretLeft size={14} weight="bold"/></button>
+                                            <button onClick={nextExam} className="p-1.5 bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-xl shadow-sm border border-border-default text-text-secondary hover:text-accent-primary transition-all active:scale-90"><CaretRight size={14} weight="bold"/></button>
                                         </div>
                                     )}
                                     <div className={`px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] border flex items-center gap-1.5 transition-all duration-500 whitespace-nowrap ${moodBgColor} ${moodTextColor} ${moodBorderColor} ${moodGlow}`}>
@@ -478,9 +478,9 @@ const ExamReminder = () => {
                                 </div>
                                 
                                 <div className="flex gap-1 backdrop-blur-xl bg-white/50 dark:bg-black/20 rounded-[1.25rem] p-1 shadow-sm transition-all z-20">
-                                    <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-2 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-xl transition-all" title="Edit"><Edit2 size={16}/></button>
-                                    <button onClick={(e) => { e.stopPropagation(); if (activeExam?.id && activeExam.id !== 'legacy') togglePauseExam(activeExam.id); }} className="p-2 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-xl transition-all" title={activeExam?.isPaused ? "Resume" : "Pause"}>{activeExam?.isPaused ? <Play size={16} fill="currentColor" /> : <Pause size={16} fill="currentColor" />}</button>
-                                    <button onClick={handleDeleteCurrent} className="p-2 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all" title="Delete"><Trash2 size={16}/></button>
+                                    <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-2 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-xl transition-all" title="Edit"><PencilSimple size={16} weight="regular"/></button>
+                                    <button onClick={(e) => { e.stopPropagation(); if (activeExam?.id && activeExam.id !== 'legacy') togglePauseExam(activeExam.id); }} className="p-2 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-xl transition-all" title={activeExam?.isPaused ? "Resume" : "Pause"}>{activeExam?.isPaused ? <Play size={16} weight="fill" /> : <Pause size={16} weight="fill" />}</button>
+                                    <button onClick={handleDeleteCurrent} className="p-2 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all" title="Delete"><Trash size={16} weight="regular"/></button>
                                 </div>
                             </div>
 
@@ -495,14 +495,14 @@ const ExamReminder = () => {
                                 
                                 <div className="flex items-center justify-center flex-wrap text-xs font-bold text-text-tertiary gap-2">
                                     <p className="flex items-center gap-1.5">
-                                        <Calendar size={14} className="text-accent-primary" />
+                                        <CalendarBlank size={14} weight="regular" className="text-accent-primary" />
                                         {new Date(activeExam?.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                                     </p>
                                     {selectedSpaceIds.length > 0 && (
                                         <>
                                             <span className="mx-1 text-text-tertiary/40">•</span>
                                             <p className="flex items-center gap-1.5">
-                                                <Link size={14} className="text-accent-primary" />
+                                                <Link size={14} weight="regular" className="text-accent-primary" />
                                                 <span>Linked to {selectedSpaceIds.length} {selectedSpaceIds.length === 1 ? 'Space' : 'Spaces'}</span>
                                             </p>
                                         </>

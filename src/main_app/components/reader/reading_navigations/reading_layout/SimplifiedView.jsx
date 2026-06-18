@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wand2, ChevronRight, Trash2, Sparkles } from 'lucide-react';
+import { MagicWand, CaretRight, Trash, Sparkle } from '@phosphor-icons/react';
 
 /**
  * SimplifiedView
@@ -15,7 +15,7 @@ function SimplifiedView({ simplifications = [], onJumpTo, onRemove, onViewSimpli
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
         <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-3">
-          <Wand2 size={22} className="text-emerald-500" strokeWidth={1.5} />
+          <MagicWand size={22} weight="bold" className="text-emerald-500" />
         </div>
         <p className="text-sm font-semibold text-text-secondary">No simplifications yet</p>
         <p className="text-xs text-text-tertiary mt-1">
@@ -45,7 +45,7 @@ function SimplifiedView({ simplifications = [], onJumpTo, onRemove, onViewSimpli
             {/* Original text */}
             <div className="flex items-start gap-2.5">
               <div className="shrink-0 w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mt-0.5">
-                <Sparkles size={12} className="text-emerald-500" />
+                <Sparkle size={12} weight="fill" className="text-emerald-500" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] text-text-tertiary font-bold uppercase tracking-wider mb-0.5 opacity-50">
@@ -89,10 +89,10 @@ function SimplifiedView({ simplifications = [], onJumpTo, onRemove, onViewSimpli
                     className="p-1 rounded-lg hover:bg-bg-subtle text-text-placeholder hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
                     title="Remove simplification"
                   >
-                    <Trash2 size={13} strokeWidth={1.5} />
+                    <Trash size={13} weight="bold" />
                   </button>
                 )}
-                <ChevronRight size={14} className="text-text-placeholder shrink-0 opacity-0 group-hover:opacity-100" strokeWidth={1.5} />
+                <CaretRight size={14} weight="bold" className="text-text-placeholder shrink-0 opacity-0 group-hover:opacity-100" />
               </div>
             </div>
           </div>

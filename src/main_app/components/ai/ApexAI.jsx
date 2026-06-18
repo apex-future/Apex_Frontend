@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { Send, ArrowLeft, User, Sparkle, RotateCcw, Trash2, AlertCircle, Plus, MessageSquare, PanelRightOpen, PanelRightClose, MoreVertical, X, SquarePen, BookOpen, Square, Highlighter } from 'lucide-react'
+import { PaperPlaneRight, ArrowLeft, User, Sparkle, ArrowCounterClockwise, Trash, WarningCircle, Plus, ChatCircle, Sidebar, DotsThreeVertical, X, PencilSimpleLine, BookOpen, Square, Highlighter } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -107,7 +107,7 @@ function ApexAI() {
                             className='p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center'
                             title="Back"
                         >
-                            <ArrowLeft size={20} className="text-text-primary" />
+                            <ArrowLeft size={20} weight="bold" className="text-text-primary" />
                         </button>
                     </div>
 
@@ -116,7 +116,7 @@ function ApexAI() {
                             {chatHistory.find(c => c.id === sessionId) ? getChatTitle(chatHistory.find(c => c.id === sessionId)) : "Cleo"}
                             {chatHistory.find(c => c.id === sessionId)?.scope && chatHistory.find(c => c.id === sessionId)?.scope !== 'general' && (
                                 <span className='text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-bg-dark-elevated px-2 py-0.5 rounded-full flex items-center gap-1.5 border border-slate-200'>
-                                    <BookOpen size={12} /> {chatHistory.find(c => c.id === sessionId)?.scope}
+                                    <BookOpen size={12} weight="regular" /> {chatHistory.find(c => c.id === sessionId)?.scope}
                                 </span>
                             )}
                         </h1>
@@ -128,14 +128,14 @@ function ApexAI() {
                             className='p-2 hover:bg-white/20 dark:hover:bg-white/10 rounded-full transition-colors text-accent-primary'
                             title="New Chat"
                         >
-                            <SquarePen size={20} />
+                            <PencilSimpleLine size={20} weight="regular" />
                         </button>
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
                             className='p-2 hover:bg-white/20 dark:hover:bg-white/10 rounded-full transition-colors text-text-tertiary'
                             title={sidebarOpen ? "Close history" : "Open history"}
                         >
-                            {sidebarOpen ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
+                            <Sidebar size={20} weight="regular" />
                         </button>
                     </div>
                 </header>
@@ -146,7 +146,7 @@ function ApexAI() {
                         {messages.length === 0 ? (
                             <div className='flex flex-col items-center justify-center py-24 text-center animate-in fade-in zoom-in duration-700'>
                                 <div className='w-20 h-20 bg-gradient-to-br from-purple-50 to-purple-100 text-accent-primary rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-accent-subtle ring-4 ring-bg-elevated'>
-                                    <Sparkle size={40} fill="currentColor" />
+                                    <Sparkle size={40} weight="fill" />
                                 </div>
                                 <h2 className='text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-text-primary font-serif italic'>Ask Cleo</h2>
                                 <p className='text-text-tertiary max-w-sm mx-auto text-base leading-relaxed'>Stay Focused. Learn Faster</p>
@@ -200,7 +200,7 @@ function ApexAI() {
                                                 {context && (
                                                     <div className="p-3.5 bg-bg-elevated border border-border-default border-l-4 border-l-accent-primary text-text-secondary rounded-2xl rounded-tr-sm text-xs leading-relaxed w-full italic font-sans shadow-sm">
                                                         <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] mb-1.5 opacity-90 text-accent-primary">
-                                                            <Highlighter size={12} className="text-accent-primary" />
+                                                            <Highlighter size={12} weight="regular" className="text-accent-primary" />
                                                             Highlight Context
                                                         </div>
                                                         <p className="line-clamp-4 leading-relaxed">"{context}"</p>
@@ -223,7 +223,7 @@ function ApexAI() {
                         {error && (
                             <div className='flex items-start gap-4 p-5 bg-red-50 border border-red-100 rounded-2xl animate-in fade-in slide-in-from-top-2 max-w-2xl mx-auto w-full'>
                                 <div className='w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center flex-shrink-0'>
-                                    <AlertCircle size={24} />
+                                    <WarningCircle size={24} weight="regular" />
                                 </div>
                                 <div className='flex-1'>
                                     <h4 className='text-sm font-bold text-red-900'>Session Error</h4>
@@ -232,7 +232,7 @@ function ApexAI() {
                                         onClick={retry}
                                         className='mt-3 text-sm bg-bg-elevated border border-red-200 px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-300 font-semibold flex items-center gap-2 transition-all shadow-sm'
                                     >
-                                        <RotateCcw size={14} /> Reconnect Session
+                                        <ArrowCounterClockwise size={14} weight="bold" /> Reconnect Session
                                     </button>
                                 </div>
                             </div>
@@ -281,7 +281,7 @@ function ApexAI() {
                                     }`}
                                 title={isStreaming ? "Stop generation" : "Send message"}
                             >
-                                {isStreaming ? <Square size={16} fill="currentColor" /> : <Send size={22} />}
+                                {isStreaming ? <Square size={16} weight="fill" /> : <PaperPlaneRight size={22} weight="fill" />}
                             </button>
                         </div>
                     </form>
@@ -299,7 +299,7 @@ function ApexAI() {
                         onClick={() => setSidebarOpen(false)}
                         className='md:hidden p-2 hover:bg-bg-subtle rounded-lg text-text-tertiary'
                     >
-                        <X size={20} />
+                        <X size={20} weight="bold" />
                     </button>
 
                     <h2 className='absolute left-1/2 -translate-x-1/2 text-sm font-bold text-text-primary pointer-events-none'>
@@ -311,7 +311,7 @@ function ApexAI() {
                         className='p-2 hover:bg-accent-subtle text-accent-primary rounded-lg transition-all ml-auto'
                         title="New Chat"
                     >
-                        <SquarePen size={18} className='md:hidden' />
+                        <PencilSimpleLine size={18} weight="regular" className='md:hidden' />
                     </button>
                 </div>
 
@@ -328,7 +328,7 @@ function ApexAI() {
                                         onClick={() => handleSwitchChat(item)}
                                         className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary font-medium' : 'hover:bg-bg-elevated text-text-secondary'}`}
                                     >
-                                        <MessageSquare size={16} className={sessionId === item.id ? 'text-accent-primary' : 'text-text-tertiary'} />
+                                        <ChatCircle size={16} weight="fill" className={sessionId === item.id ? 'text-accent-primary' : 'text-text-tertiary'} />
                                         <span className='flex-1 truncate text-sm'>{getChatTitle(item)}</span>
                                         <button 
                                             onClick={(e) => {
@@ -338,7 +338,7 @@ function ApexAI() {
                                             className='p-1.5 hover:border-border-default rounded-lg transition-all text-text-tertiary hover:text-red-500'
                                             title="Delete chat"
                                         >
-                                            <Trash2 size={14} />
+                                            <Trash size={14} weight="regular" />
                                         </button>
                                     </div>
                                 ))}
@@ -350,7 +350,7 @@ function ApexAI() {
                 <div className='p-4 border-t border-black/10 dark:border-white/10'>
                     <div className='flex items-center gap-3 p-2 rounded-xl bg-bg-elevated/50 text-text-secondary border border-black/10 dark:border-white/10'>
                         <div className='w-8 h-8 rounded-lg bg-accent-subtle flex items-center justify-center text-accent-primary'>
-                            <User size={16} />
+                            <User size={16} weight="fill" />
                         </div>
                         <span className='text-xs font-medium'>Study Account</span>
                     </div>

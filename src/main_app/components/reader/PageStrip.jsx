@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Document, Page } from 'react-pdf';
 import { gsap } from 'gsap';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 
 const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) => {
     const stripRef = useRef(null);
@@ -202,14 +202,14 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                         onClick={() => scrollByChunk('left')}
                         className="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-24 items-center justify-center hover:text-accent-primary rounded-full text-text-secondary transition-all"
                     >
-                        <ChevronLeft size={24} />
+                        <CaretLeft size={24} weight="bold" />
                     </button>
                     
                     <button 
                         onClick={() => scrollByChunk('right')}
                         className="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-24 items-center justify-center hover:text-accent-primary rounded-full text-text-secondary transition-all"
                     >
-                        <ChevronRight size={24} />
+                        <CaretRight size={24} weight="bold" />
                     </button>
 
                     {/* Thumbnail Row */}

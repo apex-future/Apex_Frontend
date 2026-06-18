@@ -1,7 +1,7 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import EmptyState from '../../layout/placeholders/EmptyState';
 import { getAllChats } from '../../../utils/db';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { ChatCircle, Spinner } from '@phosphor-icons/react';
 import { cleanUserMessage, stripMarkdown, getChatTitle } from '../../../utils/aiUtils';
 
 function DocumentChatHistory({ book }) {
@@ -33,7 +33,7 @@ function DocumentChatHistory({ book }) {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[300px]">
-                <Loader2 size={24} className="animate-spin text-accent-primary opacity-50" />
+                <Spinner size={24} weight="bold" className="animate-spin text-accent-primary opacity-50" />
             </div>
         );
     }
@@ -70,7 +70,7 @@ function DocumentChatHistory({ book }) {
             {chatHistory.map((chat) => (
                 <div key={chat.id} className='flex items-start gap-4 p-4 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-xl hover:shadow-sm transition-all cursor-pointer group'>
                     <div className="p-2 bg-accent-subtle dark:bg-accent-subtle-dark rounded-lg text-accent-primary dark:text-accent-primary-dark group-hover:bg-accent-primary group-hover:text-white transition-colors flex-shrink-0">
-                        <MessageSquare size={20} />
+                        <ChatCircle size={20} weight="fill" />
                     </div>
                     <div className="flex flex-col gap-1 min-w-0 flex-1">
                         <h2 className='text-text-primary dark:text-text-primary-dark font-semibold group-hover:text-accent-primary transition-colors truncate'>

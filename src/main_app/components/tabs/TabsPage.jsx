@@ -1,6 +1,6 @@
 import React, { useContext, useState, useMemo } from 'react';
 import { BookContext } from '../../context/BookContextInstance';
-import { ArrowLeft, Search, Pen, Clock, BookOpen, ChevronRight, Hash } from 'lucide-react';
+import { ArrowLeft, MagnifyingGlass, PencilSimple, Clock, BookOpen, CaretRight, Hash } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 
 function TabsPage() {
@@ -71,7 +71,7 @@ function TabsPage() {
                             onClick={() => navigate(-1)}
                             className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
                         >
-                            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+                            <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
                         </button>
                     </div>
 
@@ -104,7 +104,7 @@ function TabsPage() {
 
                     {/* Search Bar - Underneath header border but aligned to right on desktop */}
                     <div className='relative w-full md:w-80 group'>
-                        <Search className='absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary transition-colors' size={20} />
+                        <MagnifyingGlass className='absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary transition-colors' size={20} weight="bold" />
                         <input
                             type="text"
                             placeholder="Search tabs..."
@@ -119,7 +119,7 @@ function TabsPage() {
                 {allTabs.length === 0 ? (
                     <div className='flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-border-default rounded-card bg-bg-subtle/30'>
                         <div className='w-20 h-20 bg-bg-elevated text-text-placeholder rounded-[2rem] flex items-center justify-center mb-6 shadow-sm border border-border-default'>
-                            <Pen size={32} />
+                            <PencilSimple size={32} weight="fill" />
                         </div>
                         <h3 className='text-2xl font-bold text-text-primary mb-3 font-display'>Your notebook is empty</h3>
                         <p className='text-text-secondary max-w-md mx-auto leading-relaxed mb-8'>
@@ -134,7 +134,7 @@ function TabsPage() {
                     </div>
                 ) : filteredTabs.length === 0 ? (
                     <div className='flex flex-col items-center justify-center py-20 text-center'>
-                        <Search size={48} className='text-text-placeholder mb-4' />
+                        <MagnifyingGlass size={48} weight="bold" className='text-text-placeholder mb-4' />
                         <h3 className='text-xl font-bold text-text-primary mb-2'>No matching tabs found</h3>
                         <p className='text-text-secondary'>Try adjusting your search terms.</p>
                     </div>
@@ -152,17 +152,17 @@ function TabsPage() {
                                         <img src={tab.bookCover} alt="Cover" className='w-10 h-14 object-cover rounded-md shadow-sm border border-border-default' />
                                     ) : (
                                         <div className='w-10 h-14 bg-bg-elevated rounded-md flex items-center justify-center border border-border-default shadow-sm'>
-                                            <BookOpen size={16} className='text-text-tertiary' />
+                                            <BookOpen size={16} weight="fill" className='text-text-tertiary' />
                                         </div>
                                     )}
                                     <div className='flex-1 min-w-0'>
                                         <p className='text-xs font-bold text-accent-primary uppercase tracking-widest mb-1 truncate flex items-center gap-1'>
-                                            <Hash size={12} /> Book
+                                            <Hash size={12} weight="bold" /> Book
                                         </p>
                                         <h4 className='text-sm font-semibold text-text-primary truncate'>{tab.bookTitle}</h4>
                                     </div>
                                     <div className='w-8 h-8 rounded-full bg-bg-elevated border border-border-default flex items-center justify-center text-text-tertiary group-hover:bg-accent-primary group-hover:text-bg-elevated group-hover:border-accent-primary transition-all flex-shrink-0'>
-                                        <ChevronRight size={16} />
+                                        <CaretRight size={16} weight="bold" />
                                     </div>
                                 </div>
 
@@ -176,7 +176,7 @@ function TabsPage() {
                                 {/* Timestamp */}
                                 <div className='flex flex-wrap items-center justify-between gap-3 pt-2 mt-auto'>
                                     <span className='flex items-center gap-1.5 text-[11px] font-bold text-text-tertiary uppercase tracking-widest bg-bg-elevated px-2.5 py-1 rounded-md border border-border-default'>
-                                        <Clock size={12} />
+                                        <Clock size={12} weight="bold" />
                                         {formatDate(tab.updatedAt || tab.createdAt)}
                                     </span>
                                 </div>

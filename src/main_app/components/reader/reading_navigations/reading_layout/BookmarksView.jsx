@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bookmark, BookmarkX, ChevronRight, Trash2 } from 'lucide-react';
+import { BookmarkSimple, CaretRight, Trash } from '@phosphor-icons/react';
 
 /**
  * BookmarksView
@@ -20,10 +20,10 @@ function BookmarksView({ bookmarks = [], onJumpTo, onRemove }) {
         >
           {/* Bookmark ribbon indicator */}
           <div className="shrink-0 w-7 h-7 rounded-lg bg-accent-primary/15 flex items-center justify-center">
-            <Bookmark
+            <BookmarkSimple
               size={14}
-              strokeWidth={1.5}
-              className="text-accent-primary fill-accent-primary"
+              weight="fill"
+              className="text-accent-primary"
             />
           </div>
 
@@ -42,9 +42,9 @@ function BookmarksView({ bookmarks = [], onJumpTo, onRemove }) {
               className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-bg-subtle text-text-placeholder hover:text-red-500 transition-all"
               title="Remove bookmark"
             >
-              <Trash2 size={13} strokeWidth={1.5} />
+              <Trash size={13} weight="bold" />
             </button>
-            <ChevronRight size={14} className="text-text-placeholder shrink-0" strokeWidth={1.5} />
+            <CaretRight size={14} weight="bold" className="text-text-placeholder shrink-0" />
           </div>
         </div>
       ))}

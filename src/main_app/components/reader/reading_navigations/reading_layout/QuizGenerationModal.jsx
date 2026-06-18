@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { X, BrainCircuit, AlertCircle, Sparkles, BookOpen, Clock, Target, Layers, CheckCircle2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, Brain, WarningCircle, Sparkle, BookOpen, Clock, Target, Stack, CheckCircle, CaretLeft, CaretRight, CaretUp, CaretDown } from '@phosphor-icons/react';
 import { Document, Page } from 'react-pdf';
 
 function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, numPages }) {
@@ -112,7 +112,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                     
                     {isSelected && (
                         <div className="absolute top-2 right-2 bg-accent-primary text-white rounded-full">
-                            <CheckCircle2 size={18} />
+                            <CheckCircle size={18} weight="fill" />
                         </div>
                     )}
                 </div>
@@ -159,14 +159,14 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                 {/* Header */}
                 <div className="sticky top-0 z-50 bg-bg-elevated/90 backdrop-blur-xl flex items-center justify-between px-5 py-5 border-b border-border-default/50 shrink-0 rounded-none sm:rounded-t-[2rem]">
                     <div className="flex items-center gap-2">
-                        <Sparkles size={18} className="text-accent-primary animate-pulse" />
+                        <Sparkle size={18} weight="fill" className="text-accent-primary animate-pulse" />
                         <h2 className="text-xs font-black text-text-tertiary tracking-[0.2em] uppercase">AI Quiz Generator</h2>
                     </div>
                     <button 
                         onClick={onClose}
                         className="p-2 rounded-full bg-bg-subtle hover:bg-bg-subtle transition-all text-text-tertiary hover:text-text-secondary"
                     >
-                        <X size={18} strokeWidth={2} />
+                        <X size={18} weight="bold" />
                     </button>
                 </div>
 
@@ -177,7 +177,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                     <div className="space-y-3">
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                                <BookOpen size={16} className="text-text-tertiary" />
+                                <BookOpen size={16} weight="bold" className="text-text-tertiary" />
                                 <label className="text-sm font-bold text-text-secondary">Select Pages</label>
                             </div>
                             
@@ -193,7 +193,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                                 >
                                     <span>{selectedPages.length} selected</span>
                                     {selectedPages.length > 0 && (
-                                        selectedListOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+                                        selectedListOpen ? <CaretUp size={14} weight="bold" /> : <CaretDown size={14} weight="bold" />
                                     )}
                                 </button>
 
@@ -224,7 +224,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                                                         }}
                                                         className="text-text-tertiary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
                                                     >
-                                                        <X size={14} strokeWidth={3} />
+                                                        <X size={14} weight="bold" />
                                                     </button>
                                                 </div>
                                             ))}
@@ -239,14 +239,14 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                                 onClick={(e) => { e.preventDefault(); scrollByChunk('left'); }}
                                 className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-bg-elevated/90 shadow-md border border-border-default rounded-full text-text-secondary hover:text-accent-primary hover:scale-105 transition-all opacity-0 group-hover:opacity-100"
                             >
-                                <ChevronLeft size={20} />
+                                <CaretLeft size={20} weight="bold" />
                             </button>
                             
                             <button 
                                 onClick={(e) => { e.preventDefault(); scrollByChunk('right'); }}
                                 className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-bg-elevated/90 shadow-md border border-border-default rounded-full text-text-secondary hover:text-accent-primary hover:scale-105 transition-all opacity-0 group-hover:opacity-100"
                             >
-                                <ChevronRight size={20} />
+                                <CaretRight size={20} weight="bold" />
                             </button>
 
                             <div 
@@ -271,7 +271,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                         {/* Num Questions */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 mb-1">
-                                <Target size={16} className="text-text-tertiary" />
+                                <Target size={16} weight="bold" className="text-text-tertiary" />
                                 <label className="text-sm font-bold text-text-secondary">Questions Limit</label>
                             </div>
                             <div className="grid grid-cols-4 gap-2">
@@ -290,7 +290,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                         {/* Time */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 mb-1">
-                                <Clock size={16} className="text-text-tertiary" />
+                                <Clock size={16} weight="bold" className="text-text-tertiary" />
                                 <label className="text-sm font-bold text-text-secondary">Time Limit</label>
                             </div>
                             <div className="grid grid-cols-4 gap-2">
@@ -309,7 +309,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                         {/* Type */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 mb-1">
-                                <Layers size={16} className="text-text-tertiary" />
+                                <Stack size={16} weight="bold" className="text-text-tertiary" />
                                 <label className="text-sm font-bold text-text-secondary">Question Type</label>
                             </div>
                             <div className="flex gap-2">
@@ -328,7 +328,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                         {/* Difficulty */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 mb-1">
-                                <BrainCircuit size={16} className="text-text-tertiary" />
+                                <Brain size={16} weight="bold" className="text-text-tertiary" />
                                 <label className="text-sm font-bold text-text-secondary">Difficulty</label>
                             </div>
                             <div className="flex gap-2">
@@ -347,7 +347,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                     
                     {/* Notice */}
                     <div className="flex items-start gap-3 bg-accent-primary/5 border border-accent-primary/10 p-4 rounded-2xl">
-                        <AlertCircle size={18} className="text-accent-primary mt-0.5 flex-shrink-0" />
+                        <WarningCircle size={18} weight="bold" className="text-accent-primary mt-0.5 flex-shrink-0" />
                         <p className="text-sm font-medium text-text-secondary leading-relaxed">
                             Generating custom quizzes from specific pages might take a moment. Ensure the selected pages contain text content.
                         </p>
@@ -371,7 +371,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                             </>
                         ) : (
                             <>
-                                <Sparkles size={20} />
+                                <Sparkle size={20} weight="fill" />
                                 <span>Start Extraction</span>
                             </>
                         )}

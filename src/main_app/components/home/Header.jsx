@@ -3,7 +3,7 @@ import useAuthStore from '../../store/authStore';
 import { BookContext } from '../../context/BookContextInstance';
 import useStudyStore from '../../store/studyStore';
 import useThemeStore from '../../store/themeStore';
-import { Zap, Flame, Sparkles, Hexagon, Scroll } from 'lucide-react';
+import { Lightning, Fire, Sparkle, Hexagon, Scroll } from '@phosphor-icons/react';
 import useGreeting from '../../hooks/useGreeting';
 import Typewriter from '../ui/Typewriter';
 
@@ -66,7 +66,7 @@ export default function Header() {
                     <div className={`${cardClasses} rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2`}>
                         <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">Daily Streak</span>
                         <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500 fill-orange-500" />
+                            <Fire className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" weight="fill" />
                             <span className={`text-xl sm:text-2xl md:text-3xl font-bold ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>{streakCount || 12}</span>
                         </div>
                         <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium">days</span>
@@ -76,7 +76,7 @@ export default function Header() {
                     <div className={`${cardClasses} rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2`}>
                         <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">XP Today</span>
                         <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 fill-amber-500" />
+                            <Sparkle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" weight="fill" />
                             <span className={`text-xl sm:text-2xl md:text-3xl font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{displayXp}</span>
                         </div>
                         <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">/ 500 XP</span>
@@ -86,7 +86,7 @@ export default function Header() {
                     <div className={`${cardClasses} rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2`}>
                         <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">Study Quest</span>
                         <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Scroll className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 fill-emerald-500" />
+                            <Scroll className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" weight="fill" />
                             <span className={`text-xl sm:text-2xl md:text-3xl font-bold whitespace-nowrap ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>1</span>
                         </div>
                         <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium text-center whitespace-nowrap">/ 3 completed</span>
@@ -97,7 +97,8 @@ export default function Header() {
                 <div className={`${cardClasses} rounded-xl sm:rounded-2xl p-4 sm:p-5 flex items-center gap-3 sm:gap-5`}>
                     {/* Level Hexagon Icon - Left */}
                     <div className="relative flex items-center justify-center shrink-0 w-12 h-12 sm:w-14 sm:h-14">
-                        <Hexagon className="absolute inset-0 text-[#a855f7] w-full h-full" strokeWidth={1.5} />
+                        {/* migrated from lucide: Hexagon — decorative level icon */}
+                        <Hexagon className="absolute inset-0 text-[#a855f7] w-full h-full" weight="thin" />
                         <span className="text-xl sm:text-2xl font-bold text-text-primary relative z-10">{level}</span>
                     </div>
                     
@@ -121,7 +122,7 @@ export default function Header() {
 
                     {/* Level Hexagon Icon - Right */}
                     <div className="relative flex items-center justify-center shrink-0 w-10 h-10 sm:w-12 sm:h-12 opacity-50">
-                        <Hexagon className="absolute inset-0 text-text-placeholder w-full h-full" strokeWidth={1.5} />
+                        <Hexagon className="absolute inset-0 text-text-placeholder w-full h-full" weight="thin" />
                         <span className="text-lg sm:text-xl font-bold text-text-tertiary relative z-10">{level + 1}</span>
                     </div>
                 </div>

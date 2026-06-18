@@ -26,7 +26,7 @@ import PageSettings from './reading_navigations/reading_layout/PageSettings';
 import BookSkeleton from './BookSkeleton';
 import PageStrip from './PageStrip';
 import ReaderDictionary from './reading_navigations/reading_layout/ReaderDictionary';
-import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import { CaretLeft, CaretRight, Plus, List, ArrowLeft, ArrowRight, WarningCircle, ArrowUp, ArrowDown } from '@phosphor-icons/react';
 import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
 import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
 
@@ -36,11 +36,11 @@ const ScrollOrientationOverlay = ({ visible, orientation }) => {
     return (
         <div className="fixed inset-x-0 bottom-32 z-[100] flex items-center justify-center pointer-events-none lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-bg-elevated/80 backdrop-blur-sm border border-border-default/20 text-text-primary shadow-2xl">
-                {isVertical ? <ArrowUp size={18} className="opacity-70" /> : <ArrowLeft size={18} className="opacity-70" />}
+                {isVertical ? <ArrowUp size={18} weight="bold" className="opacity-70" /> : <ArrowLeft size={18} weight="bold" className="opacity-70" />}
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">
                     Swipe {isVertical ? 'up or down' : 'left or right'}
                 </span>
-                {isVertical ? <ArrowDown size={18} className="opacity-70" /> : <ArrowRight size={18} className="opacity-70" />}
+                {isVertical ? <ArrowDown size={18} weight="bold" className="opacity-70" /> : <ArrowRight size={18} weight="bold" className="opacity-70" />}
             </div>
         </div>
     );
@@ -1028,7 +1028,7 @@ function ReaderView() {
                 </div>
                 <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 max-w-sm w-full text-center flex flex-col items-center gap-6 animate-in slide-in-from-bottom-6 fade-in duration-500">
                     <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center">
-                        <AlertCircle size={32} />
+                        <WarningCircle size={32} />
                     </div>
                     <div className="space-y-2">
                         <h2 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Download Error</h2>
@@ -1038,7 +1038,7 @@ function ReaderView() {
                         onClick={() => window.location.reload()}
                         className="w-full py-4 rounded-xl bg-accent-primary hover:bg-purple-700 text-white font-bold transition-all shadow-lg shadow-purple-500/20 active:scale-95 flex items-center justify-center gap-2"
                     >
-                        <Menu size={18} /> Try Again
+                        <List size={18} /> Try Again
                     </button>
                 </div>
             </div>
@@ -1166,7 +1166,7 @@ function ReaderView() {
                         >
                             <div className={`w-1 h-1 rounded-full transition-colors ${navState !== 'none' ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-accent-primary'}`} />
                             <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`}>Menu</span>
-                            <Menu size={12} className={`transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`} />
+                            <List size={12} className={`transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`} />
                         </button>
                     </div>
 

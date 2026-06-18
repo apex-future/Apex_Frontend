@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { X, Send, Sparkle, Info, RotateCcw, Trash2, AlertCircle, Highlighter, User, SquarePen, MessageSquare, History, ArrowLeft, BookOpen, Square, Plus } from 'lucide-react'
+import { X, PaperPlaneTilt, Sparkle, Info, ArrowCounterClockwise, Trash, WarningCircle, HighlighterCircle, User, NotePencil, ChatCircle, ClockCounterClockwise, ArrowLeft, BookOpen, Square, Plus } from '@phosphor-icons/react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
@@ -270,7 +270,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
             onClick={() => showHistory ? setShowHistory(false) : setAiModal(false)}
             className='p-2 hover:bg-bg-subtle rounded-lg transition-colors text-text-tertiary'
           >
-            {showHistory ? <ArrowLeft size={18} /> : <X size={18} />}
+            {showHistory ? <ArrowLeft size={18} weight="bold" /> : <X size={18} weight="bold" />}
           </button>
           {!showHistory && (
             <button
@@ -278,7 +278,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
               className='p-2 hover:bg-bg-subtle rounded-lg transition-colors text-text-tertiary'
               title='Chat History'
             >
-              <History size={18} />
+              <ClockCounterClockwise size={18} weight="bold" />
             </button>
           )}
         </div>
@@ -293,7 +293,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
           className='p-2 hover:bg-bg-subtle rounded-lg transition-colors text-accent-primary'
           title='New Chat'
         >
-          <SquarePen size={18} />
+          <NotePencil size={18} weight="bold" />
         </button>
       </div>
 
@@ -318,7 +318,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                                 className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary font-medium' : 'hover:bg-bg-elevated border border-transparent hover:border-black/10 dark:hover:border-white/10 text-text-secondary shadow-sm'}`}
                             >
                                 <div className={`p-1.5 rounded-lg ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary' : 'bg-bg-subtle text-text-tertiary group-hover:bg-bg-subtle/80 group-hover:text-text-secondary'}`}>
-                                    <BookOpen size={14} />
+                                    <BookOpen size={14} weight="bold" />
                                 </div>
                                 <div className="flex-1 min-w-0 flex flex-col">
                                     <span className='truncate text-xs font-medium leading-tight'>{getChatTitle(item)}</span>
@@ -336,7 +336,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                                     className='p-1.5 hover:bg-red-50 rounded-lg transition-all text-text-placeholder hover:text-red-500 md:opacity-0 group-hover:opacity-100'
                                     title="Delete chat"
                                 >
-                                    <Trash2 size={12} />
+                                    <Trash size={12} weight="bold" />
                                 </button>
                             </div>
                         ))}
@@ -417,7 +417,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                         {context && (
                           <div className="max-w-[95%] p-3.5 bg-bg-subtle dark:bg-bg-elevated border border-black/10 dark:border-white/10 border-l-4 border-l-accent-primary text-text-secondary rounded-2xl rounded-tr-sm text-xs leading-relaxed italic font-sans shadow-sm w-full">
                             <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] mb-1.5 opacity-90 text-accent-primary">
-                              <Highlighter size={12} className="text-accent-primary" />
+                              <HighlighterCircle size={12} weight="bold" className="text-accent-primary" />
                               Highlight Context
                             </div>
                             <p className="line-clamp-4 leading-relaxed">"{context}"</p>
@@ -439,13 +439,13 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
             {error && (
               <div className='flex items-start gap-3 p-5 bg-red-50 border border-red-100 rounded-3xl animate-in fade-in'>
                 <div className='w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center flex-shrink-0'>
-                  <AlertCircle size={20} />
+                  <WarningCircle size={20} weight="bold" />
                 </div>
                 <div className='flex-1'>
                   <p className='text-xs text-red-700 font-bold uppercase tracking-wider'>System Error</p>
                   <p className='text-[11px] text-red-600 mt-1'>{error}</p>
                   <button onClick={retry} className='mt-3 text-[10px] text-red-600 hover:text-red-800 font-extrabold flex items-center gap-1.5 uppercase tracking-widest bg-bg-elevated px-3 py-1.5 rounded-lg border border-red-100 shadow-sm'>
-                    <RotateCcw size={12} /> Reconnect
+                    <ArrowCounterClockwise size={12} weight="bold" /> Reconnect
                   </button>
                 </div>
               </div>
@@ -468,7 +468,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                 onClick={() => setActiveContext(null)}
                 className='p-1.5 hover:bg-bg-subtle rounded-lg text-text-placeholder hover:text-red-500 transition-all'
               >
-                <X size={14} />
+                <X size={14} weight="bold" />
               </button>
             </div>
             <p className='text-[12px] text-text-secondary leading-relaxed italic line-clamp-3 pl-3 border-l-2 border-accent-primary/50'>
@@ -520,7 +520,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                   className="p-2 rounded-full hover:bg-bg-subtle/80 text-text-tertiary hover:text-text-secondary transition-colors"
                   title="Options"
                 >
-                  <Plus size={18} />
+                  <Plus size={18} weight="bold" />
                 </button>
                 {isStreaming ? (
                   <button
@@ -528,7 +528,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                     onClick={stop}
                     className={`p-2.5 rounded-xl transition-all duration-300 flex items-center justify-center flex-shrink-0 bg-text-primary text-bg-elevated shadow-md hover:scale-105 active:scale-95`}
                   >
-                    <Square size={16} fill="currentColor" />
+                    <Square size={16} weight="fill" />
                   </button>
                 ) : (
                   <button
@@ -539,7 +539,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                       : 'bg-slate-200 dark:bg-slate-800 text-text-tertiary cursor-not-allowed'
                       }`}
                   >
-                    <Send size={18} />
+                    <PaperPlaneTilt size={18} weight="fill" />
                   </button>
                 )}
               </div>

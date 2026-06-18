@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Brain, AlertTriangle, Loader2, Trophy, BarChart2 } from 'lucide-react';
+import { X, CaretLeft, CaretRight, CheckCircle, XCircle, Clock, Brain, Warning, Spinner, Trophy, ChartBar } from '@phosphor-icons/react';
 import { completeMCQQuiz, completeEssayQuiz } from '../../services/quizService';
 
 /**
@@ -111,7 +111,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default bg-bg-elevated flex-shrink-0">
           <button onClick={() => setShowAbandonDialog(true)} className="p-2 hover:bg-bg-subtle rounded-lg transition-colors text-text-tertiary">
-            <X size={20} />
+            <X size={20} weight="bold" />
           </button>
           <div className="flex items-center gap-3 text-center">
             <span className="text-xs font-bold text-text-secondary">
@@ -119,7 +119,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
             </span>
             {timeRemaining != null && (
               <span className={`text-xs font-black px-2.5 py-1 rounded-full flex items-center gap-1 ${timeRemaining <= 60 ? 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400 animate-pulse' : 'bg-bg-subtle text-text-secondary'}`}>
-                <Clock size={12} />
+                <Clock size={12} weight="bold" />
                 {formatTime(timeRemaining)}
               </span>
             )}
@@ -175,7 +175,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
         <div className="flex items-center justify-between px-4 py-4 border-t border-border-default bg-bg-elevated flex-shrink-0">
           <button onClick={goPrev} disabled={currentQuestionIndex === 0}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-text-secondary hover:bg-bg-subtle transition-all disabled:opacity-30 disabled:cursor-not-allowed">
-            <ChevronLeft size={16} /> Previous
+            <CaretLeft size={16} weight="bold" /> Previous
           </button>
 
           {currentQuestionIndex === totalQuestions - 1 ? (
@@ -186,14 +186,14 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
               </button>
               {unansweredCount > 0 && (
                 <span className="text-[10px] font-bold text-amber-500 flex items-center gap-1">
-                  <AlertTriangle size={10} /> {unansweredCount} unanswered
+                  <Warning size={10} weight="fill" /> {unansweredCount} unanswered
                 </span>
               )}
             </div>
           ) : (
             <button onClick={goNext}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-text-secondary hover:bg-bg-subtle transition-all">
-              Next <ChevronRight size={16} />
+              Next <CaretRight size={16} weight="bold" />
             </button>
           )}
         </div>
@@ -204,7 +204,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
             <div className="bg-bg-elevated rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-border-default animate-in zoom-in-95 duration-200">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-500/15 flex items-center justify-center">
-                  <AlertTriangle size={20} className="text-red-500" />
+                  <Warning size={20} weight="fill" className="text-red-500" />
                 </div>
                 <h3 className="text-lg font-bold text-text-primary font-display">Leave Quiz?</h3>
               </div>
@@ -226,7 +226,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
       <div className="fixed inset-0 z-[300] bg-bg-primary flex items-center justify-center font-sans">
         <div className="text-center animate-in fade-in zoom-in duration-500">
           <div className="w-20 h-20 rounded-full bg-accent-primary/10 flex items-center justify-center mx-auto mb-6">
-            <Loader2 size={36} className="text-accent-primary animate-spin" />
+            <Spinner size={36} weight="bold" className="text-accent-primary animate-spin" />
           </div>
           <h2 className="text-xl font-bold text-text-primary mb-2 font-display">
             {isMCQ ? 'Calculating score...' : 'Grading your answers...'}
@@ -254,7 +254,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
           {/* Score hero */}
           <div className="flex flex-col items-center py-10 px-6 bg-bg-elevated border-b border-border-default">
             <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 ${score_percentage >= 70 ? 'bg-green-100 dark:bg-green-500/15' : score_percentage >= 40 ? 'bg-amber-100 dark:bg-amber-500/15' : 'bg-red-100 dark:bg-red-500/15'}`}>
-              <Trophy size={40} className={`${score_percentage >= 70 ? 'text-green-500' : score_percentage >= 40 ? 'text-amber-500' : 'text-red-500'}`} />
+              <Trophy size={40} weight="fill" className={`${score_percentage >= 70 ? 'text-green-500' : score_percentage >= 40 ? 'text-amber-500' : 'text-red-500'}`} />
             </div>
             <h1 className="text-5xl font-black text-text-primary mb-2 font-display">{score_percentage}%</h1>
             {isMCQ && correct != null && (
@@ -287,7 +287,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
                   <div className="flex items-start justify-between gap-3">
                     <span className="text-[10px] font-black text-accent-primary uppercase tracking-wider flex-shrink-0">Q{q.id}</span>
                     {isMCQ ? (
-                      isCorrect ? <CheckCircle2 size={18} className="text-green-500 flex-shrink-0" /> : <XCircle size={18} className="text-red-500 flex-shrink-0" />
+                      isCorrect ? <CheckCircle size={18} weight="fill" className="text-green-500 flex-shrink-0" /> : <XCircle size={18} weight="fill" className="text-red-500 flex-shrink-0" />
                     ) : (
                       <span className={`text-xs font-black px-2 py-0.5 rounded-full ${essayScore >= 70 ? 'bg-green-100 text-green-600 dark:bg-green-500/15 dark:text-green-400' : essayScore >= 40 ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400' : 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'}`}>
                         {essayScore}/100

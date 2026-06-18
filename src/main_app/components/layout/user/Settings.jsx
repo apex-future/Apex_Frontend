@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { showToastGlobal } from '../../../hooks/useToast';
-import { ArrowLeft, Moon, Sun, Monitor, Bell, HardDrive, Download, Trash2, HelpCircle, FileText, ExternalLink, Activity, BookOpen, Bot, LogOut, User, UserMinus, Sliders } from 'lucide-react';
+import {
+  ArrowLeft, Moon, Sun, Monitor, Bell, HardDrives, DownloadSimple, Trash, Question,
+  FileText, ArrowSquareOut, BookOpen, Robot, SignOut, User, UserMinus, SlidersHorizontal
+} from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 
 import useThemeStore from '../../../store/themeStore';
@@ -140,7 +143,7 @@ function Settings({ onLogout }) {
                             onClick={() => navigate(-1)}
                             className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
                         >
-                            <ArrowLeft className='text-text-primary' size={24} />
+                            <ArrowLeft className='text-text-primary' size={24} weight="bold" />
                         </button>
                     </div>
 
@@ -155,7 +158,7 @@ function Settings({ onLogout }) {
             <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
                 {/* Appearance */}
-                <SettingSection title="Appearance" icon={<Moon size={18} />}>
+                <SettingSection title="Appearance" icon={<Moon size={18} weight="fill" />}>
                     <div className="flex items-center justify-between p-4 border-b border-black/10 dark:border-white/10 last:border-0 hover:bg-bg-subtle/50 transition-colors">
                         <div>
                             <p className="text-sm font-medium text-text-primary">Theme</p>
@@ -167,28 +170,28 @@ function Settings({ onLogout }) {
                                 className={`p-2 rounded-lg transition-all ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                                 title="Light Theme"
                             >
-                                <Sun size={16} />
+                                <Sun size={16} weight="bold" />
                             </button>
                             <button
                                 onClick={() => handleThemeChange('dark')}
                                 className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                                 title="Dark Theme"
                             >
-                                <Moon size={16} />
+                                <Moon size={16} weight="bold" />
                             </button>
                             <button
                                 onClick={() => handleThemeChange('system')}
                                 className={`p-2 rounded-lg transition-all ${theme === 'system' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                                 title="System Default"
                             >
-                                <Monitor size={16} />
+                                <Monitor size={16} weight="bold" />
                             </button>
                         </div>
                     </div>
                 </SettingSection>
 
                 {/* Reading Preferences */}
-                <SettingSection title="Reading" icon={<BookOpen size={18} />}>
+                <SettingSection title="Reading" icon={<BookOpen size={18} weight="fill" />}>
                     <ToggleRow
                         label="Auto-save Progress"
                         desc="Automatically save your reading position to the cloud"
@@ -204,7 +207,7 @@ function Settings({ onLogout }) {
                 </SettingSection>
 
                 {/* Reading Experience */}
-                <SettingSection title="Reading Experience" icon={<Sliders size={18} />}>
+                <SettingSection title="Reading Experience" icon={<SlidersHorizontal size={18} weight="bold" />}>
                   {/* Scroll Orientation */}
                   <div className="p-4 border-b border-black/10 dark:border-white/10">
                     <p className="text-sm font-medium text-text-primary mb-1">Scroll Direction</p>
@@ -290,7 +293,7 @@ function Settings({ onLogout }) {
                 </SettingSection>
 
                 {/* AI & Chatbot */}
-                <SettingSection title="AI Companion" icon={<Bot size={18} />}>
+                <SettingSection title="AI Companion" icon={<Robot size={18} weight="fill" />}>
                     <ToggleRow
                         label="Save Chat History"
                         desc="Keep a record of your AI conversations"
@@ -306,7 +309,7 @@ function Settings({ onLogout }) {
                 </SettingSection>
 
                 {/* Notifications */}
-                <SettingSection title="Notifications" icon={<Bell size={18} />}>
+                <SettingSection title="Notifications" icon={<Bell size={18} weight="fill" />}>
                     {/* Reading Reminders toggle + time picker */}
                     <div className="border-b border-black/10 dark:border-white/10 last:border-0">
                       <div className="flex items-center justify-between p-4 hover:bg-bg-subtle/50 transition-colors">
@@ -366,9 +369,9 @@ function Settings({ onLogout }) {
                 </SettingSection>
 
                 {/* Data & Storage */}
-                <SettingSection title="Data & Storage" icon={<HardDrive size={18} />}>
+                <SettingSection title="Data & Storage" icon={<HardDrives size={18} weight="bold" />}>
                     <ActionRow
-                        icon={<Download size={16} className="text-text-secondary" />}
+                        icon={<DownloadSimple size={16} weight="bold" className="text-text-secondary" />}
                         label="Export Data"
                         desc="Download your bookmarks and reading history"
                         onClick={() => showToastGlobal('Exporting data feature coming soon!', 'info')}
@@ -381,7 +384,7 @@ function Settings({ onLogout }) {
                         danger={true}
                     /> */}
                     <ActionRow
-                        icon={<Trash2 size={16} className="text-error" />}
+                        icon={<Trash size={16} weight="bold" className="text-error" />}
                         label="Clear App Data"
                         desc="Erase books and progress from this device or everywhere"
                         onClick={() => setShowClearModal(true)}
@@ -390,9 +393,9 @@ function Settings({ onLogout }) {
                 </SettingSection>
 
                 {/* Account */}
-                <SettingSection title="Account" icon={<User size={18} />}>
+                <SettingSection title="Account" icon={<User size={18} weight="bold" />}>
                     <ActionRow
-                        icon={<LogOut size={16} className="text-error" />}
+                        icon={<SignOut size={16} weight="bold" className="text-error" />}
                         label="Log Out"
                         desc="Sign out of your account on this device"
                         onClick={() => {
@@ -405,7 +408,7 @@ function Settings({ onLogout }) {
                         danger={true}
                     />
                     <ActionRow
-                        icon={<UserMinus size={16} className="text-error" />}
+                        icon={<UserMinus size={16} weight="bold" className="text-error" />}
                         label="Delete Account"
                         desc="Permanently delete your account and all data"
                         onClick={() => window.confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")}
@@ -414,14 +417,14 @@ function Settings({ onLogout }) {
                 </SettingSection>
 
                 {/* About */}
-                <SettingSection title="About" icon={<HelpCircle size={18} />}>
+                <SettingSection title="About" icon={<Question size={18} weight="bold" />}>
                     <ActionRow
-                        icon={<FileText size={16} className="text-text-secondary" />}
+                        icon={<FileText size={16} weight="bold" className="text-text-secondary" />}
                         label="Terms & Privacy"
                         onClick={() => { }}
                     />
                     <ActionRow
-                        icon={<ExternalLink size={16} className="text-text-secondary" />}
+                        icon={<ArrowSquareOut size={16} weight="bold" className="text-text-secondary" />}
                         label="Help Center"
                         onClick={() => { }}
                     />

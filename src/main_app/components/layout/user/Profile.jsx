@@ -1,4 +1,4 @@
-import { ArrowLeft, Settings, Flame, Book, BookOpen, Calendar, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Gear, Flame, Book, BookOpen, Calendar, TrendUp } from '@phosphor-icons/react';
 import useAuthStore from '../../../store/authStore'
 import useStudyStore from '../../../store/studyStore'
 import useQuizStore from '../../../store/quizStore'
@@ -61,11 +61,11 @@ function Profile() {
             onClick={() => navigate(-1)}
             className="p-2 hover:bg-white/10 rounded-lg transition-all"
           >
-            <ArrowLeft className='text-white' size={20} />
+            <ArrowLeft className='text-white' size={20} weight="bold" />
           </button>
           <h3 className='text-white text-lg font-semibold font-display'>Profile</h3>
           <button onClick={() => navigate('/settings')} className="p-2 hover:bg-white/10 rounded-lg transition-all">
-            <Settings className='text-white' size={20} />
+            <Gear className='text-white' size={20} weight="fill" />
           </button>
         </div>
 
@@ -88,7 +88,7 @@ function Profile() {
             <p className="text-purple-100/80 text-xs sm:text-sm mb-2 truncate">{user?.email || 'user@apex.com'}</p>
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1 text-purple-100 text-[10px] sm:text-xs">
-                <Calendar size={12} />
+                <Calendar size={12} weight="bold" />
                 {formattedJoinDate}
               </span>
               <span className="px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-[10px] sm:text-xs font-medium border border-white/10">
@@ -99,7 +99,7 @@ function Profile() {
 
           {/* Streak Badge - MORE FLUID */}
           <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-card p-2 sm:p-3 min-w-[64px] sm:min-w-[70px]">
-            <Flame className='text-orange-400' size={20} />
+            <Flame className='text-orange-400' size={20} weight="fill" />
             <p className='text-white text-lg sm:text-xl font-bold leading-none mt-1'>{streakCount}</p>
             <p className='text-purple-100 text-[9px] sm:text-[10px] uppercase tracking-wider font-medium'>days</p>
           </div>
@@ -113,28 +113,28 @@ function Profile() {
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-              <TrendingUp size={14} />
+              <TrendUp size={14} weight="bold" />
               Statistics
             </h2>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <StatCard
-              icon={<Book />}
+              icon={<Book weight="fill" />}
               label="Total Books"
               value={stats.totalBooks}
             />
             <StatCard
-              icon={<BookOpen />}
+              icon={<BookOpen weight="fill" />}
               label="Reading Now"
               value={stats.currentlyReading}
             />
             <StatCard
-              icon={<Book />}
+              icon={<Book weight="fill" />}
               label="Completed"
               value={stats.completedBooks}
             />
             <StatCard
-              icon={<TrendingUp />}
+              icon={<TrendUp weight="bold" />}
               label="Pages Read"
               value={stats.totalPagesRead}
             />
@@ -142,33 +142,33 @@ function Profile() {
 
           <div className="flex items-center justify-between mt-8 mb-4 px-1">
             <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-              <Flame size={14} />
+              <Flame size={14} weight="fill" />
               Interactions & Memory
             </h2>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <StatCard
-              icon={<TrendingUp />}
+              icon={<TrendUp weight="bold" />}
               label="Total Highlights"
               value={stats.highlightsCreated}
             />
             <StatCard
-              icon={<BookOpen />}
+              icon={<BookOpen weight="fill" />}
               label="Notes Taken"
               value={stats.notesTaken}
             />
             <StatCard
-              icon={<Book />}
+              icon={<Book weight="fill" />}
               label="Words Saved"
               value={stats.wordsSaved}
             />
             <StatCard
-              icon={<TrendingUp />}
+              icon={<TrendUp weight="bold" />}
               label="Quizzes Done"
               value={globalQuizStats?.attemptsCount || 0}
             />
             <StatCard
-              icon={<TrendingUp />}
+              icon={<TrendUp weight="bold" />}
               label="Avg Quiz Score"
               value={globalQuizStats ? `${globalQuizStats.averageScore}%` : 'N/A'}
             />

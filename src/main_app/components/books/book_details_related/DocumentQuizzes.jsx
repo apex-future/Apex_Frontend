@@ -1,5 +1,5 @@
-﻿import React, { useState } from 'react';
-import { Target, Timer, Trophy, CheckCircle2, ChevronRight, BookOpen, Clock, Loader2, Sparkles, AlertCircle, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Target, Timer, Trophy, CheckCircle, CaretRight, BookOpen, Clock, Spinner, Sparkle, WarningCircle, X } from '@phosphor-icons/react';
 import useQuizStore from '../../../store/quizStore';
 import useSpaceStore from '../../../store/spaceStore';
 import QuizGenerationModal from '../../reader/reading_navigations/reading_layout/QuizGenerationModal';
@@ -118,7 +118,7 @@ function DocumentQuizzes({ book }) {
     if (viewState === 'loading') {
         return (
             <div className="p-12 border-t border-black/10 dark:border-white/10 rounded-3xl flex flex-col items-center justify-center text-center">
-                <Loader2 size={48} className="text-accent-primary animate-spin mb-6" />
+                <Spinner size={48} weight="bold" className="text-accent-primary animate-spin mb-6" />
                 <h3 className="text-xl font-bold text-text-primary mb-2 animate-pulse">Analyzing Book Content</h3>
                 <p className="text-text-tertiary">Generating personalized questions...</p>
             </div>
@@ -136,7 +136,7 @@ function DocumentQuizzes({ book }) {
                 <div className="p-4 border-b border-border-default bg-neutral-50 dark:bg-zinc-800/50 flex justify-between items-center">
                     <span className="text-sm font-bold text-text-tertiary uppercase tracking-wider">Question {currentQuestionIdx + 1} of {activeQuiz.length}</span>
                     <div className="flex items-center gap-2 text-accent-primary font-bold bg-accent-primary/10 px-3 py-1 rounded-full text-sm">
-                        <Timer size={16} /> <span className="uppercase text-[10px] tracking-wider">In Progress</span>
+                        <Timer size={16} weight="bold" /> <span className="uppercase text-[10px] tracking-wider">In Progress</span>
                     </div>
                 </div>
                 
@@ -184,7 +184,7 @@ function DocumentQuizzes({ book }) {
                                 disabled={!isAnswered}
                                 className="px-8 py-3 bg-neutral-900 dark:bg-white text-white dark:text-black rounded-xl font-bold disabled:opacity-50 transition-all flex items-center gap-2"
                             >
-                                Next Question <ChevronRight size={18} />
+                                Next Question <CaretRight size={18} weight="bold" />
                             </button>
                         ) : (
                             <button 
@@ -205,7 +205,7 @@ function DocumentQuizzes({ book }) {
         return (
             <div className="p-8 md:p-12 border-t border-black/10 dark:border-white/10 bg-white dark:bg-zinc-900 rounded-3xl flex flex-col items-center text-center">
                 <div className="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Trophy size={40} />
+                    <Trophy size={40} weight="fill" />
                 </div>
                 <h2 className="text-3xl font-black text-text-primary tracking-tight mb-2">Quiz Completed!</h2>
                 <p className="text-text-tertiary font-medium mb-8">Great job finishing the review for {book.title}.</p>
@@ -226,7 +226,7 @@ function DocumentQuizzes({ book }) {
                 </div>
 
                 <div className="text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-6 py-4 rounded-2xl text-sm font-semibold max-w-md flex gap-3 mb-8 text-left">
-                    <AlertCircle size={20} className="flex-shrink-0" />
+                    <WarningCircle size={20} weight="bold" className="flex-shrink-0" />
                     <span>In version 2, individual question review is not yet supported. Your score has been saved to your Analytics.</span>
                 </div>
 
@@ -249,7 +249,7 @@ function DocumentQuizzes({ book }) {
                     onClick={() => setIsSetupModalOpen(true)}
                     className="w-full sm:w-auto px-6 py-3 bg-accent-primary text-white font-bold rounded-xl shadow-lg shadow-accent-primary/20 hover:bg-accent-hover transition-colors flex items-center justify-center gap-2"
                 >
-                    <Sparkles size={18} /> Generate Quiz
+                    <Sparkle size={18} weight="fill" /> Generate Quiz
                 </button>
             </div>
 
@@ -257,7 +257,7 @@ function DocumentQuizzes({ book }) {
             
             {attempts.length === 0 ? (
                 <div className="text-center py-12 px-4 border border-dashed border-border-default rounded-3xl">
-                    <Target size={48} className="mx-auto text-text-placeholder mb-4" />
+                    <Target size={48} weight="bold" className="mx-auto text-text-placeholder mb-4" />
                     <p className="text-text-secondary font-medium">No quizzes taken yet for this book.</p>
                     <p className="text-sm text-text-tertiary mt-1">Tap generate to start your first review session.</p>
                 </div>
@@ -276,7 +276,7 @@ function DocumentQuizzes({ book }) {
                             <div>
                                 <h4 className="font-bold text-text-primary mb-1">{attempt.numQuestions} Questions</h4>
                                 <div className="flex items-center gap-2 text-xs text-text-tertiary font-medium">
-                                    <Clock size={12} /> {formatTime(attempt.timeTaken)}
+                                    <Clock size={12} weight="bold" /> {formatTime(attempt.timeTaken)}
                                 </div>
                             </div>
                         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import ExamReminder from './ExamReminder';
 import LastReadCard from './LastReadCard';
 import StreakCard from './StreakCard';

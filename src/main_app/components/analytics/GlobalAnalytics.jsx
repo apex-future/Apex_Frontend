@@ -1,9 +1,9 @@
-﻿import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { KnowledgeMasteryCard, CoverageCard, CalendarActivityCard, QuizCard, PARTS_STYLES } from '../layout/spaces/SpaceAnalyticsParts';
 import { BookContext } from '../../context/BookContextInstance';
 import apiClient from '../../services/apiClient';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@phosphor-icons/react';
 
 const EMPTY_BOOKS = [];
 
@@ -219,7 +219,7 @@ function GlobalAnalytics() {
                             onClick={() => navigate(-1)}
                             className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
                         >
-                            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+                            <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
                         </button>
                     </div>
 

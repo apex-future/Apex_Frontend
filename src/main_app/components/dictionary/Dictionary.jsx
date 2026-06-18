@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Book, Volume2, ArrowLeft, Loader2, Sparkles, History, WifiOff } from 'lucide-react';
+import { MagnifyingGlass, Book, SpeakerHigh, ArrowLeft, Spinner, Sparkle, ClockCounterClockwise, WifiSlash } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import dictionaryService from '../../services/dictionaryService';
 
@@ -101,7 +101,7 @@ function Dictionary() {
                             onClick={() => navigate(-1)}
                             className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
                         >
-                            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+                            <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
                         </button>
                     </div>
 
@@ -129,14 +129,14 @@ function Dictionary() {
                             disabled={loading}
                             className="absolute right-3 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-accent-primary hover:bg-accent-hover text-white rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-accent-primary/20 disabled:opacity-50"
                         >
-                            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Search'}
+                            {loading ? <Spinner size={20} weight="bold" className="animate-spin" /> : 'Search'}
                         </button>
                     </div>
                 </form>
 
                 {loading && (
                     <div className="flex flex-col items-center justify-center py-20 text-text-tertiary animate-in fade-in zoom-in duration-500">
-                        <Loader2 size={48} className="animate-spin mb-4 text-accent-primary/40" />
+                        <Spinner size={48} weight="bold" className="animate-spin mb-4 text-accent-primary/40" />
                         <p className="font-medium">Discovering definition...</p>
                     </div>
                 )}
@@ -144,7 +144,7 @@ function Dictionary() {
                 {error && !loading && (
                     <div className="bg-red-50/50 border-2 border-red-100 rounded-2xl p-8 text-center animate-in slide-in-from-top-4 duration-500">
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
-                            {error.includes('internet') ? <WifiOff size={28} /> : <Sparkles size={28} />}
+                            {error.includes('internet') ? <WifiSlash size={28} weight="bold" /> : <Sparkle size={28} weight="fill" />}
                         </div>
                         <h3 className="text-lg font-bold text-red-900 mb-2">
                             {error.includes('internet') ? 'You\'re offline' : 'Word not found'}
@@ -160,7 +160,7 @@ function Dictionary() {
                                 onClick={() => navigate('/ai', { state: { initialPrompt: `Can you define the word "${word}" for me?` } })}
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-xl transition-all font-bold text-sm shadow-sm"
                             >
-                                <Sparkles size={18} className="text-purple-600" />
+                                <Sparkle size={18} weight="fill" className="text-purple-600" />
                                 Ask Cleo instead
                             </button>
                         )}
@@ -170,7 +170,7 @@ function Dictionary() {
                 {!word && !definition && !loading && history.length > 0 && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex items-center gap-2 mb-6 text-text-tertiary">
-                            <History size={18} />
+                            <ClockCounterClockwise size={18} weight="bold" />
                             <h3 className="text-sm font-bold uppercase tracking-widest">Recent Searches</h3>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -195,7 +195,7 @@ function Dictionary() {
                     <div className="mt-10 p-6 bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-3xl shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-base font-bold text-text-primary flex items-center gap-2">
-                                <WifiOff size={18} className="text-accent-primary" />
+                                <WifiSlash size={18} weight="bold" className="text-accent-primary" />
                                 Offline Dictionary Support
                             </h4>
                             {offlineReady ? (
@@ -254,7 +254,7 @@ function Dictionary() {
                                     onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)}
                                     className="w-14 h-14 bg-accent-primary/10 text-accent-primary rounded-2xl flex items-center justify-center hover:bg-accent-primary hover:text-white transition-all active:scale-95 group"
                                 >
-                                    <Volume2 size={24} className="group-hover:scale-110 transition-transform" />
+                                    <SpeakerHigh size={24} weight="fill" className="group-hover:scale-110 transition-transform" />
                                 </button>
                             )}
                         </div>
@@ -303,7 +303,7 @@ function Dictionary() {
                                     {(meaning.synonyms?.length > 0) && (
                                         <div className="mt-8 pt-8 border-t border-border-default">
                                             <div className="flex items-center gap-2 mb-4">
-                                                <Sparkles size={14} className="text-accent-primary" />
+                                                <Sparkle size={14} weight="fill" className="text-accent-primary" />
                                                 <h4 className="text-xs font-bold text-text-tertiary uppercase tracking-widest">Synonyms</h4>
                                             </div>
                                             <div className="flex flex-wrap gap-2">

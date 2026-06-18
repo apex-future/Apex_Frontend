@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@phosphor-icons/react';
 
 const BookSkeleton = ({ message = "Loading..." }) => {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ const BookSkeleton = ({ message = "Loading..." }) => {
               onClick={() => navigate('/')}
               className="p-3 bg-white rounded-xl shadow-md border border-slate-200 text-slate-700 hover:text-accent-primary hover:border-purple-200 transition-all font-bold text-sm tracking-wide flex items-center gap-2 group"
           >
-              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Dashboard
+              <ArrowLeft size={16} weight="bold" className="group-hover:-translate-x-1 transition-transform" /> Dashboard
           </button>
       </div>
 

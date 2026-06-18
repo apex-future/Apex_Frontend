@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  X, Plus, FileText, Bookmark, AlignLeft, Highlighter, Pen,
-  Trash2, AlertTriangle, Edit3, Save, Search, StickyNote, Quote, Calendar
-} from 'lucide-react';
+  X, Plus, FileText, BookmarkSimple, TextAlignLeft, HighlighterCircle, Pencil,
+  Trash, Warning, PencilSimple, FloppyDisk, MagnifyingGlass, Note, Quotes, CalendarBlank
+} from '@phosphor-icons/react';
 import useBookNotesStore from '../../../../store/bookNotesStore';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ function DeleteConfirmModal({ noteTitle, onConfirm, onCancel }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-10 rounded-2xl bg-red-500/10 flex items-center justify-center">
-          <AlertTriangle size={20} className="text-red-500" />
+          <Warning size={20} weight="fill" className="text-red-500" />
         </div>
         <div className="flex flex-col gap-1">
           <h3 className="font-display text-base font-bold text-text-primary">Delete Note</h3>
@@ -117,7 +117,7 @@ function NotesSection({ bookId, onAddNote }) {
       ) : notes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
           <div className="w-14 h-14 rounded-3xl bg-bg-subtle flex items-center justify-center mb-4 text-text-placeholder border border-border-default/40">
-            <FileText size={26} strokeWidth={1.5} />
+            <FileText size={26} weight="bold" />
           </div>
           <h4 className="text-sm font-bold text-text-secondary">No notes yet</h4>
           <p className="text-[11px] text-text-tertiary mt-2 leading-relaxed max-w-[180px]">
@@ -151,13 +151,13 @@ function NotesSection({ bookId, onAddNote }) {
                       {template}
                     </span>
                     <span className="text-[10px] text-text-tertiary flex items-center gap-1">
-                      <AlignLeft size={10} /> {wordCount}w
+                      <TextAlignLeft size={10} weight="bold" /> {wordCount}w
                     </span>
                     <button
                       onClick={(e) => requestDelete(e, note.local_id)}
                       className="p-1 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all"
                     >
-                      <Trash2 size={11} />
+                      <Trash size={11} weight="bold" />
                     </button>
                   </div>
                   <span className="text-[10px] text-text-tertiary">{formatDate(note.updatedAt)}</span>
@@ -214,7 +214,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
       {/* Search */}
       <div className="px-3 pt-3 pb-2">
         <div className="relative group">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary transition-colors" />
+          <MagnifyingGlass size={13} weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary transition-colors" />
           <input
             type="text"
             value={searchQuery}
@@ -248,7 +248,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
                 disabled={!newTab.trim()}
                 className="px-4 py-1.5 rounded-lg text-xs font-bold bg-accent-primary text-white shadow-md shadow-accent-primary/20 hover:bg-accent-primary/90 disabled:opacity-50 transition-all flex items-center gap-1.5"
               >
-                <Save size={12} /> Save Tab
+                <FloppyDisk size={12} weight="bold" /> Save Tab
               </button>
             </div>
           </div>
@@ -260,7 +260,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
         {filteredTabs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <div className="w-14 h-14 rounded-3xl bg-bg-subtle flex items-center justify-center mb-4 text-text-placeholder border border-border-default/40">
-              {searchQuery ? <Search size={26} strokeWidth={1.5} /> : <StickyNote size={26} strokeWidth={1.5} />}
+              {searchQuery ? <MagnifyingGlass size={26} weight="bold" /> : <Note size={26} weight="bold" />}
             </div>
             <h4 className="text-sm font-bold text-text-secondary">
               {searchQuery ? 'No matches' : 'No tabs yet'}
@@ -277,7 +277,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
             >
               {tab.type === 'highlight_note' && !editingId && (
                 <div className="absolute top-0 right-0 w-10 h-10 bg-accent-primary/5 rounded-bl-[2rem] flex items-start justify-end p-1.5 text-accent-primary opacity-20 pointer-events-none">
-                  <Quote size={10} />
+                  <Quotes size={10} weight="fill" />
                 </div>
               )}
               {editingId === tab.id ? (
@@ -289,8 +289,8 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
                     className="w-full p-3 rounded-xl bg-bg-subtle border border-accent-primary text-sm text-text-primary focus:outline-none min-h-[80px] resize-none"
                   />
                   <div className="flex justify-end gap-2">
-                    <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg text-text-tertiary hover:bg-bg-subtle transition-all"><X size={14} /></button>
-                    <button onClick={() => handleSaveEdit(tab.id)} className="p-1.5 px-3 rounded-lg bg-accent-primary text-white font-bold text-xs flex items-center gap-1.5"><Save size={12} /> Save</button>
+                    <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg text-text-tertiary hover:bg-bg-subtle transition-all"><X size={14} weight="bold" /></button>
+                    <button onClick={() => handleSaveEdit(tab.id)} className="p-1.5 px-3 rounded-lg bg-accent-primary text-white font-bold text-xs flex items-center gap-1.5"><FloppyDisk size={12} weight="bold" /> Save</button>
                   </div>
                 </div>
               ) : (
@@ -304,13 +304,13 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
                   <div className="flex justify-between items-start gap-3">
                     <p className="text-[13px] text-text-primary leading-relaxed font-medium flex-1">{tab.text}</p>
                     <div className="flex flex-col gap-1 transition-all duration-300">
-                      <button onClick={() => { setEditingId(tab.id); setEditText(tab.text); }} className="p-1.5 rounded-lg bg-bg-elevated border border-border-default shadow-sm text-text-tertiary hover:text-accent-primary transition-all"><Edit3 size={12} /></button>
-                      <button onClick={() => deleteTab(tab.id)} className="p-1.5 rounded-lg bg-bg-elevated border border-border-default shadow-sm text-text-tertiary hover:text-red-500 transition-all"><Trash2 size={12} /></button>
+                      <button onClick={() => { setEditingId(tab.id); setEditText(tab.text); }} className="p-1.5 rounded-lg bg-bg-elevated border border-border-default shadow-sm text-text-tertiary hover:text-accent-primary transition-all"><PencilSimple size={12} weight="bold" /></button>
+                      <button onClick={() => deleteTab(tab.id)} className="p-1.5 rounded-lg bg-bg-elevated border border-border-default shadow-sm text-text-tertiary hover:text-red-500 transition-all"><Trash size={12} weight="bold" /></button>
                     </div>
                   </div>
                   <div className="flex items-center justify-between pt-2 border-t border-border-default/30">
                     <div className="flex items-center gap-1.5 text-[9px] font-bold text-text-tertiary uppercase tracking-wider">
-                      <Calendar size={10} className="opacity-40" />
+                      <CalendarBlank size={10} weight="bold" className="opacity-40" />
                       {tab.updatedAt ? new Date(tab.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
                     </div>
                     <span className="text-[9px] font-black text-text-placeholder uppercase tracking-tighter">
@@ -360,7 +360,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
           onClick={() => setNotebookPanel(false)}
           className="p-2 rounded-full bg-bg-subtle hover:bg-bg-subtle transition-all text-text-tertiary hover:text-text-secondary"
         >
-          <X size={16} strokeWidth={2} />
+          <X size={16} weight="bold" />
         </button>
       </div>
 
@@ -406,7 +406,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
             }}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-primary text-white text-xs font-bold hover:bg-accent-primary/90 active:scale-95 transition-all shadow-md shadow-accent-primary/20"
           >
-            <Plus size={14} /> Add Note
+            <Plus size={14} weight="bold" /> Add Note
           </button>
         ) : (
           <button
@@ -416,7 +416,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
             }}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-border-default text-text-tertiary text-xs font-bold hover:border-accent-primary hover:text-accent-primary hover:bg-accent-primary/5 active:scale-95 transition-all"
           >
-            <Plus size={14} /> Add Tab
+            <Plus size={14} weight="bold" /> Add Tab
           </button>
         )}
       </div>

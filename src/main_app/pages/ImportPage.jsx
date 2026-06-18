@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Spinner, WarningCircle } from '@phosphor-icons/react';
 import db from '../db/apex.db';
 
 export default function ImportPage() {
@@ -86,7 +86,7 @@ export default function ImportPage() {
       <div className="min-h-screen flex items-center justify-center bg-bg-primary">
         <div className="text-center p-8">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="text-red-500" size={32} />
+            <WarningCircle className="text-red-500" size={32} weight="fill" />
           </div>
           <h2 className="text-xl font-bold text-text-primary mb-2">Import Failed</h2>
           <p className="text-text-secondary text-sm">{errorMsg}</p>
@@ -99,7 +99,7 @@ export default function ImportPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg-primary">
       <div className="text-center p-8">
-        <Loader2 size={48} className="animate-spin text-accent-primary mx-auto mb-4" />
+        <Spinner size={48} weight="bold" className="animate-spin text-accent-primary mx-auto mb-4" />
         <h2 className="text-xl font-bold text-text-primary mb-1">Importing your book...</h2>
         <p className="text-text-secondary text-sm">Please wait while we set things up</p>
       </div>

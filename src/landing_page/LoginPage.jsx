@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { WarningCircle, Eye, EyeClosed } from '@phosphor-icons/react';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
 
@@ -44,7 +44,7 @@ function LoginPage({ onLogin }) {
         <form className="w-full" onSubmit={handleLogin}>
           {error && (
             <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-[6px] flex items-center gap-2 mb-4">
-              <AlertCircle size={18} />
+              <WarningCircle size={18} weight="regular" />
               <p className="text-sm font-medium">{error}</p>
             </div>
           )}
@@ -82,7 +82,7 @@ function LoginPage({ onLogin }) {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? <EyeClosed size={18} weight="regular" /> : <Eye size={18} weight="regular" />}
             </button>
           </div>
 

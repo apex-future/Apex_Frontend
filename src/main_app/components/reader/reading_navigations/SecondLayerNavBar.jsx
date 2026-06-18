@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import { Menu, RotateCcw, Sparkles, ZoomIn, ZoomOut, BrainCircuit } from 'lucide-react'
+import { List, ArrowCounterClockwise, Sparkle, MagnifyingGlassPlus, MagnifyingGlassMinus, Brain } from '@phosphor-icons/react';
 import { gsap } from 'gsap'
 
 function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pdfControls }) {
@@ -34,7 +34,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
             className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setLeftPanel(prev => !prev); }}
           >
-            <Menu size={18} strokeWidth={2} />
+            <List size={18} weight="bold" />
           </button>
         </div>
 
@@ -45,7 +45,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
             onClick={(e) => { e.stopPropagation(); zoomOut?.(); }}
             title="Zoom Out"
           >
-            <ZoomOut strokeWidth={2} size={18} />
+            <MagnifyingGlassMinus size={18} weight="bold" />
           </button>
 
           {zoomLabel && (
@@ -59,7 +59,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
             onClick={(e) => { e.stopPropagation(); zoomIn?.(); }}
             title="Zoom In"
           >
-            <ZoomIn strokeWidth={2} size={18} />
+            <MagnifyingGlassPlus size={18} weight="bold" />
           </button>
 
           <div className="w-px h-5 border-border-default mx-1" />
@@ -69,7 +69,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
             onClick={(e) => { e.stopPropagation(); rotate?.(); }}
             title="Rotate"
           >
-            <RotateCcw strokeWidth={2} size={18} />
+            <ArrowCounterClockwise size={18} weight="bold" />
           </button>
         </div>
 
@@ -80,14 +80,14 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
             onClick={(e) => { e.stopPropagation(); setAiModal(prev => !prev); }}
             title="AI Tools"
           >
-            <Sparkles strokeWidth={2} size={18} />
+            <Sparkle size={18} weight="fill" />
           </button>
           <button
             className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setQuizModal(prev => !prev); }}
             title="Quiz Generation Settings"
           >
-            <BrainCircuit strokeWidth={2} size={18} />
+            <Brain size={18} weight="fill" />
           </button>
         </div>
       </div>

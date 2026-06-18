@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Flame, ChevronLeft, ChevronRight, Trophy, Calendar, Target } from 'lucide-react';
+import { ArrowLeft, Flame, CaretLeft, CaretRight, Trophy, Calendar, Target } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import useStudyStore from '../store/studyStore';
 
@@ -59,7 +59,7 @@ function StreakPage() {
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
             >
-              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+              <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
             </button>
           </div>
 
@@ -87,8 +87,9 @@ function StreakPage() {
             <div className="flex items-center justify-center gap-2 sm:gap-4 relative mb-2">
               <div className="relative flex items-center justify-center">
                 <div className="absolute inset-0 blur-xl bg-orange-400/40 rounded-full scale-[2]" />
-                <Flame
+                  <Flame
                   size={56}
+                  weight="fill"
                   className="relative text-orange-500 fill-orange-500 drop-shadow-md sm:w-[72px] sm:h-[72px]"
                 />
               </div>
@@ -112,7 +113,7 @@ function StreakPage() {
             {/* Current Streak Stat Box */}
             <div className="relative overflow-hidden bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md rounded-2xl border-t border-black/10 dark:border-white/10 p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 shadow-sm hover:shadow-md transition-all group">
               <div className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-4 size-16 sm:size-20 md:size-28 text-orange-500/10 rotate-12 group-hover:text-orange-500/20 group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 pointer-events-none ease-in-out">
-                <Flame size="100%" strokeWidth={1} />
+                <Flame size="100%" strokeWidth={1} weight="fill" />
               </div>
               <div className="relative z-10 flex flex-col items-center md:items-end text-center md:text-right">
                 <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary tabular-nums tracking-tight mb-0.5">{streakCount}</div>
@@ -123,7 +124,7 @@ function StreakPage() {
             {/* Longest Streak Stat Box */}
             <div className="relative overflow-hidden bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md rounded-2xl border-t border-black/10 dark:border-white/10 p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 shadow-sm hover:shadow-md transition-all group">
               <div className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-4 size-16 sm:size-20 md:size-28 text-amber-500/10 rotate-12 group-hover:text-amber-500/20 group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 pointer-events-none ease-in-out">
-                <Trophy size="100%" strokeWidth={1} />
+                <Trophy size="100%" strokeWidth={1} weight="fill" />
               </div>
               <div className="relative z-10 flex flex-col items-center md:items-end text-center md:text-right">
                 <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary tabular-nums tracking-tight mb-0.5">{longestStreak}</div>
@@ -134,7 +135,7 @@ function StreakPage() {
             {/* Days Tracked Stat Box */}
             <div className="relative overflow-hidden bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md rounded-2xl border-t border-black/10 dark:border-white/10 p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 shadow-sm hover:shadow-md transition-all group">
               <div className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-4 size-16 sm:size-20 md:size-28 text-blue-500/10 rotate-12 group-hover:text-blue-500/20 group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 pointer-events-none ease-in-out">
-                <Calendar size="100%" strokeWidth={1} />
+                <Calendar size="100%" strokeWidth={1} weight="fill" />
               </div>
               <div className="relative z-10 flex flex-col items-center md:items-end text-center md:text-right">
                 <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary tabular-nums tracking-tight mb-0.5">{streakHistory.length}</div>
@@ -153,7 +154,7 @@ function StreakPage() {
                 onClick={prevMonth}
                 className="p-2 hover:bg-bg-subtle rounded-xl transition-all active:scale-90"
               >
-                <ChevronLeft size={20} className="text-text-secondary" />
+                <CaretLeft size={20} weight="bold" className="text-text-secondary" />
               </button>
               <h3 className="text-base font-bold text-text-primary tracking-tight">
                 {monthName}
@@ -162,7 +163,7 @@ function StreakPage() {
                 onClick={nextMonth}
                 className="p-2 hover:bg-bg-subtle rounded-xl transition-all active:scale-90"
               >
-                <ChevronRight size={20} className="text-text-secondary" />
+                <CaretRight size={20} weight="bold" className="text-text-secondary" />
               </button>
             </div>
 

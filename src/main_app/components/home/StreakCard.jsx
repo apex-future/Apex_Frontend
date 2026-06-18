@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame } from 'lucide-react';
+import { Fire } from '@phosphor-icons/react';
 import useStudyStore from '../../store/studyStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -33,7 +33,8 @@ const StreakCard = () => {
                 
                 {/* Background Icon Asset - Matched with ExamReminder */}
                 <div className="absolute bottom-2 -left-2 size-44 md:size-52 text-orange-500/10 rotate-12 group-hover:text-orange-500/20 group-hover:scale-100 group-hover:rotate-0 transition-all duration-1000 pointer-events-none ease-in-out">
-                    <Flame size="100%" strokeWidth={1} />
+                    {/* migrated from lucide: Flame */}
+                    <Fire size="100%" weight="thin" />
                 </div>
 
                 {/* Top Section: Number + Text (Centered like ExamReminder) */}
@@ -68,7 +69,7 @@ const StreakCard = () => {
                                         : 'bg-bg-primary text-text-tertiary'
                                 }`}>
                                     {hasStreak ? (
-                                        <Flame size={isToday ? 14 : 12} className="fill-current" />
+                                        <Fire size={isToday ? 14 : 12} weight="fill" />
                                     ) : isToday ? (
                                         <div className="size-1 md:size-1.5 bg-orange-500 rounded-full" />
                                     ) : (

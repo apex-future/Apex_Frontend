@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, Check, Zap, BrainCircuit, Target, TrendingUp, AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
+import { CaretLeft, CaretRight, CaretDown, Check, Lightning, Brain, Target, TrendUp, Warning, ArrowRight, Sparkle } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ── CUSTOM SELECT COMPONENT ──
@@ -31,7 +31,7 @@ const CustomSelect = ({ value, onChange, options }) => {
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOption.title}</span>
-        <ChevronDown size={14} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', color: 'rgb(var(--text-tertiary))' }} />
+        <CaretDown size={14} weight="bold" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', color: 'rgb(var(--text-tertiary))' }} />
       </button>
 
       <AnimatePresence>
@@ -62,7 +62,7 @@ const CustomSelect = ({ value, onChange, options }) => {
                 }}
               >
                 <div style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.title}</div>
-                {String(value) === String(opt.id) && <Check size={14} />}
+                {String(value) === String(opt.id) && <Check size={14} weight="bold" />}
               </button>
             ))}
           </motion.div>
@@ -438,7 +438,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
       {/* Day labels + week navigation */}
       <div style={{ display: 'flex', alignItems: 'center', marginTop: 6 }}>
         <button onClick={prevWeek} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgb(var(--text-tertiary))', flexShrink: 0, width: Y_LABEL_W, display: 'flex', justifyContent: 'center' }}>
-          <ChevronLeft size={14} />
+          <CaretLeft size={14} weight="bold" />
         </button>
         <div style={{ flex: 1, display: 'flex' }}>
           {displayWeeklyTime.map((d, i) => {
@@ -457,7 +457,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
           })}
         </div>
         <button onClick={nextWeek} disabled={isFutureWeek} style={{ background: 'none', border: 'none', cursor: isFutureWeek ? 'default' : 'pointer', padding: 2, color: isFutureWeek ? 'rgb(var(--text-tertiary) / 0.3)' : 'rgb(var(--text-tertiary))', flexShrink: 0, width: 20, display: 'flex', justifyContent: 'center' }}>
-          <ChevronRight size={14} />
+          <CaretRight size={14} weight="bold" />
         </button>
       </div>
 
@@ -490,7 +490,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
                     <span style={{ fontSize: 11, fontWeight: 700, flex: 1, textAlign: 'left' }}>{seg.name}</span>
                     <span style={{ fontSize: 9, color: 'rgb(var(--text-tertiary))', fontWeight: 500 }}>{seg.range}</span>
                     <span style={{ fontSize: 9, color: 'rgb(var(--text-tertiary))', fontWeight: 600, marginLeft: 4 }}>{items.length}</span>
-                    <ChevronDown size={12} style={{ color: 'rgb(var(--text-tertiary))', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+                    <CaretDown size={12} weight="bold" style={{ color: 'rgb(var(--text-tertiary))', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
                   </button>
                   {isOpen && (
                     <div style={{ paddingLeft: 20, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
