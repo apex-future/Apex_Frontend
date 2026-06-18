@@ -19,7 +19,12 @@ export default function Login() {
       localStorage.setItem('adminSecret', secret);
       navigate('/overview');
     } catch (err) {
-      setError('Invalid Admin Secret. Access Denied.');
+      console.error('Login error:', err);
+      if (err.message === 'Forbidden') {
+        setError('Invalid Admin Secret. Access Denied.');
+      } else {
+        setError(`Network Error: ${err.message}. It might be a CORS issue. Check the browser console.`);
+      }
     } finally {
       setLoading(false);
     }

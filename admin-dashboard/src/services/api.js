@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://web-production-e19b7.up.railway.app/api/admin';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://web-production-e19b7.up.railway.app/api/admin';
 
 export const getHeaders = () => {
   const secret = localStorage.getItem('adminSecret');
@@ -12,7 +12,9 @@ export const checkHealth = async (secret) => {
   const res = await fetch(`${API_BASE_URL}/health`, {
     headers: { 'X-Admin-Secret': secret }
   });
-  if (!res.ok) throw new Error('Forbidden');
+  if (res.status === 403) throw new Error('Forbidden');
+  if (res.status === 503) throw new Error('503: Server says Admin Endpoints are not configured');
+  if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
   return res.json();
 };
 
