@@ -152,6 +152,7 @@ const PDFReader = ({
   goToPage,
   highlights = [],
   locked = false,
+  swipeLocked = false,
   scrollOrientation = 'vertical',
   onPageChange,
 }) => {
@@ -516,7 +517,7 @@ const PDFReader = ({
 
   // Swipe handlers — only for horizontal mode
   const handleSwipedLeft = () => {
-    if (locked || isVertical) return;
+    if (swipeLocked || isVertical) return;
     // Don't navigate during text selection
     if (window.getSelection()?.toString().trim()) return;
     if (scale > 1) {
@@ -537,7 +538,7 @@ const PDFReader = ({
   };
 
   const handleSwipedRight = () => {
-    if (locked || isVertical) return;
+    if (swipeLocked || isVertical) return;
     // Don't navigate during text selection
     if (window.getSelection()?.toString().trim()) return;
     if (scale > 1) {

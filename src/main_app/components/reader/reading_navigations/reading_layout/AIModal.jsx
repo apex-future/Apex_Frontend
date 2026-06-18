@@ -255,7 +255,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
     <>
       <div className="fixed inset-0 bg-black/40 z-[190] md:hidden animate-in fade-in" onClick={() => setAiModal(false)} />
       <aside
-        className='flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-bg-subtle/90 dark:bg-bg-elevated/95 backdrop-blur-xl rounded-t-3xl h-[85vh] md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-l border-black/10 dark:border-white/10 md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-none animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden'
+        className='flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-white/15 dark:bg-white/5 backdrop-blur-xl rounded-t-3xl h-[85vh] md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-0 md:border-l md:border-white/20 dark:md:border-white/10 md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-sm animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden'
         onClick={(e) => e.stopPropagation()}
       >
         {messages.length === 0 && (
@@ -264,7 +264,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
           </div>
         )}
       {/* ── Header ── */}
-      <div className='flex items-center justify-between px-4 py-4 border-b border-black/10 dark:border-white/10 relative z-10 flex-shrink-0'>
+      <div className='flex items-center justify-between px-4 py-4 border-b border-white/20 dark:border-white/10 bg-white/10 dark:bg-white/5 backdrop-blur-xl relative z-10 flex-shrink-0'>
         <div className='flex items-center gap-2'>
           <button
             onClick={() => showHistory ? setShowHistory(false) : setAiModal(false)}

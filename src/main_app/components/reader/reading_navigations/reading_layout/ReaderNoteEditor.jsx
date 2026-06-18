@@ -261,11 +261,11 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[210] bg-bg-elevated lg:relative lg:inset-auto lg:w-[400px] lg:h-full lg:border-r lg:border-border-default lg:shrink-0 shadow-2xl lg:shadow-none animate-in slide-in-from-left duration-300 font-sans"
+      className="flex flex-col absolute inset-0 z-[210] bg-white/15 dark:bg-white/5 backdrop-blur-xl lg:relative lg:inset-auto lg:w-[400px] lg:h-full lg:border-0 lg:border-r lg:border-white/20 dark:lg:border-white/10 lg:shrink-0 shadow-2xl lg:shadow-sm animate-in slide-in-from-left duration-300 font-sans"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Top bar ── */}
-      <div className="sticky top-0 z-50 bg-bg-elevated/95 backdrop-blur-xl border-b border-border-default shrink-0">
+      <div className="sticky top-0 z-50 bg-white/10 dark:bg-white/5 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shrink-0">
         <div className="px-4 py-3 flex items-center justify-between gap-3">
           <button
             onClick={onClose}

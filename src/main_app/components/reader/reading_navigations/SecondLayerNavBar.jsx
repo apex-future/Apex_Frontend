@@ -31,7 +31,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
         {/* Left: Menu — opens LeftPanel */}
         <div className='left-side pt-1 sm:pt-0'>
           <button
-            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
             onClick={(e) => { e.stopPropagation(); setLeftPanel(prev => !prev); }}
           >
             <List size={18} weight="bold" />
@@ -39,9 +39,9 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
         </div>
 
         {/* Center: Tool buttons */}
-        <div className="middle-tool-bar flex items-center justify-center gap-1 bg-bg-elevated shadow-lg rounded-full border border-border-default p-1.5 px-3">
+        <div className="middle-tool-bar flex items-center justify-center gap-1 bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full p-1.5 px-3">
           <button
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-bg-subtle"
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-white/20 dark:hover:bg-white/10"
             onClick={(e) => { e.stopPropagation(); zoomOut?.(); }}
             title="Zoom Out"
           >
@@ -55,17 +55,17 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
           )}
 
           <button
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-bg-subtle"
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-white/20 dark:hover:bg-white/10"
             onClick={(e) => { e.stopPropagation(); zoomIn?.(); }}
             title="Zoom In"
           >
             <MagnifyingGlassPlus size={18} weight="bold" />
           </button>
 
-          <div className="w-px h-5 border-border-default mx-1" />
+          <div className="w-px h-5 bg-white/25 dark:bg-white/10 mx-1" />
 
           <button
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-bg-subtle"
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-white/20 dark:hover:bg-white/10"
             onClick={(e) => { e.stopPropagation(); rotate?.(); }}
             title="Rotate"
           >
@@ -76,14 +76,14 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
         {/* Right: Sparkles & Quiz — opens AI and Quiz panels */}
         <div className='flex flex-col sm:flex-row gap-2 right-side items-center'>
           <button
-            className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex shrink-0 items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
             onClick={(e) => { e.stopPropagation(); setAiModal(prev => !prev); }}
             title="AI Tools"
           >
             <Sparkle size={18} weight="fill" />
           </button>
           <button
-            className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex shrink-0 items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
             onClick={(e) => { e.stopPropagation(); setQuizModal(prev => !prev); }}
             title="Quiz Generation Settings"
           >

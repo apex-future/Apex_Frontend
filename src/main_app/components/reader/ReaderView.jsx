@@ -1162,7 +1162,7 @@ function ReaderView() {
                     <div className={`absolute top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center transition-all duration-500 ease-in-out ${navState !== 'none' ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
                         <button
                             onClick={(e) => { e.stopPropagation(); toggleNav(); }}
-                            className="group bg-bg-elevated hover:bg-bg-subtle backdrop-blur-md shadow-sm border border-border-default/50 px-3 py-1.5 rounded-b-xl transition-all duration-300 flex items-center gap-1.5"
+                            className="group bg-white/15 dark:bg-white/5 hover:bg-white/25 dark:hover:bg-white/10 backdrop-blur-xl shadow-sm border-0 border-t border-white/25 dark:border-white/10 px-3 py-1.5 rounded-b-xl transition-all duration-300 flex items-center gap-1.5"
                         >
                             <div className={`w-1 h-1 rounded-full transition-colors ${navState !== 'none' ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-accent-primary'}`} />
                             <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`}>Menu</span>
@@ -1233,7 +1233,8 @@ function ReaderView() {
                                 numPages={numPages}
                                 goToPage={goToPage}
                                 highlights={stableHighlights}
-                                locked={locked || selectionLock || isDictOpen || isReaderDictOpen}
+                                locked={locked}
+                                swipeLocked={selectionLock || isDictOpen || isReaderDictOpen}
                                 scrollOrientation={scrollOrientation}
                                 onPageChange={stableOnPageChange}
                             />

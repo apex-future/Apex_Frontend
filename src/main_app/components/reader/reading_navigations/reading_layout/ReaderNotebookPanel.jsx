@@ -350,11 +350,11 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[200] bg-bg-elevated md:relative md:inset-auto md:w-80 md:h-full md:border-r md:border-border-default md:shrink-0 font-sans shadow-2xl md:shadow-none animate-in slide-in-from-left duration-300"
+      className="flex flex-col absolute inset-0 z-[200] bg-white/15 dark:bg-white/5 backdrop-blur-xl md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:border-r md:border-white/20 dark:md:border-white/10 md:shrink-0 font-sans shadow-2xl md:shadow-sm animate-in slide-in-from-left duration-300"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 py-5 border-b border-border-default shrink-0">
+      <div className="flex items-center justify-between px-5 py-5 border-b border-white/20 dark:border-white/10 shrink-0">
         <h2 className="text-xs font-black text-text-tertiary tracking-[0.2em] uppercase">Notebook</h2>
         <button
           onClick={() => setNotebookPanel(false)}

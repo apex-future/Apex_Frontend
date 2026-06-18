@@ -171,11 +171,11 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
       {/* Mobile overlay */}
       <div className="fixed inset-0 bg-black/40 z-[190] md:hidden animate-in fade-in" onClick={onClose} />
       <aside
-        className="flex flex-col fixed inset-0 z-[200] bg-bg-subtle h-[100dvh] md:relative md:inset-auto md:w-96 md:h-full md:border-l border-border-default md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-none animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden"
+        className="flex flex-col fixed inset-0 z-[200] bg-white/15 dark:bg-white/5 backdrop-blur-xl h-[100dvh] md:relative md:inset-auto md:w-96 md:h-full md:border-0 md:border-t md:border-white/25 dark:md:border-white/10 md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-sm animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-border-default bg-bg-elevated relative z-10 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-white/20 dark:border-white/10 bg-white/10 dark:bg-white/5 backdrop-blur-xl relative z-10 flex-shrink-0">
           <div className="flex items-center gap-2">
             <button onClick={() => view === 'history' ? setView('config') : onClose()} className="p-2 hover:bg-bg-subtle rounded-lg transition-colors text-text-tertiary">
               {view === 'history' ? <ArrowLeft size={18} weight="bold" /> : <X size={18} weight="bold" />}
@@ -364,7 +364,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
 
         {/* ── Footer — Generate button (config view only) ── */}
         {view === 'config' && !generating && (
-          <div className="sticky bottom-0 z-50 bg-bg-elevated/90 backdrop-blur-xl p-4 border-t border-border-default/50 flex-shrink-0">
+          <div className="sticky bottom-0 z-50 bg-white/15 dark:bg-white/5 backdrop-blur-xl p-4 border-t border-white/25 dark:border-white/10 shadow-sm flex-shrink-0">
             <button onClick={handleGenerate} disabled={generating}
               className={`w-full py-4 rounded-2xl font-black text-lg transition-all shadow-xl flex items-center justify-center gap-2 ${generating ? 'bg-neutral-200 dark:bg-bg-subtle text-text-tertiary cursor-not-allowed shadow-none' : 'bg-accent-primary text-white hover:bg-accent-primary/90 hover:shadow-[0_10px_40px_rgba(139,92,246,0.3)]'}`}>
               <Sparkle size={20} weight="fill" />
