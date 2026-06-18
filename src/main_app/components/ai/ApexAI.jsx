@@ -90,13 +90,15 @@ function ApexAI() {
     };
 
     return (
-        <div className='flex h-screen max-h-screen bg-bg-subtle text-text-primary font-sans overflow-hidden'>
+        <div className='flex h-screen max-h-screen bg-bg-base text-text-primary font-sans overflow-hidden'>
 
             {/* ── Main Chat Area ── */}
-            <main className='flex-1 flex flex-col relative min-w-0 bg-bg-elevated overflow-hidden'>
-                <div className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-multiply dark:mix-blend-screen">
-                    <Orb hoverIntensity={0.5} rotateOnHover={true} hue={280} forceHoverState={true} />
-                </div>
+            <main className='flex-1 flex flex-col relative min-w-0 bg-bg-base dark:bg-bg-dark overflow-hidden'>
+                {messages.length === 0 && (
+                    <div className="absolute inset-0 z-0 opacity-50 pointer-events-none">
+                        <Orb hoverIntensity={0.5} rotateOnHover={true} hue={280} forceHoverState={true} backgroundColor='transparent' />
+                    </div>
+                )}
                 {/* Header */}
                 <header className='flex items-center justify-between px-6 py-3 relative z-10 flex-shrink-0 gap-3'>
                     <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex-shrink-0">
@@ -159,7 +161,7 @@ function ApexAI() {
                                         <button
                                             key={i}
                                             onClick={() => handleSend(suggestion.text)}
-                                            className='flex items-center gap-3 px-5 py-4 rounded-2xl bg-card-glass backdrop-blur-md border border-border-default text-sm text-text-secondary hover:border-accent-primary  hover:bg-accent-subtle/20 hover:shadow-md hover:shadow-accent-subtle transition-all duration-300 text-left group'
+                                            className='flex items-center gap-3 px-5 py-4 rounded-2xl bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm text-sm text-text-secondary hover:shadow-md hover:border-t-accent-primary transition-all duration-300 text-left group'
                                         >
                                             <span className='text-xl grayscale group-hover:grayscale-0 transition-all'>{suggestion.icon}</span>
                                             <span className='font-medium'>{suggestion.text}</span>
@@ -171,23 +173,13 @@ function ApexAI() {
                             messages.map((msg, index) => (
                                 <div
                                     key={msg.id || index}
-                                    className={`flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-500 w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                                    className={`flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-500 w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}
                                 >
-                                    {/* Header Info (Avatar + Name) - Aligned to side */}
-                                    <div className={`flex items-center gap-2 mb-1 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-sm border ${msg.role === 'user' ? 'bg-bg-elevated border-border-default text-text-secondary' : 'bg-accent-primary border-purple-500 text-bg-elevated'}`}>
-                                            {msg.role === 'user' ? <User size={16} /> : <Sparkle size={16} fill="currentColor" />}
-                                        </div>
-                                        <span className='text-[11px] font-bold text-text-tertiary uppercase tracking-widest'>
-                                            {msg.role === 'ai' ? 'Cleo' : 'You'}
-                                        </span>
-                                    </div>
-
-                                    {/* Message Bubble - Centered for AI, right-aligned for User */}
-                                    <div className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}>
-                                        {msg.role === 'ai' ? (
-                                            <div className="max-w-[95%] md:max-w-[85%] px-6 py-4 text-[15px] leading-relaxed bg-card-glass backdrop-blur-md text-text-primary rounded-3xl rounded-tl-none border border-border-default shadow-sm">
-                                                <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-base max-w-none prose-p:my-6 prose-headings:mt-8 prose-headings:mb-4 prose-li:my-3 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-8 prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-4 prose-th:border prose-th:border-border-default prose-td:p-4 prose-td:border prose-td:border-border-default'>
+                                    {msg.role === 'ai' ? (
+                                        /* ── AI message: no bubble, plain centered prose ── */
+                                        <div className="w-full flex flex-col items-center">
+                                            <div className="w-full max-w-[88%] md:max-w-[78%] px-2 py-2 text-[15px] leading-relaxed text-text-primary">
+                                                <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-base max-w-none prose-p:my-5 prose-headings:mt-8 prose-headings:mb-4 prose-li:my-3 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-8 prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-4 prose-th:border prose-th:border-border-default prose-td:p-4 prose-td:border prose-td:border-border-default'>
                                                     {msg.content ? (
                                                         <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
                                                     ) : (
@@ -195,35 +187,34 @@ function ApexAI() {
                                                     )}
                                                 </div>
                                             </div>
-                                        ) : (() => {
-                                            const { context: parsedContext, question } = extractContextAndQuestion(msg.content);
-                                            const context = msg.highlightContext || parsedContext;
-                                            return (
-                                                <div className="flex flex-col gap-2 w-full max-w-[95%] md:max-w-[85%] items-end">
-                                                    {context && (
-                                                        <div className="p-3.5 bg-bg-elevated border border-border-default border-l-4 border-l-accent-primary text-text-secondary rounded-2xl rounded-tr-sm text-xs leading-relaxed w-full italic font-sans shadow-sm">
-                                                            <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] mb-1.5 opacity-90 text-accent-primary">
-                                                                <Highlighter size={12} className="text-accent-primary" />
-                                                                Highlight Context
-                                                            </div>
-                                                            <p className="line-clamp-4 leading-relaxed">"{context}"</p>
+                                            <span className="text-[10px] text-text-tertiary mt-1 font-medium tracking-wide opacity-60 text-center">
+                                                {msg.id ? formatTime(msg.id) : '--:--'}
+                                            </span>
+                                        </div>
+                                    ) : (() => {
+                                        /* ── User message: pill bubble, right-aligned ── */
+                                        const { context: parsedContext, question } = extractContextAndQuestion(msg.content);
+                                        const context = msg.highlightContext || parsedContext;
+                                        return (
+                                            <div className="flex flex-col gap-2 w-full max-w-[88%] md:max-w-[68%] items-end">
+                                                {context && (
+                                                    <div className="p-3.5 bg-bg-elevated border border-border-default border-l-4 border-l-accent-primary text-text-secondary rounded-2xl rounded-tr-sm text-xs leading-relaxed w-full italic font-sans shadow-sm">
+                                                        <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] mb-1.5 opacity-90 text-accent-primary">
+                                                            <Highlighter size={12} className="text-accent-primary" />
+                                                            Highlight Context
                                                         </div>
-                                                    )}
-                                                    <div className="px-5 py-3.5 text-[15px] leading-relaxed bg-card-glass backdrop-blur-md border border-border-default text-text-primary rounded-3xl rounded-tr-sm shadow-sm text-left inline-block">
-                                                        <p className='whitespace-pre-wrap'>{question}</p>
+                                                        <p className="line-clamp-4 leading-relaxed">"{context}"</p>
                                                     </div>
+                                                )}
+                                                <div className="px-5 py-3.5 text-[15px] leading-relaxed bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm rounded-2xl text-text-primary text-left inline-block">
+                                                    <p className='whitespace-pre-wrap'>{question}</p>
                                                 </div>
-                                            );
-                                        })()}
-                                        {msg.role === 'ai' && (
-                                            <p className='text-[10px] text-text-tertiary font-medium tracking-tight mt-3 text-center opacity-60'>
-                                                This is AI and can make mistake double-check your answers
-                                            </p>
-                                        )}
-                                        <span className={`text-[10px] text-text-tertiary mt-2 font-medium tracking-wide px-2 ${msg.role === 'ai' ? 'text-center' : ''}`}>
-                                            {msg.id ? formatTime(msg.id) : '--:--'}
-                                        </span>
-                                    </div>
+                                                <span className="text-[10px] text-text-tertiary mt-1 font-medium tracking-wide opacity-60">
+                                                    {msg.id ? formatTime(msg.id) : '--:--'}
+                                                </span>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             ))
                         )}
@@ -257,7 +248,7 @@ function ApexAI() {
                         onSubmit={handleSubmit}
                         className={`max-w-4xl mx-auto flex flex-col gap-2 transition-all duration-300 ${isStreaming ? 'opacity-60' : 'opacity-100'}`}
                     >
-                        <div className={`relative flex items-end gap-3 bg-card-glass backdrop-blur-xl border-2 border-border-default p-2 pr-3 shadow-xl focus-within:border-accent-primary focus-within:ring-4 focus-within:ring-accent-primary/5 transition-all duration-300 ${inputValue.split('\n').length > 1 || (inputRef.current && inputRef.current.scrollHeight > 60) ? 'rounded-[28px]' : 'rounded-full'}`}>
+                        <div className={`relative flex items-end gap-3 bg-bg-subtle dark:bg-bg-dark-elevated border border-black/10 dark:border-white/10 p-2 pr-3 shadow-sm focus-within:border-accent-primary focus-within:ring-2 focus-within:ring-accent-primary/10 transition-all duration-300 ${inputValue.split('\n').length > 1 || (inputRef.current && inputRef.current.scrollHeight > 60) ? 'rounded-[28px]' : 'rounded-full'}`}>
                             <textarea
                                 ref={inputRef}
                                 value={inputValue}
@@ -300,10 +291,10 @@ function ApexAI() {
             {/* ── Sidebar (History) ── */}
             <aside className={`
                 ${sidebarOpen ? 'w-72 translate-x-0' : 'w-0 translate-x-full md:w-0'} 
-                flex-shrink-0 bg-bg-elevated border-l border-border-default flex flex-col transition-all duration-300 
+                flex-shrink-0 bg-bg-subtle/90 dark:bg-bg-elevated/95 backdrop-blur-xl border-l border-black/10 dark:border-white/10 flex flex-col transition-all duration-300 
                 fixed lg:relative right-0 top-0 h-full lg:h-auto z-50 lg:z-20 overflow-hidden shadow-2xl lg:shadow-none
             `}>
-                <div className='p-4 border-b border-border-default flex items-center justify-between relative'>
+                <div className='p-4 border-b border-black/10 dark:border-white/10 flex items-center justify-between relative'>
                     <button
                         onClick={() => setSidebarOpen(false)}
                         className='md:hidden p-2 hover:bg-bg-subtle rounded-lg text-text-tertiary'
@@ -335,9 +326,9 @@ function ApexAI() {
                                     <div
                                         key={item.id}
                                         onClick={() => handleSwitchChat(item)}
-                                        className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-slate-50 text-slate-600'}`}
+                                        className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary font-medium' : 'hover:bg-bg-elevated text-text-secondary'}`}
                                     >
-                                        <MessageSquare size={16} className={sessionId === item.id ? 'text-accent-primary' : 'text-slate-400'} />
+                                        <MessageSquare size={16} className={sessionId === item.id ? 'text-accent-primary' : 'text-text-tertiary'} />
                                         <span className='flex-1 truncate text-sm'>{getChatTitle(item)}</span>
                                         <button 
                                             onClick={(e) => {
@@ -356,8 +347,8 @@ function ApexAI() {
                     ))}
                 </div>
 
-                <div className='p-4 border-t border-border-default'>
-                    <div className='flex items-center gap-3 p-2 rounded-xl bg-bg-subtle text-text-secondary border border-border-default shadow-inner'>
+                <div className='p-4 border-t border-black/10 dark:border-white/10'>
+                    <div className='flex items-center gap-3 p-2 rounded-xl bg-bg-elevated/50 text-text-secondary border border-black/10 dark:border-white/10'>
                         <div className='w-8 h-8 rounded-lg bg-accent-subtle flex items-center justify-center text-accent-primary'>
                             <User size={16} />
                         </div>

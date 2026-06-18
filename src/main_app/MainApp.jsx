@@ -85,7 +85,7 @@ function MainApp({ onLogout }) {
 
   React.useEffect(() => {
     if (!window.__lenis) return
-    if (location.pathname.startsWith('/reader')) {
+    if (location.pathname.startsWith('/reader') || location.pathname === '/ai') {
       window.__lenis.stop()
     } else {
       window.__lenis.start()

@@ -255,14 +255,16 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
     <>
       <div className="fixed inset-0 bg-black/40 z-[190] md:hidden animate-in fade-in" onClick={() => setAiModal(false)} />
       <aside
-        className='flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-bg-subtle rounded-t-3xl h-[85vh] md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-l border-border-default md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-none animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden'
+        className='flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-bg-subtle/90 dark:bg-bg-elevated/95 backdrop-blur-xl rounded-t-3xl h-[85vh] md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-l border-black/10 dark:border-white/10 md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-none animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden'
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-multiply dark:mix-blend-screen">
-          <Orb hoverIntensity={0.5} rotateOnHover={true} hue={280} forceHoverState={true} />
-        </div>
+        {messages.length === 0 && (
+          <div className="absolute inset-0 z-0 opacity-50 pointer-events-none">
+            <Orb hoverIntensity={0.5} rotateOnHover={true} hue={280} forceHoverState={true} backgroundColor='transparent' />
+          </div>
+        )}
       {/* ── Header ── */}
-      <div className='flex items-center justify-between px-4 py-4 border-b border-border-default bg-bg-elevated relative z-10 flex-shrink-0'>
+      <div className='flex items-center justify-between px-4 py-4 border-b border-black/10 dark:border-white/10 relative z-10 flex-shrink-0'>
         <div className='flex items-center gap-2'>
           <button
             onClick={() => showHistory ? setShowHistory(false) : setAiModal(false)}
@@ -313,7 +315,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                             <div 
                                 key={item.id}
                                 onClick={() => handleSwitchChat(item)}
-                                className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary font-medium' : 'hover:bg-bg-elevated border border-transparent hover:border-border-default text-text-secondary shadow-sm'}`}
+                                className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary font-medium' : 'hover:bg-bg-elevated border border-transparent hover:border-black/10 dark:hover:border-white/10 text-text-secondary shadow-sm'}`}
                             >
                                 <div className={`p-1.5 rounded-lg ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary' : 'bg-bg-subtle text-text-tertiary group-hover:bg-bg-subtle/80 group-hover:text-text-secondary'}`}>
                                     <BookOpen size={14} />
@@ -355,7 +357,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
 
                 {/* Context Card */}
                 {resolvedExamName !== 'your exam' && (
-                    <div className='w-full max-w-[300px] bg-bg-elevated border border-border-default rounded-card p-4 mb-6 text-left shadow-sm'>
+                    <div className='w-full max-w-[300px] bg-bg-subtle dark:bg-bg-elevated border border-black/10 dark:border-white/10 rounded-card p-4 mb-6 text-left shadow-sm'>
                         <p className='text-[9px] font-black text-accent-primary uppercase tracking-[0.2em] mb-3'>Cleo knows</p>
                         <div className='flex flex-col gap-2'>
                             <div className='flex items-center gap-2 text-[11px] text-text-secondary'>
@@ -376,7 +378,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                             key={i}
                             onClick={() => handleSend(chip)}
                             disabled={chipsLoading}
-                            className='w-full px-4 py-3 rounded-card bg-bg-elevated border border-border-default text-xs text-text-secondary hover:border-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 transition-all duration-300 text-left font-bold shadow-sm hover:translate-x-1 group disabled:opacity-40 disabled:cursor-not-allowed'
+                            className='w-full px-4 py-3 rounded-card bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 text-xs text-text-secondary hover:border-t-accent-primary hover:text-accent-primary hover:bg-accent-subtle/50 transition-all duration-300 text-left font-bold shadow-sm hover:translate-x-1 group disabled:opacity-40 disabled:cursor-not-allowed'
                         >
                             <span className='group-hover:mr-2 transition-all opacity-0 group-hover:opacity-100 text-accent-primary'>→</span>
                             {chipsLoading ? <span className='animate-pulse'>Generating...</span> : chip}
@@ -388,57 +390,48 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
               messages.map((msg, index) => (
                 <div
                   key={msg.id || index}
-                  className={`flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-500 w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                  className={`flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-500 w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}
                 >
-                  <div className={`flex items-center gap-2 mb-1 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-sm border ${msg.role === 'user' ? 'bg-bg-elevated border-border-default text-text-secondary' : 'bg-accent-primary border-purple-500 text-bg-elevated'}`}>
-                      {msg.role === 'user' ? <User size={14} /> : <Sparkle size={14} fill="currentColor" />}
-                    </div>
-                    <span className='text-[10px] font-bold text-text-tertiary uppercase tracking-widest'>
-                      {msg.role === 'ai' ? 'Cleo' : 'You'}
-                    </span>
-                  </div>
-
-                  <div className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}>
-                      {msg.role === 'ai' ? (
-                        <div className="max-w-[95%] px-6 py-5 text-[15px] leading-relaxed bg-bg-elevated text-text-primary">
-                          <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-sm max-w-none prose-p:my-4 prose-headings:mt-6 prose-headings:mb-3 prose-li:my-2 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-6 prose-table:w-full prose-table:border-collapse prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-3 prose-th:border prose-th:border-border-default prose-td:p-3 prose-td:border prose-td:border-border-default'>
-                            {msg.content ? (
-                              <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
-                            ) : (
-                              isStreaming && <TypingIndicator />
-                            )}
-                          </div>
+                  {msg.role === 'ai' ? (
+                    /* ── AI message: borderless centered prose ── */
+                    <div className="w-full flex flex-col items-center">
+                      <div className="w-full max-w-[95%] px-1 py-1 text-[14px] leading-relaxed text-text-primary">
+                        <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-sm max-w-none prose-p:my-4 prose-headings:mt-6 prose-headings:mb-3 prose-li:my-2 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-6 prose-table:w-full prose-table:border-collapse prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-3 prose-th:border prose-th:border-border-default prose-td:p-3 prose-td:border prose-td:border-border-default'>
+                          {msg.content ? (
+                            <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
+                          ) : (
+                            isStreaming && <TypingIndicator />
+                          )}
                         </div>
-                      ) : (() => {
-                        const { context: parsedContext, question } = extractContextAndQuestion(msg.content);
-                        const context = msg.highlightContext || parsedContext;
-                        return (
-                          <div className="flex flex-col gap-2 w-full items-end">
-                            {context && (
-                              <div className="max-w-[95%] p-3.5 bg-bg-elevated border border-border-default border-l-4 border-l-accent-primary text-text-secondary rounded-2xl rounded-tr-sm text-xs leading-relaxed italic font-sans shadow-sm w-full">
-                                <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] mb-1.5 opacity-90 text-accent-primary">
-                                  <Highlighter size={12} className="text-accent-primary" />
-                                  Highlight Context
-                                </div>
-                                <p className="line-clamp-4 leading-relaxed">"{context}"</p>
-                              </div>
-                            )}
-                            <div className="max-w-[95%] px-5 py-3.5 text-[15px] leading-relaxed bg-bg-elevated border border-border-default text-text-primary rounded-3xl rounded-tr-sm shadow-sm text-left inline-block">
-                              <p className='whitespace-pre-wrap'>{question}</p>
+                      </div>
+                      <span className="text-[9px] text-text-tertiary mt-1 font-medium tracking-wide opacity-60 text-center">
+                        {msg.id ? formatTime(msg.id) : '--:--'}
+                      </span>
+                    </div>
+                  ) : (() => {
+                    /* ── User message: border-t card bubble ── */
+                    const { context: parsedContext, question } = extractContextAndQuestion(msg.content);
+                    const context = msg.highlightContext || parsedContext;
+                    return (
+                      <div className="flex flex-col gap-2 w-full max-w-[95%] items-end">
+                        {context && (
+                          <div className="max-w-[95%] p-3.5 bg-bg-subtle dark:bg-bg-elevated border border-black/10 dark:border-white/10 border-l-4 border-l-accent-primary text-text-secondary rounded-2xl rounded-tr-sm text-xs leading-relaxed italic font-sans shadow-sm w-full">
+                            <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] mb-1.5 opacity-90 text-accent-primary">
+                              <Highlighter size={12} className="text-accent-primary" />
+                              Highlight Context
                             </div>
+                            <p className="line-clamp-4 leading-relaxed">"{context}"</p>
                           </div>
-                        );
-                      })()}
-                    {msg.role === 'ai' && (
-                      <p className='text-[9px] text-text-tertiary font-bold tracking-tight uppercase text-center mt-3 opacity-60'>
-                        This is AI and can make mistake double-check your answers
-                      </p>
-                    )}
-                    <span className={`text-[9px] text-text-tertiary mt-2 font-medium tracking-wide px-2 ${msg.role === 'ai' ? 'text-center' : ''}`}>
-                      {msg.id ? formatTime(msg.id) : '--:--'}
-                    </span>
-                  </div>
+                        )}
+                        <div className="max-w-[95%] px-4 py-3 text-[14px] leading-relaxed bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm rounded-2xl text-text-primary text-left inline-block">
+                          <p className='whitespace-pre-wrap'>{question}</p>
+                        </div>
+                        <span className="text-[9px] text-text-tertiary mt-1 font-medium tracking-wide opacity-60">
+                          {msg.id ? formatTime(msg.id) : '--:--'}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))
             )}
@@ -465,7 +458,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
       {/* ── Selection Context Pin ── */}
       {!showHistory && activeContext && (
         <div className='px-4 pb-3 flex-shrink-0'>
-          <div className='bg-bg-elevated border-2 border-purple-50 rounded-card p-4 relative group shadow-xl shadow-accent-subtle/20 animate-in slide-in-from-bottom-2 duration-300'>
+          <div className='bg-bg-subtle dark:bg-bg-elevated border border-black/10 dark:border-white/10 rounded-card p-4 relative group shadow-xl shadow-accent-subtle/20 animate-in slide-in-from-bottom-2 duration-300'>
             <div className='flex items-center justify-between mb-3'>
               <span className='text-[10px] font-bold text-accent-primary uppercase tracking-[0.15em] flex items-center gap-2'>
                 <span className='w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse'></span>
@@ -497,7 +490,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
             }}
             className={`flex flex-col transition-all duration-300`}
           >
-            <div className={`flex flex-col bg-bg-subtle border-2 border-border-default rounded-2xl p-2 focus-within:border-accent-primary focus-within:bg-bg-elevated focus-within:shadow-lg focus-within:shadow-accent-subtle transition-all duration-300`}>
+            <div className={`flex flex-col bg-bg-subtle dark:bg-bg-dark-elevated border border-black/10 dark:border-white/10 rounded-2xl p-2 focus-within:border-accent-primary focus-within:shadow-md focus-within:shadow-accent-primary/10 transition-all duration-300`}>
               <textarea
                 ref={inputRef}
                 value={inputValue}
