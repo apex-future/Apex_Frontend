@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo } from 'react';
+﻿import React, { useState, useContext, useMemo } from 'react';
 import { BookContext } from '../../../context/BookContextInstance';
 import { Trash2, Edit3, Save, X, Plus, Calendar, FileText, Search, StickyNote, Quote } from 'lucide-react';
 
@@ -72,13 +72,13 @@ function DocumentNotes({ book }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search through your notes..."
-            className='w-full pl-11 pr-4 py-3.5 bg-bg-subtle/50 dark:bg-bg-dark-elevated/50 border border-border-default/50 dark:border-border-default-dark/50 rounded-[2rem] text-sm text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-4 focus:ring-accent-primary/10 transition-all'
+            className='w-full pl-11 pr-4 py-3.5 bg-bg-subtle/50 dark:bg-bg-dark-elevated/50 border-t border-black/10 dark:border-white/10/50 dark:border-border-default-dark/50 rounded-[2rem] text-sm text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-4 focus:ring-accent-primary/10 transition-all'
           />
         </div>
       </div>
 
       {/* New Note Form */}
-      <div className='bg-white/40 dark:bg-bg-dark-elevated/40 backdrop-blur-md border border-border-default/50 dark:border-border-default-dark/50 rounded-[2.5rem] p-6 sm:p-8 shadow-sm transition-all focus-within:shadow-xl focus-within:shadow-accent-primary/5 focus-within:border-accent-primary/20'>
+      <div className='bg-white/40 dark:bg-bg-dark-elevated/40 backdrop-blur-md border-t border-black/10 dark:border-white/10/50 dark:border-border-default-dark/50 rounded-[2.5rem] p-6 sm:p-8 shadow-sm transition-all focus-within:shadow-xl focus-within:shadow-accent-primary/5 focus-within:border-accent-primary/20'>
         <form onSubmit={handleAddNote} className='flex flex-col gap-5'>
           <div className='flex items-center gap-3'>
             <div className='p-2.5 rounded-2xl bg-accent-subtle dark:bg-accent-subtle-dark text-accent-primary dark:text-accent-primary-dark'>
@@ -92,7 +92,7 @@ function DocumentNotes({ book }) {
             value={newNoteText}
             onChange={(e) => setNewNoteText(e.target.value)}
             placeholder='Type your thoughts, summaries, or key takeaways...'
-            className='w-full min-h-[150px] bg-bg-subtle/30 dark:bg-bg-dark/30 border border-border-default/40 dark:border-border-default-dark/40 rounded-[2rem] p-6 text-text-primary dark:text-text-primary-dark text-[15px] resize-none focus:outline-none focus:bg-white/80 dark:focus:bg-bg-dark-elevated transition-all custom-scrollbar placeholder:text-text-placeholder dark:placeholder:text-text-placeholder-dark leading-premium-relaxed'
+            className='w-full min-h-[150px] bg-bg-subtle/30 dark:bg-bg-dark/30 border-t border-black/10 dark:border-white/10/40 dark:border-border-default-dark/40 rounded-[2rem] p-6 text-text-primary dark:text-text-primary-dark text-[15px] resize-none focus:outline-none focus:bg-white/80 dark:focus:bg-bg-dark-elevated transition-all custom-scrollbar placeholder:text-text-placeholder dark:placeholder:text-text-placeholder-dark leading-premium-relaxed'
           />
           <div className='flex justify-end'>
             <button
@@ -111,7 +111,7 @@ function DocumentNotes({ book }) {
       <div className='flex flex-col gap-6 pb-12'>
         {filteredNotes.length === 0 ? (
           <div className='flex flex-col items-center justify-center py-24 text-center animate-in fade-in duration-700'>
-            <div className='w-24 h-24 bg-bg-subtle/50 dark:bg-bg-dark-elevated/50 text-text-placeholder dark:text-text-placeholder-dark rounded-[3rem] flex items-center justify-center mb-6 border border-border-default/30 dark:border-border-default-dark/30 shadow-inner'>
+            <div className='w-24 h-24 bg-bg-subtle/50 dark:bg-bg-dark-elevated/50 text-text-placeholder dark:text-text-placeholder-dark rounded-[3rem] flex items-center justify-center mb-6 border-t border-black/10 dark:border-white/10/30 dark:border-border-default-dark/30 shadow-inner'>
               {searchQuery ? <Search size={40} strokeWidth={1} /> : <StickyNote size={40} strokeWidth={1} />}
             </div>
             <h3 className='text-xl font-black text-text-secondary dark:text-text-secondary-dark uppercase tracking-widest mb-3'>
@@ -125,7 +125,7 @@ function DocumentNotes({ book }) {
           filteredNotes.map((note) => (
             <div
               key={note.id}
-              className='bg-white/50 dark:bg-bg-dark-elevated/50 backdrop-blur-sm border border-border-default/40 dark:border-border-default-dark/40 rounded-[2.5rem] p-6 sm:p-10 hover:border-accent-primary/30 transition-all duration-500 group animate-in slide-in-from-bottom-4 relative overflow-hidden'
+              className='bg-white/50 dark:bg-bg-dark-elevated/50 backdrop-blur-sm border-t border-black/10 dark:border-white/10/40 dark:border-border-default-dark/40 rounded-[2.5rem] p-6 sm:p-10 hover:border-accent-primary/30 transition-all duration-500 group animate-in slide-in-from-bottom-4 relative overflow-hidden'
             >
               {note.type === 'highlight_note' && !editingId && (
                 <div className='absolute top-0 right-0 w-20 h-20 bg-accent-primary/5 dark:bg-accent-primary/10 rounded-bl-[4rem] flex items-start justify-end p-6 text-accent-primary/20 dark:text-accent-primary-dark/20 pointer-events-none'>

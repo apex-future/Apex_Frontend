@@ -156,12 +156,12 @@ function Settings({ onLogout }) {
 
                 {/* Appearance */}
                 <SettingSection title="Appearance" icon={<Moon size={18} />}>
-                    <div className="flex items-center justify-between p-4 border-b border-border-default last:border-0 hover:bg-bg-subtle/50 transition-colors">
+                    <div className="flex items-center justify-between p-4 border-b border-black/10 dark:border-white/10 last:border-0 hover:bg-bg-subtle/50 transition-colors">
                         <div>
                             <p className="text-sm font-medium text-text-primary">Theme</p>
                             <p className="text-xs text-text-tertiary mt-0.5">Select your app theme</p>
                         </div>
-                        <div className="flex bg-bg-elevated/50 p-1 rounded-xl border border-border-default shadow-inner">
+                        <div className="flex bg-bg-elevated/50 p-1 rounded-xl border border-black/10 dark:border-white/10 shadow-inner">
                             <button
                                 onClick={() => handleThemeChange('light')}
                                 className={`p-2 rounded-lg transition-all ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
@@ -206,7 +206,7 @@ function Settings({ onLogout }) {
                 {/* Reading Experience */}
                 <SettingSection title="Reading Experience" icon={<Sliders size={18} />}>
                   {/* Scroll Orientation */}
-                  <div className="p-4 border-b border-border-default">
+                  <div className="p-4 border-b border-black/10 dark:border-white/10">
                     <p className="text-sm font-medium text-text-primary mb-1">Scroll Direction</p>
                     <p className="text-xs text-text-tertiary mb-3">How you navigate between pages</p>
                     <div className="flex gap-2">
@@ -308,7 +308,7 @@ function Settings({ onLogout }) {
                 {/* Notifications */}
                 <SettingSection title="Notifications" icon={<Bell size={18} />}>
                     {/* Reading Reminders toggle + time picker */}
-                    <div className="border-b border-border-default last:border-0">
+                    <div className="border-b border-black/10 dark:border-white/10 last:border-0">
                       <div className="flex items-center justify-between p-4 hover:bg-bg-subtle/50 transition-colors">
                         <div className="pr-4">
                           <p className="text-sm font-medium text-text-primary">Reading Reminders</p>
@@ -342,7 +342,7 @@ function Settings({ onLogout }) {
                       {/* Time picker — only visible when reminders are enabled */}
                       {notifications.readingReminders && (
                         <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                          <div className="flex items-center justify-between bg-bg-elevated/50 rounded-xl px-4 py-3 border border-border-default">
+                          <div className="flex items-center justify-between bg-bg-elevated/50 rounded-xl px-4 py-3 border border-black/10 dark:border-white/10">
                             <div>
                               <p className="text-xs font-medium text-text-primary">Remind me at</p>
                               <p className="text-xs text-text-tertiary mt-0.5">Time is in your local timezone</p>
@@ -462,8 +462,8 @@ function Settings({ onLogout }) {
 
 // Subcomponents for consistency
 const SettingSection = ({ title, icon, children }) => (
-    <div className="bg-card-glass backdrop-blur-md border-2 border-border-default rounded-card overflow-hidden hover:border-text-tertiary/20 transition-all shadow-sm">
-        <div className="px-5 py-3 border-b border-border-default bg-bg-elevated/50 flex items-center gap-2">
+    <div className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-card overflow-hidden hover:border-text-tertiary/20 dark:hover:border-text-tertiary-dark/20 transition-all shadow-sm hover:shadow-md duration-300">
+        <div className="px-5 py-3 border-b border-black/10 dark:border-white/10 bg-transparent flex items-center gap-2">
             <div className="text-accent-primary p-1.5 bg-accent-primary/10 rounded-lg">
                 {icon}
             </div>
@@ -476,7 +476,7 @@ const SettingSection = ({ title, icon, children }) => (
 );
 
 const ToggleRow = ({ label, desc, checked, onChange }) => (
-    <div className="flex items-center justify-between p-4 border-b border-border-default last:border-0 hover:bg-bg-subtle/50 transition-colors">
+    <div className="flex items-center justify-between p-4 border-b border-black/10 dark:border-white/10 last:border-0 hover:bg-bg-subtle/50 transition-colors">
         <div className="pr-4">
             <p className="text-sm font-medium text-text-primary">{label}</p>
             {desc && <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">{desc}</p>}
@@ -491,7 +491,7 @@ const ToggleRow = ({ label, desc, checked, onChange }) => (
 const ActionRow = ({ label, desc, icon, onClick, danger = false }) => (
     <button
         onClick={onClick}
-        className="w-full flex items-center justify-between p-4 border-b border-border-default last:border-0 hover:bg-bg-subtle/50 transition-colors text-left"
+        className="w-full flex items-center justify-between p-4 border-b border-black/10 dark:border-white/10 last:border-0 hover:bg-bg-subtle/50 transition-colors text-left"
     >
         <div className="flex items-center gap-3">
             {icon && (

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { BarChart3, Clock, Target, TrendingUp, Trophy } from 'lucide-react';
 import useQuizStore from '../../../store/quizStore';
 
@@ -36,7 +36,7 @@ function DocumentAnalytics({ book }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Average Score */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-3xl relative overflow-hidden group">
+                <div className="p-6 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-3xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Trophy size={64} />
                     </div>
@@ -50,7 +50,7 @@ function DocumentAnalytics({ book }) {
                 </div>
 
                 {/* Total Quizzes */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-3xl relative overflow-hidden group">
+                <div className="p-6 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-3xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Target size={64} />
                     </div>
@@ -64,7 +64,7 @@ function DocumentAnalytics({ book }) {
                 </div>
 
                 {/* Total Questions */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-3xl relative overflow-hidden group">
+                <div className="p-6 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-3xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <BarChart3 size={64} />
                     </div>
@@ -78,7 +78,7 @@ function DocumentAnalytics({ book }) {
                 </div>
 
                 {/* Time Spent in Quizzes */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border border-border-default rounded-3xl relative overflow-hidden group">
+                <div className="p-6 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-3xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Clock size={64} />
                     </div>
@@ -96,3 +96,4 @@ function DocumentAnalytics({ book }) {
 }
 
 export default DocumentAnalytics;
+

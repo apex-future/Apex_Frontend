@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import FeaturePlaceholder from '../../layout/placeholders/FeaturePlaceholder';
 
 function DocumentsAdvanced() {
@@ -11,3 +11,4 @@ function DocumentsAdvanced() {
 }
 
 export default DocumentsAdvanced
+

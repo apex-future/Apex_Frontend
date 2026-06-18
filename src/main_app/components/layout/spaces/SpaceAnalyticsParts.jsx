@@ -179,7 +179,7 @@ export const CoverageCard = React.memo(({ enrichedBooks }) => {
   const sorts = [['most', 'Most read'], ['least', 'Least read'], ['recent', 'Recent'], ['az', 'A–Z']];
 
   return (
-    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, padding: 24 }}>
+    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-6 shadow-sm hover:shadow-md transition-all duration-300">
       {PARTS_STYLES}
       <div className="cc-header">
         <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))', letterSpacing: '-0.01em' }}>Course coverage</span>
@@ -369,7 +369,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
   const toggleSeg = (name) => setCollapsed(p => ({ ...p, [name]: !p[name] }));
 
   return (
-    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, padding: 24 }}>
+    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-6 shadow-sm hover:shadow-md transition-all duration-300">
       {PARTS_STYLES}
 
       {/* Header */}
@@ -568,7 +568,7 @@ export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends,
   };
 
   return (
-    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, padding: 24 }}>
+    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-6 shadow-sm hover:shadow-md transition-all duration-300">
       {PARTS_STYLES}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Quiz performance</span>
@@ -801,7 +801,7 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
   };
 
   return (
-    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card shadow-sm hover:shadow-md transition-all duration-300 flex flex-col">
       {/* Calendar */}
       <div style={{ padding: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -902,7 +902,7 @@ export const KnowledgeMasteryCard = React.memo(({ spaceBooks, masteryData }) => 
   };
 
   return (
-    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, overflow: 'hidden' }}>
+    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
       {PARTS_STYLES}
       <div style={{ padding: 24, borderBottom: '1px solid rgb(var(--border-default) / 0.4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

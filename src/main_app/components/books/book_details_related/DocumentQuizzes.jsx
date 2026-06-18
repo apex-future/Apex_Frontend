@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Target, Timer, Trophy, CheckCircle2, ChevronRight, BookOpen, Clock, Loader2, Sparkles, AlertCircle, X } from 'lucide-react';
 import useQuizStore from '../../../store/quizStore';
 import useSpaceStore from '../../../store/spaceStore';
@@ -117,7 +117,7 @@ function DocumentQuizzes({ book }) {
 
     if (viewState === 'loading') {
         return (
-            <div className="p-12 border border-border-default rounded-3xl flex flex-col items-center justify-center text-center">
+            <div className="p-12 border-t border-black/10 dark:border-white/10 rounded-3xl flex flex-col items-center justify-center text-center">
                 <Loader2 size={48} className="text-accent-primary animate-spin mb-6" />
                 <h3 className="text-xl font-bold text-text-primary mb-2 animate-pulse">Analyzing Book Content</h3>
                 <p className="text-text-tertiary">Generating personalized questions...</p>
@@ -132,7 +132,7 @@ function DocumentQuizzes({ book }) {
              : selectedAnswers[currentQuestionIdx] !== undefined;
 
         return (
-            <div className="w-full bg-white dark:bg-zinc-900 border border-border-default rounded-3xl overflow-hidden shadow-sm">
+            <div className="w-full bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-3xl overflow-hidden shadow-sm">
                 <div className="p-4 border-b border-border-default bg-neutral-50 dark:bg-zinc-800/50 flex justify-between items-center">
                     <span className="text-sm font-bold text-text-tertiary uppercase tracking-wider">Question {currentQuestionIdx + 1} of {activeQuiz.length}</span>
                     <div className="flex items-center gap-2 text-accent-primary font-bold bg-accent-primary/10 px-3 py-1 rounded-full text-sm">
@@ -203,7 +203,7 @@ function DocumentQuizzes({ book }) {
 
     if (viewState === 'result') {
         return (
-            <div className="p-8 md:p-12 border border-border-default bg-white dark:bg-zinc-900 rounded-3xl flex flex-col items-center text-center">
+            <div className="p-8 md:p-12 border-t border-black/10 dark:border-white/10 bg-white dark:bg-zinc-900 rounded-3xl flex flex-col items-center text-center">
                 <div className="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Trophy size={40} />
                 </div>
@@ -211,13 +211,13 @@ function DocumentQuizzes({ book }) {
                 <p className="text-text-tertiary font-medium mb-8">Great job finishing the review for {book.title}.</p>
                 
                 <div className="flex gap-8 justify-center mb-10 w-full max-w-sm">
-                    <div className="flex-1 p-4 bg-neutral-50 dark:bg-zinc-800 rounded-2xl border border-border-default">
+                    <div className="flex-1 p-4 bg-neutral-50 dark:bg-zinc-800 rounded-2xl border-t border-black/10 dark:border-white/10">
                         <span className="text-xs font-bold text-text-tertiary uppercase tracking-widest block mb-2">Score</span>
                         <span className={`text-4xl font-black ${quizResult.score >= 50 ? 'text-green-500' : 'text-red-500'}`}>
                             {quizResult.score}%
                         </span>
                     </div>
-                    <div className="flex-1 p-4 bg-neutral-50 dark:bg-zinc-800 rounded-2xl border border-border-default">
+                    <div className="flex-1 p-4 bg-neutral-50 dark:bg-zinc-800 rounded-2xl border-t border-black/10 dark:border-white/10">
                         <span className="text-xs font-bold text-text-tertiary uppercase tracking-widest block mb-2">Time Taken</span>
                         <span className="text-4xl font-black text-text-primary">
                             {formatTime(quizResult.timeTaken)}
@@ -264,7 +264,7 @@ function DocumentQuizzes({ book }) {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {attempts.map((attempt) => (
-                        <div key={attempt.id} className="p-5 bg-white dark:bg-zinc-900 border border-border-default rounded-2xl flex flex-col justify-between hover:shadow-md transition-shadow group">
+                        <div key={attempt.id} className="p-5 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-2xl flex flex-col justify-between hover:shadow-md transition-shadow group">
                             <div className="flex justify-between items-start mb-4">
                                 <div className={`px-3 py-1 rounded-lg text-xs font-bold ${attempt.score >= 50 ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
                                     {attempt.score}%
@@ -297,3 +297,4 @@ function DocumentQuizzes({ book }) {
 }
 
 export default DocumentQuizzes;
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+﻿import React, { useState, useEffect } from 'react'
 import EmptyState from '../../layout/placeholders/EmptyState';
 import { getAllChats } from '../../../utils/db';
 import { MessageSquare, Loader2 } from 'lucide-react';
@@ -68,7 +68,7 @@ function DocumentChatHistory({ book }) {
     return (
         <div className='grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500'>
             {chatHistory.map((chat) => (
-                <div key={chat.id} className='flex items-start gap-4 p-4 bg-white dark:bg-bg-dark-elevated border border-border-default dark:border-border-default-dark rounded-xl hover:shadow-sm transition-all cursor-pointer group'>
+                <div key={chat.id} className='flex items-start gap-4 p-4 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-xl hover:shadow-sm transition-all cursor-pointer group'>
                     <div className="p-2 bg-accent-subtle dark:bg-accent-subtle-dark rounded-lg text-accent-primary dark:text-accent-primary-dark group-hover:bg-accent-primary group-hover:text-white transition-colors flex-shrink-0">
                         <MessageSquare size={20} />
                     </div>

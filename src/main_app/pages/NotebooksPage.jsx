@@ -161,7 +161,7 @@ function NotebooksPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg-elevated w-full overflow-x-hidden">
+    <div className="min-h-screen w-full overflow-x-hidden">
       <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
           <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
@@ -206,19 +206,19 @@ function NotebooksPage() {
               placeholder="Search notebooks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-bg-subtle border border-border-default rounded-2xl py-3 pl-11 pr-4 text-text-primary focus:outline-none focus:border-accent-primary transition-all"
+              className="w-full bg-bg-subtle dark:bg-bg-elevated border border-black/10 dark:border-white/10 rounded-2xl py-3 pl-11 pr-4 text-text-primary focus:outline-none focus:border-accent-primary transition-all"
             />
           </div>
         </div>
 
         {notebooksData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-border-default rounded-card">
+          <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-black/10 dark:border-white/10 rounded-card">
             <BookOpen size={32} className="text-text-placeholder mb-4" />
             <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No notebooks yet</h3>
             <button onClick={() => navigate('/')} className="mt-4 bg-accent-primary text-white px-8 py-3 rounded-xl font-bold">Go to Library</button>
           </div>
         ) : filteredNotebooks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-border-default rounded-card">
+          <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-black/10 dark:border-white/10 rounded-card">
             {activeFilter === 'starred' ? (
               <>
                 <Star size={32} className="text-text-placeholder mb-4" />
@@ -243,7 +243,7 @@ function NotebooksPage() {
             {filteredNotebooks.map((nb) => (
               <div
                 key={nb.bookId}
-                className="flex flex-col bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-[32px] overflow-hidden hover:-translate-y-2 transition-all duration-500 group cursor-pointer aspect-[3/4.2] shadow-sm hover:shadow-md"
+                className="flex flex-col bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-card overflow-hidden hover:-translate-y-2 transition-all duration-300 group cursor-pointer aspect-[3/4.2] shadow-sm hover:shadow-md"
                 onClick={() => navigate(`/notes/${nb.bookId}`)}
               >
                 {/* Book Header Section */}
@@ -277,7 +277,7 @@ function NotebooksPage() {
                         return (
                           <div
                             key={note.local_id}
-                            className={`absolute inset-x-0 h-32 bg-bg-elevated border border-border-default rounded-2xl p-4 shadow-xl transition-all duration-500 ease-out flex flex-col gap-2 ${offsets[idx]} ${hoverOffsets[idx]}`}
+                            className={`absolute inset-x-0 h-32 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-2xl p-4 shadow-sm transition-all duration-300 ease-out flex flex-col gap-2 ${offsets[idx]} ${hoverOffsets[idx]}`}
                           >
                             <h5 className="text-xs font-bold text-text-primary truncate">{note.title || 'Untitled'}</h5>
                             <p className="text-[10px] text-text-secondary line-clamp-2 leading-relaxed">
@@ -340,14 +340,14 @@ function NotebooksPage() {
 
       {renameModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setRenameModal(null)}>
-          <div className="bg-bg-elevated rounded-[32px] p-8 w-full max-w-sm shadow-2xl border border-border-default" onClick={e => e.stopPropagation()}>
+          <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-8 w-full max-w-sm shadow-xl border-t border-black/10 dark:border-white/10" onClick={e => e.stopPropagation()}>
             <h3 className="font-display text-xl font-bold text-text-primary">Rename Notebook</h3>
             <p className="text-sm text-text-secondary mt-1.5">Give this notebook a new name — anything you like.</p>
             <input
               type="text"
               value={renameValue}
               onChange={e => setRenameValue(e.target.value)}
-              className="w-full mt-6 bg-bg-subtle border border-border-default rounded-2xl py-4 px-6 text-text-primary focus:outline-none focus:border-accent-primary"
+              className="w-full mt-6 bg-bg-subtle dark:bg-bg-elevated border border-black/10 dark:border-white/10 rounded-2xl py-4 px-6 text-text-primary focus:outline-none focus:border-accent-primary transition-all"
               autoFocus
             />
             <div className="flex justify-end gap-3 mt-8">

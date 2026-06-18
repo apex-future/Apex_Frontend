@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+﻿import React, { useMemo, useState, useEffect } from 'react';
 import { KnowledgeMasteryCard, CoverageCard, CalendarActivityCard, QuizCard, PARTS_STYLES } from '../layout/spaces/SpaceAnalyticsParts';
 import { BookContext } from '../../context/BookContextInstance';
 import apiClient from '../../services/apiClient';
@@ -29,7 +29,7 @@ function GlobalAnalytics() {
         console.log('[GlobalAnalytics] useEffect running, bookIds key:', analyticsBookIdsKey || '(none)');
 
         if (!analyticsBookIdsKey) {
-            console.log('[GlobalAnalytics] No synced books — skipping fetch');
+            console.log('[GlobalAnalytics] No synced books â€” skipping fetch');
             setAnalyticsData(null);
             setLoading(false);
             return;
@@ -210,11 +210,11 @@ function GlobalAnalytics() {
     }
 
     return (
-        <div className="w-full min-h-screen pb-20 bg-bg-elevated">
+        <div className="w-full min-h-screen pb-20">
             {PARTS_STYLES}
             <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
                 <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
-                    <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    <div className="px-1 py-1 rounded-full bg-bg-subtle dark:bg-bg-elevated backdrop-blur-xl border border-black/5 dark:border-white/5 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         <button 
                             onClick={() => navigate(-1)}
                             className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
@@ -223,11 +223,11 @@ function GlobalAnalytics() {
                         </button>
                     </div>
 
-                    <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex-1 text-center max-w-md">
+                    <div className="px-5 py-2.5 rounded-full bg-bg-subtle dark:bg-bg-elevated backdrop-blur-xl border border-black/5 dark:border-white/5 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex-1 text-center max-w-md">
                         <h3 className="text-base md:text-lg font-bold font-display text-text-primary">Global Analytics</h3>
                     </div>
 
-                    <div className="px-3 py-2 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    <div className="px-3 py-2 rounded-full bg-bg-subtle dark:bg-bg-elevated backdrop-blur-xl border border-black/5 dark:border-white/5 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         <p className="text-[10px] text-accent-primary font-bold uppercase tracking-wider">Live Dashboard</p>
                     </div>
                 </div>
@@ -262,3 +262,4 @@ function GlobalAnalytics() {
 }
 
 export default GlobalAnalytics;
+

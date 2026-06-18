@@ -49,7 +49,7 @@ function Profile() {
   }, [user]);
 
   return (
-    <div className='w-full h-screen flex flex-col bg-bg-primary overflow-hidden'>
+    <div className='w-full min-h-screen flex flex-col bg-bg-primary'>
       {/* Header Section - Glassmorphic Purple Gradient */}
       <div className="top-wrapper relative flex-shrink-0 overflow-hidden bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] rounded-b-[2.5rem] pb-6">
         {/* Glassmorphic overlay */}
@@ -107,7 +107,7 @@ function Profile() {
       </div>
 
       {/* Main Content - SCROLLABLE AREA */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-28 space-y-8 scroll-smooth scrollbar-hide">
+      <div className="flex-1 px-4 py-6 pb-28 space-y-8">
         
         {/* Stats Grid - FLUID AND COMPACT */}
         <section>
@@ -185,7 +185,7 @@ function Profile() {
 
 // Stat Card Component with PREMIUM BACKGROUND-ICON DESIGN
 const StatCard = ({ icon, label, value }) => (
-  <div className="relative overflow-hidden bg-white/70 dark:bg-zinc-900/40 backdrop-blur-md border border-border-default/60 dark:border-white/10 rounded-card p-5 sm:p-6 hover:scale-[1.02] hover:border-accent-primary/50 transition-all duration-300 shadow-sm hover:shadow-sm group flex flex-col justify-end min-h-[110px]">
+  <div className="relative overflow-hidden bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-card p-5 sm:p-6 hover:border-accent-primary/50 transition-all duration-300 shadow-sm hover:shadow-md group flex flex-col justify-end min-h-[110px]">
     {/* Background Icon - LEFT POSITIONED, ROTATED */}
     <div className="absolute -left-2 -top-2 text-text-primary/10 dark:text-white/10 transition-all duration-500 transform rotate-12 group-hover:rotate-0 group-hover:scale-110 group-hover:text-accent-primary/20">
       {React.cloneElement(icon, { size: 80 })}
@@ -209,7 +209,7 @@ const ActivityRow = ({ label, value }) => (
 
 // Book Row Component with Progress Bar
 const BookRow = ({ book }) => (
-  <div className="flex items-center gap-3 p-3 hover:bg-white/50 rounded-xl transition-all cursor-pointer">
+  <div className="flex items-center gap-3 p-3 hover:bg-bg-subtle/50 rounded-xl transition-all cursor-pointer">
     <div className="w-10 h-14 bg-border-default rounded-lg overflow-hidden flex-shrink-0">
       <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
     </div>

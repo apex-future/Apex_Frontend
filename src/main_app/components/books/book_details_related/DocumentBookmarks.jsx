@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import EmptyState from '../../layout/placeholders/EmptyState';
 import { Bookmark } from 'lucide-react';
 
@@ -38,7 +38,7 @@ function DocumentBookmarks({ book }) {
                 ) : (
                     <div className='grid grid-cols-1 gap-3'>
                         {bookmarks.map((bookmark, index) => (
-                            <div key={index} className='flex items-start gap-4 p-4 bg-white dark:bg-bg-dark-elevated border border-border-default dark:border-border-default-dark rounded-xl hover:shadow-md transition-all cursor-pointer group'>
+                            <div key={index} className='flex items-start gap-4 p-4 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-xl hover:shadow-md transition-all cursor-pointer group'>
                                 <div className="p-2 bg-accent-subtle dark:bg-accent-subtle-dark rounded-lg text-accent-primary dark:text-accent-primary-dark group-hover:bg-accent-primary group-hover:text-white transition-colors">
                                     <Bookmark size={20} />
                                 </div>
