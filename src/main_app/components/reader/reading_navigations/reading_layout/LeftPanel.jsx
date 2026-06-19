@@ -110,11 +110,11 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[200] bg-white/15 dark:bg-white/5 backdrop-blur-xl md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:border-r md:border-white/20 dark:md:border-white/10 md:shrink-0 font-sans shadow-2xl md:shadow-sm"
+      className="flex flex-col absolute inset-0 z-[200] bg-white shadow-sm hover:shadow-md transition-shadow md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 py-5 border-b border-white/20 dark:border-white/10 shrink-0">
+      <div className="flex items-center justify-between px-5 py-5 shrink-0">
         {activeSection ? (
           /* Back to main nav when inside a section */
           <button
@@ -155,9 +155,9 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
                 <button
                   key={id}
                   onClick={() => handleNavClick(id)}
-                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-text-secondary bg-bg-subtle/50 hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full border border-transparent hover:border-accent-primary/10 group"
+                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-text-secondary bg-white hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full shadow-sm group"
                 >
-                  <div className="w-10 h-10 rounded-full bg-bg-elevated shadow-sm flex items-center justify-center text-text-tertiary group-hover:text-accent-primary transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-text-tertiary group-hover:text-accent-primary transition-colors">
                     <ItemIcon size={20} weight="bold" />
                   </div>
                   <span className="flex-1 tracking-tight">{label}</span>

@@ -107,10 +107,10 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
   // ─── TAKING PHASE ───
   if (phase === 'taking') {
     return (
-      <div className="fixed inset-0 z-[300] bg-bg-primary text-text-primary font-sans flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-[300] bg-white text-text-primary font-sans flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border-default bg-bg-elevated flex-shrink-0">
-          <button onClick={() => setShowAbandonDialog(true)} className="p-2 hover:bg-bg-subtle rounded-lg transition-colors text-text-tertiary">
+        <div className="flex items-center justify-between px-4 py-3 bg-white shadow-sm flex-shrink-0 z-10">
+          <button onClick={() => setShowAbandonDialog(true)} className="p-2 hover:bg-gray-50 rounded-lg transition-colors text-text-tertiary">
             <X size={20} weight="bold" />
           </button>
           <div className="flex items-center gap-3 text-center">
@@ -118,7 +118,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
               Question {currentQuestionIndex + 1} of {totalQuestions}
             </span>
             {timeRemaining != null && (
-              <span className={`text-xs font-black px-2.5 py-1 rounded-full flex items-center gap-1 ${timeRemaining <= 60 ? 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400 animate-pulse' : 'bg-bg-subtle text-text-secondary'}`}>
+              <span className={`text-xs font-black px-2.5 py-1 rounded-full flex items-center gap-1 ${timeRemaining <= 60 ? 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400 animate-pulse' : 'bg-white shadow-sm text-text-secondary'}`}>
                 <Clock size={12} weight="bold" />
                 {formatTime(timeRemaining)}
               </span>
@@ -130,7 +130,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 bg-bg-subtle flex-shrink-0">
+        <div className="h-1 bg-gray-50 shadow-inner flex-shrink-0">
           <div className="h-full bg-accent-primary transition-all duration-500 ease-out" style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }} />
         </div>
 
@@ -150,8 +150,8 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
                   const isSelected = answers[currentQuestion.id] === letter;
                   return (
                     <button key={letter} onClick={() => setAnswer(currentQuestion.id, letter)}
-                      className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 flex items-start gap-4 group ${isSelected ? 'border-accent-primary bg-accent-primary/10 shadow-lg shadow-accent-primary/10' : 'border-border-default hover:border-accent-primary/40 hover:bg-bg-elevated'}`}>
-                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black flex-shrink-0 transition-all ${isSelected ? 'bg-accent-primary text-white' : 'bg-bg-subtle text-text-tertiary group-hover:bg-accent-primary/10 group-hover:text-accent-primary'}`}>
+                      className={`w-full text-left px-5 py-4 rounded-2xl transition-all duration-200 flex items-start gap-4 group ${isSelected ? 'ring-2 ring-accent-primary bg-accent-primary/5 shadow-lg shadow-accent-primary/10' : 'bg-white shadow-sm hover:shadow-md'}`}>
+                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black flex-shrink-0 transition-all ${isSelected ? 'bg-accent-primary text-white' : 'bg-gray-50 text-text-tertiary group-hover:bg-accent-primary/10 group-hover:text-accent-primary'}`}>
                         {letter}
                       </span>
                       <span className={`text-sm font-medium leading-relaxed pt-1 ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>{text}</span>
@@ -165,16 +165,16 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
                 value={answers[currentQuestion.id] || ''}
                 onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
                 placeholder="Write your answer here..."
-                className="w-full min-h-[200px] bg-bg-elevated border-2 border-border-default rounded-2xl p-5 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent-primary focus:shadow-lg focus:shadow-accent-primary/10 transition-all resize-y leading-relaxed"
+                className="w-full min-h-[200px] bg-white shadow-inner rounded-2xl p-5 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:shadow-lg focus:shadow-accent-primary/10 transition-all resize-y leading-relaxed"
               />
             )}
           </div>
         </div>
 
         {/* Footer navigation */}
-        <div className="flex items-center justify-between px-4 py-4 border-t border-border-default bg-bg-elevated flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-4 bg-white shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)] z-10 flex-shrink-0">
           <button onClick={goPrev} disabled={currentQuestionIndex === 0}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-text-secondary hover:bg-bg-subtle transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-text-secondary hover:bg-gray-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
             <CaretLeft size={16} weight="bold" /> Previous
           </button>
 
@@ -192,7 +192,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
             </div>
           ) : (
             <button onClick={goNext}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-text-secondary hover:bg-bg-subtle transition-all">
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-text-secondary hover:bg-gray-50 transition-all">
               Next <CaretRight size={16} weight="bold" />
             </button>
           )}
@@ -201,7 +201,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
         {/* Abandon confirmation dialog */}
         {showAbandonDialog && (
           <div className="fixed inset-0 z-[310] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-bg-elevated rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-border-default animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-200">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-500/15 flex items-center justify-center">
                   <Warning size={20} weight="fill" className="text-red-500" />
@@ -210,7 +210,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
               </div>
               <p className="text-sm text-text-secondary mb-6 leading-relaxed">Are you sure? Your progress will be lost.</p>
               <div className="flex gap-3">
-                <button onClick={() => setShowAbandonDialog(false)} className="flex-1 py-3 rounded-xl border-2 border-border-default text-sm font-bold text-text-secondary hover:bg-bg-subtle transition-all">Stay</button>
+                <button onClick={() => setShowAbandonDialog(false)} className="flex-1 py-3 rounded-xl bg-white shadow-sm text-sm font-bold text-text-secondary hover:bg-gray-50 transition-all">Stay</button>
                 <button onClick={handleAbandon} className="flex-1 py-3 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-500/20">Leave</button>
               </div>
             </div>
@@ -223,7 +223,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
   // ─── SUBMITTING PHASE ───
   if (phase === 'submitting') {
     return (
-      <div className="fixed inset-0 z-[300] bg-bg-primary flex items-center justify-center font-sans">
+      <div className="fixed inset-0 z-[300] bg-white flex items-center justify-center font-sans">
         <div className="text-center animate-in fade-in zoom-in duration-500">
           <div className="w-20 h-20 rounded-full bg-accent-primary/10 flex items-center justify-center mx-auto mb-6">
             <Spinner size={36} weight="bold" className="text-accent-primary animate-spin" />
@@ -243,16 +243,16 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
     const scoredPayload = filledPayload || questionsPayload;
 
     return (
-      <div className="fixed inset-0 z-[300] bg-bg-primary text-text-primary font-sans flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-[300] bg-white text-text-primary font-sans flex flex-col overflow-hidden">
         {/* Results header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border-default bg-bg-elevated flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 bg-white shadow-sm z-10 flex-shrink-0">
           <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-tertiary">Quiz Results</span>
-          <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-bold text-text-secondary hover:bg-bg-subtle transition-all">Close</button>
+          <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-bold text-text-secondary hover:bg-gray-50 transition-all">Close</button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {/* Score hero */}
-          <div className="flex flex-col items-center py-10 px-6 bg-bg-elevated border-b border-border-default">
+          <div className="flex flex-col items-center py-10 px-6 bg-white shadow-sm">
             <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 ${score_percentage >= 70 ? 'bg-green-100 dark:bg-green-500/15' : score_percentage >= 40 ? 'bg-amber-100 dark:bg-amber-500/15' : 'bg-red-100 dark:bg-red-500/15'}`}>
               <Trophy size={40} weight="fill" className={`${score_percentage >= 70 ? 'text-green-500' : score_percentage >= 40 ? 'text-amber-500' : 'text-red-500'}`} />
             </div>
@@ -283,7 +283,7 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
               const essayScore = q.score;
 
               return (
-                <div key={q.id} className="bg-bg-elevated border border-border-default rounded-card p-5 space-y-3">
+                <div key={q.id} className="bg-white rounded-card p-5 space-y-3 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <span className="text-[10px] font-black text-accent-primary uppercase tracking-wider flex-shrink-0">Q{q.id}</span>
                     {isMCQ ? (
@@ -311,12 +311,12 @@ function QuizView({ quizSession, bookId, supabaseBookId, userId, onClose }) {
                         </div>
                       )}
                       {q.explanation && (
-                        <p className="text-xs text-text-tertiary mt-2 pl-3 border-l-2 border-border-default leading-relaxed">{q.explanation}</p>
+                        <p className="text-xs text-text-tertiary mt-2 pl-3 border-l-2 border-gray-100 leading-relaxed">{q.explanation}</p>
                       )}
                     </div>
                   ) : (
                     <div className="space-y-3 text-sm">
-                      <div className="px-3 py-2 rounded-xl bg-bg-subtle">
+                      <div className="px-3 py-2 rounded-xl bg-gray-50">
                         <span className="text-[10px] font-black uppercase tracking-wider text-text-tertiary block mb-1">Your Answer</span>
                         <p className="text-text-primary font-medium leading-relaxed">{userAns || 'No answer provided'}</p>
                       </div>

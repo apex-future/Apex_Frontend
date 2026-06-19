@@ -23,11 +23,11 @@ function PageSettings({ setPageSettings, readerControls }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[200] bg-white/15 dark:bg-white/5 backdrop-blur-xl md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:border-r md:border-white/20 dark:md:border-white/10 md:shrink-0 font-sans shadow-2xl md:shadow-sm animate-in slide-in-from-left duration-300"
+      className="flex flex-col absolute inset-0 z-[200] bg-white md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-left duration-300"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 py-5 border-b border-white/20 dark:border-white/10 shrink-0">
+      <div className="flex items-center justify-between px-5 py-5 shrink-0">
         {activeSection ? (
           <button
             onClick={() => setActiveSection(null)}
@@ -68,7 +68,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                     checked={pageAnimations}
                     onChange={(e) => updateSetting('pageAnimations', e.target.checked)}
                   />
-                  <div className="w-9 h-5 bg-border-default rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent-primary" />
+                  <div className="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent-primary" />
                 </label>
               </div>
 
@@ -77,7 +77,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                 <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
                   <button
                     onClick={() => updateSetting('scrollAnimation', 'slide')}
-                    className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 transition-all group ${
+                    className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all group ${
                       scrollAnimation === 'slide'
                         ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
                         : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
@@ -93,7 +93,7 @@ function PageSettings({ setPageSettings, readerControls }) {
 
                   <button
                     onClick={() => updateSetting('scrollAnimation', 'fade')}
-                    className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 transition-all group ${
+                    className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all group ${
                       scrollAnimation === 'fade'
                         ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
                         : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
@@ -117,7 +117,7 @@ function PageSettings({ setPageSettings, readerControls }) {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handleOrientationChange('vertical')}
-                  className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all group ${
+                  className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border transition-all group ${
                     scrollOrientation === 'vertical'
                       ? 'border-accent-primary bg-accent-primary/5 text-accent-primary shadow-sm'
                       : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20 hover:bg-bg-subtle'
@@ -133,7 +133,7 @@ function PageSettings({ setPageSettings, readerControls }) {
 
                 <button
                   onClick={() => handleOrientationChange('horizontal')}
-                  className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all group ${
+                  className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border transition-all group ${
                     scrollOrientation === 'horizontal'
                       ? 'border-accent-primary bg-accent-primary/5 text-accent-primary shadow-sm'
                       : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20 hover:bg-bg-subtle'

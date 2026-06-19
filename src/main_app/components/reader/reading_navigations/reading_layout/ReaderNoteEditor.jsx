@@ -261,11 +261,11 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[210] bg-white/15 dark:bg-white/5 backdrop-blur-xl lg:relative lg:inset-auto lg:w-[400px] lg:h-full lg:border-0 lg:border-r lg:border-white/20 dark:lg:border-white/10 lg:shrink-0 shadow-2xl lg:shadow-sm animate-in slide-in-from-left duration-300 font-sans"
+      className="flex flex-col absolute inset-0 z-[210] bg-white lg:relative lg:inset-auto lg:w-[400px] lg:h-full lg:border-0 lg:shrink-0 shadow-2xl lg:shadow-sm animate-in slide-in-from-left duration-300 font-sans"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Top bar ── */}
-      <div className="sticky top-0 z-50 bg-white/10 dark:bg-white/5 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shrink-0">
+      <div className="sticky top-0 z-50 bg-white shrink-0">
         <div className="px-4 py-3 flex items-center justify-between gap-3">
           <button
             onClick={onClose}
@@ -330,11 +330,11 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
         </div>
 
         {/* Separator */}
-        <div className="border-t border-border-default mb-6" />
+        <div className="mb-6" />
 
         {/* Sticky Floating Toolbar */}
         <div className="sticky top-0 z-30 mb-4 -mx-1">
-          <div className="bg-bg-elevated/95 backdrop-blur-xl border border-border-default rounded-2xl shadow-lg px-2 py-1.5 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
+          <div className="bg-white rounded-2xl shadow-lg px-2 py-1.5 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
             <HeadingDropdown editor={editor} />
             <ToolbarDivider />
             <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold"><TextB size={13} weight="bold" /></ToolbarBtn>

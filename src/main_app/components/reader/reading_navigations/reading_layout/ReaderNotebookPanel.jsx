@@ -64,7 +64,7 @@ function DeleteConfirmModal({ noteTitle, onConfirm, onCancel }) {
       onClick={onCancel}
     >
       <div
-        className="bg-bg-elevated border border-border-default rounded-[24px] p-6 w-full max-w-xs shadow-2xl flex flex-col gap-4"
+        className="bg-white rounded-[24px] p-6 w-full max-w-xs shadow-2xl flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-10 rounded-2xl bg-red-500/10 flex items-center justify-center">
@@ -78,7 +78,7 @@ function DeleteConfirmModal({ noteTitle, onConfirm, onCancel }) {
           </p>
         </div>
         <div className="flex gap-2 pt-1">
-          <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-text-secondary bg-bg-subtle hover:bg-border-default transition-all">
+          <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-text-secondary bg-white shadow-sm hover:bg-gray-50 transition-all">
             Cancel
           </button>
           <button onClick={onConfirm} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 active:scale-95 transition-all shadow-lg shadow-red-500/20">
@@ -116,7 +116,7 @@ function NotesSection({ bookId, onAddNote }) {
         </div>
       ) : notes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-          <div className="w-14 h-14 rounded-3xl bg-bg-subtle flex items-center justify-center mb-4 text-text-placeholder border border-border-default/40">
+          <div className="w-14 h-14 rounded-3xl bg-white shadow-sm flex items-center justify-center mb-4 text-text-placeholder">
             <FileText size={26} weight="bold" />
           </div>
           <h4 className="text-sm font-bold text-text-secondary">No notes yet</h4>
@@ -133,7 +133,7 @@ function NotesSection({ bookId, onAddNote }) {
             return (
               <div
                 key={note.local_id}
-                className="bg-bg-subtle border border-border-default rounded-2xl overflow-hidden hover:border-accent-primary/30 hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer flex flex-col"
+                className="bg-white rounded-2xl overflow-hidden hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer flex flex-col shadow-sm hover:shadow-md"
                 onClick={() => onAddNote(note.local_id)}
               >
                 <div className="p-4 pb-3">
@@ -144,7 +144,7 @@ function NotesSection({ bookId, onAddNote }) {
                     {preview || <span className="text-text-tertiary italic">No content yet…</span>}
                   </p>
                 </div>
-                <div className="border-t border-border-default/60" />
+                <div />
                 <div className="px-4 py-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md ${getTemplateStyle(template)}`}>
@@ -215,20 +215,20 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
       <div className="px-3 pt-3 pb-2">
         <div className="relative group">
           <MagnifyingGlass size={13} weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary transition-colors" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search tabs…"
-            className="w-full pl-8 pr-3 py-2 bg-bg-subtle/50 border border-border-default/60 rounded-xl text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/10 transition-all"
-          />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tabs…"
+              className="w-full pl-8 pr-3 py-2 bg-white shadow-sm rounded-xl text-xs text-text-primary focus:outline-none transition-all"
+            />
         </div>
       </div>
 
       {/* Inline Add Tab Form */}
       {isAdding && (
         <div className="px-3 pb-2 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex flex-col gap-2 p-3 rounded-2xl bg-bg-subtle border border-accent-primary/30 shadow-inner">
+          <div className="flex flex-col gap-2 p-3 rounded-2xl bg-white shadow-sm">
             <textarea
               autoFocus
               value={newTab}
@@ -273,7 +273,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
           filteredTabs.map(tab => (
             <div
               key={tab.id}
-              className="group flex flex-col gap-3 p-4 rounded-2xl bg-bg-elevated border border-border-default/50 hover:border-accent-primary/20 transition-all duration-300 relative overflow-hidden"
+              className="group flex flex-col gap-3 p-4 rounded-2xl bg-white shadow-sm transition-all duration-300 relative overflow-hidden"
             >
               {tab.type === 'highlight_note' && !editingId && (
                 <div className="absolute top-0 right-0 w-10 h-10 bg-accent-primary/5 rounded-bl-[2rem] flex items-start justify-end p-1.5 text-accent-primary opacity-20 pointer-events-none">
@@ -286,7 +286,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
                     autoFocus
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-bg-subtle border border-accent-primary text-sm text-text-primary focus:outline-none min-h-[80px] resize-none"
+                    className="w-full p-3 rounded-xl bg-white shadow-sm text-sm text-text-primary focus:outline-none min-h-[80px] resize-none"
                   />
                   <div className="flex justify-end gap-2">
                     <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg text-text-tertiary hover:bg-bg-subtle transition-all"><X size={14} weight="bold" /></button>
@@ -296,7 +296,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
               ) : (
                 <>
                   {tab.context && (
-                    <div className="bg-bg-subtle/50 p-2.5 rounded-xl border-l-4 border-accent-primary/30">
+                    <div className="bg-white shadow-sm p-2.5 rounded-xl">
                       <p className="text-[9px] text-accent-primary font-black uppercase tracking-widest mb-1 opacity-60">Context</p>
                       <p className="text-[12px] text-text-secondary italic line-clamp-2">&ldquo;{tab.context}&rdquo;</p>
                     </div>
@@ -304,11 +304,11 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
                   <div className="flex justify-between items-start gap-3">
                     <p className="text-[13px] text-text-primary leading-relaxed font-medium flex-1">{tab.text}</p>
                     <div className="flex flex-col gap-1 transition-all duration-300">
-                      <button onClick={() => { setEditingId(tab.id); setEditText(tab.text); }} className="p-1.5 rounded-lg bg-bg-elevated border border-border-default shadow-sm text-text-tertiary hover:text-accent-primary transition-all"><PencilSimple size={12} weight="bold" /></button>
-                      <button onClick={() => deleteTab(tab.id)} className="p-1.5 rounded-lg bg-bg-elevated border border-border-default shadow-sm text-text-tertiary hover:text-red-500 transition-all"><Trash size={12} weight="bold" /></button>
+                      <button onClick={() => { setEditingId(tab.id); setEditText(tab.text); }} className="p-1.5 rounded-lg bg-white shadow-sm text-text-tertiary hover:text-accent-primary transition-all"><PencilSimple size={12} weight="bold" /></button>
+                      <button onClick={() => deleteTab(tab.id)} className="p-1.5 rounded-lg bg-white shadow-sm text-text-tertiary hover:text-red-500 transition-all"><Trash size={12} weight="bold" /></button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-border-default/30">
+                  <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-1.5 text-[9px] font-bold text-text-tertiary uppercase tracking-wider">
                       <CalendarBlank size={10} weight="bold" className="opacity-40" />
                       {tab.updatedAt ? new Date(tab.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
@@ -350,15 +350,15 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[200] bg-white/15 dark:bg-white/5 backdrop-blur-xl md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:border-r md:border-white/20 dark:md:border-white/10 md:shrink-0 font-sans shadow-2xl md:shadow-sm animate-in slide-in-from-left duration-300"
+      className="flex flex-col absolute inset-0 z-[200] bg-white md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-left duration-300"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 py-5 border-b border-white/20 dark:border-white/10 shrink-0">
+      <div className="flex items-center justify-between px-5 py-5 shrink-0">
         <h2 className="text-xs font-black text-text-tertiary tracking-[0.2em] uppercase">Notebook</h2>
         <button
           onClick={() => setNotebookPanel(false)}
-          className="p-2 rounded-full bg-bg-subtle hover:bg-bg-subtle transition-all text-text-tertiary hover:text-text-secondary"
+          className="p-2 rounded-full bg-white hover:bg-gray-50 transition-all text-text-tertiary hover:text-text-secondary"
         >
           <X size={16} weight="bold" />
         </button>
@@ -366,12 +366,12 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
 
       {/* ── Tab Switcher ── */}
       <div className="px-4 pt-3 pb-0 shrink-0">
-        <div className="flex items-center gap-1 bg-bg-subtle rounded-full p-1">
+        <div className="flex items-center gap-1 bg-white shadow-sm rounded-full p-1">
           <button
             onClick={() => setActiveTab('notes')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
               activeTab === 'notes'
-                ? 'bg-bg-elevated text-text-primary shadow-sm'
+                ? 'bg-gray-50 text-text-primary shadow-sm'
                 : 'text-text-tertiary hover:text-text-secondary'
             }`}
           >
@@ -384,7 +384,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
             onClick={() => setActiveTab('tabs')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
               activeTab === 'tabs'
-                ? 'bg-bg-elevated text-text-primary shadow-sm'
+                ? 'bg-gray-50 text-text-primary shadow-sm'
                 : 'text-text-tertiary hover:text-text-secondary'
             }`}
           >
@@ -414,7 +414,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
               setActiveTab('tabs');
               setIsAddingTab(true);
             }}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-border-default text-text-tertiary text-xs font-bold hover:border-accent-primary hover:text-accent-primary hover:bg-accent-primary/5 active:scale-95 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-text-tertiary text-xs font-bold hover:text-accent-primary hover:bg-white shadow-sm active:scale-95 transition-all"
           >
             <Plus size={14} weight="bold" /> Add Tab
           </button>
