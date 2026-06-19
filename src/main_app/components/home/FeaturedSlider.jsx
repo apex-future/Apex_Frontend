@@ -78,7 +78,7 @@ const FeaturedSlider = ({ lastReadBook, isLoading }) => {
                 ))}
             </div>
 
-            {/* Navigation Indicators (Expanded Pills) */}
+            {/* NavigationArrow Indicators (Expanded Pills) */}
             {slides.length > 1 && (
                 <div className="flex justify-center gap-3">
                     {slides.map((_, i) => (

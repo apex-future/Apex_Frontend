@@ -47,7 +47,7 @@ function SidebarTabsView({ tabs = [], addTab, updateTab, deleteTab }) {
 
     return (
         <div className='flex flex-col h-full bg-bg-elevated font-sans'>
-            {/* Search Bar */}
+            {/* MagnifyingGlass Bar */}
             <div className='px-4 pt-4 pb-2'>
                 <div className='relative group'>
                     <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>

@@ -21,7 +21,7 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
         {/* Left Elements (No glassmorphic wrapper, free standing) */}
         {/* Left Elements (No glassmorphic wrapper, free standing) */}
         <div className="flex items-center gap-3">
-          {/* Mobile Menu Button - Only visible on mobile */}
+          {/* Mobile List Button - Only visible on mobile */}
           <button
             onClick={() => setIsMobileOpen(true)}
             className="md:hidden z-40 p-2 rounded-lg hover:bg-bg-subtle/50 dark:hover:bg-white/5 transition-all text-text-primary"
@@ -51,7 +51,7 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
           {/* Glassmorphic Pill container for upload button, notification bell, profile picture icon */}
           <div className="flex items-center gap-3.5 md:gap-5 px-4 py-2 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             
-            {/* Upload Button - Hidden on mobile */}
+            {/* UploadSimple Button - Hidden on mobile */}
             <div className="hidden md:flex items-center h-full">
               <input
                 type="file"

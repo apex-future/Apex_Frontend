@@ -111,7 +111,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
         {/* Title and Counter (Stacked layout, smaller text) */}
         <div className="flex flex-col select-none">
           <h2 className='text-xl sm:text-2xl font-bold font-display text-text-primary tracking-tight leading-tight'>
-            {isSearching ? 'Search Results' : 'Your Library'}
+            {isSearching ? 'MagnifyingGlass Results' : 'Your Library'}
           </h2>
           {!booksLoading && (
             <span className="text-xs sm:text-sm text-text-tertiary mt-1 font-medium">
@@ -121,10 +121,10 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
           )}
         </div>
 
-        {/* Right Corner: Search and Filter Control Center */}
+        {/* Right Corner: MagnifyingGlass and Funnel Control Center */}
         <div className="flex items-center gap-2">
           
-          {/* Expandable Search Input Container */}
+          {/* Expandable MagnifyingGlass Input Container */}
           <div className="flex items-center">
             <div className={`flex items-center transition-all duration-300 ease-in-out ${isSearchOpen ? 'w-48 sm:w-64 border-accent-primary bg-card-glass px-3 py-1.5' : 'w-0 border-transparent bg-transparent overflow-hidden'} border-2 rounded-full backdrop-blur-md relative`}>
               <MagnifyingGlass className={`text-text-placeholder mr-2 ${isSearchOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`} size={16} weight="regular" />
@@ -146,17 +146,17 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
               )}
             </div>
 
-            {/* Toggle Search Button */}
+            {/* Toggle MagnifyingGlass Button */}
             <button
               onClick={toggleSearch}
               className={`p-2.5 rounded-full transition-all ${isSearchOpen ? 'bg-accent-primary/10 text-accent-primary' : 'bg-bg-subtle text-text-secondary hover:text-text-primary'} hover:scale-105 active:scale-95 ml-1`}
-              title={isSearchOpen ? "Close Search" : "Search Library"}
+              title={isSearchOpen ? "Close MagnifyingGlass" : "MagnifyingGlass Library"}
             >
               {isSearchOpen && !searchQuery ? <X size={18} /> : <MagnifyingGlass size={18} />}
             </button>
           </div>
 
-          {/* Filter Dropdown Container */}
+          {/* Funnel Dropdown Container */}
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -166,10 +166,10 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
               <Sliders size={20} weight="regular" />
             </button>
 
-            {/* Dropdown Menu - Glassmorphic */}
+            {/* Dropdown List - Glassmorphic */}
             {isFilterOpen && (
               <div className="absolute right-0 mt-2.5 w-60 sm:w-64 bg-card-glass backdrop-blur-xl border border-border-default/80 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-3 duration-200">
-                {/* Section: Filter By */}
+                {/* Section: Funnel By */}
                 <div className="mb-4">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-text-tertiary block mb-2">Filter By</span>
                   <div className="flex flex-wrap gap-1.5">
@@ -241,7 +241,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
         isSearching ? (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
             <div className="w-20 h-20 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-6 text-text-tertiary">
-              {/* migrated from lucide: SearchX */}
+              {/* migrated from lucide: MagnifyingGlassMinus */}
               <MagnifyingGlass size={32} />
             </div>
             <h3 className="text-2xl font-display font-bold text-text-primary mb-2">No matching books</h3>

@@ -211,7 +211,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
 
   return (
     <div className="flex flex-col h-full font-sans">
-      {/* Search */}
+      {/* MagnifyingGlass */}
       <div className="px-3 pt-3 pb-2">
         <div className="relative group">
           <MagnifyingGlass size={13} weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary transition-colors" />

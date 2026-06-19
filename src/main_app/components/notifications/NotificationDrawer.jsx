@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Flame, Sparkle, Calendar, Bell, CheckCircle, DotsThreeVertical } from '@phosphor-icons/react';
+import { X, Fire, Sparkle, Calendar, Bell, CheckCircle, DotsThreeVertical } from '@phosphor-icons/react';
 
 const MOCK_NOTIFICATIONS = [
   { id: 1, type: 'streak', title: 'Streak at risk!', message: "You're about to lose your 5-day streak. Read for 10 minutes today to keep it.", time: '2 hours ago', read: false },
@@ -27,7 +27,7 @@ function NotificationDrawer({ isOpen, onClose }) {
 
   const getIcon = (type) => {
     switch (type) {
-      case 'streak': return <Flame size={18} weight="fill" className="text-orange-500" />;
+      case 'streak': return <Fire size={18} weight="fill" className="text-orange-500" />;
       case 'cleo': return <Sparkle size={18} weight="fill" className="text-purple-500" />;
       case 'exam': return <Calendar size={18} weight="fill" className="text-blue-500" />;
       default: return <Bell size={18} weight="fill" className="text-accent-primary" />;

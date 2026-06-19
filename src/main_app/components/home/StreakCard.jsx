@@ -33,7 +33,7 @@ const StreakCard = () => {
                 
                 {/* Background Icon Asset - Matched with ExamReminder */}
                 <div className="absolute bottom-2 -left-2 size-44 md:size-52 text-orange-500/10 rotate-12 group-hover:text-orange-500/20 group-hover:scale-100 group-hover:rotate-0 transition-all duration-1000 pointer-events-none ease-in-out">
-                    {/* migrated from lucide: Flame */}
+                    {/* migrated from lucide: Fire */}
                     <Fire size="100%" weight="thin" />
                 </div>
 

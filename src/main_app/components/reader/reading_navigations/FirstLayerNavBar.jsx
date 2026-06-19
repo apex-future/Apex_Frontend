@@ -67,7 +67,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
         className='flex top-bar pb-4 items-start sm:items-center justify-between w-full pointer-events-auto'
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Back and Settings buttons */}
+        {/* Back and Gear buttons */}
         <div className='flex items-center gap-3 pt-1 sm:pt-0'>
           <button
             onClick={() => navigate('/')}
@@ -148,7 +148,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
                   : 'bg-white/15 dark:bg-white/5 border-white/25 dark:border-white/10 text-text-primary hover:bg-white/25 dark:hover:bg-white/10'
               }`}
               onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
-              title={locked ? 'Unlock scroll' : 'Lock scroll'}
+              title={locked ? 'LockOpen scroll' : 'Lock scroll'}
             >
               {locked ? (
                 <LockKey size={18} weight="bold" />

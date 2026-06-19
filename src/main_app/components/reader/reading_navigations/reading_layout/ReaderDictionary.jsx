@@ -96,7 +96,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-                    {/* Search Input */}
+                    {/* MagnifyingGlass Input */}
                     <form onSubmit={handleSearch} className="mb-6">
                         <div className="relative group">
                             <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-accent-primary transition-colors" size={18} weight="bold" />
@@ -211,7 +211,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                         </div>
                     )}
 
-                    {/* Offline Dictionary Settings */}
+                    {/* Offline Dictionary Gear */}
                     {!loading && (
                         <div className="mt-8 p-4 bg-bg-subtle rounded-2xl border border-border-default animate-in fade-in slide-in-from-bottom-2">
                             <div className="flex items-center justify-between mb-2">
@@ -234,7 +234,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                     onClick={handleDownloadOfflineDictionary}
                                     className="w-full py-2.5 bg-bg-elevated border-2 border-border-default hover:border-accent-primary hover:text-accent-primary text-text-secondary text-sm font-bold rounded-xl transition-all shadow-sm"
                                 >
-                                    {offlineReady ? 'Update Dictionary' : 'Download Dictionary'}
+                                    {offlineReady ? 'Update Dictionary' : 'DownloadSimple Dictionary'}
                                 </button>
                             )}
                             

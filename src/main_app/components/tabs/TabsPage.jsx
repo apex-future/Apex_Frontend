@@ -86,7 +86,7 @@ function TabsPage() {
             <div className='max-w-6xl mx-auto flex flex-col gap-10 px-4 md:px-8 py-8 md:py-12 animate-in fade-in slide-in-from-bottom-4 duration-500'>
 
                 <div className='flex flex-col md:flex-row md:items-center justify-between gap-6'>
-                    {/* Filter Tabs moved here for cleaner flow */}
+                    {/* Funnel Tabs moved here for cleaner flow */}
                     <div className='flex gap-2 border-b border-border-default w-full md:w-auto overflow-x-auto custom-scrollbar pb-1'>
                         <button
                             onClick={() => setActiveTab('all')}
@@ -102,7 +102,7 @@ function TabsPage() {
                         </button>
                     </div>
 
-                    {/* Search Bar - Underneath header border but aligned to right on desktop */}
+                    {/* MagnifyingGlass Bar - Underneath header border but aligned to right on desktop */}
                     <div className='relative w-full md:w-80 group'>
                         <MagnifyingGlass className='absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary transition-colors' size={20} weight="bold" />
                         <input

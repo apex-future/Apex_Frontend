@@ -78,9 +78,9 @@ function ToolbarDivider() {
 
 const HEADING_OPTIONS = [
   { label: 'Paragraph', icon: TextT, level: 0 },
-  { label: 'Heading 1', icon: TextHOne, level: 1 },
-  { label: 'Heading 2', icon: TextHTwo, level: 2 },
-  { label: 'Heading 3', icon: TextHThree, level: 3 },
+  { label: 'TextHOne 1', icon: TextHOne, level: 1 },
+  { label: 'TextHOne 2', icon: TextHTwo, level: 2 },
+  { label: 'TextHOne 3', icon: TextHThree, level: 3 },
 ];
 
 function HeadingDropdown({ editor }) {

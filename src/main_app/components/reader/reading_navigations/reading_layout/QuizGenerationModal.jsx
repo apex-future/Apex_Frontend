@@ -306,7 +306,7 @@ function QuizGenerationModal({ onClose, onGenerate, bookTitle, fileUrl, isPdf, n
                             </div>
                         </div>
 
-                        {/* Type */}
+                        {/* TextT */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 mb-1">
                                 <Stack size={16} weight="bold" className="text-text-tertiary" />

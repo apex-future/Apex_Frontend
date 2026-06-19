@@ -114,7 +114,7 @@ function Dictionary() {
             </div>
 
             <div className="max-w-4xl mx-auto px-4 py-8">
-                {/* Search Bar - Premium Thick Border System */}
+                {/* MagnifyingGlass Bar - Premium Thick Border System */}
                 <form onSubmit={handleSearch} className="mb-10">
                     <div className="relative group">
                         <input
@@ -190,7 +190,7 @@ function Dictionary() {
                     </div>
                 )}
 
-                {/* Offline Dictionary Settings */}
+                {/* Offline Dictionary Gear */}
                 {!loading && (
                     <div className="mt-10 p-6 bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-3xl shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center justify-between mb-3">
@@ -213,7 +213,7 @@ function Dictionary() {
                                 onClick={handleDownloadOfflineDictionary}
                                 className="px-6 py-3 bg-accent-primary hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-accent-primary/20 active:scale-95"
                             >
-                                {offlineReady ? 'Update Offline Package' : 'Download Offline Package'}
+                                {offlineReady ? 'Update Offline Package' : 'DownloadSimple Offline Package'}
                             </button>
                         )}
                         

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, X, Sparkle } from '@phosphor-icons/react';
+import { DownloadSimple, X, Sparkle } from '@phosphor-icons/react';
 
 const PWAPrompt = ({ deferredPrompt }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -51,7 +51,7 @@ const PWAPrompt = ({ deferredPrompt }) => {
         {/* Row 1: Icons */}
         <div className="flex items-center justify-between mb-5 relative z-10">
           <div className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-violet-600 dark:text-violet-400 shadow-inner">
-            <Download size={24} weight="bold" />
+            <DownloadSimple size={24} weight="bold" />
           </div>
           <button 
             type="button"

@@ -34,7 +34,7 @@ function PageSettings({ setPageSettings, readerControls }) {
             className="flex items-center gap-2 text-base font-bold text-text-primary hover:text-accent-primary transition-colors"
           >
             <CaretLeft size={18} weight="bold" />
-            {activeSection === 'orientation' ? 'Scroll Orientation' : 'Settings'}
+            {activeSection === 'orientation' ? 'Scroll Orientation' : 'Gear'}
           </button>
         ) : (
           <div className="flex items-center gap-2">

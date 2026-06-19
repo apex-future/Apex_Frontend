@@ -108,7 +108,7 @@ function WaitlistForm({ onLogin }) {
         {/* Subtle Inner Glow */}
         <div className="absolute top-0 left-1/4 w-1/2 h-1 bg-gradient-to-r from-transparent via-accent-primary/20 to-transparent" aria-hidden="true" />
 
-        {/* Heading */}
+        {/* TextHOne */}
         <h3
           id="signup-heading"
           className='font-display text-2xl sm:text-3xl font-bold text-white mb-2 text-center leading-tight'

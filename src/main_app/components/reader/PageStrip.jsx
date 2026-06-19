@@ -197,7 +197,7 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                         </span>
                     </div>
 
-                    {/* Navigation Buttons (Desktop Only) */}
+                    {/* NavigationArrow Buttons (Desktop Only) */}
                     <button 
                         onClick={() => scrollByChunk('left')}
                         className="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-24 items-center justify-center hover:text-accent-primary rounded-full text-text-secondary transition-all"

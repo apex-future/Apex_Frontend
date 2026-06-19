@@ -273,7 +273,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
                     ))}
                   </div>
                 </div>
-                {/* Type */}
+                {/* TextT */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 mb-1"><Stack size={16} weight="bold" className="text-text-tertiary" /><label className="text-sm font-bold text-text-secondary">Question Type</label></div>
                   <div className="flex gap-2">

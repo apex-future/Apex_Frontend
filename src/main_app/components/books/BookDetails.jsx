@@ -319,7 +319,7 @@ function BookDetails() {
                                 className="w-full py-3.5 px-4 bg-accent-primary hover:bg-accent-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-accent-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                             >
                                 {isInAnySpace ? <PencilSimple size={18} weight="fill" /> : <FolderSimplePlus size={18} weight="fill" />}
-                                <span>{isInAnySpace ? "Edit" : "Add to Bookspace"}</span>
+                                <span>{isInAnySpace ? "PencilSimple" : "Add to Bookspace"}</span>
                             </button>
                         </div>
                     </div>

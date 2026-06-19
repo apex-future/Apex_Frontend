@@ -462,7 +462,7 @@ const ExamReminder = () => {
                         <div className={`absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-16 blur-3xl transition-all duration-700 pointer-events-none ${moodAmbientBg}`} />
 
                         <div className="flex flex-col w-full h-full relative z-10 justify-between">
-                            {/* Top Row: Navigation and Action Buttons */}
+                            {/* Top Row: NavigationArrow and Action Buttons */}
                             <div className="flex justify-between items-center w-full mb-2">
                                 <div className="flex gap-2 items-center flex-1">
                                     {examsList.length > 1 && (

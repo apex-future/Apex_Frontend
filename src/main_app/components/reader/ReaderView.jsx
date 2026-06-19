@@ -1066,7 +1066,7 @@ function ReaderView() {
                     tocOutline={tocOutline}
                 />}
                 
-                {/* Settings panel */}
+                {/* Gear panel */}
                 {pageSettings && <PageSettings 
                     setPageSettings={setPageSettings}
                     readerControls={readerControls}
@@ -1093,7 +1093,7 @@ function ReaderView() {
                     }}
                 />}
 
-                {/* Highlight Menu */}
+                {/* Highlight List */}
                 {showHighlightMenu && (
                     <HighlightMenu
                         selection={selectionRef.current.text}
@@ -1158,7 +1158,7 @@ function ReaderView() {
 
                 {/* Main reading area */}
                 <div className="flex-1 relative min-w-0 flex flex-col h-full max-h-full overflow-hidden">
-                    {/* Subtle Menu Trigger - Persistent at top, now relative to content area */}
+                    {/* Subtle List Trigger - Persistent at top, now relative to content area */}
                     <div className={`absolute top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center transition-all duration-500 ease-in-out ${navState !== 'none' ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
                         <button
                             onClick={(e) => { e.stopPropagation(); toggleNav(); }}
@@ -1247,7 +1247,7 @@ function ReaderView() {
                                         className="md:flex hidden absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                         title="Previous page"
                                     >
-                                        <ChevronLeft size={28} strokeWidth={2.5} className="-ml-1" />
+                                        <CaretLeft size={28} strokeWidth={2.5} className="-ml-1" />
                                     </button>
 
                                     <button
@@ -1256,7 +1256,7 @@ function ReaderView() {
                                         className="md:flex hidden absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                         title="Next page"
                                     >
-                                        <ChevronRight size={28} strokeWidth={2.5} className="ml-1" />
+                                        <CaretRight size={28} strokeWidth={2.5} className="ml-1" />
                                     </button>
                                 </>
                             )}

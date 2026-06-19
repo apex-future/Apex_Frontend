@@ -175,7 +175,7 @@ const ExamPage = () => {
             <main className="max-w-7xl mx-auto px-4 md:px-8 mt-10">
                 {/* Responsive Controls Bar */}
                 <div className="flex flex-col gap-6 mb-12">
-                    {/* Search Bar */}
+                    {/* MagnifyingGlass Bar */}
                     <div className="relative group">
                         <MagnifyingGlass className="absolute left-5 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-accent-primary transition-colors" size={20} weight="regular" />
                         <input 
@@ -187,7 +187,7 @@ const ExamPage = () => {
                         />
                     </div>
                     
-                    {/* Filter & Sort Bar */}
+                    {/* Funnel & Sort Bar */}
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex flex-wrap bg-bg-elevated p-1 rounded-[1.5rem] border-2 border-border-default shadow-sm min-w-max">
                             {['all', 'ongoing', 'paused', 'completed'].map((status) => (
@@ -492,7 +492,7 @@ const ExamEditModal = ({ isOpen, onClose, exam, resolvedTheme }) => {
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-8 py-6">
-                    <h2 className="text-xl font-black text-text-primary tracking-tight">{exam ? 'Edit Exam' : 'New Exam'}</h2>
+                    <h2 className="text-xl font-black text-text-primary tracking-tight">{exam ? 'PencilSimple Exam' : 'New Exam'}</h2>
                     <button onClick={onClose} className="p-2.5 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all">
                         <X size={20} weight="bold" className="rotate-45" />
                     </button>

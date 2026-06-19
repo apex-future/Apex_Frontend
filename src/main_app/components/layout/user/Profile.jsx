@@ -1,4 +1,4 @@
-import { ArrowLeft, Gear, Flame, Book, BookOpen, Calendar, TrendUp } from '@phosphor-icons/react';
+import { ArrowLeft, Gear, Fire, Book, BookOpen, Calendar, TrendUp } from '@phosphor-icons/react';
 import useAuthStore from '../../../store/authStore'
 import useStudyStore from '../../../store/studyStore'
 import useQuizStore from '../../../store/quizStore'
@@ -55,7 +55,7 @@ function Profile() {
         {/* Glassmorphic overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,255,255,0.1),rgba(255,255,255,0))]"></div>
 
-        {/* Navigation */}
+        {/* NavigationArrow */}
         <div className="relative flex justify-between items-center p-4">
           <button
             onClick={() => navigate(-1)}
@@ -99,7 +99,7 @@ function Profile() {
 
           {/* Streak Badge - MORE FLUID */}
           <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-card p-2 sm:p-3 min-w-[64px] sm:min-w-[70px]">
-            <Flame className='text-orange-400' size={20} weight="fill" />
+            <Fire className='text-orange-400' size={20} weight="fill" />
             <p className='text-white text-lg sm:text-xl font-bold leading-none mt-1'>{streakCount}</p>
             <p className='text-purple-100 text-[9px] sm:text-[10px] uppercase tracking-wider font-medium'>days</p>
           </div>
@@ -109,7 +109,7 @@ function Profile() {
       {/* Main Content - SCROLLABLE AREA */}
       <div className="flex-1 px-4 py-6 pb-28 space-y-8">
         
-        {/* Stats Grid - FLUID AND COMPACT */}
+        {/* Stats GridFour - FLUID AND COMPACT */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
@@ -142,7 +142,7 @@ function Profile() {
 
           <div className="flex items-center justify-between mt-8 mb-4 px-1">
             <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-              <Flame size={14} weight="fill" />
+              <Fire size={14} weight="fill" />
               Interactions & Memory
             </h2>
           </div>

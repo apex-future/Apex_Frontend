@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Sparkle, X } from '@phosphor-icons/react';
+import { Fire, Sparkle, X } from '@phosphor-icons/react';
 import confetti from 'canvas-confetti';
 
 const StreakCelebration = ({ streakCount, streakHistory, onClose }) => {
@@ -132,7 +132,7 @@ const StreakCelebration = ({ streakCount, streakHistory, onClose }) => {
                                                 : 'bg-bg-subtle/50 border-border-default/50 text-text-tertiary/30'
                                         }`}>
                                             {hasStreak ? (
-                                                <Flame size={10} weight="fill" className="fill-current" />
+                                                <Fire size={10} weight="fill" className="fill-current" />
                                             ) : isToday ? (
                                                 <div className="size-1 bg-orange-500 rounded-full" />
                                             ) : null}

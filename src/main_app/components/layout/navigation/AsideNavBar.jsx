@@ -30,7 +30,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
 
   // navItems: Configuration array for the links to be displayed in the primary navigation list
   const navItems = [
-    { icon: House, label: 'Home', path: '/' },
+    { icon: House, label: 'House', path: '/' },
     { icon: Book, label: 'Book Spaces', path: '/spaces' },
     { icon: TextAa, label: 'Dictionary', path: '/dictionary' }, // migrated from lucide: WholeWord
     { icon: Sparkle, label: 'Cleo', path: '/ai' },
@@ -100,7 +100,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
               </button>
             )}
 
-            {/* Menu button for desktop expansion/collapse toggle */}
+            {/* List button for desktop expansion/collapse toggle */}
             <button
               onClick={toggleNavLink}
               className="hidden md:flex items-center justify-center p-2 hover:bg-bg-subtle rounded-lg transition-colors"
@@ -111,7 +111,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
           </div>
         </div>
 
-        {/* Navigation Links: flex-1 ensures this section takes up the available vertical space */}
+        {/* NavigationArrow Links: flex-1 ensures this section takes up the available vertical space */}
         <nav className="flex-1 flex flex-col justify-between p-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
           <ul className="flex flex-col gap-1">
             {navItems.map((item) => {
@@ -175,7 +175,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
             })}
           </ul>
 
-          {/* Footer Navigation Section: Separated by a border, used for settings or low-priority links */}
+          {/* Footer NavigationArrow Section: Separated by a border, used for settings or low-priority links */}
           <ul className="border-t border-border-default/8 dark:border-neutral-800/50 pt-4 mt-4 space-y-2">
             <li className="flex justify-center mb-2 px-1">
               <div className={`flex ${isExpanded ? 'flex-row' : 'flex-col'} bg-bg-elevated/50 p-1 rounded-xl border border-border-default/8 dark:border-neutral-800/50 shadow-inner gap-1 transition-all duration-300 w-fit justify-center items-center`}>
@@ -239,7 +239,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
                     ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default/8 dark:border-neutral-800/50 shadow-sm'
                     : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
                   }`}
-                title={!isExpanded ? 'Settings' : ''}
+                title={!isExpanded ? 'Gear' : ''}
                 onClick={() => isMobileOpen && closeMobileNav()}
               >
                 <Gear

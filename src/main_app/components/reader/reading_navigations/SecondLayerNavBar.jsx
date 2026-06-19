@@ -28,7 +28,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
       className='absolute top-0 left-0 right-0 z-50 p-2 pr-4 sm:pr-6 pointer-events-auto'
     >
       <div className='flex top-bar pb-4 items-start sm:items-center justify-between w-full'>
-        {/* Left: Menu — opens LeftPanel */}
+        {/* Left: List — opens LeftPanel */}
         <div className='left-side pt-1 sm:pt-0'>
           <button
             className="w-10 h-10 flex items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
@@ -38,7 +38,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
           </button>
         </div>
 
-        {/* Center: Tool buttons */}
+        {/* Center: Wrench buttons */}
         <div className="middle-tool-bar flex items-center justify-center gap-1 bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full p-1.5 px-3">
           <button
             className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-white/20 dark:hover:bg-white/10"
@@ -73,7 +73,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
           </button>
         </div>
 
-        {/* Right: Sparkles & Quiz — opens AI and Quiz panels */}
+        {/* Right: Sparkle & Quiz — opens AI and Quiz panels */}
         <div className='flex flex-col sm:flex-row gap-2 right-side items-center'>
           <button
             className="w-10 h-10 flex shrink-0 items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"

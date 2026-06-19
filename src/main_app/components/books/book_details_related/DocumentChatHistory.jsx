@@ -13,7 +13,7 @@ function DocumentChatHistory({ book }) {
             try {
                 setLoading(true);
                 const allChats = await getAllChats();
-                // Filter chats scoped to this book's title (matching AIModal's scope logic)
+                // Funnel chats scoped to this book's title (matching AIModal's scope logic)
                 const bookTitle = book?.title || '';
                 const bookChats = allChats.filter(
                     (chat) => chat.scope === bookTitle

@@ -31,7 +31,7 @@ function buildSignal(userSignal) {
 const getHeaders = (contentType = 'application/json') => {
   const headers = {};
   if (contentType) {
-    headers['Content-Type'] = contentType;
+    headers['Content-TextT'] = contentType;
   }
   const token = authService.getToken();
   if (token) {
@@ -65,7 +65,7 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
     });
   } catch (err) {
     if (err.name === 'TimeoutError') {
-      throw new Error('Server is not responding. Please check your connection and try again.');
+      throw new Error('Desktop is not responding. Please check your connection and try again.');
     }
     throw err;
   }
@@ -105,7 +105,7 @@ export async function streamAsk({ message, bookTitle, bookId, chatType, conversa
     });
   } catch (err) {
     if (err.name === 'TimeoutError') {
-      throw new Error('Server is not responding. Please check your connection and try again.');
+      throw new Error('Desktop is not responding. Please check your connection and try again.');
     }
     throw err;
   }

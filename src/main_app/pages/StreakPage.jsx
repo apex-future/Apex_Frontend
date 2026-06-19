@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Flame, CaretLeft, CaretRight, Trophy, Calendar, Target } from '@phosphor-icons/react';
+import { ArrowLeft, Fire, CaretLeft, CaretRight, Trophy, Calendar, Target } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import useStudyStore from '../store/studyStore';
 
@@ -87,7 +87,7 @@ function StreakPage() {
             <div className="flex items-center justify-center gap-2 sm:gap-4 relative mb-2">
               <div className="relative flex items-center justify-center">
                 <div className="absolute inset-0 blur-xl bg-orange-400/40 rounded-full scale-[2]" />
-                  <Flame
+                  <Fire
                   size={56}
                   weight="fill"
                   className="relative text-orange-500 fill-orange-500 drop-shadow-md sm:w-[72px] sm:h-[72px]"
@@ -113,7 +113,7 @@ function StreakPage() {
             {/* Current Streak Stat Box */}
             <div className="relative overflow-hidden bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md rounded-2xl border-t border-black/10 dark:border-white/10 p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 shadow-sm hover:shadow-md transition-all group">
               <div className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-4 size-16 sm:size-20 md:size-28 text-orange-500/10 rotate-12 group-hover:text-orange-500/20 group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 pointer-events-none ease-in-out">
-                <Flame size="100%" strokeWidth={1} weight="fill" />
+                <Fire size="100%" strokeWidth={1} weight="fill" />
               </div>
               <div className="relative z-10 flex flex-col items-center md:items-end text-center md:text-right">
                 <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary tabular-nums tracking-tight mb-0.5">{streakCount}</div>

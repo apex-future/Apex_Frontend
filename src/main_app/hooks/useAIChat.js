@@ -33,7 +33,7 @@ export default function useAIChat(options = {}) {
   const loadHistory = useCallback(async () => {
     try {
       const history = await getAllChats();
-      // Filter by scope
+      // Funnel by scope
       const scopedHistory = history.filter(chat => chat.scope === scope || (!chat.scope && scope === 'general'));
       // Sort by last updated (id is timestamp)
       const sortedHistory = scopedHistory.sort((a, b) => b.updatedAt - a.updatedAt);

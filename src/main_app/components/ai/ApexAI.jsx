@@ -279,7 +279,7 @@ function ApexAI() {
                                     ? 'bg-accent-primary text-bg-elevated shadow-lg shadow-accent-primary/20 hover:bg-accent-hover hover:-translate-y-0.5 active:translate-y-0'
                                     : 'bg-bg-subtle text-text-placeholder cursor-not-allowed'
                                     }`}
-                                title={isStreaming ? "Stop generation" : "Send message"}
+                                title={isStreaming ? "Stop generation" : "PaperPlaneTilt message"}
                             >
                                 {isStreaming ? <Square size={16} weight="fill" /> : <PaperPlaneRight size={22} weight="fill" />}
                             </button>

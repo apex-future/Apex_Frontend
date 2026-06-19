@@ -61,7 +61,7 @@ function DocumentNotes({ book }) {
 
   return (
     <div className='flex flex-col h-full gap-8 font-sans'>
-      {/* Search & Actions Header */}
+      {/* MagnifyingGlass & Actions Header */}
       <div className='flex flex-col sm:flex-row gap-4 justify-between items-center'>
         <div className='relative w-full sm:max-w-md group'>
           <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>

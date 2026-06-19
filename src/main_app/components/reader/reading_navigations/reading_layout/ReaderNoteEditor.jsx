@@ -277,7 +277,7 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
 
           <div className="flex-1 text-center">
             <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-widest">
-              {noteId === 'new' ? 'New Note' : 'Edit Note'}
+              {noteId === 'new' ? 'New Note' : 'PencilSimple Note'}
             </p>
           </div>
 

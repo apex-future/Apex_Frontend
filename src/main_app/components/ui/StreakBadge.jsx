@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame } from '@phosphor-icons/react';
+import { Fire } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import useStudyStore from '../../store/studyStore';
 
@@ -13,7 +13,7 @@ const StreakBadge = () => {
       className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/10 dark:bg-orange-500/20 border border-orange-500/20 rounded-full group cursor-pointer transition-all duration-300 hover:bg-orange-500/20 dark:hover:bg-orange-500/30 active:scale-95"
       aria-label="View streak"
     >
-      <Flame
+      <Fire
         size={18}
         weight="fill"
         className={`transition-transform group-hover:scale-110 ${

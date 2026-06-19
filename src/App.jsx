@@ -116,7 +116,7 @@ function App() {
 
         if (user.settings) {
           useSettingsStore.getState().seedFromSupabase(user.settings);
-          if (import.meta.env.DEV) console.log('[Apex Settings] Seed attempted from cloud');
+          if (import.meta.env.DEV) console.log('[Apex Gear] Seed attempted from cloud');
         }
 
         if (!user.user_type) {
