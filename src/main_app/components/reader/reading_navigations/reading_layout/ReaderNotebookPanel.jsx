@@ -112,7 +112,7 @@ function NotesSection({ bookId, onAddNote }) {
     <div className="flex flex-col h-full relative">
       {loading ? (
         <div className="flex flex-col gap-3 p-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-bg-subtle animate-pulse rounded-2xl" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-white shadow-sm opacity-50 animate-pulse rounded-2xl" />)}
         </div>
       ) : notes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
@@ -259,7 +259,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
       <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-3">
         {filteredTabs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-            <div className="w-14 h-14 rounded-3xl bg-bg-subtle flex items-center justify-center mb-4 text-text-placeholder border border-border-default/40">
+            <div className="w-14 h-14 rounded-3xl bg-white shadow-sm flex items-center justify-center mb-4 text-text-placeholder">
               {searchQuery ? <MagnifyingGlass size={26} weight="bold" /> : <Note size={26} weight="bold" />}
             </div>
             <h4 className="text-sm font-bold text-text-secondary">
@@ -289,7 +289,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
                     className="w-full p-3 rounded-xl bg-white shadow-sm text-sm text-text-primary focus:outline-none min-h-[80px] resize-none"
                   />
                   <div className="flex justify-end gap-2">
-                    <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg text-text-tertiary hover:bg-bg-subtle transition-all"><X size={14} weight="bold" /></button>
+                    <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg text-text-tertiary hover:bg-white hover:shadow-sm transition-all"><X size={14} weight="bold" /></button>
                     <button onClick={() => handleSaveEdit(tab.id)} className="p-1.5 px-3 rounded-lg bg-accent-primary text-white font-bold text-xs flex items-center gap-1.5"><FloppyDisk size={12} weight="bold" /> Save</button>
                   </div>
                 </div>
@@ -358,7 +358,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
         <h2 className="text-xs font-black text-text-tertiary tracking-[0.2em] uppercase">Notebook</h2>
         <button
           onClick={() => setNotebookPanel(false)}
-          className="p-2 rounded-full bg-white hover:bg-gray-50 transition-all text-text-tertiary hover:text-text-secondary"
+          className="p-2 rounded-full bg-white hover:shadow-md transition-all text-text-tertiary hover:text-text-secondary"
         >
           <X size={16} weight="bold" />
         </button>
@@ -371,7 +371,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
             onClick={() => setActiveTab('notes')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
               activeTab === 'notes'
-                ? 'bg-gray-50 text-text-primary shadow-sm'
+                ? 'bg-white text-text-primary shadow-md'
                 : 'text-text-tertiary hover:text-text-secondary'
             }`}
           >
@@ -384,7 +384,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
             onClick={() => setActiveTab('tabs')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
               activeTab === 'tabs'
-                ? 'bg-gray-50 text-text-primary shadow-sm'
+                ? 'bg-white text-text-primary shadow-md'
                 : 'text-text-tertiary hover:text-text-secondary'
             }`}
           >
