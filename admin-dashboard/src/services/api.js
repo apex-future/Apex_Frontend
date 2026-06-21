@@ -29,3 +29,27 @@ export const fetchUsers = async (page = 1, limit = 50) => {
   if (!res.ok) throw new Error('Failed to fetch users');
   return res.json();
 };
+
+export const fetchAiAnalytics = async (days = 30) => {
+  const res = await fetch(`${API_BASE_URL}/analytics/ai?days=${days}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch AI analytics');
+  return res.json();
+};
+
+export const fetchAiAnalyticsDaily = async (days = 7) => {
+  const res = await fetch(`${API_BASE_URL}/analytics/ai/daily?days=${days}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch daily AI analytics');
+  return res.json();
+};
+
+export const fetchBooksAnalytics = async (days = 30) => {
+  const res = await fetch(`${API_BASE_URL}/analytics/books?days=${days}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch books analytics');
+  return res.json();
+};
+
+export const fetchHighlightsAnalytics = async (days = 30) => {
+  const res = await fetch(`${API_BASE_URL}/analytics/highlights?days=${days}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch highlights analytics');
+  return res.json();
+};
