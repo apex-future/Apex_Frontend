@@ -26,42 +26,43 @@ export default function Overview() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((item) => (
-          <div key={item.name} className="bg-white overflow-hidden rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="p-5">
+          <div key={item.name} className="bg-white overflow-hidden rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className={`rounded-lg p-3 ${item.bg}`}>
+                  <div className={`rounded-xl p-3.5 ${item.bg} shadow-inner`}>
                     <item.icon className={`h-6 w-6 ${item.color}`} aria-hidden="true" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">{item.name}</dt>
-                    <dd className="flex items-baseline">
-                      <div className="text-2xl font-bold text-gray-900">{item.value.toLocaleString()}</div>
+                    <dt className="text-sm font-semibold text-slate-500 truncate tracking-wide">{item.name}</dt>
+                    <dd className="flex items-baseline mt-1">
+                      <div className="text-3xl font-bold text-slate-800 tracking-tight">{item.value.toLocaleString()}</div>
                     </dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 px-5 py-3">
-              <div className="text-sm text-gray-500">{item.change}</div>
+            <div className="bg-slate-50/50 px-6 py-3 border-t border-slate-100">
+              <div className="text-sm font-medium text-slate-500">{item.change}</div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Plan Breakdown */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Users by Plan</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8">
+        <h3 className="text-lg font-bold text-slate-800 mb-6 tracking-tight">Users by Plan</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {Object.entries(data.users.by_plan || {}).map(([plan, count]) => (
-            <div key={plan} className="border border-gray-100 rounded-lg p-4 text-center">
-              <div className="text-sm font-medium text-gray-500 capitalize">{plan}</div>
-              <div className="mt-1 text-2xl font-semibold text-gray-900">{count}</div>
+            <div key={plan} className="relative overflow-hidden border border-slate-100 rounded-2xl p-6 text-center hover:border-blue-200 hover:shadow-md transition-all duration-300 group bg-gradient-to-b from-white to-slate-50/50">
+              <div className="text-sm font-semibold text-slate-500 uppercase tracking-widest">{plan}</div>
+              <div className="mt-2 text-4xl font-extrabold text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">{count}</div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           ))}
         </div>

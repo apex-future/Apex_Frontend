@@ -53,3 +53,49 @@ export const fetchHighlightsAnalytics = async (days = 30) => {
   if (!res.ok) throw new Error('Failed to fetch highlights analytics');
   return res.json();
 };
+
+export const fetchUser = async (id) => {
+  const res = await fetch(`${API_BASE_URL}/users/${id}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch user');
+  return res.json();
+};
+
+export const deleteUser = async (id) => {
+  const res = await fetch(`${API_BASE_URL}/users/${id}`, { method: 'DELETE', headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to delete user');
+  return res.json();
+};
+
+export const updateUserPlan = async (id, planData) => {
+  const res = await fetch(`${API_BASE_URL}/users/${id}/plan`, { 
+    method: 'PATCH', 
+    headers: getHeaders(),
+    body: JSON.stringify(planData)
+  });
+  if (!res.ok) throw new Error('Failed to update user plan');
+  return res.json();
+};
+
+export const fetchUserActivity = async (id, days = 30) => {
+  const res = await fetch(`${API_BASE_URL}/users/${id}/activity?days=${days}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch user activity');
+  return res.json();
+};
+
+export const fetchUserAiHistory = async (id, limit = 50) => {
+  const res = await fetch(`${API_BASE_URL}/users/${id}/ai-history?limit=${limit}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch user AI history');
+  return res.json();
+};
+
+export const fetchEngagementAnalytics = async (days = 30) => {
+  const res = await fetch(`${API_BASE_URL}/analytics/engagement?days=${days}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch engagement analytics');
+  return res.json();
+};
+
+export const fetchQuizzesAnalytics = async (days = 30) => {
+  const res = await fetch(`${API_BASE_URL}/analytics/quizzes?days=${days}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch quizzes analytics');
+  return res.json();
+};

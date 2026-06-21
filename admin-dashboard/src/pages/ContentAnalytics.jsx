@@ -51,17 +51,17 @@ export default function ContentAnalytics() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((item) => (
-          <div key={item.name} className="bg-white overflow-hidden rounded-xl shadow-sm border border-gray-100 p-5">
+          <div key={item.name} className="bg-white overflow-hidden rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className={`rounded-lg p-3 ${item.bg}`}>
+                <div className={`rounded-xl p-3.5 ${item.bg} shadow-inner`}>
                   <item.icon className={`h-6 w-6 ${item.color}`} aria-hidden="true" />
                 </div>
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">{item.name}</dt>
-                  <dd className="text-2xl font-bold text-gray-900 mt-1">{item.value}</dd>
+                  <dt className="text-sm font-semibold text-slate-500 truncate tracking-wide">{item.name}</dt>
+                  <dd className="text-3xl font-bold text-slate-800 mt-1 tracking-tight">{item.value}</dd>
                 </dl>
               </div>
             </div>
@@ -70,8 +70,8 @@ export default function ContentAnalytics() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Books by File Type</h3>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 tracking-tight">Books by File Type</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -88,15 +88,15 @@ export default function ContentAnalytics() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <RechartsTooltip />
+                <RechartsTooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
                 <Legend verticalAlign="bottom" height={36} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Engagement Metrics</h3>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow flex flex-col justify-center">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 tracking-tight">Engagement Metrics</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center">
@@ -123,9 +123,9 @@ export default function ContentAnalytics() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900">Top Books by Reading Time</h3>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-md transition-shadow">
+        <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+          <h3 className="text-lg font-bold text-slate-800 tracking-tight">Top Books by Reading Time</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">

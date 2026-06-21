@@ -47,17 +47,17 @@ export default function AiAnalytics() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((item) => (
-          <div key={item.name} className="bg-white overflow-hidden rounded-xl shadow-sm border border-gray-100 p-5">
+          <div key={item.name} className="bg-white overflow-hidden rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className={`rounded-lg p-3 ${item.bg}`}>
+                <div className={`rounded-xl p-3.5 ${item.bg} shadow-inner`}>
                   <item.icon className={`h-6 w-6 ${item.color}`} aria-hidden="true" />
                 </div>
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">{item.name}</dt>
-                  <dd className="text-2xl font-bold text-gray-900 mt-1">{item.value.toLocaleString()}</dd>
+                  <dt className="text-sm font-semibold text-slate-500 truncate tracking-wide">{item.name}</dt>
+                  <dd className="text-3xl font-bold text-slate-800 mt-1 tracking-tight">{item.value.toLocaleString()}</dd>
                 </dl>
               </div>
             </div>
@@ -66,24 +66,24 @@ export default function AiAnalytics() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Requests Trend</h3>
+        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 tracking-tight">Daily Requests Trend</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} dx={-10} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dx={-10} />
                 <RechartsTooltip 
-                  contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
                 />
-                <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{r: 6}} />
+                <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{r: 6, strokeWidth: 0, fill: '#3b82f6'}} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Usage by Provider</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -109,9 +109,9 @@ export default function AiAnalytics() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900">Top AI Users</h3>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-md transition-shadow">
+        <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+          <h3 className="text-lg font-bold text-slate-800 tracking-tight">Top AI Users</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
