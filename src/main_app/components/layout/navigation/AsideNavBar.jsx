@@ -30,7 +30,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
 
   // navItems: Configuration array for the links to be displayed in the primary navigation list
   const navItems = [
-    { icon: House, label: 'House', path: '/' },
+    { icon: House, label: 'Home', path: '/' },
     { icon: Book, label: 'Book Spaces', path: '/spaces' },
     { icon: TextAa, label: 'Dictionary', path: '/dictionary' }, // migrated from lucide: WholeWord
     { icon: Sparkle, label: 'Cleo', path: '/ai' },

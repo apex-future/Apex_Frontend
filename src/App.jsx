@@ -12,6 +12,8 @@ import useAuthStore from './main_app/store/authStore'
 import useStudyStore from './main_app/store/studyStore'
 import useThemeStore from './main_app/store/themeStore'
 import useSettingsStore from './main_app/store/settingsStore'
+import useXpStore from './main_app/store/useXpStore'
+import apiClient from './main_app/services/apiClient'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
 import LandingLoadingScreen from './landing_page/components/LandingLoadingScreen'
 import OnboardingPage from './landing_page/OnboardingPage';
@@ -114,6 +116,13 @@ function App() {
         console.log('[Apex Streak] Store seeded from Supabase');
         useStudyStore.getState().checkStreakIntegrity();
 
+        // Seed XP store from server (non-blocking, runs in background)
+        apiClient.get('/api/xp/profile')
+          .then((xpProfile) => {
+            useXpStore.getState().seedFromServer(xpProfile.data);
+          })
+          .catch((err) => console.error('[Apex XP] Failed to seed XP profile:', err.message));
+
         if (user.settings) {
           useSettingsStore.getState().seedFromSupabase(user.settings);
           if (import.meta.env.DEV) console.log('[Apex Gear] Seed attempted from cloud');
@@ -160,8 +169,17 @@ function App() {
   // Sync offline streak changes when device comes back online
   useEffect(() => {
     const handleOnline = () => {
-      console.log('[Apex Streak] Back online — flushing pending streak sync');
+      console.log('[Apex Streak] Back online -- flushing pending streak sync');
       useStudyStore.getState().flushPendingStreakSync();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
+  // Flush pending XP actions when device comes back online
+  useEffect(() => {
+    const handleOnline = () => {
+      useXpStore.getState().flushPendingXp();
     };
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);

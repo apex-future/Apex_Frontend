@@ -71,14 +71,14 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
         <div className='flex items-center gap-3 pt-1 sm:pt-0'>
           <button
             onClick={() => navigate('/')}
-            className="w-10 h-10 flex items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
+            className="w-10 h-10 flex items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
           >
             <ArrowLeft size={18} weight="bold" />
           </button>
           
           <button
             onClick={(e) => { e.stopPropagation(); setPageSettings?.(true); }}
-            className="w-10 h-10 flex items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
+            className="w-10 h-10 flex items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
           >
             <Gear size={18} weight="bold" />
           </button>
@@ -88,10 +88,10 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
           <div className='flex flex-row items-center gap-2 sm:gap-3'>
             {/* Page Bookmark button — purple fill when bookmarked */}
             <button
-              className={`w-10 h-10 flex shrink-0 items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border shadow-sm rounded-full transition-all active:scale-90 hover:bg-white/25 dark:hover:bg-white/10 ${
+              className={`w-10 h-10 flex shrink-0 items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${
                 isBookmarked
-                  ? 'text-accent-primary border-accent-primary/40'
-                  : 'text-text-primary border-white/25 dark:border-white/10'
+                  ? 'bg-white dark:bg-neutral-800 text-accent-primary border border-accent-primary/40 hover:bg-gray-50 dark:hover:bg-neutral-700'
+                  : 'bg-white dark:bg-neutral-800 text-text-primary border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700'
               }`}
               onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
               title={isBookmarked ? 'Remove page bookmark' : 'Bookmark this page'}
@@ -104,7 +104,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
 
             {/* Dots — open second layer */}
             <button
-              className="w-10 h-10 flex shrink-0 items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
+              className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
               onClick={onDotsClick}
             >
               <DotsThreeVertical size={18} weight="bold" />
@@ -122,7 +122,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
           {/* Bottom Left Controls — Dictionary and Notebook */}
           <div className='flex items-center gap-2 sm:gap-3'>
             <button
-              className="w-10 h-10 flex shrink-0 items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
+              className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
               onClick={(e) => { e.stopPropagation(); onToggleDictionary?.(); }}
               title="Dictionary Search"
             >
@@ -130,7 +130,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
             </button>
 
             <button
-              className="w-10 h-10 flex shrink-0 items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
+              className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
               onClick={(e) => { e.stopPropagation(); onNotebookClick?.(); }}
               title="Notebook"
             >
@@ -142,10 +142,10 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
           <div className='flex items-end sm:items-center gap-2 sm:gap-3'>
             {/* Lock — toggles pan/scroll lock */}
             <button
-              className={`w-10 h-10 flex shrink-0 items-center justify-center rounded-full transition-all active:scale-90 shadow-sm backdrop-blur-xl border ${
+              className={`w-10 h-10 flex shrink-0 items-center justify-center rounded-full transition-all active:scale-90 shadow-md border ${
                 locked
                   ? 'bg-accent-primary/25 text-accent-primary border-accent-primary/45 hover:bg-accent-primary/35'
-                  : 'bg-white/15 dark:bg-white/5 border-white/25 dark:border-white/10 text-text-primary hover:bg-white/25 dark:hover:bg-white/10'
+                  : 'bg-white dark:bg-neutral-800 border-gray-200 dark:border-neutral-700 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700'
               }`}
               onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
               title={locked ? 'LockOpen scroll' : 'Lock scroll'}
@@ -160,7 +160,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
             <div className='flex flex-col-reverse sm:flex-row items-center gap-2 sm:gap-3'>
               {/* Fit-to-screen — resets zoom to 100% */}
               <button
-                className="w-10 h-10 flex shrink-0 items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
+                className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
                 onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
                 title="Fit to screen (reset zoom)"
               >
@@ -169,7 +169,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
 
               {/* Browser Fullscreen — makes app occupy entire window */}
               <button
-                className="w-10 h-10 flex shrink-0 items-center justify-center bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-white/25 dark:hover:bg-white/10"
+                className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
                 onClick={handleFullScreen}
                 title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
               >
@@ -186,7 +186,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
         {/* Real progress bar */}
         
         <div 
-          className="progress w-full max-w-md bg-white/15 dark:bg-white/5 backdrop-blur-xl p-4 rounded-3xl shadow-sm border-t border-white/25 dark:border-white/10 cursor-pointer"
+          className="progress w-full max-w-md bg-white dark:bg-neutral-800 p-4 rounded-3xl shadow-md border border-gray-200 dark:border-neutral-700 cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onProgressBarClick?.(); }}
         >
           

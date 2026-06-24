@@ -186,6 +186,7 @@ function NoteEditorPage() {
       CharacterCount,
       Highlight.configure({ multicolor: false }),
       TextStyle,
+      Underline,
     ],
     content: '',
     onUpdate: ({ editor }) => {

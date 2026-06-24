@@ -1,4 +1,6 @@
 import authService from './authService';
+import useXpStore from '../store/useXpStore';
+import { XP_VALUES } from '../../config/xpConfig';
 
 /**
  * AI Service — Fetch wrappers for Cleo backend endpoints.
@@ -76,6 +78,9 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
     throw new Error(errorMsg);
   }
 
+  // Award XP
+  useXpStore.getState().awardXpOptimistic('ai_explanation', {}, XP_VALUES.ai_explanation);
+
   return response;
 }
 
@@ -115,6 +120,9 @@ export async function streamAsk({ message, bookTitle, bookId, chatType, conversa
     if (import.meta.env.DEV) console.error(errorMsg);
     throw new Error(errorMsg);
   }
+
+  // Award XP
+  useXpStore.getState().awardXpOptimistic('ai_explanation', {}, XP_VALUES.ai_explanation);
 
   return response;
 }

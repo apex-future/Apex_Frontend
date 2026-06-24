@@ -5,6 +5,8 @@ import authService from './authService';
 import useAuthStore from '../store/authStore';
 import useSettingsStore from '../store/settingsStore';
 import useSpaceStore from '../store/spaceStore';
+import useXpStore from '../store/useXpStore';
+import { XP_VALUES } from '../../config/xpConfig';
 import { cleanUserMessage } from '../utils/aiUtils';
 
 // Helper: generate a local ID
@@ -701,6 +703,9 @@ const syncService = {
     // Step 1: Save to Dexie immediately
     const dexieId = await db.highlights.add(dexieRecord);
 
+    // Award XP for creating a highlight
+    useXpStore.getState().awardXpOptimistic('highlight_created', {}, XP_VALUES.highlight_created);
+
     // Step 2: If online, resolve the Supabase book UUID and save directly
     if (navigator.onLine) {
       const supabaseBookId = await this._resolveBookId(bookId, highlightData._supabase_book_id);
@@ -758,9 +763,12 @@ const syncService = {
   },
 
   updateHighlight: async function (supabaseId, updateData) {
-    if (navigator.onLine && supabaseId) {
+    if (navigator.onLine) {
       try {
         await apiClient.put(`/api/highlights/${supabaseId}`, updateData);
+        if (updateData.note && updateData.note.trim() !== '') {
+          useXpStore.getState().awardXpOptimistic('note_added', {}, XP_VALUES.note_added);
+        }
       } catch (error) {
         if (import.meta.env.DEV) console.error('Failed to update highlight on Supabase:', error);
       }
@@ -1158,6 +1166,8 @@ const syncService = {
       await db.book_notes.update(dexieId, dexieRecord);
     } else {
       dexieId = await db.book_notes.add(dexieRecord);
+      // Award XP for creating a note
+      useXpStore.getState().awardXpOptimistic('note_added', {}, XP_VALUES.note_added);
     }
     if (import.meta.env.DEV) console.log('[Apex] Book note saved to Dexie:', dexieId);
 

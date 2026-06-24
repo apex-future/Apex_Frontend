@@ -1,5 +1,7 @@
 import db from '../db/apex.db';
 import apiClient from './apiClient';
+import useXpStore from '../store/useXpStore';
+import { XP_VALUES } from '../../config/xpConfig';
 
 /**
  * Dictionary Service — Category C (hybrid offline) for definitions,
@@ -105,6 +107,9 @@ const dictionaryService = {
     // Extract metadata from definition
     const defData = Array.isArray(definition) ? definition[0] : definition;
     const firstMeaning = defData?.meanings?.[0];
+
+    // Award XP for dictionary lookup
+    useXpStore.getState().awardXpOptimistic('dictionary_lookup', {}, XP_VALUES.dictionary_lookup);
 
     const historyPayload = {
       word: word.toLowerCase(),

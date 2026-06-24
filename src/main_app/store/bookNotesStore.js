@@ -4,7 +4,7 @@ import syncService from '../services/syncService';
 
 /** Deduplicate an array of notes by local_id, keeping the last occurrence. */
 function dedupeNotes(arr) {
-  const seen = new MapTrifold();
+  const seen = new Map();
   for (const note of arr) seen.set(note.local_id, note);
   return [...seen.values()];
 }

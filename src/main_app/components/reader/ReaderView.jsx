@@ -35,7 +35,7 @@ const ScrollOrientationOverlay = ({ visible, orientation }) => {
     const isVertical = orientation === 'vertical';
     return (
         <div className="fixed inset-x-0 bottom-32 z-[100] flex items-center justify-center pointer-events-none lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-bg-elevated/80 backdrop-blur-sm border border-border-default/20 text-text-primary shadow-2xl">
+            <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md text-text-primary">
                 {isVertical ? <ArrowUp size={18} weight="bold" className="opacity-70" /> : <ArrowLeft size={18} weight="bold" className="opacity-70" />}
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">
                     Swipe {isVertical ? 'up or down' : 'left or right'}
@@ -1055,6 +1055,7 @@ function ReaderView() {
         <div
             className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden"
             onClick={closeNav}
+            data-lenis-prevent="true"
         >
             <ScrollOrientationOverlay visible={showScrollOverlay} orientation={scrollOrientation} />
             <div className="flex h-full max-h-full overflow-hidden relative">

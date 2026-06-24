@@ -6,6 +6,8 @@
 import db from '../db/apex.db';
 import { generateQuiz as apiGenerateQuiz, gradeEssay as apiGradeEssay } from './aiService';
 import apiClient from './apiClient';
+import useXpStore from '../store/useXpStore';
+import { XP_VALUES } from '../../config/xpConfig';
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -237,6 +239,10 @@ export async function completeMCQQuiz({ dexieId, questionsPayload, timeTakenSeco
   const quiz = await db.quizzes.get(dexieId);
   if (quiz) syncQuizToSupabase(dexieId, { ...quiz, ...updates }, userId, supabaseBookId).catch(() => {});
 
+  // Award XP for quiz
+  const earnedXp = Math.max(XP_VALUES.quiz_min, Math.floor(score_percentage * XP_VALUES.quiz_per_score_point));
+  useXpStore.getState().awardXpOptimistic('quiz', { score_percentage }, earnedXp);
+
   console.log('[QuizService] MCQ quiz completed. Score:', score_percentage);
   return { score_percentage, correct, total };
 }
@@ -280,6 +286,10 @@ export async function completeEssayQuiz({ dexieId, questionsPayload, timeTakenSe
 
   const quiz = await db.quizzes.get(dexieId);
   if (quiz) syncQuizToSupabase(dexieId, { ...quiz, ...updates }, userId, supabaseBookId).catch(() => {});
+
+  // Award XP for quiz
+  const earnedXp = Math.max(XP_VALUES.quiz_min, Math.floor(avgScore * XP_VALUES.quiz_per_score_point));
+  useXpStore.getState().awardXpOptimistic('quiz', { score_percentage: avgScore }, earnedXp);
 
   console.log('[QuizService] Essay quiz completed. Avg score:', avgScore);
   return { score_percentage: avgScore, total: scoredPayload.length };

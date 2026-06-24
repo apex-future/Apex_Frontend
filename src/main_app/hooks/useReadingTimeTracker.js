@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react';
 import db from '../db/apex.db';
+import useAuthStore from '../store/authStore';
+import useXpStore from '../store/useXpStore';
+import { XP_VALUES } from '../../config/xpConfig';
 
 const MIN_SESSION_SECONDS = 60; // discard fragments under 1 minute
 const TICK_INTERVAL_MS = 60000; // 1 minute
@@ -91,6 +94,10 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
       // Update last flushed marker
       lastFlushedMinutesRef.current = record.minutes;
       console.log('[ReadingTimeTracker] Flushed delta of', delta, 'minutes (total today:', record.minutes, ') for book', supabaseBookId);
+      
+      // Award XP optimistically
+      useXpStore.getState().awardXpOptimistic('reading', { minutes: delta }, delta * XP_VALUES.reading_per_minute);
+
       // Keep synced flag for backward compatibility but set to 1
       await db.book_reading_time.update(record.id, { synced: 1 });
     } catch (err) {
