@@ -161,10 +161,10 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         >
             {/* Arrow when menu is placed below the text (pointing up) */}
             {!isMobile && !showDict && !showTab && showBelow && (
-                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-bg-elevated mx-auto" />
+                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white mx-auto" />
             )}
 
-            <div className="bg-bg-elevated border border-border-default shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
+            <div className="bg-white shadow-sm hover:shadow-md transition-shadow rounded-2xl border border-transparent border-t-gray-200 overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
                 {!showDict && !showTab && !showFlashcards ? (
                     <div className="flex flex-col">
                         <div className="flex items-center p-1.5 gap-1">
@@ -434,7 +434,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
 
             {/* Arrow when menu is placed above the text (pointing down) */}
             {!isMobile && !showDict && !showTab && !showFlashcards && !showBelow && (
-                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-bg-elevated mx-auto" />
+                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white mx-auto" />
             )}
 
             <style dangerouslySetInnerHTML={{

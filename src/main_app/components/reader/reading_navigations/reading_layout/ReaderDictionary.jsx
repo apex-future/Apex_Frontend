@@ -75,7 +75,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
             onClick={onClose}
         >
             <div 
-                className="bg-bg-elevated w-full max-w-lg rounded-card shadow-2xl border border-border-default overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[80vh]"
+                className="bg-white w-full max-w-lg rounded-card shadow-sm hover:shadow-md transition-shadow border border-transparent border-t-gray-200 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[80vh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -105,7 +105,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                 value={word}
                                 onChange={(e) => setWord(e.target.value)}
                                 placeholder="Search for a word..."
-                                className="w-full h-14 pl-12 pr-6 bg-bg-subtle border-2 border-border-default rounded-2xl text-base font-medium text-text-primary focus:outline-none focus:border-accent-primary transition-all placeholder:text-sm font-sans"
+                                className="w-full h-14 pl-12 pr-6 bg-white shadow-sm rounded-2xl text-base font-medium text-text-primary focus:outline-none transition-all placeholder:text-sm font-sans"
                                 autoFocus
                             />
                         </div>
@@ -134,7 +134,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
 
                     {definition && !loading && (
                         <div className="animate-in fade-in duration-500">
-                            <div className="flex items-center justify-between mb-6 pb-6 border-b border-border-default">
+                            <div className="flex items-center justify-between mb-6 pb-6">
                                 <div>
                                     <h3 className="text-3xl font-black font-display text-text-primary capitalize tracking-tight mb-1">{definition.word}</h3>
                                     <p className="text-accent-primary font-bold italic text-base">
@@ -158,7 +158,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                             <span className="text-[10px] font-black uppercase tracking-widest text-accent-primary bg-accent-primary/10 px-2 py-0.5 rounded">
                                                 {meaning.partOfSpeech}
                                             </span>
-                                            <div className="h-px flex-1 bg-border-default"></div>
+                                            <div className="h-px flex-1"></div>
                                         </div>
                                         <ul className="space-y-4">
                                             {(meaning.definitions || []).slice(0, 3).map((def, defIdx) => (
@@ -169,7 +169,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                                             {def.definition}
                                                         </p>
                                                         {def.example && (
-                                                            <p className="text-sm text-text-tertiary italic pl-4 border-l-2 border-border-default font-sans mt-2">
+                                                            <p className="text-sm text-text-tertiary italic pl-4 font-sans mt-2">
                                                                 "{def.example}"
                                                             </p>
                                                         )}
@@ -187,7 +187,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                             ))}
                                         </ul>
                                         {meaning.synonyms?.length > 0 && (
-                                            <div className="pt-3 border-t border-border-default/50">
+                                            <div className="pt-3">
                                                 <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">Synonyms</p>
                                                 <div className="flex flex-wrap gap-1.5">
                                                     {meaning.synonyms.slice(0, 5).map((syn, synIdx) => (
@@ -213,7 +213,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
 
                     {/* Offline Dictionary Gear */}
                     {!loading && (
-                        <div className="mt-8 p-4 bg-bg-subtle rounded-2xl border border-border-default animate-in fade-in slide-in-from-bottom-2">
+                        <div className="mt-8 p-4 bg-white shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-2">
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="text-sm font-bold text-text-primary flex items-center gap-2">
                                     <WifiSlash size={16} weight="bold" className="text-accent-primary" />
@@ -232,7 +232,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                             {!downloadingOffline && (
                                 <button 
                                     onClick={handleDownloadOfflineDictionary}
-                                    className="w-full py-2.5 bg-bg-elevated border-2 border-border-default hover:border-accent-primary hover:text-accent-primary text-text-secondary text-sm font-bold rounded-xl transition-all shadow-sm"
+                                    className="w-full py-2.5 bg-white shadow-sm hover:shadow-md hover:text-accent-primary text-text-secondary text-sm font-bold rounded-xl transition-all"
                                 >
                                     {offlineReady ? 'Update Dictionary' : 'DownloadSimple Dictionary'}
                                 </button>

@@ -129,7 +129,7 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
             >
                 <div 
                     className={`rounded-card overflow-hidden border-2 transition-all duration-300 w-[100px] h-[150px] flex items-center justify-center cursor-pointer ${
-                        isCurrent ? 'border-accent-primary shadow-lg scale-105' : 'border-transparent hover:border-border-default bg-bg-subtle/50'
+                        isCurrent ? 'border-accent-primary shadow-lg scale-105' : 'border-transparent hover:border-gray-200 bg-gray-50'
                     }`}
                 >
                     {isPdf && fileUrl ? (
@@ -181,11 +181,11 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
             {/* Strip Panel */}
             <div
                 ref={stripRef}
-                className="absolute bottom-0 left-0 right-0 z-[56] pointer-events-auto bg-card-glass backdrop-blur-xl border-t border-border-default rounded-t-card shadow-2xl safe-area-pb"
+                className="absolute bottom-0 left-0 right-0 z-[56] pointer-events-auto bg-white border-t border-gray-200 rounded-t-card shadow-sm safe-area-pb"
             >
                 <div className="pt-3 pb-6 px-4 max-w-7xl mx-auto relative">
                     {/* Drag handle */}
-                    <div className="w-10 h-1 rounded-full bg-border-default mx-auto mb-3" />
+                    <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto mb-3" />
                     
                     {/* Header/Label Row */}
                     <div className="flex items-center justify-between mb-2">

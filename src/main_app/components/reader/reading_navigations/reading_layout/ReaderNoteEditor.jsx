@@ -52,7 +52,7 @@ function ToolbarBtn({ onClick, active, title, children, disabled }) {
       className={`p-1.5 rounded-lg transition-all duration-150 ${
         active
           ? 'bg-accent-primary text-white shadow-sm'
-          : 'text-text-secondary hover:text-text-primary hover:bg-bg-subtle'
+          : 'text-text-secondary hover:text-text-primary hover:bg-gray-50'
       } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
     >
       {children}
@@ -90,13 +90,13 @@ function HeadingDropdown({ editor }) {
     <div className="relative" ref={ref}>
       <button
         onMouseDown={(e) => { e.preventDefault(); setOpen((p) => !p); }}
-        className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-all"
+        className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-all"
       >
         <current.icon size={13} />
         <CaretDown size={10} weight="bold" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-bg-elevated border border-border-default rounded-xl shadow-xl overflow-hidden min-w-[130px]">
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white rounded-xl shadow-xl overflow-hidden min-w-[130px]">
           {HEADING_OPTIONS.map((opt) => {
             const Icon = opt.icon;
             const isActive = opt.level === 0
@@ -112,7 +112,7 @@ function HeadingDropdown({ editor }) {
                   setOpen(false);
                 }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-all ${
-                  isActive ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-primary hover:bg-bg-subtle'
+                  isActive ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-primary hover:bg-gray-50'
                 }`}
               >
                 <Icon size={14} />
@@ -261,15 +261,15 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[210] bg-white/15 dark:bg-white/5 backdrop-blur-xl lg:relative lg:inset-auto lg:w-[400px] lg:h-full lg:border-0 lg:border-r lg:border-white/20 dark:lg:border-white/10 lg:shrink-0 shadow-2xl lg:shadow-sm animate-in slide-in-from-left duration-300 font-sans"
+      className="flex flex-col absolute inset-0 z-[210] bg-white lg:relative lg:inset-auto lg:w-[400px] lg:h-full lg:border-0 lg:shrink-0 shadow-2xl lg:shadow-sm animate-in slide-in-from-left duration-300 font-sans"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Top bar ── */}
-      <div className="sticky top-0 z-50 bg-white/10 dark:bg-white/5 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shrink-0">
+      <div className="sticky top-0 z-50 bg-white shrink-0">
         <div className="px-4 py-3 flex items-center justify-between gap-3">
           <button
             onClick={onClose}
-            className="p-2 hover:bg-bg-subtle text-text-secondary rounded-xl transition-all group flex-shrink-0"
+            className="p-2 hover:bg-gray-50 text-text-secondary rounded-xl transition-all group flex-shrink-0"
             title="Back to notebook"
           >
             <ArrowLeft size={16} weight="bold" className="group-hover:-translate-x-0.5 transition-transform" />
@@ -330,11 +330,11 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
         </div>
 
         {/* Separator */}
-        <div className="border-t border-border-default mb-6" />
+        <div className="mb-6" />
 
         {/* Sticky Floating Toolbar */}
         <div className="sticky top-0 z-30 mb-4 -mx-1">
-          <div className="bg-bg-elevated/95 backdrop-blur-xl border border-border-default rounded-2xl shadow-lg px-2 py-1.5 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
+          <div className="bg-white rounded-2xl shadow-lg px-2 py-1.5 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
             <HeadingDropdown editor={editor} />
             <ToolbarDivider />
             <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold"><TextB size={13} weight="bold" /></ToolbarBtn>

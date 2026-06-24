@@ -1244,7 +1244,7 @@ function ReaderView() {
                                     <button
                                         onClick={(e) => { e.stopPropagation(); previousPage(); }}
                                         disabled={pageNumber <= 1}
-                                        className="md:flex hidden absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                                        className="md:flex hidden absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white hover:bg-gray-50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                         title="Previous page"
                                     >
                                         <CaretLeft size={28} strokeWidth={2.5} className="-ml-1" />
@@ -1253,7 +1253,7 @@ function ReaderView() {
                                     <button
                                         onClick={(e) => { e.stopPropagation(); nextPage(); }}
                                         disabled={pageNumber >= (numPages || 1)}
-                                        className="md:flex hidden absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                                        className="md:flex hidden absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white hover:bg-gray-50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                         title="Next page"
                                     >
                                         <CaretRight size={28} strokeWidth={2.5} className="ml-1" />
