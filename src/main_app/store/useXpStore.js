@@ -8,7 +8,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import apiClient from '../services/apiClient';
-import { showToastGlobal } from '../hooks/useToast';
+
 
 const useXpStore = create(
   persist(
@@ -26,6 +26,7 @@ const useXpStore = create(
 
       // ─── Timed multiplier from overflow rewards ─────────────────────────────
       multiplierExpiresAt: null, // ISO string or null
+      lastMultiplierApplied: 1.0,
 
       // ─── Game profile extras (synced from server) ───────────────────────────
       streakFreezeHeld: false,
@@ -46,8 +47,7 @@ const useXpStore = create(
        * If offline: queues the action and sets a localStorage flag.
        */
       awardXpOptimistic: (action, metadata, estimatedAmount) => {
-        console.log(`[XP Gained] +${estimatedAmount} XP for ${action}`);
-        showToastGlobal(`+${estimatedAmount} XP (${action.replace('_', ' ')})`, 'success');
+        if (import.meta.env.DEV) console.log(`[XP Gained] +${estimatedAmount} XP for ${action}`);
 
         const newAction = {
           action,
@@ -86,17 +86,14 @@ const useXpStore = create(
 
           const { xp_awarded, multiplier_applied, total_xp, multiplier_expires_at, streak_freeze_held, refresh_tokens, lifetime_quests_completed, unclaimed_rewards } = response.data;
           
-          console.log(`[XP Sync] Flushed to server. Awarded: ${xp_awarded}, Multiplier: ${multiplier_applied}x, Total: ${total_xp}`);
-
-          if (xp_awarded > 0 && multiplier_applied > 1.0) {
-            showToastGlobal(`Bonus! ${multiplier_applied}x day multiplier applied.`, 'success');
-          }
+          if (import.meta.env.DEV) console.log(`[XP Sync] Flushed to server. Awarded: ${xp_awarded}, Multiplier: ${multiplier_applied}x, Total: ${total_xp}`);
 
           set({
             confirmedXp: total_xp,
             estimatedXp: total_xp,
             pendingXpActions: [],
             multiplierExpiresAt: multiplier_expires_at ?? get().multiplierExpiresAt,
+            lastMultiplierApplied: multiplier_applied ?? get().lastMultiplierApplied,
             streakFreezeHeld: streak_freeze_held ?? get().streakFreezeHeld,
             refreshTokens: refresh_tokens ?? get().refreshTokens,
             lifetimeQuestsCompleted: lifetime_quests_completed ?? get().lifetimeQuestsCompleted,

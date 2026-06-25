@@ -11,6 +11,8 @@ import db from '../../db/apex.db';
 import DOMPurify from 'dompurify';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
+import SessionSummaryModal from './SessionSummaryModal';
+import useXpStore from '../../store/useXpStore';
 import AIModal from './reading_navigations/reading_layout/AIModal';
 import QuizPanel from './reading_navigations/reading_layout/QuizPanel';
 import QuizView from './QuizView';
@@ -55,8 +57,6 @@ function ReaderView() {
     const [textContent, setTextContent] = useState("");
     const [htmlContent, setHtmlContent] = useState("");
 
-
-
     // Find the book and determine type
     const book = useMemo(() => books.find(b => b.id.toString() === bookId), [books, bookId]);
     const isPdf = useMemo(() => book?.file?.type === 'application/pdf' || book?.file?.name.toLowerCase().endsWith('.pdf'), [book]);
@@ -69,6 +69,41 @@ function ReaderView() {
     const [scale, setScale] = useState(1.0);
     const [rotation, setRotation] = useState(0);
     const [tocOutline, setTocOutline] = useState(null);
+
+    // Session Summary State
+    const [showSessionSummary, setShowSessionSummary] = useState(false);
+    const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0 });
+    const sessionStartXp = useRef(useXpStore.getState().estimatedXp);
+    const mountTime = useRef(Date.now());
+    const visitedPages = useRef(new Set());
+
+    useEffect(() => {
+        // Record pages as they are visited
+        if (pageNumber) visitedPages.current.add(pageNumber);
+    }, [pageNumber]);
+
+    const handleExitReader = async () => {
+        if (flushSessionToQueue) {
+            await flushSessionToQueue();
+        }
+
+        const xpStore = useXpStore.getState();
+        if (xpStore.pendingXpActions.length > 0) {
+            xpStore.flushPendingXp(); // Fire and forget to eliminate latency
+        }
+        const currentXp = useXpStore.getState().estimatedXp;
+        const gained = currentXp - sessionStartXp.current;
+        const pagesRead = visitedPages.current.size;
+        const timeSpentMinutes = Math.floor((Date.now() - mountTime.current) / 60000);
+        const timeSpentSeconds = Math.floor((Date.now() - mountTime.current) / 1000);
+
+        if (gained > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
+            setSessionStats({ xpGained: Math.max(0, gained), pagesRead, timeSpentSeconds });
+            setShowSessionSummary(true);
+        } else {
+            navigate('/');
+        }
+    };
 
     // Progress state
     const [localProgress, setLocalProgress] = useState(book?.progress || 0);
@@ -148,7 +183,7 @@ function ReaderView() {
     // ============================================
     // READING TIME TRACKER — minute-tick accumulation
     // ============================================
-    useReadingTimeTracker({
+    const { flushSessionToQueue } = useReadingTimeTracker({
         bookId: book?.id,
         supabaseBookId: book?.supabaseId,
         isEnabled: !!book?.supabaseId,
@@ -1020,7 +1055,7 @@ function ReaderView() {
             <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-slate-50 relative p-8 font-sans">
                 <div className="absolute top-6 left-6 z-10">
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={handleExitReader}
                         className="p-3 bg-white rounded-xl shadow-md border border-slate-200 text-slate-700 hover:text-accent-primary hover:border-purple-200 transition-all font-bold text-sm tracking-wide flex items-center gap-2 group"
                     >
                         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Library
@@ -1174,7 +1209,7 @@ function ReaderView() {
 
                     <ReaderNavBar
                         book={book}
-                        navigate={navigate}
+                        navigate={handleExitReader}
                         navState={navState}
                         setNavState={setNavState}
                         setPageSettings={(val) => {
@@ -1372,6 +1407,23 @@ function ReaderView() {
                         streakCount={streakCount} 
                         streakHistory={streakHistory} 
                         onClose={() => setShowStreakCelebration(false)} 
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {showSessionSummary && (
+                    <SessionSummaryModal
+                        xpGained={sessionStats.xpGained}
+                        pagesRead={sessionStats.pagesRead}
+                        timeSpentSeconds={sessionStats.timeSpentSeconds}
+                        onClose={() => navigate('/')}
+                        onStartQuiz={() => {
+                            setShowSessionSummary(false);
+                            setNavState('first');
+                            setTimeout(() => {
+                                setQuizModal(true);
+                            }, 300);
+                        }}
                     />
                 )}
             </AnimatePresence>

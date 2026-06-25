@@ -191,4 +191,6 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
       console.log('[ReadingTimeTracker] Cleanup — session ended for book', bookId);
     };
   }, [bookId, supabaseBookId, isEnabled]);
+
+  return { flushSessionToQueue };
 }
