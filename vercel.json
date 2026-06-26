@@ -30,7 +30,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://web-production-e19b7.up.railway.app/api/:path*" },
+    { "source": "/api/:path*", "destination": "https://apexbackend.pxxl.run/api/:path*" },
     { "source": "/((?!sw\\.js|manifest\\.webmanifest|.*\\.).*)", "destination": "/index.html" }
   ]
 }
