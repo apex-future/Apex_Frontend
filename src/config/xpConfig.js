@@ -39,6 +39,8 @@ export const XP_VALUES = {
   highlight_created: 2,        // per highlight, capped at 20/day for XP
   note_added: 8,               // per note added to highlight, capped at 10/day
   dictionary_lookup: 2,        // per lookup, capped at 15/day
+  tab_added: 5,                // per tab/sticky note saved, capped at 15/day
+  simplify: 5,                 // per text simplification
 };
 
 // ─── Daily XP Caps ───────────────────────────────────────────────────────────
@@ -46,6 +48,7 @@ export const XP_DAILY_CAPS = {
   highlight_created: 20,
   note_added: 10,
   dictionary_lookup: 15,
+  tab_added: 15,
 };
 
 // ─── Band offset computation ──────────────────────────────────────────────────

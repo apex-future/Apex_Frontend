@@ -8,11 +8,13 @@ import { computeLevel } from '../../../config/xpConfig';
 import { Lightning, Fire, Sparkle, Hexagon, Scroll } from '@phosphor-icons/react';
 import useGreeting from '../../hooks/useGreeting';
 import Typewriter from '../ui/Typewriter';
+import { useNavigate } from 'react-router-dom';
 
 export default function Header() {
     const { user } = useAuthStore();
     const { books = [] } = useContext(BookContext) || {};
     const { streakCount = 0 } = useStudyStore() || {};
+    const navigate = useNavigate();
     const { resolvedTheme } = useThemeStore();
     const isDark = resolvedTheme === 'dark';
     
@@ -60,11 +62,14 @@ export default function Header() {
                 {/* 3 Cards Section */}
                 <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
                     {/* Daily Streak Card */}
-                    <div className={`${cardClasses} rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2`}>
+                    <div 
+                        onClick={() => navigate('/streak')}
+                        className={`${cardClasses} rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
+                    >
                         <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">Daily Streak</span>
                         <div className="flex items-center gap-1 sm:gap-1.5">
                             <Fire className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" weight="fill" />
-                            <span className={`text-xl sm:text-2xl md:text-3xl font-bold ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>{streakCount || 12}</span>
+                            <span className={`text-xl sm:text-2xl md:text-3xl font-bold ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>{streakCount}</span>
                         </div>
                         <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium">days</span>
                     </div>

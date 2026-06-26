@@ -4,6 +4,7 @@ import {
   Trash, Warning, PencilSimple, FloppyDisk, MagnifyingGlass, Note, Quotes, CalendarBlank
 } from '@phosphor-icons/react';
 import useBookNotesStore from '../../../../store/bookNotesStore';
+import useXpStore from '../../../../store/useXpStore';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -199,6 +200,15 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
   const handleAdd = () => {
     if (!newTab.trim()) return;
     addTab(newTab.trim());
+    
+    try {
+        const { awardXpOptimistic } = useXpStore.getState();
+        awardXpOptimistic('tab_added', {}, 5);
+        console.log('[XP Wire] tab_added (notebook panel) optimistic award fired');
+    } catch (xpErr) {
+        console.error('[XP Wire] tab_added notebook XP failed silently:', xpErr);
+    }
+
     setNewTab('');
     setIsAdding(false);
   };

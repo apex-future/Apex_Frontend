@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, BookmarkSimple, Check, WifiSlash, Note, FloppyDisk, MagicWand, Stack, WarningCircle, Trash, Quotes } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
 import useThemeStore from '../../store/themeStore';
+import useXpStore from '../../store/useXpStore';
 
 function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards }) {
     const { resolvedTheme } = useThemeStore();
@@ -101,6 +102,9 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
             // dictionaryService returns the raw API response (array or object)
             const defData = Array.isArray(result) ? result[0] : result;
             setDefinition(defData);
+
+
+
         } catch (err) {
             setError(err.message);
             setDefinition(null);
@@ -138,6 +142,14 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                     type: 'highlight_note'
                 });
             }
+        }
+
+        try {
+            const { awardXpOptimistic } = useXpStore.getState();
+            awardXpOptimistic('tab_added', {}, 5);
+            console.log('[XP Wire] tab_added optimistic award fired');
+        } catch (xpErr) {
+            console.error('[XP Wire] tab_added XP failed silently:', xpErr);
         }
 
         setTimeout(() => {

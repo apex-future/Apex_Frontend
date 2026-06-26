@@ -321,6 +321,14 @@ function ReaderView() {
                 addedAt: new Date().toISOString(),
                 isSimplified: true,
             });
+
+            // Award XP for simplification
+            try {
+                useXpStore.getState().awardXpOptimistic('simplify', {}, 5);
+                console.log('[XP Wire] simplify optimistic award fired');
+            } catch (xpErr) {
+                console.error('[XP Wire] simplify XP failed silently:', xpErr);
+            }
         } catch (err) {
             console.error('[Apex Simplify] Failed:', err);
             setActiveSimplification(prev => ({ ...prev, loading: false, error: err.message || 'Failed to simplify' }));
