@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, BookmarkSimple, Check, WifiSlash, Note, FloppyDisk, MagicWand, Stack, WarningCircle, Trash, Quotes } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
+import useThemeStore from '../../store/themeStore';
 
-function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose, onGenerateFlashcards }) {
+function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards }) {
+    const { resolvedTheme } = useThemeStore();
+    const isDark = resolvedTheme === 'dark';
+
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -14,6 +18,38 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     const [showFlashcards, setShowFlashcards] = useState(false);
     const [flashcardCount, setFlashcardCount] = useState(5);
     const [flashcardError, setFlashcardError] = useState('');
+
+    const [savedTabId, setSavedTabId] = useState(null);
+    const savedTabIdRef = useRef(null);
+
+    // Auto-save debounce effect (2 seconds)
+    useEffect(() => {
+        if (!showTab || !tabText.trim()) return;
+
+        const delayDebounceFn = setTimeout(async () => {
+            if (savedTabIdRef.current) {
+                // Update
+                if (onUpdateNote) {
+                    onUpdateNote(savedTabIdRef.current, tabText.trim());
+                }
+            } else {
+                // Add
+                if (onAddNote) {
+                    const result = await onAddNote({
+                        text: tabText.trim(),
+                        context: selection,
+                        type: 'highlight_note'
+                    });
+                    if (result && result.id) {
+                        savedTabIdRef.current = result.id;
+                        setSavedTabId(result.id);
+                    }
+                }
+            }
+        }, 2000);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [tabText, showTab, onAddNote, onUpdateNote, selection]);
 
     const toggleDict = (val) => {
         setShowDict(val);
@@ -86,19 +122,41 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         setWordSaved(true);
     };
 
-    const handleSaveTab = () => {
-        if (!tabText.trim() || !onAddNote) return;
-        onAddNote({
-            text: tabText.trim(),
-            context: selection,
-            type: 'highlight_note'
-        });
+    const handleSaveTab = async () => {
+        if (!tabText.trim()) return;
         setTabSaved(true);
+
+        if (savedTabIdRef.current) {
+            if (onUpdateNote) {
+                await onUpdateNote(savedTabIdRef.current, tabText.trim());
+            }
+        } else {
+            if (onAddNote) {
+                await onAddNote({
+                    text: tabText.trim(),
+                    context: selection,
+                    type: 'highlight_note'
+                });
+            }
+        }
+
         setTimeout(() => {
             toggleTab(false);
             setTabSaved(false);
             setTabText('');
-        }, 1500);
+            setSavedTabId(null);
+            savedTabIdRef.current = null;
+        }, 1000);
+    };
+
+    const handleCancelTab = async () => {
+        if (savedTabIdRef.current && onDeleteNote) {
+            await onDeleteNote(savedTabIdRef.current);
+        }
+        setTabText('');
+        setSavedTabId(null);
+        savedTabIdRef.current = null;
+        handleCloseModal();
     };
 
     const playAudio = (url) => {
@@ -164,7 +222,35 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                 <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white mx-auto" />
             )}
 
-            <div className="bg-white shadow-sm hover:shadow-md transition-shadow rounded-2xl border border-transparent border-t-gray-200 overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
+            <div
+                className={`flex flex-col min-w-[200px] w-full max-w-[400px] ${
+                    showTab
+                        ? 'shadow-sm overflow-visible relative'
+                        : 'bg-white shadow-md rounded-2xl border border-transparent border-t-gray-200 overflow-hidden'
+                }`}
+                style={showTab ? {
+                    background: isDark ? 'hsl(270 60% 14%)' : 'hsl(270 55% 93%)',
+                    borderRadius: '5px',
+                    transform: 'rotate(-2deg)',
+                } : undefined}
+            >
+                {showTab && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '-10px',
+                        left: '12px',
+                        width: '55px',
+                        height: '16px',
+                        background: 'rgba(120, 120, 120, 0.25)',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        backdropFilter: 'blur(1px)',
+                        transform: 'rotate(-15deg)',
+                        zIndex: 50,
+                        pointerEvents: 'none',
+                        borderLeft: '1.5px dashed rgba(0,0,0,0.15)',
+                        borderRight: '1.5px dashed rgba(0,0,0,0.15)',
+                    }} />
+                )}
                 {!showDict && !showTab && !showFlashcards ? (
                     <div className="flex flex-col">
                         <div className="flex items-center p-1.5 gap-1">
@@ -176,7 +262,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Define</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-border-default/50" />
+                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
 
                             <button
                                 onClick={onAskAI}
@@ -186,7 +272,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-border-default/50" />
+                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
 
                             <button
                                 onClick={() => toggleTab(true)}
@@ -196,7 +282,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Tab</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-border-default/50" />
+                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
 
                             <button
                                 onClick={() => onSimplify?.()}
@@ -205,19 +291,9 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <MagicWand size={20} weight="fill" className="text-text-secondary group-hover:text-emerald-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Simplify</span>
                             </button>
-
-                            <div className="w-[1px] h-8 bg-border-default/50" />
-
-                            <button
-                                onClick={() => toggleFlashcards(true)}
-                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
-                            >
-                                <Stack size={20} weight="fill" className="text-text-secondary group-hover:text-rose-600 transition-colors" />
-                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Cards</span>
-                            </button>
                         </div>
 
-                        <div className="flex items-center justify-center gap-4 p-3 bg-bg-subtle/50 border-t border-border-default/50">
+                        <div className="flex items-center justify-center gap-4 p-3 bg-bg-subtle/50 border-t border-gray-200 dark:border-neutral-800/80">
                             {['#d1d5db', '#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff'].map(color => (
                                 <button
                                     key={color}
@@ -333,15 +409,24 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         )}
                     </div>
                 ) : showTab ? (
-                    <div className="animate-in slide-in-from-bottom-2 duration-300 font-sans shadow-2xl rounded-2xl overflow-hidden flex flex-col relative"
-                        style={{ background: 'hsl(270 60% 14%)', border: '1.5px solid hsl(270 55% 22%)', minHeight: '220px' }}>
-                        
+                    <div
+                        className="animate-in slide-in-from-bottom-2 duration-300 font-sans flex flex-col relative w-full"
+                        style={{
+                            minHeight: '220px',
+                            transform: 'rotate(2deg)',
+                        }}
+                    >
                         {/* Context Header */}
-                        <div className="px-4 pt-4 pb-3 flex items-start gap-2"
-                             style={{ background: 'hsl(270 50% 10%)' }}>
-                            <Quotes size={16} weight="fill" style={{ color: 'hsl(270 80% 70%)', flexShrink: 0, marginTop: 2 }} />
-                            <p className="text-[12px] italic leading-relaxed line-clamp-3"
-                               style={{ color: 'hsl(270 20% 60%)' }}>
+                        <div
+                            className="px-4 pt-3 pb-2.5 flex items-start gap-2 select-none"
+                            style={{
+                                background: isDark ? 'hsl(270 50% 10%)' : 'hsl(270 45% 87%)',
+                                borderRadius: '5px 5px 0 0',
+                            }}
+                        >
+                            <Quotes size={15} weight="fill" style={{ color: isDark ? 'hsl(270 80% 70%)' : 'hsl(270 50% 45%)', flexShrink: 0, marginTop: 2 }} />
+                            <p className="text-[12px] italic leading-relaxed line-clamp-2"
+                               style={{ color: isDark ? 'hsl(270 20% 58%)' : 'hsl(270 25% 40%)' }}>
                                 {selection}
                             </p>
                         </div>
@@ -352,37 +437,40 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             onChange={(e) => setTabText(e.target.value)}
                             placeholder="Write your tab here..."
                             className="flex-1 w-full p-4 text-[14px] leading-relaxed resize-none focus:outline-none"
-                            style={{ background: 'transparent', color: 'hsl(270 20% 90%)', caretColor: 'hsl(270 80% 70%)' }}
+                            style={{
+                                background: 'transparent',
+                                color: isDark ? 'hsl(270 20% 90%)' : 'hsl(270 30% 22%)',
+                                caretColor: isDark ? 'hsl(270 80% 70%)' : 'hsl(270 60% 50%)',
+                            }}
                             autoFocus
                         />
 
                         {/* Footer */}
-                        <div className="flex items-center justify-between px-4 py-2 border-t"
-                             style={{ borderColor: 'hsl(270 55% 22%)' }}>
-                            <span className="text-[10px]" style={{ color: 'hsl(270 20% 60%)' }}>
+                        <div className="flex items-center justify-between px-4 py-2"
+                             style={{
+                                 borderTop: `1px solid ${isDark ? 'hsl(270 45% 20%)' : 'hsl(270 30% 82%)'}`,
+                             }}>
+                            <span className="text-[10px]" style={{ color: isDark ? 'hsl(270 20% 55%)' : 'hsl(270 25% 55%)' }}>
                                 {tabText.trim().split(/\s+/).filter(Boolean).length} words
                             </span>
-                            
+
                             <div className="flex items-center gap-1">
                                 {/* Tick - Save and Close */}
                                 <button
                                     onClick={handleSaveTab}
                                     disabled={tabSaved || !tabText.trim()}
-                                    className="p-1.5 rounded-lg transition-all hover:bg-black/20"
-                                    style={{ color: (tabSaved || !tabText.trim()) ? 'hsl(270 20% 50%)' : 'hsl(270 80% 70%)' }}
+                                    className="p-1.5 rounded-lg transition-all hover:bg-black/10"
+                                    style={{ color: (tabSaved || !tabText.trim()) ? (isDark ? 'hsl(270 20% 45%)' : 'hsl(270 20% 70%)') : (isDark ? 'hsl(270 80% 70%)' : 'hsl(270 60% 45%)') }}
                                     title="Save & Close"
                                 >
                                     <Check size={16} weight="bold" />
                                 </button>
-                                
+
                                 {/* Bin - Close without saving */}
                                 <button
-                                    onClick={() => {
-                                        setTabText('');
-                                        handleCloseModal();
-                                    }}
-                                    className="p-1.5 rounded-lg transition-all hover:bg-red-500/10 hover:text-red-400"
-                                    style={{ color: 'hsl(270 20% 60%)' }}
+                                    onClick={handleCancelTab}
+                                    className="p-1.5 rounded-lg transition-all hover:bg-red-500/10"
+                                    style={{ color: isDark ? 'hsl(270 20% 55%)' : 'hsl(270 20% 60%)' }}
                                     title="Cancel"
                                 >
                                     <Trash size={16} weight="bold" />

@@ -1157,6 +1157,8 @@ function ReaderView() {
                             }
                         }}
                         onAddNote={readerControls.addTab}
+                        onUpdateNote={readerControls.updateTab}
+                        onDeleteNote={readerControls.deleteTab}
                         onGenerateFlashcards={(selection, count) => {
                             setShowHighlightMenu(false);
                             setActiveFlashcardSession({ selection, count });
