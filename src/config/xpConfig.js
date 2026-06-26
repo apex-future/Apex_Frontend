@@ -16,16 +16,16 @@
 
 // ─── XP Band Definitions ─────────────────────────────────────────────────────
 export const XP_BANDS = [
-  { title: 'Freshman',     levels: 10, cd: 50,   baseXp: 0,       startLevel: 1  },
-  { title: 'Rookie',       levels: 10, cd: 100,  baseXp: 2250,    startLevel: 11 },
-  { title: 'Scholar',      levels: 10, cd: 200,  baseXp: 12750,   startLevel: 21 },
-  { title: 'Thinker',      levels: 10, cd: 350,  baseXp: 39750,   startLevel: 31 },
-  { title: 'Achiever',     levels: 10, cd: 500,  baseXp: 95500,   startLevel: 41 },
-  { title: 'Apex Scholar', levels: 10, cd: 800,  baseXp: 195000,  startLevel: 51 },
-  { title: 'Elite',        levels: 10, cd: 1200, baseXp: 362000,  startLevel: 61 },
-  { title: 'Genius',       levels: 10, cd: 1800, baseXp: 632000,  startLevel: 71 },
-  { title: 'Master',       levels: 10, cd: 2500, baseXp: 1055000, startLevel: 81 },
-  { title: 'Legend',       levels: 10, cd: 4000, baseXp: 1697500, startLevel: 91 },
+  { title: 'Freshman',     levels: 10, cd: 170,   baseXp: 0,         startLevel: 1  },
+  { title: 'Rookie',       levels: 10, cd: 340,   baseXp: 7650,      startLevel: 11 },
+  { title: 'Scholar',      levels: 10, cd: 670,   baseXp: 42350,     startLevel: 21 },
+  { title: 'Thinker',      levels: 10, cd: 1200,  baseXp: 131150,    startLevel: 31 },
+  { title: 'Achiever',     levels: 10, cd: 1700,  baseXp: 317150,    startLevel: 41 },
+  { title: 'Apex Scholar', levels: 10, cd: 2700,  baseXp: 651650,    startLevel: 51 },
+  { title: 'Elite',        levels: 10, cd: 4000,  baseXp: 1200650,   startLevel: 61 },
+  { title: 'Genius',       levels: 10, cd: 6000,  baseXp: 2100650,   startLevel: 71 },
+  { title: 'Master',       levels: 10, cd: 8500,  baseXp: 3500650,   startLevel: 81 },
+  { title: 'Legend',       levels: 10, cd: 13000, baseXp: 5600650,   startLevel: 91 },
 ];
 
 // ─── XP Values ───────────────────────────────────────────────────────────────

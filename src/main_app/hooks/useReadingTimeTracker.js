@@ -28,6 +28,8 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
   // Refs for heartbeat and delta tracking
   const heartbeatRef = useRef(null);
   const lastFlushedMinutesRef = useRef(0);
+  const isFlushingRef = useRef(false);
+  const sessionStartMinutesRef = useRef(0); // Dexie total at session mount — used for XP calc
 
   function getTodayStr() {
     const d = new Date();
@@ -62,6 +64,12 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
 
   async function flushSessionToQueue() {
     if (!supabaseBookId) return;
+    if (isFlushingRef.current) {
+      console.log('[ReadingTimeTracker] Flush already in progress — skipping');
+      return;
+    }
+    
+    isFlushingRef.current = true;
     const today = getTodayStr();
     try {
       const record = await db.book_reading_time
@@ -94,14 +102,37 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
       // Update last flushed marker
       lastFlushedMinutesRef.current = record.minutes;
       console.log('[ReadingTimeTracker] Flushed delta of', delta, 'minutes (total today:', record.minutes, ') for book', supabaseBookId);
-      
-      // Award XP optimistically
-      useXpStore.getState().awardXpOptimistic('reading', { minutes: delta }, delta * XP_VALUES.reading_per_minute);
+      // NOTE: XP is NOT awarded here. It is awarded once at session exit ("No Thanks, Exit" button)
+      // to avoid accumulating multiple pendingXpActions across heartbeats.
 
       // Keep synced flag for backward compatibility but set to 1
       await db.book_reading_time.update(record.id, { synced: 1 });
     } catch (err) {
       console.error('[ReadingTimeTracker] Flush failed:', err);
+    } finally {
+      isFlushingRef.current = false;
+    }
+  }
+
+  /**
+   * computeSessionXp
+   * Returns the XP earned during THIS session = (minutes accumulated since mount) * rate.
+   * Safe to call before flushing — does not write anything.
+   */
+  async function computeSessionXp() {
+    if (!bookId) return 0;
+    const today = getTodayStr();
+    try {
+      const record = await db.book_reading_time
+        .where('[bookId+date]').equals([bookId, today]).first();
+      const currentMinutes = record?.minutes ?? 0;
+      const sessionMinutes = Math.max(0, currentMinutes - sessionStartMinutesRef.current);
+      const xp = sessionMinutes * XP_VALUES.reading_per_minute;
+      console.log('[ReadingTimeTracker] computeSessionXp:', sessionMinutes, 'min ×', XP_VALUES.reading_per_minute, '=', xp, 'XP');
+      return xp;
+    } catch (err) {
+      console.warn('[ReadingTimeTracker] computeSessionXp failed — returning 0:', err);
+      return 0;
     }
   }
 
@@ -138,14 +169,17 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
           .where('[bookId+date]').equals([bookId, today]).first();
         if (record && record.minutes > 0) {
           lastFlushedMinutesRef.current = record.minutes;
+          sessionStartMinutesRef.current = record.minutes; // XP baseline for this session
           console.log('[ReadingTimeTracker] Seeded lastFlushed from Dexie:', record.minutes);
         } else {
           lastFlushedMinutesRef.current = 0;
+          sessionStartMinutesRef.current = 0;
           console.log('[ReadingTimeTracker] No existing Dexie record for today — starting delta from 0');
         }
       } catch (err) {
         console.warn('[ReadingTimeTracker] Could not seed lastFlushed — defaulting to 0');
         lastFlushedMinutesRef.current = 0;
+        sessionStartMinutesRef.current = 0;
       }
     }
 
@@ -192,5 +226,5 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
     };
   }, [bookId, supabaseBookId, isEnabled]);
 
-  return { flushSessionToQueue };
+  return { flushSessionToQueue, stopTick, startTick, computeSessionXp };
 }

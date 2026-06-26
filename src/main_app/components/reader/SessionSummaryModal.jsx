@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
-import { Lightning, Target, Clock, PlayCircle } from '@phosphor-icons/react';
+import { Lightning, Target, Clock, PlayCircle, X } from '@phosphor-icons/react';
 import confetti from 'canvas-confetti';
 import useXpStore from '../../store/useXpStore';
 import useThemeStore from '../../store/themeStore';
@@ -28,6 +28,7 @@ function CountingNumber({ value }) {
 
 export default function SessionSummaryModal({
   onClose,
+  onCancel,
   onStartQuiz,
   xpGained,
   pagesRead,
@@ -142,6 +143,19 @@ export default function SessionSummaryModal({
         className={`relative z-10 w-full h-full ${bgGradient} sm:h-auto sm:max-w-md sm:rounded-2xl sm:shadow-aura-lg flex flex-col items-center justify-center p-8 sm:p-10 text-center`}
       >
         <div className="w-full flex flex-col items-center max-w-sm mx-auto">
+
+          {/* Cancel (X) button — stay in book */}
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              aria-label="Cancel and stay in book"
+              className={`absolute top-4 right-4 z-20 p-2 rounded-full transition-colors duration-200 ${
+                isDark ? 'text-text-secondary hover:bg-white/10' : 'text-text-secondary hover:bg-black/8'
+              }`}
+            >
+              <X size={22} weight="bold" />
+            </button>
+          )}
 
           {/* Heading */}
           <motion.h2

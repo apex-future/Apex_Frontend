@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, BookmarkSimple, Check, WifiSlash, Note, FloppyDisk, MagicWand, Stack, WarningCircle } from '@phosphor-icons/react';
+import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, BookmarkSimple, Check, WifiSlash, Note, FloppyDisk, MagicWand, Stack, WarningCircle, Trash, Quotes } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
 
 function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose, onGenerateFlashcards }) {
@@ -333,39 +333,61 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         )}
                     </div>
                 ) : showTab ? (
-                    <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Add Tab</h3>
-                            <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
-                                <X size={16} weight="bold" className="text-text-tertiary" />
-                            </button>
+                    <div className="animate-in slide-in-from-bottom-2 duration-300 font-sans shadow-2xl rounded-2xl overflow-hidden flex flex-col relative"
+                        style={{ background: 'hsl(270 60% 14%)', border: '1.5px solid hsl(270 55% 22%)', minHeight: '220px' }}>
+                        
+                        {/* Context Header */}
+                        <div className="px-4 pt-4 pb-3 flex items-start gap-2"
+                             style={{ background: 'hsl(270 50% 10%)' }}>
+                            <Quotes size={16} weight="fill" style={{ color: 'hsl(270 80% 70%)', flexShrink: 0, marginTop: 2 }} />
+                            <p className="text-[12px] italic leading-relaxed line-clamp-3"
+                               style={{ color: 'hsl(270 20% 60%)' }}>
+                                {selection}
+                            </p>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="bg-bg-subtle/50 p-3 rounded-xl border border-border-default/50 mb-3">
-                                <p className="text-[11px] text-text-tertiary font-bold uppercase tracking-wider mb-1 opacity-50">Selected Text</p>
-                                <p className="text-sm text-text-secondary line-clamp-2 italic">"{selection}"</p>
+                        {/* Text Area */}
+                        <textarea
+                            value={tabText}
+                            onChange={(e) => setTabText(e.target.value)}
+                            placeholder="Write your tab here..."
+                            className="flex-1 w-full p-4 text-[14px] leading-relaxed resize-none focus:outline-none"
+                            style={{ background: 'transparent', color: 'hsl(270 20% 90%)', caretColor: 'hsl(270 80% 70%)' }}
+                            autoFocus
+                        />
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between px-4 py-2 border-t"
+                             style={{ borderColor: 'hsl(270 55% 22%)' }}>
+                            <span className="text-[10px]" style={{ color: 'hsl(270 20% 60%)' }}>
+                                {tabText.trim().split(/\s+/).filter(Boolean).length} words
+                            </span>
+                            
+                            <div className="flex items-center gap-1">
+                                {/* Tick - Save and Close */}
+                                <button
+                                    onClick={handleSaveTab}
+                                    disabled={tabSaved || !tabText.trim()}
+                                    className="p-1.5 rounded-lg transition-all hover:bg-black/20"
+                                    style={{ color: (tabSaved || !tabText.trim()) ? 'hsl(270 20% 50%)' : 'hsl(270 80% 70%)' }}
+                                    title="Save & Close"
+                                >
+                                    <Check size={16} weight="bold" />
+                                </button>
+                                
+                                {/* Bin - Close without saving */}
+                                <button
+                                    onClick={() => {
+                                        setTabText('');
+                                        handleCloseModal();
+                                    }}
+                                    className="p-1.5 rounded-lg transition-all hover:bg-red-500/10 hover:text-red-400"
+                                    style={{ color: 'hsl(270 20% 60%)' }}
+                                    title="Cancel"
+                                >
+                                    <Trash size={16} weight="bold" />
+                                </button>
                             </div>
-
-                            <textarea
-                                value={tabText}
-                                onChange={(e) => setTabText(e.target.value)}
-                                placeholder="Write your tab here..."
-                                className="w-full h-32 bg-bg-subtle border border-border-default rounded-xl p-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/20 resize-none font-sans"
-                                autoFocus
-                            />
-
-                            <button
-                                onClick={handleSaveTab}
-                                disabled={tabSaved || !tabText.trim()}
-                                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${tabSaved
-                                    ? 'bg-green-50 text-green-600 border border-green-200'
-                                    : 'bg-accent-primary text-white hover:bg-accent-primary/90 active:scale-[0.98] disabled:opacity-50'
-                                    }`}
-                            >
-                                {tabSaved ? <Check size={18} weight="bold" /> : <FloppyDisk size={18} weight="bold" />}
-                                {tabSaved ? 'Tab Saved' : 'Save Tab'}
-                            </button>
                         </div>
                     </div>
                 ) : showFlashcards ? (

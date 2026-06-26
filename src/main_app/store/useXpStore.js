@@ -36,6 +36,9 @@ const useXpStore = create(
 
       // ─── Last sync timestamp (server-provided, never client clock) ──────────
       lastSyncedAt: null,
+      
+      // ─── Flush Lock ─────────────────────────────────────────────────────────
+      isFlushingXp: false,
 
       // ═══════════════════════════════════════════════════════════════════════
       // ACTIONS
@@ -74,36 +77,42 @@ const useXpStore = create(
        * Called on reconnect and after every optimistic award when online.
        */
       flushPendingXp: async () => {
-        const { pendingXpActions } = get();
+        const { pendingXpActions, isFlushingXp } = get();
 
         if (pendingXpActions.length === 0) return;
         if (!navigator.onLine) return;
+        if (isFlushingXp) return;
+
+        set({ isFlushingXp: true });
+        const actionsToFlush = pendingXpActions;
 
         try {
           const response = await apiClient.post('/api/xp/sync', {
-            actions: pendingXpActions,
+            actions: actionsToFlush,
           });
 
           const { xp_awarded, multiplier_applied, total_xp, multiplier_expires_at, streak_freeze_held, refresh_tokens, lifetime_quests_completed, unclaimed_rewards } = response.data;
           
           if (import.meta.env.DEV) console.log(`[XP Sync] Flushed to server. Awarded: ${xp_awarded}, Multiplier: ${multiplier_applied}x, Total: ${total_xp}`);
 
-          set({
+          set((state) => ({
             confirmedXp: total_xp,
             estimatedXp: total_xp,
-            pendingXpActions: [],
-            multiplierExpiresAt: multiplier_expires_at ?? get().multiplierExpiresAt,
-            lastMultiplierApplied: multiplier_applied ?? get().lastMultiplierApplied,
-            streakFreezeHeld: streak_freeze_held ?? get().streakFreezeHeld,
-            refreshTokens: refresh_tokens ?? get().refreshTokens,
-            lifetimeQuestsCompleted: lifetime_quests_completed ?? get().lifetimeQuestsCompleted,
-            unclaimedRewards: unclaimed_rewards ?? get().unclaimedRewards,
-          });
+            pendingXpActions: state.pendingXpActions.filter(a => !actionsToFlush.includes(a)),
+            isFlushingXp: false,
+            multiplierExpiresAt: multiplier_expires_at ?? state.multiplierExpiresAt,
+            lastMultiplierApplied: multiplier_applied ?? state.lastMultiplierApplied,
+            streakFreezeHeld: streak_freeze_held ?? state.streakFreezeHeld,
+            refreshTokens: refresh_tokens ?? state.refreshTokens,
+            lifetimeQuestsCompleted: lifetime_quests_completed ?? state.lifetimeQuestsCompleted,
+            unclaimedRewards: unclaimed_rewards ?? state.unclaimedRewards,
+          }));
 
           localStorage.removeItem('apex_xp_sync_pending');
         } catch (err) {
           // Leave pendingXpActions intact for retry
           console.error('[XP Store] Flush failed, will retry:', err?.message);
+          set({ isFlushingXp: false });
         }
       },
 
@@ -145,6 +154,7 @@ const useXpStore = create(
           confirmedXp: 0,
           estimatedXp: 0,
           pendingXpActions: [],
+          isFlushingXp: false,
           multiplierExpiresAt: null,
           streakFreezeHeld: false,
           refreshTokens: 0,

@@ -81,7 +81,7 @@ export default function Header() {
                             <Sparkle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" weight="fill" />
                             <span className={`text-xl sm:text-2xl md:text-3xl font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{estimatedXp}</span>
                         </div>
-                        <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">/ {levelData.xpForCurrentLevel} XP</span>
+                        <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">gained</span>
                     </div>
 
                     {/* Study Quest Card */}
@@ -106,11 +106,18 @@ export default function Header() {
                     
                     {/* Progress Center */}
                     <div className="flex-1 flex flex-col gap-1.5 sm:gap-2">
-                        <div className="text-sm sm:text-base font-medium text-text-primary">
-                            Level {levelData.level}
-                        </div>
-                        <div className="text-xs text-text-tertiary font-medium -mt-1">
-                            {levelData.displayTitle}
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <div className="text-sm sm:text-base font-medium text-text-primary">
+                                    Level {levelData.level}
+                                </div>
+                                <div className="text-xs text-text-tertiary font-medium -mt-1">
+                                    {levelData.displayTitle}
+                                </div>
+                            </div>
+                            <div className="text-xs sm:text-sm text-text-tertiary font-medium">
+                                {levelData.xpIntoLevel} / {levelData.xpForCurrentLevel} XP
+                            </div>
                         </div>
                         <div className={`w-full h-1.5 sm:h-2 rounded-full relative overflow-visible ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
                             <div 

@@ -73,7 +73,6 @@ function ReaderView() {
     // Session Summary State
     const [showSessionSummary, setShowSessionSummary] = useState(false);
     const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0 });
-    const sessionStartXp = useRef(useXpStore.getState().estimatedXp);
     const mountTime = useRef(Date.now());
     const visitedPages = useRef(new Set());
 
@@ -83,22 +82,17 @@ function ReaderView() {
     }, [pageNumber]);
 
     const handleExitReader = async () => {
-        if (flushSessionToQueue) {
-            await flushSessionToQueue();
-        }
+        // 1. Stop the timer immediately — no more minutes accumulate
+        stopTick();
 
-        const xpStore = useXpStore.getState();
-        if (xpStore.pendingXpActions.length > 0) {
-            xpStore.flushPendingXp(); // Fire and forget to eliminate latency
-        }
-        const currentXp = useXpStore.getState().estimatedXp;
-        const gained = currentXp - sessionStartXp.current;
+        // 2. Compute XP from actual session minutes (does NOT flush or award yet)
+        const xpGained = await computeSessionXp();
         const pagesRead = visitedPages.current.size;
-        const timeSpentMinutes = Math.floor((Date.now() - mountTime.current) / 60000);
         const timeSpentSeconds = Math.floor((Date.now() - mountTime.current) / 1000);
+        const timeSpentMinutes = Math.floor(timeSpentSeconds / 60);
 
-        if (gained > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
-            setSessionStats({ xpGained: Math.max(0, gained), pagesRead, timeSpentSeconds });
+        if (xpGained > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
+            setSessionStats({ xpGained: Math.max(0, xpGained), pagesRead, timeSpentSeconds });
             setShowSessionSummary(true);
         } else {
             navigate('/');
@@ -183,7 +177,7 @@ function ReaderView() {
     // ============================================
     // READING TIME TRACKER — minute-tick accumulation
     // ============================================
-    const { flushSessionToQueue } = useReadingTimeTracker({
+    const { flushSessionToQueue, stopTick, startTick, computeSessionXp } = useReadingTimeTracker({
         bookId: book?.id,
         supabaseBookId: book?.supabaseId,
         isEnabled: !!book?.supabaseId,
@@ -1416,7 +1410,22 @@ function ReaderView() {
                         xpGained={sessionStats.xpGained}
                         pagesRead={sessionStats.pagesRead}
                         timeSpentSeconds={sessionStats.timeSpentSeconds}
-                        onClose={() => navigate('/')}
+                        onClose={async () => {
+                            // User confirmed exit — flush reading time + award XP now
+                            await flushSessionToQueue();
+                            if (sessionStats.xpGained > 0) {
+                                const xpStore = useXpStore.getState();
+                                const minutes = Math.round(sessionStats.xpGained / 2);
+                                xpStore.awardXpOptimistic('reading', { minutes }, sessionStats.xpGained);
+                                xpStore.flushPendingXp();
+                            }
+                            navigate('/');
+                        }}
+                        onCancel={() => {
+                            // User clicked X — cancel exit, resume timer
+                            setShowSessionSummary(false);
+                            startTick();
+                        }}
                         onStartQuiz={() => {
                             setShowSessionSummary(false);
                             setNavState('first');
