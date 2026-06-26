@@ -77,7 +77,7 @@ function LoginPage({ onLogin }) {
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
                 <label className="text-sm font-semibold text-white/90">Password</label>
-                <a href="#" className="text-xs font-semibold text-white/70 hover:text-white hover:underline">Forgot password?</a>
+                <Link to="/forgot-password" className="text-xs font-semibold text-white/70 hover:text-white hover:underline">Forgot password?</Link>
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50 group-focus-within:text-white transition-colors">

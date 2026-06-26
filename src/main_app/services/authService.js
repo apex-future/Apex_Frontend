@@ -46,6 +46,21 @@ const authService = {
     return response.data;
   },
 
+  // Send forgot password request
+  async forgotPassword(email) {
+    const response = await apiClient.post('/api/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  // Submit new password with token
+  async resetPassword(token, newPassword) {
+    const response = await apiClient.post('/api/auth/reset-password', {
+      token,
+      new_password: newPassword,
+    });
+    return response.data;
+  },
+
   getToken() {
     return localStorage.getItem('apex_token');
   },
