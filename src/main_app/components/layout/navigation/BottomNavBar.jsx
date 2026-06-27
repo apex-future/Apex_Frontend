@@ -11,7 +11,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 function BottomNavBar() {
   const { addBookToShelf } = useContext(BookContext);
-  const { setIsNotificationOpen } = useContext(NavBarContext) || {};
+  const { setIsNotificationOpen, unreadNotificationCount } = useContext(NavBarContext) || {};
   const navRef = useRef(null);
 
   useGSAP(() => {
@@ -102,7 +102,11 @@ function BottomNavBar() {
       >
         <div className="relative">
           <Bell size={20} />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-accent-primary rounded-full border-2 border-white dark:border-zinc-900" />
+          {unreadNotificationCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-[3px] bg-accent-primary rounded-full border-2 border-white dark:border-zinc-900 flex items-center justify-center text-[8px] font-bold text-white z-20">
+              {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+            </span>
+          )}
         </div>
       </button>
 

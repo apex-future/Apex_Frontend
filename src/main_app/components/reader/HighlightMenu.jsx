@@ -131,7 +131,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         showBelow = spaceBelow > spaceAbove;
 
         const leftPos = isMobile
-            ? Math.min(window.innerWidth - 310, Math.max(10, position.x - 150))
+            ? Math.min(window.innerWidth - 320, Math.max(10, position.x - 150))
             : Math.min(window.innerWidth - 300, Math.max(10, position.x - 100));
 
         menuStyle = isMobile

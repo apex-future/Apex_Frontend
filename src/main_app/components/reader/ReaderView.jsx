@@ -196,12 +196,15 @@ function ReaderView() {
                     logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
                 }
 
-                // Streak fires once per day only
-                if (!streakFiredTodayRef.current) {
+                // Streak fires once per day only. Fetch today dynamically in case it crossed midnight
+                const today = new Date().toLocaleDateString('en-CA');
+                const lastFired = localStorage.getItem('apex_streak_fired_today');
+                
+                if (lastFired !== today) {
                     updateStreakRef.current();
                     setShowStreakCelebration(true);
-                    streakFiredTodayRef.current = true;
-                    localStorage.setItem('apex_streak_fired_today', new Date().toLocaleDateString('en-CA'));
+                    streakFiredTodayRef.current = true; // Still keep ref updated for other possible checks
+                    localStorage.setItem('apex_streak_fired_today', today);
                 }
             }, STREAK_DURATION);
         };

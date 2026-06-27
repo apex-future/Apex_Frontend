@@ -522,7 +522,7 @@ const PDFReader = ({
     if (scale > 1) {
       const el = containerRef.current;
       if (el) {
-        const isAtRightEdge = el.scrollLeft + el.clientWidth >= el.scrollWidth - 20;
+        const isAtRightEdge = el.scrollLeft + el.clientWidth >= el.scrollWidth - 50;
         if (!isAtRightEdge) return;
 
         const now = Date.now();
@@ -543,7 +543,7 @@ const PDFReader = ({
     if (scale > 1) {
       const el = containerRef.current;
       if (el) {
-        const isAtLeftEdge = el.scrollLeft <= 20;
+        const isAtLeftEdge = el.scrollLeft <= 50;
         if (!isAtLeftEdge) return;
 
         const now = Date.now();
