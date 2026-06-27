@@ -4,6 +4,8 @@ import MainApp from './main_app/MainApp'
 import LandingPage from './landing_page/LandingPage'
 import SignupPage from './landing_page/SignupPage'
 import LoginPage from './landing_page/LoginPage'
+import ForgotPasswordPage from './landing_page/ForgotPasswordPage'
+import ResetPasswordPage from './landing_page/ResetPasswordPage'
 import PrivacyPolicy from './landing_page/PrivacyPolicy'
 import authService from './main_app/services/authService'
 import syncService from './main_app/services/syncService'
@@ -244,6 +246,8 @@ function App() {
             <Route path="/" element={<LandingPage onLogin={handleLogin} deferredPrompt={deferredPrompt} />} />
             <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             {/* Redirect any other logged-out route to landing */}
             <Route path="*" element={<Navigate to="/" />} />
           </>
