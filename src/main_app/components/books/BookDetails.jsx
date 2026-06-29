@@ -19,7 +19,7 @@ import DocumentAnalytics from './book_details_related/DocumentAnalytics';
 function BookDetails() {
     const { bookId } = useParams();
     const navigate = useNavigate();
-    const { books, toggleFavorite, deleteBookFromShelves } = useContext(BookContext);
+    const { books = [], toggleFavorite, deleteBookFromShelves } = useContext(BookContext) || {};
     const { spaces, addBookToSpace, removeBookFromSpace } = useSpaceStore();
     const { resolvedTheme } = useThemeStore();
 

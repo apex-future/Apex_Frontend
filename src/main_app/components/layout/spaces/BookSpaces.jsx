@@ -15,7 +15,7 @@ import useThemeStore from '../../../store/themeStore'
  */
 function BookShelf() {
   const navigate = useNavigate();
-  const { shelves, books } = useContext(BookContext);
+  const { shelves = [], books = [] } = useContext(BookContext) || {};
   const { createSpace, addBookToSpace } = useSpaceStore();
   const { setExamDate: setGlobalExamDate } = useStudyStore();
   const { resolvedTheme } = useThemeStore();

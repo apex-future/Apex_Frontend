@@ -4,7 +4,7 @@ import { ArrowLeft, MagnifyingGlass, PencilSimple, Clock, BookOpen, CaretRight, 
 import { useNavigate } from 'react-router-dom';
 
 function TabsPage() {
-    const { books } = useContext(BookContext);
+    const { books = [] } = useContext(BookContext) || {};
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('all'); // 'all', 'recent'

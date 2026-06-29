@@ -3,7 +3,7 @@ import { BookContext } from '../../../context/BookContextInstance';
 import { Trash, PencilSimple, FloppyDisk, X, Plus, CalendarBlank, FileText, MagnifyingGlass, Note, Quotes } from '@phosphor-icons/react';
 
 function DocumentNotes({ book }) {
-  const { addNote, updateNote, deleteNote } = useContext(BookContext);
+  const { addNote, updateNote, deleteNote } = useContext(BookContext) || {};
   const [newNoteText, setNewNoteText] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');

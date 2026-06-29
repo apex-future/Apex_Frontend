@@ -4,7 +4,7 @@ import { TextAa, Trash } from '@phosphor-icons/react';
 import { BookContext } from '../../../context/BookContextInstance';
 
 function DocumentsWords({ book }) {
-    const { removeSavedWord } = useContext(BookContext);
+    const { removeSavedWord } = useContext(BookContext) || {};
     const words = book?.metadata?.words || [];
 
     if (!words || words.length === 0) {

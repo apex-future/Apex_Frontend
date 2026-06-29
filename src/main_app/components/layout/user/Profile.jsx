@@ -11,7 +11,7 @@ import OnlineStatusBadge from '../OnlineStatusBadge'
 function Profile() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { books } = useContext(BookContext);
+  const { books = [] } = useContext(BookContext) || {};
   const streakCount = useStudyStore(state => state.streakCount);
   const getGlobalStats = useQuizStore(state => state.getGlobalStats);
   const globalQuizStats = getGlobalStats();

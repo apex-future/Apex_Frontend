@@ -120,7 +120,7 @@ function DeleteConfirmModal({ noteTitle, onConfirm, onCancel }) {
 function NotebookDetailPage() {
   const { bookId } = useParams();
   const navigate = useNavigate();
-  const { books, deleteTab } = useContext(BookContext);
+  const { books = [], deleteTab } = useContext(BookContext) || {};
   const { notes, fetchNotesByBook, deleteNote, loading } = useBookNotesStore();
 
   // Custom delete modal state

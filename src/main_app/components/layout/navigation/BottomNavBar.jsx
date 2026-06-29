@@ -10,7 +10,7 @@ import { useGSAP } from '@gsap/react';
 gsap.registerPlugin(ScrollTrigger);
 
 function BottomNavBar() {
-  const { addBookToShelf } = useContext(BookContext);
+  const { addBookToShelf } = useContext(BookContext) || {};
   const { setIsNotificationOpen } = useContext(NavBarContext) || {};
   const navRef = useRef(null);
 

@@ -17,7 +17,7 @@ import SpaceAnalytics from './SpaceAnalytics'
 function SpaceDetail() {
   const { spaceId } = useParams();
   const navigate = useNavigate();
-  const { shelves, books, handleBookClick } = useContext(BookContext);
+  const { shelves = [], books = [], handleBookClick } = useContext(BookContext) || {};
   const { addBookToSpace, setActiveSpace, updateSpace } = useSpaceStore();
   const { exams, examDate: globalExamDate, examName: globalExamName, setExamDate: setGlobalExamDate } = useStudyStore();
   const { getAggregatedStatsForSpace } = useQuizStore();

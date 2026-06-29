@@ -48,7 +48,7 @@ function formatDate(isoString) {
 const STARRED_KEY = 'apex_starred_notebooks';
 
 function NotebooksPage() {
-  const { books } = useContext(BookContext);
+  const { books = [] } = useContext(BookContext) || {};
   const navigate = useNavigate();
   const { getNotebooksSummary } = useBookNotesStore();
 
