@@ -257,7 +257,7 @@ export default function SessionSummaryModal({
                     <span className="text-text-secondary">
                       {item.label}
                     </span>
-                    <span className="font-black font-sans" style={{ color: isDark ? '#A78BFA' : '#7C3AED' }}>
+                    <span className="font-black font-sans" style={{ color: showMultiplier ? (isDark ? '#A78BFA' : '#7C3AED') : (isDark ? '#F59E0B' : '#D97706') }}>
                       +{item.xp} XP
                     </span>
                   </div>

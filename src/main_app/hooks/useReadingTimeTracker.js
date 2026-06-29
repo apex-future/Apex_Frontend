@@ -121,12 +121,10 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
    */
   async function computeSessionXp() {
     if (!bookId) return 0;
-    const today = getTodayStr();
     try {
-      const record = await db.book_reading_time
-        .where('[bookId+date]').equals([bookId, today]).first();
-      const currentMinutes = record?.minutes ?? 0;
-      const sessionMinutes = Math.max(0, currentMinutes - sessionStartMinutesRef.current);
+      // Use the actual elapsed seconds tracked in memory during this active session
+      // rather than reading from Dexie, to avoid race conditions with seedLastFlushed()
+      const sessionMinutes = Math.floor(elapsedSecondsRef.current / 60);
       const xp = sessionMinutes * XP_VALUES.reading_per_minute;
       console.log('[ReadingTimeTracker] computeSessionXp:', sessionMinutes, 'min ×', XP_VALUES.reading_per_minute, '=', xp, 'XP');
       return xp;

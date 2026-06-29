@@ -147,6 +147,11 @@ export default function useAIChat(options = {}) {
             if (data.done) {
               setIsStreaming(false);
               persistChat(activeSessionId, finalMessages);
+              
+              // Only award XP if it was a successful AI response and not aborted midway
+              const { awardXpOptimistic } = useXpStore.getState();
+              awardXpOptimistic('ai_explanation', {}, 5); // 5 is XP_VALUES.ai_explanation
+              
               return;
             }
           } catch (e) {

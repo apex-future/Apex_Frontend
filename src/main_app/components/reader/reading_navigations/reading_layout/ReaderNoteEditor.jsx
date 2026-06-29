@@ -9,6 +9,7 @@ import CharacterCount from '@tiptap/extension-character-count';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import useBookNotesStore from '../../../../store/bookNotesStore';
+import useXpStore from '../../../../store/useXpStore';
 
 import {
   ArrowLeft, TextB, TextItalic, TextUnderline as UnderlineIcon, TextStrikethrough,
@@ -151,6 +152,7 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
   const titleRef = useRef('Untitled');
   const contentRef = useRef(null);
   const initializedRef = useRef(false);
+  const xpAwardedRef = useRef(false);
 
   const editor = useEditor({
     extensions: [
@@ -183,6 +185,7 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
   useEffect(() => {
     if (!editor) return;
     initializedRef.current = false;
+    xpAwardedRef.current = false;
   }, [noteId]);
 
   useEffect(() => {
@@ -238,6 +241,12 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
       const result = await saveNote(noteData);
       setLastEdited(result.updatedAt);
       setSaved(true);
+
+      // Award XP if word count is meaningful (> 5 words) and we haven't yet for this note in this session
+      if (noteData.word_count > 5 && !xpAwardedRef.current) {
+        useXpStore.getState().awardXpOptimistic('note_added', {}, 8); // 8 is XP_VALUES.note_added
+        xpAwardedRef.current = true;
+      }
     } catch (err) {
       console.error('[ReaderNoteEditor] auto-save failed:', err);
     }
