@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { WarningCircle, Eye, EyeClosed } from '@phosphor-icons/react';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
 
@@ -44,7 +44,7 @@ function LoginPage({ onLogin }) {
         <form className="w-full" onSubmit={handleLogin}>
           {error && (
             <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-[6px] flex items-center gap-2 mb-4">
-              <AlertCircle size={18} />
+              <WarningCircle size={18} weight="regular" />
               <p className="text-sm font-medium">{error}</p>
             </div>
           )}
@@ -63,28 +63,32 @@ function LoginPage({ onLogin }) {
             />
           </div>
 
-          <div className="mb-4 relative">
-            <label htmlFor="password" className="sr-only">Password</label>
-            <input 
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Password"
-              aria-label="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3.5 border border-[#D1D5DB] rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#10a37f] focus:border-transparent text-base transition-colors pr-12"
-              required
-            />
-            <button
-              type="button"
-              aria-label="Toggle password visibility"
-              aria-pressed={showPassword}
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-sm font-semibold text-white/90">Password</label>
+                <Link to="/forgot-password" className="text-xs font-semibold text-white/70 hover:text-white hover:underline">Forgot password?</Link>
+              </div>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50 group-focus-within:text-white transition-colors">
+                  <Lock size={18} />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-11 pr-12 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white transition-all backdrop-blur-md"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-black  transition-colors cursor-pointer"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
 
           <button 
             type="submit"

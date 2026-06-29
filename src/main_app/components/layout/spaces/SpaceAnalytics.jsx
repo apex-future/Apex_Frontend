@@ -219,20 +219,27 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
             <style>{`
                 .sa-grid {
                     display: grid;
-                    grid-template-columns: 1fr;
+                    grid-template-columns: minmax(0, 1fr);
                     align-items: start;
                     gap: 24px;
+                    width: 100%;
                 }
                 
                 .sa-card-limit {
                     width: 100%;
                     max-width: 680px;
                     margin: 0 auto;
+                    min-width: 0;
+                }
+
+                .sa-left, .sa-right {
+                    min-width: 0;
+                    width: 100%;
                 }
 
                 @media (min-width: 1024px) {
                     .sa-grid {
-                        grid-template-columns: 60fr 40fr;
+                        grid-template-columns: minmax(0, 60fr) minmax(0, 40fr);
                         gap: 20px;
                     }
                     .sa-card-limit {

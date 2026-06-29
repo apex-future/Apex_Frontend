@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { BookContext } from '../context/BookContextInstance';
 import useBookNotesStore from '../store/bookNotesStore';
 import {
-  ArrowLeft, Search, Star, Pencil, ChevronRight,
-  BookOpen, FileText, Bookmark, X, AlignLeft
-} from 'lucide-react';
+  ArrowLeft, MagnifyingGlass, Star, PencilSimple, CaretRight,
+  BookOpen, FileText, BookmarkSimple, X, TextAlignLeft
+} from '@phosphor-icons/react';
 
 // Extract plain text preview from JSONB content blocks
 function getContentPreview(content) {
@@ -161,17 +161,23 @@ function NotebooksPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg-elevated w-full overflow-x-hidden">
-      <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group"
-          >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          </button>
-          <h3 className="text-xl font-bold font-display text-text-primary text-center flex-1">Notebooks</h3>
-          <div className="w-10" />
+    <div className="min-h-screen w-full overflow-x-hidden">
+      <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+            >
+              <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+            </button>
+          </div>
+
+          <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <h3 className="text-base md:text-lg font-bold font-display text-text-primary text-center">Notebooks</h3>
+          </div>
+
+          <div className="w-[42px]" />
         </div>
       </div>
 
@@ -194,40 +200,40 @@ function NotebooksPage() {
           </div>
 
           <div className="relative w-full md:w-72 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary" size={18} />
+            <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-accent-primary" size={18} weight="bold" />
             <input
               type="text"
               placeholder="Search notebooks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-bg-subtle border border-border-default rounded-2xl py-3 pl-11 pr-4 text-text-primary focus:outline-none focus:border-accent-primary transition-all"
+              className="w-full bg-bg-subtle dark:bg-bg-elevated border border-black/10 dark:border-white/10 rounded-2xl py-3 pl-11 pr-4 text-text-primary focus:outline-none focus:border-accent-primary transition-all"
             />
           </div>
         </div>
 
         {notebooksData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-border-default rounded-card">
-            <BookOpen size={32} className="text-text-placeholder mb-4" />
+          <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-black/10 dark:border-white/10 rounded-card">
+            <BookOpen size={32} weight="fill" className="text-text-placeholder mb-4" />
             <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No notebooks yet</h3>
             <button onClick={() => navigate('/')} className="mt-4 bg-accent-primary text-white px-8 py-3 rounded-xl font-bold">Go to Library</button>
           </div>
         ) : filteredNotebooks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-border-default rounded-card">
+          <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-black/10 dark:border-white/10 rounded-card">
             {activeFilter === 'starred' ? (
               <>
-                <Star size={32} className="text-text-placeholder mb-4" />
+                <Star size={32} weight="fill" className="text-text-placeholder mb-4" />
                 <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No starred notebooks</h3>
                 <p className="text-text-secondary">Star your favorite notebooks to see them here.</p>
               </>
             ) : searchQuery.trim() ? (
               <>
-                <Search size={32} className="text-text-placeholder mb-4" />
+                <MagnifyingGlass size={32} weight="bold" className="text-text-placeholder mb-4" />
                 <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No results found</h3>
                 <p className="text-text-secondary">We couldn't find any notebooks matching "{searchQuery}".</p>
               </>
             ) : (
               <>
-                <BookOpen size={32} className="text-text-placeholder mb-4" />
+                <BookOpen size={32} weight="fill" className="text-text-placeholder mb-4" />
                 <h3 className="font-display text-2xl font-bold text-text-primary mb-2">No notebooks found</h3>
               </>
             )}
@@ -237,7 +243,7 @@ function NotebooksPage() {
             {filteredNotebooks.map((nb) => (
               <div
                 key={nb.bookId}
-                className="flex flex-col bg-card-glass backdrop-blur-xl border border-border-default rounded-[32px] overflow-hidden hover:-translate-y-2 transition-all duration-500 group cursor-pointer aspect-[3/4.2]"
+                className="flex flex-col bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-card overflow-hidden hover:-translate-y-2 transition-all duration-300 group cursor-pointer aspect-[3/4.2] shadow-sm hover:shadow-md"
                 onClick={() => navigate(`/notes/${nb.bookId}`)}
               >
                 {/* Book Header Section */}
@@ -271,7 +277,7 @@ function NotebooksPage() {
                         return (
                           <div
                             key={note.local_id}
-                            className={`absolute inset-x-0 h-32 bg-bg-elevated border border-border-default rounded-2xl p-4 shadow-xl transition-all duration-500 ease-out flex flex-col gap-2 ${offsets[idx]} ${hoverOffsets[idx]}`}
+                            className={`absolute inset-x-0 h-32 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-2xl p-4 shadow-sm transition-all duration-300 ease-out flex flex-col gap-2 ${offsets[idx]} ${hoverOffsets[idx]}`}
                           >
                             <h5 className="text-xs font-bold text-text-primary truncate">{note.title || 'Untitled'}</h5>
                             <p className="text-[10px] text-text-secondary line-clamp-2 leading-relaxed">
@@ -283,7 +289,7 @@ function NotebooksPage() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center text-text-placeholder opacity-40">
-                      <FileText size={40} strokeWidth={1} />
+                      <FileText size={40} strokeWidth={1} weight="fill" />
                       <p className="text-xs mt-3 font-medium">Empty notebook</p>
                     </div>
                   )}
@@ -311,14 +317,14 @@ function NotebooksPage() {
                         onClick={(e) => { e.stopPropagation(); toggleStar(nb.bookId); }}
                         className={`p-2 rounded-xl transition-all ${nb.isStarred ? 'text-amber-400 bg-amber-400/10' : 'text-text-tertiary hover:bg-bg-subtle'}`}
                       >
-                        <Star size={15} fill={nb.isStarred ? 'currentColor' : 'none'} />
+                        <Star size={15} weight={nb.isStarred ? 'fill' : 'regular'} />
                       </button>
 
                       <button 
                         onClick={(e) => { e.stopPropagation(); openRenameModal(nb.bookId, nb.bookTitle); }}
                         className="p-2 text-text-tertiary hover:text-accent-primary transition-colors rounded-xl"
                       >
-                        <Pencil size={14} />
+                        <PencilSimple size={14} weight="bold" />
                       </button>
                     </div>
                   </div>
@@ -334,14 +340,14 @@ function NotebooksPage() {
 
       {renameModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setRenameModal(null)}>
-          <div className="bg-bg-elevated rounded-[32px] p-8 w-full max-w-sm shadow-2xl border border-border-default" onClick={e => e.stopPropagation()}>
+          <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-8 w-full max-w-sm shadow-xl border-t border-black/10 dark:border-white/10" onClick={e => e.stopPropagation()}>
             <h3 className="font-display text-xl font-bold text-text-primary">Rename Notebook</h3>
             <p className="text-sm text-text-secondary mt-1.5">Give this notebook a new name — anything you like.</p>
             <input
               type="text"
               value={renameValue}
               onChange={e => setRenameValue(e.target.value)}
-              className="w-full mt-6 bg-bg-subtle border border-border-default rounded-2xl py-4 px-6 text-text-primary focus:outline-none focus:border-accent-primary"
+              className="w-full mt-6 bg-bg-subtle dark:bg-bg-elevated border border-black/10 dark:border-white/10 rounded-2xl py-4 px-6 text-text-primary focus:outline-none focus:border-accent-primary transition-all"
               autoFocus
             />
             <div className="flex justify-end gap-3 mt-8">

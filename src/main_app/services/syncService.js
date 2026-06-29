@@ -5,6 +5,8 @@ import authService from './authService';
 import useAuthStore from '../store/authStore';
 import useSettingsStore from '../store/settingsStore';
 import useSpaceStore from '../store/spaceStore';
+import useXpStore from '../store/useXpStore';
+import { XP_VALUES } from '../../config/xpConfig';
 import { cleanUserMessage } from '../utils/aiUtils';
 
 // Helper: generate a local ID
@@ -188,7 +190,7 @@ const syncService = {
       if (totalPages > 1) formData.append('total_pages', totalPages.toString());
 
       const response = await apiClient.post('/api/books/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-TextT': 'multipart/form-data' },
       });
 
       if (response.data && response.data.id) {
@@ -269,7 +271,7 @@ const syncService = {
         cloudTimestamps = tsResponse.data;
         serverTime = tsResponse.data.server_time;
         if (import.meta.env.DEV) console.log('[Apex Sync] Cloud timestamps received:', cloudTimestamps);
-        if (import.meta.env.DEV) console.log('[Apex Sync] Server time anchor:', serverTime);
+        if (import.meta.env.DEV) console.log('[Apex Sync] Desktop time anchor:', serverTime);
       } catch (err) {
         if (import.meta.env.DEV) console.error('[Apex Sync] Failed to fetch timestamps — doing full pull:', err);
         // Fallback: pull everything if timestamp endpoint fails
@@ -701,6 +703,9 @@ const syncService = {
     // Step 1: Save to Dexie immediately
     const dexieId = await db.highlights.add(dexieRecord);
 
+    // Award XP for creating a highlight
+    useXpStore.getState().awardXpOptimistic('highlight_created', {}, XP_VALUES.highlight_created);
+
     // Step 2: If online, resolve the Supabase book UUID and save directly
     if (navigator.onLine) {
       const supabaseBookId = await this._resolveBookId(bookId, highlightData._supabase_book_id);
@@ -758,9 +763,12 @@ const syncService = {
   },
 
   updateHighlight: async function (supabaseId, updateData) {
-    if (navigator.onLine && supabaseId) {
+    if (navigator.onLine) {
       try {
         await apiClient.put(`/api/highlights/${supabaseId}`, updateData);
+        if (updateData.note && updateData.note.trim() !== '') {
+          useXpStore.getState().awardXpOptimistic('note_added', {}, XP_VALUES.note_added);
+        }
       } catch (error) {
         if (import.meta.env.DEV) console.error('Failed to update highlight on Supabase:', error);
       }
@@ -1040,6 +1048,12 @@ const syncService = {
     const dexieId = await db.tabs.add(dexieRecord);
     if (import.meta.env.DEV) console.log('[Apex] Tab saved to Dexie:', dexieId);
 
+    // Award XP if word count > 5
+    const wordCount = dexieRecord.text.trim().split(/\s+/).filter(Boolean).length;
+    if (wordCount > 5) {
+      useXpStore.getState().awardXpOptimistic('note_added', {}, XP_VALUES.note_added);
+    }
+
     // Step 2: If online, resolve Supabase book UUID and save
     if (navigator.onLine) {
       const supabaseBookId = await this._resolveBookId(bookId, tabData._supabase_book_id);
@@ -1157,7 +1171,10 @@ const syncService = {
       dexieId = existing.id;
       await db.book_notes.update(dexieId, dexieRecord);
     } else {
-      dexieId = await db.book_notes.add(dexieRecord);
+      // Award XP for creating a note if word count > 5
+      if (dexieRecord.word_count > 5) {
+        useXpStore.getState().awardXpOptimistic('note_added', {}, XP_VALUES.note_added);
+      }
     }
     if (import.meta.env.DEV) console.log('[Apex] Book note saved to Dexie:', dexieId);
 
@@ -1500,7 +1517,7 @@ const syncService = {
           console.log('[Apex Sync] In-session retries exhausted — marking failed for:', freshBook.title);
           await db.books.update(dexieBookId, { sync_status: 'failed', sync_retry_count: currentRetry });
         } else {
-          // Schedule the next backoff retry (recursive, but deduped by the Map check)
+          // Schedule the next backoff retry (recursive, but deduped by the MapTrifold check)
           await this._scheduleBookRetry(dexieBookId);
         }
       }

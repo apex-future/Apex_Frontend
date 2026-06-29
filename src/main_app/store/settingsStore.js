@@ -65,7 +65,7 @@ const useSettingsStore = create(
        */
       _syncToSupabase: async () => {
         if (!navigator.onLine) {
-          if (import.meta.env.DEV) console.log('[Apex Settings] Offline — settings saved locally, will sync when online');
+          if (import.meta.env.DEV) console.log('[Apex Gear] Offline — settings saved locally, will sync when online');
           return;
         }
         try {
@@ -92,7 +92,7 @@ const useSettingsStore = create(
           }
           if (import.meta.env.DEV) console.log('[Apex Settings] Synced to Supabase successfully');
         } catch (err) {
-          if (import.meta.env.DEV) console.error('[Apex Settings] Failed to sync to Supabase:', err);
+          if (import.meta.env.DEV) console.error('[Apex Gear] Failed to sync to Supabase:', err);
         }
       },
 
@@ -111,12 +111,12 @@ const useSettingsStore = create(
         // If no anchor exists (fresh device) — cloud always wins
         // If no cloud timestamp — skip seed, local is safer
         if (!cloudUpdatedAt) {
-          if (import.meta.env.DEV) console.log('[Apex Settings] No cloud timestamp — keeping local settings');
+          if (import.meta.env.DEV) console.log('[Apex Gear] No cloud timestamp — keeping local settings');
           return;
         }
 
         if (lastSyncedAt && cloudUpdatedAt <= lastSyncedAt) {
-          if (import.meta.env.DEV) console.log('[Apex Settings] Local settings are current — skipping cloud seed',
+          if (import.meta.env.DEV) console.log('[Apex Gear] Local settings are current — skipping cloud seed',
             '(cloud:', cloudUpdatedAt, 'lastSynced:', lastSyncedAt, ')');
           return;
         }
@@ -146,7 +146,7 @@ const useSettingsStore = create(
        * Pushes any offline setting changes to Supabase
        */
       syncOnReconnect: () => {
-        if (import.meta.env.DEV) console.log('[Apex Settings] Back online — syncing settings');
+        if (import.meta.env.DEV) console.log('[Apex Gear] Back online — syncing settings');
         get()._syncToSupabase();
       },
     }),

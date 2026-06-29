@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import ExamReminder from './ExamReminder';
 import LastReadCard from './LastReadCard';
 import StreakCard from './StreakCard';
@@ -78,7 +78,7 @@ const FeaturedSlider = ({ lastReadBook, isLoading }) => {
                 ))}
             </div>
 
-            {/* Navigation Indicators (Expanded Pills) */}
+            {/* NavigationArrow Indicators (Expanded Pills) */}
             {slides.length > 1 && (
                 <div className="flex justify-center gap-3">
                     {slides.map((_, i) => (
@@ -88,7 +88,7 @@ const FeaturedSlider = ({ lastReadBook, isLoading }) => {
                             className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
                                 i === currentIndex 
                                     ? 'w-12 bg-accent-primary animate-pulse-subtle' 
-                                    : 'w-8 bg-border-default hover:bg-text-tertiary hover:w-16'
+                                    : 'w-8 bg-black/5 dark:bg-white/5 hover:bg-text-tertiary hover:w-16'
                             }`}
                             aria-label={`Go to slide ${i + 1}`}
                         />

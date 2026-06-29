@@ -152,6 +152,7 @@ const PDFReader = ({
   goToPage,
   highlights = [],
   locked = false,
+  swipeLocked = false,
   scrollOrientation = 'vertical',
   onPageChange,
 }) => {
@@ -514,9 +515,37 @@ const PDFReader = ({
 
   const lastEdgeHit = useRef({ left: 0, right: 0 });
 
+  const handleWheel = useCallback((e) => {
+    if (isVertical) return;
+    if (swipeLocked || window.getSelection()?.toString().trim()) return;
+    
+    const now = Date.now();
+    
+    // Reset accumulator if it's been a while since last event
+    if (now - (window.lastWheelEventTime || 0) > 150) {
+        window.wheelDeltaY = 0;
+    }
+    window.lastWheelEventTime = now;
+    
+    window.wheelDeltaY = (window.wheelDeltaY || 0) + e.deltaY;
+    
+    // Cooldown between page flips
+    if (now - (window.lastWheelFlipTime || 0) < 300) return;
+
+    if (window.wheelDeltaY > 30) {
+      window.lastWheelFlipTime = now;
+      window.wheelDeltaY = 0;
+      onNextPage?.();
+    } else if (window.wheelDeltaY < -30) {
+      window.lastWheelFlipTime = now;
+      window.wheelDeltaY = 0;
+      onPrevPage?.();
+    }
+  }, [isVertical, swipeLocked, onNextPage, onPrevPage]);
+
   // Swipe handlers — only for horizontal mode
   const handleSwipedLeft = () => {
-    if (locked || isVertical) return;
+    if (swipeLocked || isVertical) return;
     // Don't navigate during text selection
     if (window.getSelection()?.toString().trim()) return;
     if (scale > 1) {
@@ -537,7 +566,7 @@ const PDFReader = ({
   };
 
   const handleSwipedRight = () => {
-    if (locked || isVertical) return;
+    if (swipeLocked || isVertical) return;
     // Don't navigate during text selection
     if (window.getSelection()?.toString().trim()) return;
     if (scale > 1) {
@@ -583,6 +612,7 @@ const PDFReader = ({
       {...swipeHandlers}
       ref={mergedRef}
       onScroll={isVertical ? handleVerticalScroll : undefined}
+      onWheel={!isVertical ? handleWheel : undefined}
       className={`flex-1 flex flex-col items-center h-full max-h-full ${isDesktop ? 'p-4' : 'p-0 w-full'} relative ${locked ? 'overflow-hidden' : 'overflow-auto touch-auto custom-scrollbar'}`}
       id="pdf-container"
     >

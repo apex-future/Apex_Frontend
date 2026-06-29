@@ -1009,6 +1009,7 @@ export const BookProvider = ({ children }) => {
         };
       }),
     })));
+    return uiTab;
   }, []);
 
   const updateTab = useCallback(async (bookId, tabId, text) => {

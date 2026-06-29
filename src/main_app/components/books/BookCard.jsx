@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Heart, Eye, FolderPlus, Trash, X, Info, Edit2 } from "lucide-react";
+import { Heart, Eye, FolderSimplePlus, Trash, X, Info, PencilSimple } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
 import ConfirmModal from '../ui/ConfirmModal';
@@ -83,7 +83,7 @@ export default function BookCard({ book, onClick }) {
     return (
         <div
             onClick={() => onClick && onClick(book.id)}
-            className="group relative flex flex-col p-4 bg-card-glass backdrop-blur-md border border-border-default rounded-card transition-all duration-300 cursor-pointer hover:border-text-tertiary shadow-sm"
+            className="group relative flex flex-col p-4 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-card transition-all duration-300 cursor-pointer shadow-sm"
         >
             <div className="flex flex-row gap-4">
                 {/* Cover - Left Side */}
@@ -125,11 +125,11 @@ export default function BookCard({ book, onClick }) {
                           e.stopPropagation();
                           setSyncPopover(prev => prev ? null : book.sync_status);
                         }}
-                        className={`absolute -top-1 -left-1 z-20 w-5 h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[#08090C] transition-transform hover:scale-125
+                        className={`absolute -top-1 -left-1 z-20 w-5 h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[#1C1C20] transition-transform hover:scale-125
                           ${book.sync_status === 'pending' ? 'bg-amber-400 text-white' : 'bg-red-500 text-white'}`}
                         title={book.sync_status === 'pending' ? 'Syncing soon' : 'Sync failed'}
                       >
-                        <Info size={11} strokeWidth={2.5} />
+                        <Info size={11} weight="bold" />
                       </button>
                     )}
                 </div>
@@ -153,7 +153,7 @@ export default function BookCard({ book, onClick }) {
                         {/* Icon + Title */}
                         <div className="flex items-center gap-2.5 mb-3">
                           <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${syncPopover === 'pending' ? 'bg-amber-400/15 text-amber-400' : 'bg-red-500/15 text-red-400'}`}>
-                            <Info size={16} strokeWidth={2} />
+                            <Info size={16} weight="bold" />
                           </div>
                           <h4 className="text-sm font-bold" style={{ color: 'rgb(var(--text-primary))' }}>
                             {syncPopover === 'pending' ? 'Syncing soon' : 'Sync failed'}
@@ -193,7 +193,7 @@ export default function BookCard({ book, onClick }) {
                         <p className="text-sm text-text-tertiary mb-3 text-left">by {book.author || "N/A"}</p>
 
                         {/* Progress Bar */}
-                        <div className="w-full bg-border-default rounded-full h-1">
+                        <div className="w-full bg-black/5 dark:bg-white/5 rounded-full h-1">
                             <div
                                 className="bg-accent-primary h-1 rounded-full transition-all duration-500"
                                 style={{ width: `${book.progress}%` }}
@@ -212,27 +212,27 @@ export default function BookCard({ book, onClick }) {
                             onClick={handleFavoriteClick}
                             className={`transition-colors ${book.isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
                         >
-                            <Heart size={20} fill={book.isFavorite ? 'currentColor' : 'none'} />
+                            <Heart size={20} weight={book.isFavorite ? 'fill' : 'regular'} />
                         </button>
                         <button
                             className="text-gray-400 hover:text-indigo-600 transition-colors"
                             onClick={handleDetailsClick}
                         >
-                            <Eye size={20} />
+                            <Eye size={20} weight="bold" />
                         </button>
                         <button
                             onClick={handleBookmarkClick}
                             className={`transition-colors ${isInAnySpace ? 'text-accent-primary' : 'text-gray-400 hover:text-accent-primary'}`}
                             title="Add to Bookspace"
                         >
-                            <FolderPlus size={20} fill={isInAnySpace ? 'currentColor' : 'none'} />
+                            <FolderSimplePlus size={20} weight={isInAnySpace ? 'fill' : 'regular'} />
                         </button>
                         <button
                             onClick={handleDeleteClick}
                             className="text-gray-400 hover:text-red-500 transition-colors ml-1"
                             title="Delete book"
                         >
-                            <Trash size={20} />
+                            <Trash size={20} weight="bold" />
                         </button>
                     </div>
                 </div>
@@ -280,7 +280,7 @@ export default function BookCard({ book, onClick }) {
                                 onClick={() => setShowSpaceModal(false)} 
                                 className="p-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
                             >
-                                <X size={18} />
+                                <X size={18} weight="bold" />
                             </button>
                         </div>
                         
@@ -310,7 +310,7 @@ export default function BookCard({ book, onClick }) {
                             {spaces.filter(s => !s.isSystem).length === 0 && (
                                 <div className="text-center py-8 px-4">
                                     <div className="w-12 h-12 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <FolderPlus size={20} className="text-neutral-400" />
+                                        <FolderSimplePlus size={20} weight="bold" className="text-neutral-400" />
                                     </div>
                                     <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">No custom spaces yet</p>
                                     <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Create spaces to organize your library.</p>
@@ -324,8 +324,8 @@ export default function BookCard({ book, onClick }) {
                                 onClick={handleConfirmAddToSpace}
                                 className="w-full py-3.5 px-4 bg-accent-primary hover:bg-accent-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-accent-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                             >
-                                {isInAnySpace ? <Edit2 size={18} fill="currentColor" /> : <FolderPlus size={18} fill="currentColor" />}
-                                <span>{isInAnySpace ? "Edit" : "Add to Bookspace"}</span>
+                                {isInAnySpace ? <PencilSimple size={18} weight="fill" /> : <FolderSimplePlus size={18} weight="fill" />}
+                                <span>{isInAnySpace ? "PencilSimple" : "Add to Bookspace"}</span>
                             </button>
                         </div>
                     </div>

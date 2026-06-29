@@ -31,6 +31,7 @@ import NotificationDrawer from './components/notifications/NotificationDrawer';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
+import Lenis from 'lenis';
 
 
 function MainApp({ onLogout }) {
@@ -59,8 +60,40 @@ function MainApp({ onLogout }) {
     });
   }, []);
 
+  React.useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    })
+
+    window.__lenis = lenis
+
+    function raf(time) {
+      lenis.raf(time)
+      requestAnimationFrame(raf)
+    }
+
+    const rafId = requestAnimationFrame(raf)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      lenis.destroy()
+      window.__lenis = null
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (!window.__lenis) return
+    if (location.pathname.startsWith('/reader') || location.pathname === '/ai') {
+      window.__lenis.stop()
+    } else {
+      window.__lenis.start()
+    }
+  }, [location.pathname])
+
   return (
-    <div className={`flex relative min-h-screen bg-bg-elevated ${resolvedTheme}`}>
+    <div className={`flex relative min-h-screen bg-bg-primary ${resolvedTheme}`}>
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>

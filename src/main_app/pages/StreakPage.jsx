@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Flame, ChevronLeft, ChevronRight, Trophy, Calendar, Target } from 'lucide-react';
+import { ArrowLeft, Fire, CaretLeft, CaretRight, Trophy, Calendar, Target } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import useStudyStore from '../store/studyStore';
 
@@ -52,18 +52,22 @@ function StreakPage() {
   return (
     <div className="min-h-screen bg-bg-primary pb-24">
       {/* Header - Glassmorphic matching Dictionary style */}
-      <div className="sticky top-0 z-50 bg-card-glass/80 backdrop-blur-xl border-b border-border-default">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-white/5 rounded-xl transition-all group"
-          >
-            <ArrowLeft size={20} className="text-text-secondary group-hover:-translate-x-1 transition-transform" />
-          </button>
+      <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+            >
+              <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+            </button>
+          </div>
 
-          <h1 className="text-xl font-bold font-display text-text-primary">Streak</h1>
+          <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <h1 className="text-base md:text-lg font-bold font-display text-text-primary">Streak</h1>
+          </div>
 
-          <div className="w-10"></div> {/* Spacer to center title */}
+          <div className="w-[42px]" /> {/* Spacer to center title */}
         </div>
       </div>
 
@@ -83,8 +87,9 @@ function StreakPage() {
             <div className="flex items-center justify-center gap-2 sm:gap-4 relative mb-2">
               <div className="relative flex items-center justify-center">
                 <div className="absolute inset-0 blur-xl bg-orange-400/40 rounded-full scale-[2]" />
-                <Flame
+                  <Fire
                   size={56}
+                  weight="fill"
                   className="relative text-orange-500 fill-orange-500 drop-shadow-md sm:w-[72px] sm:h-[72px]"
                 />
               </div>
@@ -106,9 +111,9 @@ function StreakPage() {
           <div className="grid grid-cols-3 md:flex md:flex-col gap-2 md:gap-5 h-full">
 
             {/* Current Streak Stat Box */}
-            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-2xl border-2 border-border-default p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 hover:border-orange-500/30 transition-all group">
+            <div className="relative overflow-hidden bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md rounded-2xl border-t border-black/10 dark:border-white/10 p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 shadow-sm hover:shadow-md transition-all group">
               <div className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-4 size-16 sm:size-20 md:size-28 text-orange-500/10 rotate-12 group-hover:text-orange-500/20 group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 pointer-events-none ease-in-out">
-                <Flame size="100%" strokeWidth={1} />
+                <Fire size="100%" strokeWidth={1} weight="fill" />
               </div>
               <div className="relative z-10 flex flex-col items-center md:items-end text-center md:text-right">
                 <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary tabular-nums tracking-tight mb-0.5">{streakCount}</div>
@@ -117,9 +122,9 @@ function StreakPage() {
             </div>
 
             {/* Longest Streak Stat Box */}
-            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-2xl border-2 border-border-default p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 hover:border-amber-500/30 transition-all group">
+            <div className="relative overflow-hidden bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md rounded-2xl border-t border-black/10 dark:border-white/10 p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 shadow-sm hover:shadow-md transition-all group">
               <div className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-4 size-16 sm:size-20 md:size-28 text-amber-500/10 rotate-12 group-hover:text-amber-500/20 group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 pointer-events-none ease-in-out">
-                <Trophy size="100%" strokeWidth={1} />
+                <Trophy size="100%" strokeWidth={1} weight="fill" />
               </div>
               <div className="relative z-10 flex flex-col items-center md:items-end text-center md:text-right">
                 <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary tabular-nums tracking-tight mb-0.5">{longestStreak}</div>
@@ -128,9 +133,9 @@ function StreakPage() {
             </div>
 
             {/* Days Tracked Stat Box */}
-            <div className="relative overflow-hidden bg-card-glass backdrop-blur-xl rounded-2xl border-2 border-border-default p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 hover:border-blue-500/30 transition-all group">
+            <div className="relative overflow-hidden bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md rounded-2xl border-t border-black/10 dark:border-white/10 p-2 sm:p-3 md:p-5 flex flex-col justify-center flex-1 shadow-sm hover:shadow-md transition-all group">
               <div className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-4 size-16 sm:size-20 md:size-28 text-blue-500/10 rotate-12 group-hover:text-blue-500/20 group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 pointer-events-none ease-in-out">
-                <Calendar size="100%" strokeWidth={1} />
+                <Calendar size="100%" strokeWidth={1} weight="fill" />
               </div>
               <div className="relative z-10 flex flex-col items-center md:items-end text-center md:text-right">
                 <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary tabular-nums tracking-tight mb-0.5">{streakHistory.length}</div>
@@ -141,16 +146,15 @@ function StreakPage() {
           </div>
         </div>
 
-        {/* Calendar Section (Centered, max-w-550px) */}
         <div className="max-w-[550px] mx-auto w-full">
-          <div className="bg-card-glass backdrop-blur-xl rounded-3xl border-2 border-border-default p-5 sm:p-6 shadow-sm">
+          <div className="bg-bg-subtle dark:bg-bg-primary border-t border-black/10 dark:border-white/10 rounded-3xl p-5 sm:p-6 shadow-sm">
             {/* Month header with navigation */}
             <div className="flex items-center justify-between mb-5">
               <button
                 onClick={prevMonth}
                 className="p-2 hover:bg-bg-subtle rounded-xl transition-all active:scale-90"
               >
-                <ChevronLeft size={20} className="text-text-secondary" />
+                <CaretLeft size={20} weight="bold" className="text-text-secondary" />
               </button>
               <h3 className="text-base font-bold text-text-primary tracking-tight">
                 {monthName}
@@ -159,7 +163,7 @@ function StreakPage() {
                 onClick={nextMonth}
                 className="p-2 hover:bg-bg-subtle rounded-xl transition-all active:scale-90"
               >
-                <ChevronRight size={20} className="text-text-secondary" />
+                <CaretRight size={20} weight="bold" className="text-text-secondary" />
               </button>
             </div>
 

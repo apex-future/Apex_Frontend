@@ -1,5 +1,5 @@
 import React from 'react'
-import { Sparkles, Pen, Book, PlaySquare } from 'lucide-react';
+import { Sparkle, PencilSimple, Book, YoutubeLogo } from '@phosphor-icons/react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -36,7 +36,7 @@ function Features() {
             <div className="feature-list grid sm:grid-cols-2 max-w-[1000px] gap-8 w-[90%] mx-auto mt-8">
                 <div className="feature-card-wrapper h-full">
                     <article className='feature-card relative bg-gray-200 shadow-inner shadow-white border-2 p-6 rounded-2xl backdrop-blur-md min-h-[256px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
-                        <Sparkles className="inline-block size-12   text-purple-500  " aria-hidden="true" />
+                        <Sparkle className="inline-block size-12   text-purple-500  " aria-hidden="true" weight="fill" />
 
                         <div className='paragraph-overlay h-full flex flex-col gap-6 rounded-lg p-2 mt-4'>
                             <div className='font-display font-semibold text-3xl' aria-label="Availability">
@@ -57,7 +57,7 @@ function Features() {
                 <div className="feature-card-wrapper h-full">
                     <article className='feature-card relative bg-gray-200 shadow-inner shadow-white border-2 p-6 rounded-2xl backdrop-blur-md min-h-[256px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
 
-                        <Pen className="inline-block size-10  text-yellow-500 " aria-hidden="true" />
+                        <PencilSimple className="inline-block size-10  text-yellow-500 " aria-hidden="true" weight="fill" />
                         <div className='paragraph-overlay h-full flex flex-col gap-4 rounded-lg p-2'>
                             <div className='font-display font-semibold text-7xl' aria-label="Limitless">
                                 ∞
@@ -77,7 +77,7 @@ function Features() {
                 <div className="feature-card-wrapper h-full">
                     <article className='feature-card relative bg-gray-200 shadow-inner shadow-white border-2 p-6 rounded-2xl backdrop-blur-md min-h-[256px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
 
-                        <Book className="inline-block size-12  text-blue-500 " aria-hidden="true" />
+                        <Book className="inline-block size-12  text-blue-500 " aria-hidden="true" weight="fill" />
 
                         <div className='paragraph-overlay h-full flex flex-col gap-6 rounded-lg p-2 mt-4'>
                             <div className='font-display font-semibold text-3xl' aria-label="Over five hundred thousand">
@@ -99,7 +99,7 @@ function Features() {
                     <article className='feature-card relative bg-gray-200 shadow-inner shadow-white border-2 p-6 rounded-2xl backdrop-blur-md min-h-[256px] h-full flex flex-col overflow-hidden hover:scale-105 transition-transform duration-300'>
 
 
-                        <PlaySquare className="inline-block size-12  text-red-500 " aria-hidden="true" />
+                        <YoutubeLogo className="inline-block size-12  text-red-500 " aria-hidden="true" weight="fill" />
                         <div className='paragraph-overlay h-full flex flex-col gap-6 rounded-lg p-2 mt-4'>
                             <div className='font-display font-semibold text-3xl' aria-label="Over ten thousand">
                                 10K +

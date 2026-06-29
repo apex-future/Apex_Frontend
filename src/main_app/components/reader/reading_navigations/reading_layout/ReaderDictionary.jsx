@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Volume2, Loader2, Book, WifiOff } from 'lucide-react';
+import { MagnifyingGlass, X, SpeakerHigh, Spinner, Book, WifiSlash } from '@phosphor-icons/react';
 import dictionaryService from '../../../../services/dictionaryService';
 
 function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
@@ -75,14 +75,14 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
             onClick={onClose}
         >
             <div 
-                className="bg-bg-elevated w-full max-w-lg rounded-card shadow-2xl border border-border-default overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[80vh]"
+                className="bg-white w-full max-w-lg rounded-card shadow-sm hover:shadow-md transition-shadow border border-transparent border-t-gray-200 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[80vh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="p-6 border-b border-border-default flex items-center justify-between bg-bg-elevated/50 backdrop-blur-md sticky top-0 z-10">
                     <div className="flex items-center gap-3">
                         <div className="size-10 rounded-xl bg-accent-primary/10 flex items-center justify-center text-accent-primary">
-                            <Book size={20} />
+                            <Book size={20} weight="bold" />
                         </div>
                         <h2 className="text-xl font-bold font-display text-text-primary tracking-tight">Quick Dictionary</h2>
                     </div>
@@ -90,22 +90,22 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                         onClick={onClose}
                         className="p-2 hover:bg-bg-subtle rounded-xl text-text-tertiary transition-colors"
                     >
-                        <X size={20} />
+                        <X size={20} weight="bold" />
                     </button>
                 </div>
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-                    {/* Search Input */}
+                    {/* MagnifyingGlass Input */}
                     <form onSubmit={handleSearch} className="mb-6">
                         <div className="relative group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-accent-primary transition-colors" size={18} />
+                            <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-accent-primary transition-colors" size={18} weight="bold" />
                             <input
                                 type="text"
                                 value={word}
                                 onChange={(e) => setWord(e.target.value)}
                                 placeholder="Search for a word..."
-                                className="w-full h-14 pl-12 pr-6 bg-bg-subtle border-2 border-border-default rounded-2xl text-base font-medium text-text-primary focus:outline-none focus:border-accent-primary transition-all placeholder:text-sm font-sans"
+                                className="w-full h-14 pl-12 pr-6 bg-white shadow-sm rounded-2xl text-base font-medium text-text-primary focus:outline-none transition-all placeholder:text-sm font-sans"
                                 autoFocus
                             />
                         </div>
@@ -113,7 +113,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
 
                     {loading && (
                         <div className="flex flex-col items-center justify-center py-12 text-text-tertiary">
-                            <Loader2 size={32} className="animate-spin mb-3 text-accent-primary" />
+                            <Spinner size={32} weight="bold" className="animate-spin mb-3 text-accent-primary" />
                             <p className="text-sm font-medium font-sans">Looking up definition...</p>
                         </div>
                     )}
@@ -121,7 +121,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                     {error && (
                         <div className="py-8 text-center bg-red-50/50 rounded-2xl border border-red-100 p-6">
                             <div className="text-red-500 mb-3 flex justify-center">
-                                {error.includes('internet') ? <WifiOff size={28} /> : <X size={28} />}
+                                {error.includes('internet') ? <WifiSlash size={28} weight="bold" /> : <X size={28} weight="bold" />}
                             </div>
                             <p className="text-sm text-red-700 font-medium font-sans">
                                 {error.includes('internet') 
@@ -134,7 +134,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
 
                     {definition && !loading && (
                         <div className="animate-in fade-in duration-500">
-                            <div className="flex items-center justify-between mb-6 pb-6 border-b border-border-default">
+                            <div className="flex items-center justify-between mb-6 pb-6">
                                 <div>
                                     <h3 className="text-3xl font-black font-display text-text-primary capitalize tracking-tight mb-1">{definition.word}</h3>
                                     <p className="text-accent-primary font-bold italic text-base">
@@ -146,7 +146,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                         onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)}
                                         className="size-12 bg-accent-primary/10 text-accent-primary rounded-xl flex items-center justify-center hover:bg-accent-primary hover:text-white transition-all active:scale-95"
                                     >
-                                        <Volume2 size={24} />
+                                        <SpeakerHigh size={24} weight="fill" />
                                     </button>
                                 )}
                             </div>
@@ -158,7 +158,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                             <span className="text-[10px] font-black uppercase tracking-widest text-accent-primary bg-accent-primary/10 px-2 py-0.5 rounded">
                                                 {meaning.partOfSpeech}
                                             </span>
-                                            <div className="h-px flex-1 bg-border-default"></div>
+                                            <div className="h-px flex-1"></div>
                                         </div>
                                         <ul className="space-y-4">
                                             {(meaning.definitions || []).slice(0, 3).map((def, defIdx) => (
@@ -169,7 +169,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                                             {def.definition}
                                                         </p>
                                                         {def.example && (
-                                                            <p className="text-sm text-text-tertiary italic pl-4 border-l-2 border-border-default font-sans mt-2">
+                                                            <p className="text-sm text-text-tertiary italic pl-4 font-sans mt-2">
                                                                 "{def.example}"
                                                             </p>
                                                         )}
@@ -187,7 +187,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                             ))}
                                         </ul>
                                         {meaning.synonyms?.length > 0 && (
-                                            <div className="pt-3 border-t border-border-default/50">
+                                            <div className="pt-3">
                                                 <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">Synonyms</p>
                                                 <div className="flex flex-wrap gap-1.5">
                                                     {meaning.synonyms.slice(0, 5).map((syn, synIdx) => (
@@ -206,17 +206,17 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
 
                     {!word && !definition && !loading && (
                         <div className="py-12 text-center opacity-40">
-                            <Book size={48} className="mx-auto mb-4" strokeWidth={1} />
+                            <Book size={48} weight="regular" className="mx-auto mb-4" />
                             <p className="text-sm font-medium font-sans">Enter a word to see its definition.</p>
                         </div>
                     )}
 
-                    {/* Offline Dictionary Settings */}
+                    {/* Offline Dictionary Gear */}
                     {!loading && (
-                        <div className="mt-8 p-4 bg-bg-subtle rounded-2xl border border-border-default animate-in fade-in slide-in-from-bottom-2">
+                        <div className="mt-8 p-4 bg-white shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-2">
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="text-sm font-bold text-text-primary flex items-center gap-2">
-                                    <WifiOff size={16} className="text-accent-primary" />
+                                    <WifiSlash size={16} weight="bold" className="text-accent-primary" />
                                     Offline Dictionary
                                 </h4>
                                 {offlineReady ? (
@@ -232,9 +232,9 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                             {!downloadingOffline && (
                                 <button 
                                     onClick={handleDownloadOfflineDictionary}
-                                    className="w-full py-2.5 bg-bg-elevated border-2 border-border-default hover:border-accent-primary hover:text-accent-primary text-text-secondary text-sm font-bold rounded-xl transition-all shadow-sm"
+                                    className="w-full py-2.5 bg-white shadow-sm hover:shadow-md hover:text-accent-primary text-text-secondary text-sm font-bold rounded-xl transition-all"
                                 >
-                                    {offlineReady ? 'Update Dictionary' : 'Download Dictionary'}
+                                    {offlineReady ? 'Update Dictionary' : 'DownloadSimple Dictionary'}
                                 </button>
                             )}
                             

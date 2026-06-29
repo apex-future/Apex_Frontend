@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import { Menu, RotateCcw, Sparkles, ZoomIn, ZoomOut, BrainCircuit } from 'lucide-react'
+import { List, ArrowCounterClockwise, Sparkle, MagnifyingGlassPlus, MagnifyingGlassMinus, Brain } from '@phosphor-icons/react';
 import { gsap } from 'gsap'
 
 function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pdfControls }) {
@@ -28,24 +28,24 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
       className='absolute top-0 left-0 right-0 z-50 p-2 pr-4 sm:pr-6 pointer-events-auto'
     >
       <div className='flex top-bar pb-4 items-start sm:items-center justify-between w-full'>
-        {/* Left: Menu — opens LeftPanel */}
+        {/* Left: List — opens LeftPanel */}
         <div className='left-side pt-1 sm:pt-0'>
           <button
-            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
             onClick={(e) => { e.stopPropagation(); setLeftPanel(prev => !prev); }}
           >
-            <Menu size={18} strokeWidth={2} />
+            <List size={18} weight="bold" />
           </button>
         </div>
 
-        {/* Center: Tool buttons */}
-        <div className="middle-tool-bar flex items-center justify-center gap-1 bg-bg-elevated shadow-lg rounded-full border border-border-default p-1.5 px-3">
+        {/* Center: Wrench buttons */}
+        <div className="middle-tool-bar flex items-center justify-center gap-1 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full p-1.5 px-3">
           <button
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-bg-subtle"
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-gray-100 dark:hover:bg-neutral-700"
             onClick={(e) => { e.stopPropagation(); zoomOut?.(); }}
             title="Zoom Out"
           >
-            <ZoomOut strokeWidth={2} size={18} />
+            <MagnifyingGlassMinus size={18} weight="bold" />
           </button>
 
           {zoomLabel && (
@@ -55,39 +55,39 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
           )}
 
           <button
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-bg-subtle"
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-gray-100 dark:hover:bg-neutral-700"
             onClick={(e) => { e.stopPropagation(); zoomIn?.(); }}
             title="Zoom In"
           >
-            <ZoomIn strokeWidth={2} size={18} />
+            <MagnifyingGlassPlus size={18} weight="bold" />
           </button>
 
-          <div className="w-px h-5 border-border-default mx-1" />
+          <div className="w-px h-5 bg-gray-200 dark:bg-neutral-700 mx-1" />
 
           <button
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-bg-subtle"
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-gray-100 dark:hover:bg-neutral-700"
             onClick={(e) => { e.stopPropagation(); rotate?.(); }}
             title="Rotate"
           >
-            <RotateCcw strokeWidth={2} size={18} />
+            <ArrowCounterClockwise size={18} weight="bold" />
           </button>
         </div>
 
-        {/* Right: Sparkles & Quiz — opens AI and Quiz panels */}
+        {/* Right: Sparkle & Quiz — opens AI and Quiz panels */}
         <div className='flex flex-col sm:flex-row gap-2 right-side items-center'>
           <button
-            className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
             onClick={(e) => { e.stopPropagation(); setAiModal(prev => !prev); }}
             title="AI Tools"
           >
-            <Sparkles strokeWidth={2} size={18} />
+            <Sparkle size={18} weight="fill" />
           </button>
           <button
-            className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
             onClick={(e) => { e.stopPropagation(); setQuizModal(prev => !prev); }}
             title="Quiz Generation Settings"
           >
-            <BrainCircuit strokeWidth={2} size={18} />
+            <Brain size={18} weight="fill" />
           </button>
         </div>
       </div>

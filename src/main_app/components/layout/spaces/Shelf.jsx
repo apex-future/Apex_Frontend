@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { Heart, Trash2, X } from 'lucide-react'
+import { Heart, Trash, X } from '@phosphor-icons/react';
 import BookCover from '../../books/BookCover'
 import useSpaceStore from '../../../store/spaceStore'
 import useThemeStore from '../../../store/themeStore'
@@ -54,7 +54,7 @@ function Shelf({ shelves }) {
         />
         <div className="relative w-full max-w-md bg-bg-elevated/95 backdrop-blur-2xl rounded-[2.5rem] border-2 border-border-default shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 fade-in duration-300">
           <div className="size-16 bg-red-500/10 rounded-[2rem] flex items-center justify-center text-red-500 mb-6">
-            <Trash2 size={32} />
+            <Trash size={32} weight="fill" />
           </div>
           <h2 className="text-2xl font-black text-text-primary tracking-tight mb-2">Delete Space?</h2>
           <p className="text-sm font-bold text-text-tertiary mb-8">
@@ -94,7 +94,7 @@ function Shelf({ shelves }) {
           <div
             onClick={() => navigate(`/space/${shelf.id}`)}
             key={index}
-            className='group flex flex-col border-2 border-border-default rounded-card bg-neutral-100/40 relative h-64 transition-all duration-500 overflow-hidden cursor-pointer hover:border-accent-primary/30 hover:shadow-xl hover:shadow-accent-primary/5'
+            className='group flex flex-col border-t border-black/10 dark:border-white/10 rounded-card bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md relative h-64 transition-all duration-500 overflow-hidden cursor-pointer shadow-sm hover:shadow-md'
           >
 
             {/* Book Stack Container: Positioned behind the info panel with a more subtle pop-up */}
@@ -128,7 +128,7 @@ function Shelf({ shelves }) {
                     <div className="absolute top-1 right-1 flex flex-col gap-1">
                       {book.isFavorite && (
                         <div className="bg-red-500 text-white rounded-full p-0.5 shadow-sm">
-                          <Heart size={8} fill="currentColor" />
+                          <Heart size={8} weight="fill" />
                         </div>
                       )}
                     </div>
@@ -172,7 +172,7 @@ function Shelf({ shelves }) {
                       className="p-1.5 hover:bg-red-500/10 text-text-tertiary hover:text-red-500 rounded-lg transition-all"
                       title="Delete Space"
                     >
-                      <Trash2 size={16} />
+                      <Trash size={16} weight="bold" />
                     </button>
                   )}
                 </div>

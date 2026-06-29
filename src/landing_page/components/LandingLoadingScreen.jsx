@@ -12,7 +12,7 @@ function LandingLoadingScreen() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#08090C] flex flex-col items-center justify-center gap-8">
+    <div className="fixed inset-0 z-[9999] bg-[#1C1C20] flex flex-col items-center justify-center gap-8">
       {/* Pulsing Apex Logo - for visual effect*/}
       <div className="animate-pulse">
         <img

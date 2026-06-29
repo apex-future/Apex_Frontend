@@ -1,13 +1,13 @@
 import React, { useContext, useMemo, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Plus, Clock, FileText, Calendar, X, Check } from 'lucide-react'
+import { ArrowLeft, BookOpen, Plus, Clock, FileText, Calendar, X, Check, Trophy } from '@phosphor-icons/react';
 import { BookContext } from "../../../context/BookContextInstance"
 import useSpaceStore from '../../../store/spaceStore'
 import useStudyStore from '../../../store/studyStore'
 import BookCard from '../../books/BookCard'
 import BookCover from '../../books/BookCover'
 import useQuizStore from '../../../store/quizStore'
-import { Trophy } from 'lucide-react'
+
 import SpaceAnalytics from './SpaceAnalytics'
 
 /**
@@ -66,24 +66,26 @@ function SpaceDetail() {
   return (
     <div className='w-full min-h-screen pb-20'>
       {/* Page Header - Matching BookSpaces style */}
-      <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group"
-          >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          </button>
+      <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+            >
+              <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+            </button>
+          </div>
 
-          <div className="text-center flex flex-col items-center">
-            <h3 className='text-xl font-bold font-display text-text-primary'>{selectedShelf.name}</h3>
+          <div className="px-5 py-2.5 rounded-[20px] bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-center flex flex-col items-center">
+            <h3 className='text-base font-bold font-display text-text-primary'>{selectedShelf.name}</h3>
             <div className="flex items-center gap-3 mt-1">
                <p className="text-xs text-text-tertiary font-medium">{selectedShelf.books?.length || 0} {selectedShelf.books?.length === 1 ? 'book' : 'books'}</p>
                {linkedExam && (
                    <div 
                      className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-accent-primary/10 text-accent-primary px-2.5 py-1 rounded-full border border-accent-primary/20"
                    >
-                     <Calendar size={10} strokeWidth={3} />
+                     <Calendar size={10} weight="bold" />
                      <span>{linkedExam.name} <span className="mx-0.5 opacity-40">•</span> {new Date(linkedExam.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                    </div>
                )}
@@ -91,15 +93,17 @@ function SpaceDetail() {
           </div>
 
           {!selectedShelf.isSystem ? (
-            <button
-              onClick={() => setIsAddingBooks(true)}
-              className="p-2 hover:bg-accent-primary/10 text-accent-primary rounded-xl transition-all"
-              title="Add Books to Space"
-            >
-              <Plus size={20} />
-            </button>
+            <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+              <button
+                onClick={() => setIsAddingBooks(true)}
+                className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-accent-primary rounded-full transition-all flex items-center justify-center"
+                title="Add Books to Space"
+              >
+                <Plus size={20} weight="bold" />
+              </button>
+            </div>
           ) : (
-            <div className="w-10" />
+            <div className="w-[42px]" />
           )}
         </div>
       </div>
@@ -142,7 +146,7 @@ function SpaceDetail() {
                                onClick={() => { setIsAddingBooks(false); setSelectedBooksToAdd([]); }} 
                                className="p-2 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all"
                              >
-                               <X size={20} />
+                               <X size={20} weight="bold" />
                              </button>
                           </div>
                           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide py-4 px-1">
@@ -166,7 +170,7 @@ function SpaceDetail() {
                                   
                                   {isSelected && (
                                     <div className="absolute -top-2 -right-2 bg-accent-primary text-white rounded-full p-1 shadow-md scale-in-center z-10">
-                                      <Check size={14} strokeWidth={4} />
+                                      <Check size={14} weight="bold" />
                                     </div>
                                   )}
                                   
@@ -200,7 +204,7 @@ function SpaceDetail() {
                         </div>
                       )}
 
-                      {/* Books List Grid */}
+                      {/* Books List GridFour */}
                       <div className="w-full">
                         {selectedShelf.books?.length > 0 ? (
                           <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-6 lg:gap-8 transition-all duration-300">
@@ -218,7 +222,7 @@ function SpaceDetail() {
                         ) : (
                           <div className="flex flex-col items-center justify-center py-20 text-center">
                             <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-6 border border-border-default">
-                              <BookOpen className="text-text-tertiary" size={40} />
+                              <BookOpen className="text-text-tertiary" size={40} weight="fill" />
                             </div>
                             <h3 className="text-xl font-bold text-text-primary">Empty Space</h3>
                             <p className="text-text-tertiary mt-2 max-w-sm">No books in this collection yet. Click the + button above to add books to this space.</p>

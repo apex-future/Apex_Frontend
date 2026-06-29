@@ -4,6 +4,8 @@ import MainApp from './main_app/MainApp'
 import LandingPage from './landing_page/LandingPage'
 import SignupPage from './landing_page/SignupPage'
 import LoginPage from './landing_page/LoginPage'
+import ForgotPasswordPage from './landing_page/ForgotPasswordPage'
+import ResetPasswordPage from './landing_page/ResetPasswordPage'
 import PrivacyPolicy from './landing_page/PrivacyPolicy'
 import authService from './main_app/services/authService'
 import syncService from './main_app/services/syncService'
@@ -12,6 +14,8 @@ import useAuthStore from './main_app/store/authStore'
 import useStudyStore from './main_app/store/studyStore'
 import useThemeStore from './main_app/store/themeStore'
 import useSettingsStore from './main_app/store/settingsStore'
+import useXpStore from './main_app/store/useXpStore'
+import apiClient from './main_app/services/apiClient'
 import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
 import LandingLoadingScreen from './landing_page/components/LandingLoadingScreen'
 import OnboardingPage from './landing_page/OnboardingPage';
@@ -93,8 +97,6 @@ function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      syncService.init();
-
       if (!authService.isAuthenticated()) {
         setLoading(false);
         return;
@@ -116,9 +118,18 @@ function App() {
         console.log('[Apex Streak] Store seeded from Supabase');
         useStudyStore.getState().checkStreakIntegrity();
 
+        // Seed XP store from server (non-blocking, runs in background)
+        apiClient.get('/api/xp/profile')
+          .then((xpProfile) => {
+            useXpStore.getState().seedFromServer(xpProfile.data);
+            // After seeding, immediately try to flush any pending offline XP
+            useXpStore.getState().flushPendingXp();
+          })
+          .catch((err) => console.error('[Apex XP] Failed to seed XP profile:', err.message));
+
         if (user.settings) {
           useSettingsStore.getState().seedFromSupabase(user.settings);
-          if (import.meta.env.DEV) console.log('[Apex Settings] Seed attempted from cloud');
+          if (import.meta.env.DEV) console.log('[Apex Gear] Seed attempted from cloud');
         }
 
         if (!user.user_type) {
@@ -162,8 +173,17 @@ function App() {
   // Sync offline streak changes when device comes back online
   useEffect(() => {
     const handleOnline = () => {
-      console.log('[Apex Streak] Back online — flushing pending streak sync');
+      console.log('[Apex Streak] Back online -- flushing pending streak sync');
       useStudyStore.getState().flushPendingStreakSync();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
+  // Flush pending XP actions when device comes back online
+  useEffect(() => {
+    const handleOnline = () => {
+      useXpStore.getState().flushPendingXp();
     };
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
@@ -228,6 +248,8 @@ function App() {
             <Route path="/" element={<LandingPage onLogin={handleLogin} deferredPrompt={deferredPrompt} />} />
             <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             {/* Redirect any other logged-out route to landing */}
             <Route path="*" element={<Navigate to="/" />} />
           </>

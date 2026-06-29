@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { ArrowLeft, Bookmark, EllipsisVertical, Fullscreen, Lock, LockOpen, Maximize, Minimize, NotebookPen, Settings, WholeWord } from 'lucide-react'
+import { ArrowLeft, BookmarkSimple, DotsThreeVertical, CornersOut, LockKey, LockKeyOpen, ArrowsOut, ArrowsIn, Notebook, Gear, TextAa } from '@phosphor-icons/react';
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookClick }) {
@@ -67,20 +67,20 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
         className='flex top-bar pb-4 items-start sm:items-center justify-between w-full pointer-events-auto'
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Back and Settings buttons */}
+        {/* Back and Gear buttons */}
         <div className='flex items-center gap-3 pt-1 sm:pt-0'>
           <button
             onClick={() => navigate('/')}
-            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
           >
-            <ArrowLeft size={18} strokeWidth={2} />
+            <ArrowLeft size={18} weight="bold" />
           </button>
           
           <button
             onClick={(e) => { e.stopPropagation(); setPageSettings?.(true); }}
-            className="w-10 h-10 flex items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
           >
-            <Settings size={18} strokeWidth={2} />
+            <Gear size={18} weight="bold" />
           </button>
         </div>
         <div className='flex items-start sm:items-center gap-2 sm:gap-3'>
@@ -88,27 +88,26 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
           <div className='flex flex-row items-center gap-2 sm:gap-3'>
             {/* Page Bookmark button — purple fill when bookmarked */}
             <button
-              className={`w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 ${
+              className={`w-10 h-10 flex shrink-0 items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${
                 isBookmarked
-                  ? 'text-accent-primary'
-                  : 'text-text-primary hover:bg-bg-subtle'
+                  ? 'bg-white dark:bg-neutral-800 text-accent-primary border border-accent-primary/40 hover:bg-gray-50 dark:hover:bg-neutral-700'
+                  : 'bg-white dark:bg-neutral-800 text-text-primary border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700'
               }`}
               onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
               title={isBookmarked ? 'Remove page bookmark' : 'Bookmark this page'}
             >
-              <Bookmark
-                strokeWidth={2}
+              <BookmarkSimple
                 size={18}
-                className={`transition-all duration-200 ${isBookmarked ? 'fill-accent-primary' : 'fill-none'}`}
+                weight={isBookmarked ? "fill" : "bold"}
               />
             </button>
 
             {/* Dots — open second layer */}
             <button
-              className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+              className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
               onClick={onDotsClick}
             >
-              <EllipsisVertical strokeWidth={2} size={18} />
+              <DotsThreeVertical size={18} weight="bold" />
             </button>
           </div>
         </div>
@@ -123,19 +122,19 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
           {/* Bottom Left Controls — Dictionary and Notebook */}
           <div className='flex items-center gap-2 sm:gap-3'>
             <button
-              className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+              className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
               onClick={(e) => { e.stopPropagation(); onToggleDictionary?.(); }}
               title="Dictionary Search"
             >
-              <WholeWord strokeWidth={2} size={18} />
+              <TextAa size={18} weight="bold" />
             </button>
 
             <button
-              className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+              className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
               onClick={(e) => { e.stopPropagation(); onNotebookClick?.(); }}
               title="Notebook"
             >
-              <NotebookPen strokeWidth={2} size={18} />
+              <Notebook size={18} weight="bold" />
             </button>
           </div>
 
@@ -143,39 +142,41 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
           <div className='flex items-end sm:items-center gap-2 sm:gap-3'>
             {/* Lock — toggles pan/scroll lock */}
             <button
-              className={`w-10 h-10 flex shrink-0 items-center justify-center shadow-md rounded-full transition-all active:scale-90 ${locked
-                ? 'bg-accent-primary text-bg-elevated'
-                : 'bg-bg-elevated text-text-primary hover:bg-bg-subtle'
-                }`}
+              className={`w-10 h-10 flex shrink-0 items-center justify-center rounded-full transition-all active:scale-90 shadow-md border ${
+                locked
+                  ? 'bg-accent-primary/25 text-accent-primary border-accent-primary/45 hover:bg-accent-primary/35'
+                  : 'bg-white dark:bg-neutral-800 border-gray-200 dark:border-neutral-700 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700'
+              }`}
               onClick={(e) => { e.stopPropagation(); onToggleLock?.(); }}
-              title={locked ? 'Unlock scroll' : 'Lock scroll'}
+              title={locked ? 'LockOpen scroll' : 'Lock scroll'}
             >
-              {locked
-                ? <Lock strokeWidth={2} size={18} />
-                : <LockOpen strokeWidth={2} size={18} />
-              }
+              {locked ? (
+                <LockKey size={18} weight="bold" />
+              ) : (
+                <LockKeyOpen size={18} weight="bold" />
+              )}
             </button>
 
             <div className='flex flex-col-reverse sm:flex-row items-center gap-2 sm:gap-3'>
               {/* Fit-to-screen — resets zoom to 100% */}
               <button
-                className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+                className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
                 onClick={(e) => { e.stopPropagation(); onResetZoom?.(); }}
                 title="Fit to screen (reset zoom)"
               >
-                <Fullscreen strokeWidth={2} size={18} />
+                <CornersOut size={18} weight="bold" />
               </button>
 
               {/* Browser Fullscreen — makes app occupy entire window */}
               <button
-                className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-elevated shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+                className="w-10 h-10 flex shrink-0 items-center justify-center bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md rounded-full transition-all active:scale-90 text-text-primary hover:bg-gray-50 dark:hover:bg-neutral-700"
                 onClick={handleFullScreen}
                 title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
               >
                 {isFullScreen ? (
-                  <Minimize strokeWidth={2} size={18} />
+                  <ArrowsIn size={18} weight="bold" />
                 ) : (
-                  <Maximize strokeWidth={2} size={18} />
+                  <ArrowsOut size={18} weight="bold" />
                 )}
               </button>
             </div>
@@ -185,15 +186,15 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
         {/* Real progress bar */}
         
         <div 
-          className="progress w-full max-w-md bg-white/80 dark:bg-black/80 backdrop-blur-lg p-4 rounded-3xl shadow-md border-2 border-border-default cursor-pointer"
+          className="progress w-full max-w-md bg-white dark:bg-neutral-800 p-4 rounded-3xl shadow-md border border-gray-200 dark:border-neutral-700 cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onProgressBarClick?.(); }}
         >
           
           <div className="text-progress mb-2.5 flex items-center justify-between font-sans">
             <span className="percent text-[11px] font-black uppercase tracking-widest text-text-tertiary">{progress}% Read</span>
-            <span className="chapter text-[11px] font-bold text-text-tertiary bg-bg-subtle px-2 py-0.5 rounded-full">page {pages.current} of {pages.total}</span>
+            <span className="chapter text-[11px] font-bold text-text-tertiary bg-white/10 dark:bg-white/5 px-2 py-0.5 rounded-full">page {pages.current} of {pages.total}</span>
           </div>
-          <div className="progress-bar h-1 rounded-full w-full bg-bg-subtle overflow-hidden">
+          <div className="progress-bar h-1 rounded-full w-full bg-black/10 dark:bg-white/10 overflow-hidden">
             <div
               className="progress-fill h-full rounded-full bg-accent-primary transition-all duration-700 ease-out shadow-[0_0_12px_rgba(139,92,246,0.3)]"
               style={{ width: `${progress}%` }}

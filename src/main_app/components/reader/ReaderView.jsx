@@ -11,6 +11,8 @@ import db from '../../db/apex.db';
 import DOMPurify from 'dompurify';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
+import SessionSummaryModal from './SessionSummaryModal';
+import useXpStore from '../../store/useXpStore';
 import AIModal from './reading_navigations/reading_layout/AIModal';
 import QuizPanel from './reading_navigations/reading_layout/QuizPanel';
 import QuizView from './QuizView';
@@ -26,7 +28,7 @@ import PageSettings from './reading_navigations/reading_layout/PageSettings';
 import BookSkeleton from './BookSkeleton';
 import PageStrip from './PageStrip';
 import ReaderDictionary from './reading_navigations/reading_layout/ReaderDictionary';
-import { ChevronLeft, ChevronRight, Plus, Menu, ArrowLeft, ArrowRight, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import { CaretLeft, CaretRight, Plus, List, ArrowLeft, ArrowRight, WarningCircle, ArrowUp, ArrowDown } from '@phosphor-icons/react';
 import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
 import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
 
@@ -35,15 +37,46 @@ const ScrollOrientationOverlay = ({ visible, orientation }) => {
     const isVertical = orientation === 'vertical';
     return (
         <div className="fixed inset-x-0 bottom-32 z-[100] flex items-center justify-center pointer-events-none lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-bg-elevated/80 backdrop-blur-sm border border-border-default/20 text-text-primary shadow-2xl">
-                {isVertical ? <ArrowUp size={18} className="opacity-70" /> : <ArrowLeft size={18} className="opacity-70" />}
+            <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md text-text-primary">
+                {isVertical ? <ArrowUp size={18} weight="bold" className="opacity-70" /> : <ArrowLeft size={18} weight="bold" className="opacity-70" />}
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">
                     Swipe {isVertical ? 'up or down' : 'left or right'}
                 </span>
-                {isVertical ? <ArrowDown size={18} className="opacity-70" /> : <ArrowRight size={18} className="opacity-70" />}
+                {isVertical ? <ArrowDown size={18} weight="bold" className="opacity-70" /> : <ArrowRight size={18} weight="bold" className="opacity-70" />}
             </div>
         </div>
     );
+};
+
+const getSessionXpBreakdown = (actions, readingXp) => {
+    const counts = {};
+    actions.forEach(a => {
+        counts[a.action] = (counts[a.action] || 0) + a.estimatedXp;
+    });
+
+    const breakdown = [];
+    if (readingXp > 0) {
+        breakdown.push({ label: 'Reading Time', xp: readingXp });
+    }
+
+    const actionLabels = {
+        highlight_created: 'Highlights Created',
+        note_added: 'Notes Added',
+        dictionary_lookup: 'Dictionary Lookups',
+        tab_added: 'Sticky Tabs Saved',
+        simplify: 'Text Simplifications',
+        ai_explanation: 'AI Clarification',
+        quiz: 'Quizzes Completed'
+    };
+
+    Object.keys(counts).forEach(action => {
+        if (counts[action] > 0) {
+            const label = actionLabels[action] || action.replace(/_/g, ' ');
+            breakdown.push({ label, xp: counts[action] });
+        }
+    });
+
+    return breakdown;
 };
 
 function ReaderView() {
@@ -54,8 +87,6 @@ function ReaderView() {
     const [fileUrl, setFileUrl] = useState(null);
     const [textContent, setTextContent] = useState("");
     const [htmlContent, setHtmlContent] = useState("");
-
-
 
     // Find the book and determine type
     const book = useMemo(() => books.find(b => b.id.toString() === bookId), [books, bookId]);
@@ -69,6 +100,51 @@ function ReaderView() {
     const [scale, setScale] = useState(1.0);
     const [rotation, setRotation] = useState(0);
     const [tocOutline, setTocOutline] = useState(null);
+
+    // Session Summary State
+    const [showSessionSummary, setShowSessionSummary] = useState(false);
+    const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [] });
+    const mountTime = useRef(Date.now());
+    const visitedPages = useRef(new Set());
+
+    useEffect(() => {
+        // Record pages as they are visited
+        if (pageNumber) visitedPages.current.add(pageNumber);
+    }, [pageNumber]);
+
+    useEffect(() => {
+        // Start tracking XP actions for this session
+        useXpStore.getState().startSessionTracker();
+    }, [bookId]);
+
+    const handleExitReader = async () => {
+        // 1. Stop the timer immediately — no more minutes accumulate
+        stopTick();
+
+        // 2. Compute XP from actual session minutes (does NOT flush or award yet)
+        const readingXp = await computeSessionXp();
+        const pagesRead = visitedPages.current.size;
+        const timeSpentSeconds = Math.floor((Date.now() - mountTime.current) / 1000);
+        const timeSpentMinutes = Math.floor(timeSpentSeconds / 60);
+
+        // Fetch session XP actions
+        const sessionXpActions = useXpStore.getState().sessionXpActions || [];
+        const activityXp = sessionXpActions.reduce((sum, act) => sum + act.estimatedXp, 0);
+        const totalXp = readingXp + activityXp;
+
+        if (totalXp > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
+            setSessionStats({ 
+                xpGained: Math.max(0, readingXp), 
+                pagesRead, 
+                timeSpentSeconds,
+                totalXp: Math.max(0, totalXp),
+                breakdown: getSessionXpBreakdown(sessionXpActions, readingXp)
+            });
+            setShowSessionSummary(true);
+        } else {
+            navigate('/');
+        }
+    };
 
     // Progress state
     const [localProgress, setLocalProgress] = useState(book?.progress || 0);
@@ -148,7 +224,7 @@ function ReaderView() {
     // ============================================
     // READING TIME TRACKER — minute-tick accumulation
     // ============================================
-    useReadingTimeTracker({
+    const { flushSessionToQueue, stopTick, startTick, computeSessionXp } = useReadingTimeTracker({
         bookId: book?.id,
         supabaseBookId: book?.supabaseId,
         isEnabled: !!book?.supabaseId,
@@ -292,6 +368,14 @@ function ReaderView() {
                 addedAt: new Date().toISOString(),
                 isSimplified: true,
             });
+
+            // Award XP for simplification
+            try {
+                useXpStore.getState().awardXpOptimistic('simplify', {}, 5);
+                console.log('[XP Wire] simplify optimistic award fired');
+            } catch (xpErr) {
+                console.error('[XP Wire] simplify XP failed silently:', xpErr);
+            }
         } catch (err) {
             console.error('[Apex Simplify] Failed:', err);
             setActiveSimplification(prev => ({ ...prev, loading: false, error: err.message || 'Failed to simplify' }));
@@ -1020,7 +1104,7 @@ function ReaderView() {
             <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-slate-50 relative p-8 font-sans">
                 <div className="absolute top-6 left-6 z-10">
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={handleExitReader}
                         className="p-3 bg-white rounded-xl shadow-md border border-slate-200 text-slate-700 hover:text-accent-primary hover:border-purple-200 transition-all font-bold text-sm tracking-wide flex items-center gap-2 group"
                     >
                         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Library
@@ -1028,7 +1112,7 @@ function ReaderView() {
                 </div>
                 <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 max-w-sm w-full text-center flex flex-col items-center gap-6 animate-in slide-in-from-bottom-6 fade-in duration-500">
                     <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center">
-                        <AlertCircle size={32} />
+                        <WarningCircle size={32} />
                     </div>
                     <div className="space-y-2">
                         <h2 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Download Error</h2>
@@ -1038,7 +1122,7 @@ function ReaderView() {
                         onClick={() => window.location.reload()}
                         className="w-full py-4 rounded-xl bg-accent-primary hover:bg-purple-700 text-white font-bold transition-all shadow-lg shadow-purple-500/20 active:scale-95 flex items-center justify-center gap-2"
                     >
-                        <Menu size={18} /> Try Again
+                        <List size={18} /> Try Again
                     </button>
                 </div>
             </div>
@@ -1055,6 +1139,7 @@ function ReaderView() {
         <div
             className="h-[100dvh] max-h-[100dvh] w-screen bg-bg-primary text-text-primary font-serif selection:bg-blue-200/50 relative overflow-hidden"
             onClick={closeNav}
+            data-lenis-prevent="true"
         >
             <ScrollOrientationOverlay visible={showScrollOverlay} orientation={scrollOrientation} />
             <div className="flex h-full max-h-full overflow-hidden relative">
@@ -1066,7 +1151,7 @@ function ReaderView() {
                     tocOutline={tocOutline}
                 />}
                 
-                {/* Settings panel */}
+                {/* Gear panel */}
                 {pageSettings && <PageSettings 
                     setPageSettings={setPageSettings}
                     readerControls={readerControls}
@@ -1093,7 +1178,7 @@ function ReaderView() {
                     }}
                 />}
 
-                {/* Highlight Menu */}
+                {/* Highlight List */}
                 {showHighlightMenu && (
                     <HighlightMenu
                         selection={selectionRef.current.text}
@@ -1127,6 +1212,8 @@ function ReaderView() {
                             }
                         }}
                         onAddNote={readerControls.addTab}
+                        onUpdateNote={readerControls.updateTab}
+                        onDeleteNote={readerControls.deleteTab}
                         onGenerateFlashcards={(selection, count) => {
                             setShowHighlightMenu(false);
                             setActiveFlashcardSession({ selection, count });
@@ -1158,22 +1245,22 @@ function ReaderView() {
 
                 {/* Main reading area */}
                 <div className="flex-1 relative min-w-0 flex flex-col h-full max-h-full overflow-hidden">
-                    {/* Subtle Menu Trigger - Persistent at top, now relative to content area */}
+                    {/* Subtle List Trigger - Persistent at top, now relative to content area */}
                     <div className={`absolute top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center transition-all duration-500 ease-in-out ${navState !== 'none' ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
                         <button
                             onClick={(e) => { e.stopPropagation(); toggleNav(); }}
-                            className="group bg-bg-elevated hover:bg-bg-subtle backdrop-blur-md shadow-sm border border-border-default/50 px-3 py-1.5 rounded-b-xl transition-all duration-300 flex items-center gap-1.5"
+                            className="group bg-white/15 dark:bg-white/5 hover:bg-white/25 dark:hover:bg-white/10 backdrop-blur-xl shadow-sm border-0 border-t border-white/25 dark:border-white/10 px-3 py-1.5 rounded-b-xl transition-all duration-300 flex items-center gap-1.5"
                         >
                             <div className={`w-1 h-1 rounded-full transition-colors ${navState !== 'none' ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-accent-primary'}`} />
                             <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`}>Menu</span>
-                            <Menu size={12} className={`transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`} />
+                            <List size={12} className={`transition-colors ${navState !== 'none' ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-primary'}`} />
                         </button>
                     </div>
 
 
                     <ReaderNavBar
                         book={book}
-                        navigate={navigate}
+                        navigate={handleExitReader}
                         navState={navState}
                         setNavState={setNavState}
                         setPageSettings={(val) => {
@@ -1233,7 +1320,8 @@ function ReaderView() {
                                 numPages={numPages}
                                 goToPage={goToPage}
                                 highlights={stableHighlights}
-                                locked={locked || selectionLock || isDictOpen || isReaderDictOpen}
+                                locked={locked}
+                                swipeLocked={selectionLock || isDictOpen || isReaderDictOpen}
                                 scrollOrientation={scrollOrientation}
                                 onPageChange={stableOnPageChange}
                             />
@@ -1243,19 +1331,19 @@ function ReaderView() {
                                     <button
                                         onClick={(e) => { e.stopPropagation(); previousPage(); }}
                                         disabled={pageNumber <= 1}
-                                        className="md:flex hidden absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                                        className="md:flex hidden absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white hover:bg-gray-50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                         title="Previous page"
                                     >
-                                        <ChevronLeft size={28} strokeWidth={2.5} className="-ml-1" />
+                                        <CaretLeft size={28} strokeWidth={2.5} className="-ml-1" />
                                     </button>
 
                                     <button
                                         onClick={(e) => { e.stopPropagation(); nextPage(); }}
                                         disabled={pageNumber >= (numPages || 1)}
-                                        className="md:flex hidden absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-bg-elevated/95 hover:bg-bg-elevated backdrop-blur-xl border border-border-default/50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                                        className="md:flex hidden absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[80] items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-white hover:bg-gray-50 text-text-secondary hover:text-blue-600 transition-all duration-300 active:scale-90 disabled:opacity-0 disabled:pointer-events-none shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
                                         title="Next page"
                                     >
-                                        <ChevronRight size={28} strokeWidth={2.5} className="ml-1" />
+                                        <CaretRight size={28} strokeWidth={2.5} className="ml-1" />
                                     </button>
                                 </>
                             )}
@@ -1370,6 +1458,41 @@ function ReaderView() {
                         streakCount={streakCount} 
                         streakHistory={streakHistory} 
                         onClose={() => setShowStreakCelebration(false)} 
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {showSessionSummary && (
+                    <SessionSummaryModal
+                        xpGained={sessionStats.totalXp}
+                        pagesRead={sessionStats.pagesRead}
+                        timeSpentSeconds={sessionStats.timeSpentSeconds}
+                        breakdown={sessionStats.breakdown}
+                        onClose={async () => {
+                            // User confirmed exit — flush reading time + award XP now
+                            await flushSessionToQueue();
+                            if (sessionStats.xpGained > 0) {
+                                const xpStore = useXpStore.getState();
+                                const minutes = Math.round(sessionStats.xpGained / 2);
+                                xpStore.awardXpOptimistic('reading', { minutes }, sessionStats.xpGained);
+                                xpStore.flushPendingXp();
+                            }
+                            // Reset session tracking
+                            useXpStore.getState().startSessionTracker();
+                            navigate('/');
+                        }}
+                        onCancel={() => {
+                            // User clicked X — cancel exit, resume timer
+                            setShowSessionSummary(false);
+                            startTick();
+                        }}
+                        onStartQuiz={() => {
+                            setShowSessionSummary(false);
+                            setNavState('first');
+                            setTimeout(() => {
+                                setQuizModal(true);
+                            }, 300);
+                        }}
                     />
                 )}
             </AnimatePresence>

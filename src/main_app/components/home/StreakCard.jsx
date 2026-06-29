@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame } from 'lucide-react';
+import { Fire } from '@phosphor-icons/react';
 import useStudyStore from '../../store/studyStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,16 +24,17 @@ const StreakCard = () => {
     };
 
     return (
-        <div className="w-full">
-            <h2 className='text-lg sm:text-xl px-2 font-bold text-text-primary mb-4 tracking-tight'>Activity Streak</h2>
+        <div className="w-full h-full flex flex-col">
+            <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Activity Streak</h2>
             <div 
                 onClick={() => navigate('/streak')}
-                className="bg-card-glass backdrop-blur-xl rounded-card p-4 px-6 border-2 border-border-default hover:border-orange-500/40 hover:shadow-xl hover:shadow-black/5 transition-all duration-500 group overflow-hidden shadow-xl shadow-black/5 relative h-48 xs:h-60 sm:h-64 flex flex-col justify-center items-center cursor-pointer"
+                className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 hover:border-t-orange-500/60 hover:shadow-md transition-all duration-500 rounded-card p-4 px-6 group overflow-hidden relative min-h-[14rem] flex-1 flex flex-col justify-center items-center cursor-pointer"
             >
                 
                 {/* Background Icon Asset - Matched with ExamReminder */}
                 <div className="absolute bottom-2 -left-2 size-44 md:size-52 text-orange-500/10 rotate-12 group-hover:text-orange-500/20 group-hover:scale-100 group-hover:rotate-0 transition-all duration-1000 pointer-events-none ease-in-out">
-                    <Flame size="100%" strokeWidth={1} />
+                    {/* migrated from lucide: Fire */}
+                    <Fire size="100%" weight="thin" />
                 </div>
 
                 {/* Top Section: Number + Text (Centered like ExamReminder) */}
@@ -58,17 +59,17 @@ const StreakCard = () => {
                                 <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wider ${index === currentDay ? 'text-orange-500' : 'text-text-tertiary'}`}>
                                     {day}
                                 </span>
-                                <div className={`size-7 md:size-9 lg:size-8 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
+                                <div className={`size-7 md:size-9 lg:size-8 rounded-full flex items-center justify-center transition-all duration-500 ${
                                     hasStreak
                                         ? isToday
-                                          ? 'bg-orange-500 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)] ring-2 ring-orange-500/30 ring-offset-2 dark:ring-offset-neutral-900 shadow-md scale-110'
-                                          : 'bg-orange-500 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
+                                          ? 'bg-orange-500 border-2 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)] ring-2 ring-orange-500/30 ring-offset-2 dark:ring-offset-neutral-900 shadow-md scale-110'
+                                          : 'bg-orange-500 border-2 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
                                         : isToday
-                                        ? 'bg-transparent border-orange-500 text-orange-500 shadow-sm ring-2 ring-offset-2 ring-orange-500/20 dark:ring-offset-neutral-900'
-                                        : 'bg-bg-subtle border-border-default text-text-tertiary'
+                                        ? 'bg-transparent border-2 border-orange-500 text-orange-500 shadow-sm ring-2 ring-offset-2 ring-orange-500/20 dark:ring-offset-neutral-900'
+                                        : 'bg-bg-primary text-text-tertiary'
                                 }`}>
                                     {hasStreak ? (
-                                        <Flame size={isToday ? 14 : 12} className="fill-current" />
+                                        <Fire size={isToday ? 14 : 12} weight="fill" />
                                     ) : isToday ? (
                                         <div className="size-1 md:size-1.5 bg-orange-500 rounded-full" />
                                     ) : (

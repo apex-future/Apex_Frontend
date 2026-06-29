@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
-import { ArrowLeft, Heart, Share2, FolderPlus, CheckCircle2, Trash2, X, Edit2 } from 'lucide-react';
+import { ArrowLeft, Heart, ShareNetwork, FolderSimplePlus, CheckCircle, Trash, X, PencilSimple } from '@phosphor-icons/react';
 import useSpaceStore from '../../store/spaceStore';
 import useThemeStore from '../../store/themeStore';
 
@@ -105,17 +105,21 @@ function BookDetails() {
     return (
         <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500 font-sans">
             {/* Page Header */}
-            <div className="relative flex justify-between items-center py-4 px-2">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated rounded-lg transition-all group"
-                >
-                    <ArrowLeft size={20} className="text-text-primary dark:text-text-primary-dark group-hover:-translate-x-1 transition-transform" />
-                </button>
+            <div className="relative flex justify-between items-center py-4 px-2 gap-3">
+                <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+                    >
+                        <ArrowLeft size={20} weight="bold" className="text-text-primary group-hover:-translate-x-1 transition-transform" />
+                    </button>
+                </div>
 
-                <h3 className='text-lg font-semibold text-text-tertiary dark:text-text-tertiary-dark tracking-tight'>Book Details</h3>
+                <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    <h3 className='text-base font-bold font-display text-text-primary'>Book Details</h3>
+                </div>
 
-                <div className="w-9" />
+                <div className="w-[42px]" />
             </div>
 
             <div className="flex flex-col pt-8 items-start">
@@ -130,10 +134,10 @@ function BookDetails() {
                         </div>
 
                         <div className="flex flex-wrap items-center justify-center gap-3">
-                            <span className="bg-accent-subtle text-accent-pressed dark:text-accent-pressed text-xs font-semibold px-4 py-1.5 border border-border-default dark:border-border-default-dark rounded-full tracking-widest shadow-sm">
+                            <span className="bg-accent-subtle text-accent-pressed dark:text-accent-pressed text-xs font-semibold px-4 py-1.5 border border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 rounded-full tracking-widest transition-all">
                                 {book.status || 'Library'}
                             </span>
-                            <span className="bg-neutral-100 dark:bg-bg-dark-elevated text-text-tertiary dark:text-text-tertiary-dark text-xs font-semibold px-4 py-1.5 border border-border-default dark:border-border-default-dark rounded-full tracking-widest shadow-sm">
+                            <span className="bg-bg-subtle dark:bg-bg-dark-elevated text-text-tertiary dark:text-text-tertiary-dark text-xs font-semibold px-4 py-1.5 border border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 rounded-full tracking-widest transition-all">
                                 {Math.round(book.progress || 0)}% Completed
                             </span>
                         </div>
@@ -149,7 +153,7 @@ function BookDetails() {
 
                         <div className="max-w-2xl">
                             <h2 className="text-xs sm:text-sm font-bold text-text-placeholder dark:text-text-placeholder-dark uppercase tracking-[0.2em] mb-4">About this book</h2>
-                            <div className="bg-card-glass dark:bg-bg-dark-elevated/40 backdrop-blur-md border border-border-default dark:border-border-default-dark rounded-card p-6 sm:p-8 hover:border-text-tertiary/20 dark:hover:border-text-tertiary-dark/20 hover:shadow-md transition-all duration-500 text-text-secondary dark:text-text-secondary-dark leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc mb-8 shadow-sm">
+                            <div className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-card p-6 sm:p-8 hover:border-text-tertiary/20 dark:hover:border-text-tertiary-dark/20 transition-all duration-300 shadow-sm hover:shadow-md text-text-secondary dark:text-text-secondary-dark leading-premium-relaxed text-sm sm:text-base relative overflow-hidden group/desc mb-8">
                                
                                 {book.description || "No description available for this title."}
 
@@ -199,23 +203,23 @@ function BookDetails() {
                                     onClick={() => toggleFavorite(book.id)}
                                     className={`p-3 rounded-xl transition-all ${book.isFavorite ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30' : 'text-gray-400 hover:text-red-500 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50'}`}
                                 >
-                                    <Heart size={20} fill={book.isFavorite ? 'currentColor' : 'none'} />
+                                    <Heart size={20} weight={book.isFavorite ? 'fill' : 'regular'} />
                                 </button>
                                 <button className="p-3 text-gray-400 rounded-xl hover:text-success hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50 transition-all">
-                                    <CheckCircle2 size={20} />
+                                    <CheckCircle size={20} weight="bold" />
                                 </button>
                                 <button
                                     onClick={handleBookmarkClick}
                                     className={`p-3 rounded-xl transition-all ${isInAnySpace ? 'text-accent-primary bg-accent-subtle dark:bg-accent-subtle-dark hover:bg-accent-primary/20' : 'text-gray-400 hover:text-accent-primary hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50'}`}
                                     title="Add to Bookspace"
                                 >
-                                    <FolderPlus size={20} fill={isInAnySpace ? 'currentColor' : 'none'} />
+                                    <FolderSimplePlus size={20} weight={isInAnySpace ? 'fill' : 'regular'} />
                                 </button>
                                 <button className="p-3 text-gray-400 rounded-xl hover:text-blue-500 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50 transition-all">
-                                    <Share2 size={20} />
+                                    <ShareNetwork size={20} weight="bold" />
                                 </button>
                                 <button onClick={handleDelete} className="p-3 text-gray-400 rounded-xl hover:text-error hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50 transition-all">
-                                    <Trash2 size={20} />
+                                    <Trash size={20} weight="bold" />
                                 </button>
                             </div>
                             <div className="w-full sm:w-auto text-center">
@@ -231,8 +235,8 @@ function BookDetails() {
                     </div>
                 </div>
 
-                <div className="overflow-hidden max-w-[850px] mx-auto w-full bg-card-glass dark:bg-bg-dark-elevated backdrop-blur-xl p-2.5 border border-border-default dark:border-border-default-dark rounded-[3rem] shadow-md">
-                    <ul className="flex gap-2 overflow-x-auto py-2.5 bg-card-glass/60 dark:bg-bg-dark-elevated/60 backdrop-blur-md px-2.5 rounded-full items-center no-scrollbar border border-border-default/20 dark:border-border-default-dark/20">
+                <div className="overflow-hidden max-w-[850px] mx-auto w-full bg-bg-subtle dark:bg-bg-elevated p-2.5 border-t border-black/10 dark:border-white/10 rounded-[3rem] shadow-sm">
+                    <ul className="flex gap-2 overflow-x-auto py-2.5 bg-black/5 dark:bg-white/5 px-2.5 rounded-full items-center no-scrollbar border border-black/5 dark:border-white/5">
                         {tabs.map((tab) => (
                             <li
                                 key={tab.id}
@@ -270,7 +274,7 @@ function BookDetails() {
                                 onClick={() => setShowSpaceModal(false)} 
                                 className="p-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
                             >
-                                <X size={18} />
+                                <X size={18} weight="bold" />
                             </button>
                         </div>
                         
@@ -300,7 +304,7 @@ function BookDetails() {
                             {spaces.filter(s => !s.isSystem).length === 0 && (
                                 <div className="text-center py-8 px-4">
                                     <div className="w-12 h-12 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <FolderPlus size={20} className="text-neutral-400" />
+                                        <FolderSimplePlus size={20} weight="bold" className="text-neutral-400" />
                                     </div>
                                     <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">No custom spaces yet</p>
                                     <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Create spaces to organize your library.</p>
@@ -314,8 +318,8 @@ function BookDetails() {
                                 onClick={handleConfirmAddToSpace}
                                 className="w-full py-3.5 px-4 bg-accent-primary hover:bg-accent-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-accent-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                             >
-                                {isInAnySpace ? <Edit2 size={18} fill="currentColor" /> : <FolderPlus size={18} fill="currentColor" />}
-                                <span>{isInAnySpace ? "Edit" : "Add to Bookspace"}</span>
+                                {isInAnySpace ? <PencilSimple size={18} weight="fill" /> : <FolderSimplePlus size={18} weight="fill" />}
+                                <span>{isInAnySpace ? "PencilSimple" : "Add to Bookspace"}</span>
                             </button>
                         </div>
                     </div>

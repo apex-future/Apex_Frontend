@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
-import { Sparkles, Book, Highlighter, X, Loader2, Volume2, BookmarkPlus, Check, WifiOff, StickyNote, Save, Wand2, Layers, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, BookmarkSimple, Check, WifiSlash, Note, FloppyDisk, MagicWand, Stack, WarningCircle, Trash, Quotes } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
+import useThemeStore from '../../store/themeStore';
+import useXpStore from '../../store/useXpStore';
 
-function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onClose, onGenerateFlashcards }) {
+function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards }) {
+    const { resolvedTheme } = useThemeStore();
+    const isDark = resolvedTheme === 'dark';
+
     const [definition, setDefinition] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -14,6 +19,38 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     const [showFlashcards, setShowFlashcards] = useState(false);
     const [flashcardCount, setFlashcardCount] = useState(5);
     const [flashcardError, setFlashcardError] = useState('');
+
+    const [savedTabId, setSavedTabId] = useState(null);
+    const savedTabIdRef = useRef(null);
+
+    // Auto-save debounce effect (2 seconds)
+    useEffect(() => {
+        if (!showTab || !tabText.trim()) return;
+
+        const delayDebounceFn = setTimeout(async () => {
+            if (savedTabIdRef.current) {
+                // Update
+                if (onUpdateNote) {
+                    onUpdateNote(savedTabIdRef.current, tabText.trim());
+                }
+            } else {
+                // Add
+                if (onAddNote) {
+                    const result = await onAddNote({
+                        text: tabText.trim(),
+                        context: selection,
+                        type: 'highlight_note'
+                    });
+                    if (result && result.id) {
+                        savedTabIdRef.current = result.id;
+                        setSavedTabId(result.id);
+                    }
+                }
+            }
+        }, 2000);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [tabText, showTab, onAddNote, onUpdateNote, selection]);
 
     const toggleDict = (val) => {
         setShowDict(val);
@@ -65,6 +102,9 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
             // dictionaryService returns the raw API response (array or object)
             const defData = Array.isArray(result) ? result[0] : result;
             setDefinition(defData);
+
+
+
         } catch (err) {
             setError(err.message);
             setDefinition(null);
@@ -86,19 +126,49 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         setWordSaved(true);
     };
 
-    const handleSaveTab = () => {
-        if (!tabText.trim() || !onAddNote) return;
-        onAddNote({
-            text: tabText.trim(),
-            context: selection,
-            type: 'highlight_note'
-        });
+    const handleSaveTab = async () => {
+        if (!tabText.trim()) return;
         setTabSaved(true);
+
+        if (savedTabIdRef.current) {
+            if (onUpdateNote) {
+                await onUpdateNote(savedTabIdRef.current, tabText.trim());
+            }
+        } else {
+            if (onAddNote) {
+                await onAddNote({
+                    text: tabText.trim(),
+                    context: selection,
+                    type: 'highlight_note'
+                });
+            }
+        }
+
+        try {
+            const { awardXpOptimistic } = useXpStore.getState();
+            awardXpOptimistic('tab_added', {}, 5);
+            console.log('[XP Wire] tab_added optimistic award fired');
+        } catch (xpErr) {
+            console.error('[XP Wire] tab_added XP failed silently:', xpErr);
+        }
+
         setTimeout(() => {
             toggleTab(false);
             setTabSaved(false);
             setTabText('');
-        }, 1500);
+            setSavedTabId(null);
+            savedTabIdRef.current = null;
+        }, 1000);
+    };
+
+    const handleCancelTab = async () => {
+        if (savedTabIdRef.current && onDeleteNote) {
+            await onDeleteNote(savedTabIdRef.current);
+        }
+        setTabText('');
+        setSavedTabId(null);
+        savedTabIdRef.current = null;
+        handleCloseModal();
     };
 
     const playAudio = (url) => {
@@ -161,10 +231,38 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         >
             {/* Arrow when menu is placed below the text (pointing up) */}
             {!isMobile && !showDict && !showTab && showBelow && (
-                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-bg-elevated mx-auto" />
+                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white mx-auto" />
             )}
 
-            <div className="bg-bg-elevated border border-border-default shadow-2xl rounded-2xl overflow-hidden flex flex-col min-w-[200px] w-full max-w-[400px]">
+            <div
+                className={`flex flex-col min-w-[200px] w-full max-w-[400px] ${
+                    showTab
+                        ? 'shadow-sm overflow-visible relative'
+                        : 'bg-white shadow-md rounded-2xl border border-transparent border-t-gray-200 overflow-hidden'
+                }`}
+                style={showTab ? {
+                    background: isDark ? 'hsl(270 60% 14%)' : 'hsl(270 55% 93%)',
+                    borderRadius: '5px',
+                    transform: 'rotate(-2deg)',
+                } : undefined}
+            >
+                {showTab && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '-10px',
+                        left: '12px',
+                        width: '55px',
+                        height: '16px',
+                        background: 'rgba(120, 120, 120, 0.25)',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        backdropFilter: 'blur(1px)',
+                        transform: 'rotate(-15deg)',
+                        zIndex: 50,
+                        pointerEvents: 'none',
+                        borderLeft: '1.5px dashed rgba(0,0,0,0.15)',
+                        borderRight: '1.5px dashed rgba(0,0,0,0.15)',
+                    }} />
+                )}
                 {!showDict && !showTab && !showFlashcards ? (
                     <div className="flex flex-col">
                         <div className="flex items-center p-1.5 gap-1">
@@ -172,52 +270,42 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 onClick={() => fetchDefinition(selection)}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
-                                <Book size={20} className="text-text-secondary group-hover:text-blue-600 transition-colors" />
+                                <Book size={20} weight="fill" className="text-text-secondary group-hover:text-blue-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Define</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-border-default/50" />
+                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
 
                             <button
                                 onClick={onAskAI}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
-                                <Sparkles size={20} className="text-text-secondary group-hover:text-purple-600 transition-colors" />
+                                <Sparkle size={20} weight="fill" className="text-text-secondary group-hover:text-purple-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-border-default/50" />
+                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
 
                             <button
                                 onClick={() => toggleTab(true)}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
-                                <StickyNote size={20} className="text-text-secondary group-hover:text-amber-600 transition-colors" />
+                                <Note size={20} weight="fill" className="text-text-secondary group-hover:text-amber-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Tab</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-border-default/50" />
+                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
 
                             <button
                                 onClick={() => onSimplify?.()}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
-                                <Wand2 size={20} className="text-text-secondary group-hover:text-emerald-600 transition-colors" />
+                                <MagicWand size={20} weight="fill" className="text-text-secondary group-hover:text-emerald-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Simplify</span>
-                            </button>
-
-                            <div className="w-[1px] h-8 bg-border-default/50" />
-
-                            <button
-                                onClick={() => toggleFlashcards(true)}
-                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
-                            >
-                                <Layers size={20} className="text-text-secondary group-hover:text-rose-600 transition-colors" />
-                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Cards</span>
                             </button>
                         </div>
 
-                        <div className="flex items-center justify-center gap-4 p-3 bg-bg-subtle/50 border-t border-border-default/50">
+                        <div className="flex items-center justify-center gap-4 p-3 bg-bg-subtle/50 border-t border-gray-200 dark:border-neutral-800/80">
                             {['#d1d5db', '#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff'].map(color => (
                                 <button
                                     key={color}
@@ -234,19 +322,19 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Dictionary</h3>
                             <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
-                                <X size={16} className="text-text-tertiary" />
+                                <X size={16} weight="bold" className="text-text-tertiary" />
                             </button>
                         </div>
 
                         {loading ? (
                             <div className="flex items-center justify-center py-8">
-                                <Loader2 size={28} className="animate-spin text-blue-500 opacity-60" />
+                                <Spinner size={28} weight="bold" className="animate-spin text-blue-500 opacity-60" />
                             </div>
                         ) : error ? (
                             <div className="py-6">
                                 {error.includes('internet') ? (
                                     <div className="flex flex-col items-center gap-2 text-center">
-                                        <WifiOff size={24} className="text-amber-500" />
+                                        <WifiSlash size={24} weight="bold" className="text-amber-500" />
                                         <p className="text-sm text-amber-700 font-medium font-sans">
                                             {error}
                                         </p>
@@ -261,7 +349,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                             }}
                                             className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition-all border border-purple-200 shadow-sm font-bold text-sm"
                                         >
-                                            <Sparkles size={16} className="text-purple-600" />
+                                            <Sparkle size={16} weight="fill" className="text-purple-600" />
                                             Ask Cleo to define it
                                         </button>
                                     </div>
@@ -276,7 +364,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                             onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)}
                                             className="w-8 h-8 rounded-full bg-accent-subtle flex items-center justify-center text-blue-500 hover:bg-accent-subtle transition-all hover:scale-110"
                                         >
-                                            <Volume2 size={18} />
+                                            <SpeakerHigh size={18} weight="fill" />
                                         </button>
                                     )}
                                 </div>
@@ -325,7 +413,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                             : 'bg-text-primary text-bg-elevated hover:bg-black active:scale-[0.98]'
                                             }`}
                                     >
-                                        {wordSaved ? <Check size={18} /> : <BookmarkPlus size={18} />}
+                                        {wordSaved ? <Check size={18} weight="bold" /> : <BookmarkSimple size={18} weight="bold" />}
                                         {wordSaved ? 'Word Saved' : 'Save to Vocabulary'}
                                     </button>
                                 )}
@@ -333,55 +421,89 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         )}
                     </div>
                 ) : showTab ? (
-                    <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] font-sans">Add Tab</h3>
-                            <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
-                                <X size={16} className="text-text-tertiary" />
-                            </button>
+                    <div
+                        className="animate-in slide-in-from-bottom-2 duration-300 font-sans flex flex-col relative w-full"
+                        style={{
+                            minHeight: '220px',
+                            transform: 'rotate(2deg)',
+                        }}
+                    >
+                        {/* Context Header */}
+                        <div
+                            className="px-4 pt-3 pb-2.5 flex items-start gap-2 select-none"
+                            style={{
+                                background: isDark ? 'hsl(270 50% 10%)' : 'hsl(270 45% 87%)',
+                                borderRadius: '5px 5px 0 0',
+                            }}
+                        >
+                            <Quotes size={15} weight="fill" style={{ color: isDark ? 'hsl(270 80% 70%)' : 'hsl(270 50% 45%)', flexShrink: 0, marginTop: 2 }} />
+                            <p className="text-[12px] italic leading-relaxed line-clamp-2"
+                               style={{ color: isDark ? 'hsl(270 20% 58%)' : 'hsl(270 25% 40%)' }}>
+                                {selection}
+                            </p>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="bg-bg-subtle/50 p-3 rounded-xl border border-border-default/50 mb-3">
-                                <p className="text-[11px] text-text-tertiary font-bold uppercase tracking-wider mb-1 opacity-50">Selected Text</p>
-                                <p className="text-sm text-text-secondary line-clamp-2 italic">"{selection}"</p>
+                        {/* Text Area */}
+                        <textarea
+                            value={tabText}
+                            onChange={(e) => setTabText(e.target.value)}
+                            placeholder="Write your tab here..."
+                            className="flex-1 w-full p-4 text-[14px] leading-relaxed resize-none focus:outline-none"
+                            style={{
+                                background: 'transparent',
+                                color: isDark ? 'hsl(270 20% 90%)' : 'hsl(270 30% 22%)',
+                                caretColor: isDark ? 'hsl(270 80% 70%)' : 'hsl(270 60% 50%)',
+                            }}
+                            autoFocus
+                        />
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between px-4 py-2"
+                             style={{
+                                 borderTop: `1px solid ${isDark ? 'hsl(270 45% 20%)' : 'hsl(270 30% 82%)'}`,
+                             }}>
+                            <span className="text-[10px]" style={{ color: isDark ? 'hsl(270 20% 55%)' : 'hsl(270 25% 55%)' }}>
+                                {tabText.trim().split(/\s+/).filter(Boolean).length} words
+                            </span>
+
+                            <div className="flex items-center gap-1">
+                                {/* Tick - Save and Close */}
+                                <button
+                                    onClick={handleSaveTab}
+                                    disabled={tabSaved || !tabText.trim()}
+                                    className="p-1.5 rounded-lg transition-all hover:bg-black/10"
+                                    style={{ color: (tabSaved || !tabText.trim()) ? (isDark ? 'hsl(270 20% 45%)' : 'hsl(270 20% 70%)') : (isDark ? 'hsl(270 80% 70%)' : 'hsl(270 60% 45%)') }}
+                                    title="Save & Close"
+                                >
+                                    <Check size={16} weight="bold" />
+                                </button>
+
+                                {/* Bin - Close without saving */}
+                                <button
+                                    onClick={handleCancelTab}
+                                    className="p-1.5 rounded-lg transition-all hover:bg-red-500/10"
+                                    style={{ color: isDark ? 'hsl(270 20% 55%)' : 'hsl(270 20% 60%)' }}
+                                    title="Cancel"
+                                >
+                                    <Trash size={16} weight="bold" />
+                                </button>
                             </div>
-
-                            <textarea
-                                value={tabText}
-                                onChange={(e) => setTabText(e.target.value)}
-                                placeholder="Write your tab here..."
-                                className="w-full h-32 bg-bg-subtle border border-border-default rounded-xl p-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/20 resize-none font-sans"
-                                autoFocus
-                            />
-
-                            <button
-                                onClick={handleSaveTab}
-                                disabled={tabSaved || !tabText.trim()}
-                                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${tabSaved
-                                    ? 'bg-green-50 text-green-600 border border-green-200'
-                                    : 'bg-accent-primary text-white hover:bg-accent-primary/90 active:scale-[0.98] disabled:opacity-50'
-                                    }`}
-                            >
-                                {tabSaved ? <Check size={18} /> : <Save size={18} />}
-                                {tabSaved ? 'Tab Saved' : 'Save Tab'}
-                            </button>
                         </div>
                     </div>
                 ) : showFlashcards ? (
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] font-sans flex items-center gap-2">
-                                <Layers size={14} /> Flashcards
+                                <Stack size={14} weight="fill" /> Flashcards
                             </h3>
                             <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
-                                <X size={16} className="text-text-tertiary" />
+                                <X size={16} weight="bold" className="text-text-tertiary" />
                             </button>
                         </div>
 
                         {flashcardError ? (
                             <div className="bg-red-50/50 border border-red-100 p-4 rounded-xl flex flex-col items-center text-center gap-3">
-                                <AlertCircle size={24} className="text-red-500" />
+                                <WarningCircle size={24} weight="bold" className="text-red-500" />
                                 <p className="text-sm text-red-700 font-medium">{flashcardError}</p>
                                 <button
                                     onClick={handleCloseModal}
@@ -423,7 +545,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                     }}
                                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white rounded-xl text-sm font-bold transition-all shadow-md active:scale-95"
                                 >
-                                    <Sparkles size={18} />
+                                    <Sparkle size={18} weight="fill" />
                                     Generate Cards
                                 </button>
                             </div>
@@ -434,7 +556,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
 
             {/* Arrow when menu is placed above the text (pointing down) */}
             {!isMobile && !showDict && !showTab && !showFlashcards && !showBelow && (
-                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-bg-elevated mx-auto" />
+                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white mx-auto" />
             )}
 
             <style dangerouslySetInnerHTML={{

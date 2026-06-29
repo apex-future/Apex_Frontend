@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Sparkles, X } from 'lucide-react';
+import { Fire, Sparkle, X } from '@phosphor-icons/react';
 import confetti from 'canvas-confetti';
 
 const StreakCelebration = ({ streakCount, streakHistory, onClose }) => {
@@ -88,16 +88,16 @@ const StreakCelebration = ({ streakCount, streakHistory, onClose }) => {
                                 onClick={onClose}
                                 className="p-1.5 rounded-lg hover:bg-white/10 transition-all text-text-secondary active:scale-90"
                             >
-                                <X size={14} />
+                                <X size={14} weight="bold" />
                             </button>
                         </div>
 
                         {/* Header */}
                         <div className="flex flex-col items-center">
                             <div className="flex items-center gap-2 mb-1">
-                                <Sparkles size={16} className="text-orange-400 animate-pulse" />
+                                <Sparkle size={16} weight="fill" className="text-orange-400 animate-pulse" />
                                 <span className="text-sm font-bold text-orange-400 tracking-[0.3em] font-display">Streak Unlocked!</span>
-                                <Sparkles size={16} className="text-orange-400 animate-pulse" />
+                                <Sparkle size={16} weight="fill" className="text-orange-400 animate-pulse" />
                             </div>
                             
                             <div className="flex flex-col items-center mt-1">
@@ -132,7 +132,7 @@ const StreakCelebration = ({ streakCount, streakHistory, onClose }) => {
                                                 : 'bg-bg-subtle/50 border-border-default/50 text-text-tertiary/30'
                                         }`}>
                                             {hasStreak ? (
-                                                <Flame size={10} className="fill-current" />
+                                                <Fire size={10} weight="fill" className="fill-current" />
                                             ) : isToday ? (
                                                 <div className="size-1 bg-orange-500 rounded-full" />
                                             ) : null}
