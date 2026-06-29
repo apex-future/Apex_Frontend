@@ -48,6 +48,37 @@ const ScrollOrientationOverlay = ({ visible, orientation }) => {
     );
 };
 
+const getSessionXpBreakdown = (actions, readingXp) => {
+    const counts = {};
+    actions.forEach(a => {
+        counts[a.action] = (counts[a.action] || 0) + a.estimatedXp;
+    });
+
+    const breakdown = [];
+    if (readingXp > 0) {
+        breakdown.push({ label: 'Reading Time', xp: readingXp });
+    }
+
+    const actionLabels = {
+        highlight_created: 'Highlights Created',
+        note_added: 'Notes Added',
+        dictionary_lookup: 'Dictionary Lookups',
+        tab_added: 'Sticky Tabs Saved',
+        simplify: 'Text Simplifications',
+        ai_explanation: 'AI Clarification',
+        quiz: 'Quizzes Completed'
+    };
+
+    Object.keys(counts).forEach(action => {
+        if (counts[action] > 0) {
+            const label = actionLabels[action] || action.replace(/_/g, ' ');
+            breakdown.push({ label, xp: counts[action] });
+        }
+    });
+
+    return breakdown;
+};
+
 function ReaderView() {
     const { books, updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addTab, updateTab, deleteTab, toggleFavorite, toggleBookmarkedBook, addSimplification, removeSimplification } = useContext(BookContext);
     const { bookId } = useParams();
@@ -72,7 +103,7 @@ function ReaderView() {
 
     // Session Summary State
     const [showSessionSummary, setShowSessionSummary] = useState(false);
-    const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0 });
+    const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [] });
     const mountTime = useRef(Date.now());
     const visitedPages = useRef(new Set());
 
@@ -81,18 +112,34 @@ function ReaderView() {
         if (pageNumber) visitedPages.current.add(pageNumber);
     }, [pageNumber]);
 
+    useEffect(() => {
+        // Start tracking XP actions for this session
+        useXpStore.getState().startSessionTracker();
+    }, [bookId]);
+
     const handleExitReader = async () => {
         // 1. Stop the timer immediately — no more minutes accumulate
         stopTick();
 
         // 2. Compute XP from actual session minutes (does NOT flush or award yet)
-        const xpGained = await computeSessionXp();
+        const readingXp = await computeSessionXp();
         const pagesRead = visitedPages.current.size;
         const timeSpentSeconds = Math.floor((Date.now() - mountTime.current) / 1000);
         const timeSpentMinutes = Math.floor(timeSpentSeconds / 60);
 
-        if (xpGained > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
-            setSessionStats({ xpGained: Math.max(0, xpGained), pagesRead, timeSpentSeconds });
+        // Fetch session XP actions
+        const sessionXpActions = useXpStore.getState().sessionXpActions || [];
+        const activityXp = sessionXpActions.reduce((sum, act) => sum + act.estimatedXp, 0);
+        const totalXp = readingXp + activityXp;
+
+        if (totalXp > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
+            setSessionStats({ 
+                xpGained: Math.max(0, readingXp), 
+                pagesRead, 
+                timeSpentSeconds,
+                totalXp: Math.max(0, totalXp),
+                breakdown: getSessionXpBreakdown(sessionXpActions, readingXp)
+            });
             setShowSessionSummary(true);
         } else {
             navigate('/');
@@ -1417,9 +1464,10 @@ function ReaderView() {
             <AnimatePresence>
                 {showSessionSummary && (
                     <SessionSummaryModal
-                        xpGained={sessionStats.xpGained}
+                        xpGained={sessionStats.totalXp}
                         pagesRead={sessionStats.pagesRead}
                         timeSpentSeconds={sessionStats.timeSpentSeconds}
+                        breakdown={sessionStats.breakdown}
                         onClose={async () => {
                             // User confirmed exit — flush reading time + award XP now
                             await flushSessionToQueue();
@@ -1429,6 +1477,8 @@ function ReaderView() {
                                 xpStore.awardXpOptimistic('reading', { minutes }, sessionStats.xpGained);
                                 xpStore.flushPendingXp();
                             }
+                            // Reset session tracking
+                            useXpStore.getState().startSessionTracker();
                             navigate('/');
                         }}
                         onCancel={() => {

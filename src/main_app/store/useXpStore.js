@@ -24,6 +24,9 @@ const useXpStore = create(
       // Actions earned while offline, not yet confirmed by server
       pendingXpActions: [], // array of { action, metadata, estimatedXp, timestamp }
 
+      // Actions earned in the current reader/active session
+      sessionXpActions: [],
+
       // ─── Timed multiplier from overflow rewards ─────────────────────────────
       multiplierExpiresAt: null, // ISO string or null
       lastMultiplierApplied: 1.0,
@@ -36,13 +39,26 @@ const useXpStore = create(
 
       // ─── Last sync timestamp (server-provided, never client clock) ──────────
       lastSyncedAt: null,
-      
+
+      // ─── CASA sync anchors ───────────────────────────────────────────────────
+      // lastUpdatedAt: the updated_at timestamp of the last profile we wrote locally.
+      // xpLog: local union-merged copy of the XP action log (max 500 entries).
+      lastUpdatedAt: null,
+      xpLog: [],
+
       // ─── Flush Lock ─────────────────────────────────────────────────────────
       isFlushingXp: false,
 
       // ═══════════════════════════════════════════════════════════════════════
       // ACTIONS
       // ═══════════════════════════════════════════════════════════════════════
+
+      /**
+       * startSessionTracker — starts/resets the tracking of XP actions for the session.
+       */
+      startSessionTracker: () => {
+        set({ sessionXpActions: [] });
+      },
 
       /**
        * awardXpOptimistic — optimistically award XP locally.
@@ -62,6 +78,7 @@ const useXpStore = create(
         set((state) => ({
           pendingXpActions: [...state.pendingXpActions, newAction],
           estimatedXp: state.estimatedXp + estimatedAmount,
+          sessionXpActions: [...(state.sessionXpActions || []), newAction],
         }));
 
         if (navigator.onLine) {
@@ -118,20 +135,95 @@ const useXpStore = create(
 
       /**
        * seedFromServer — called on login and app load.
-       * Sets both confirmedXp and estimatedXp to the server's total_xp.
+       *
+       * Implements the Clock-Agnostic Sync Algorithm (CASA):
+       *   - total_xp:            Math.max(local, cloud) — XP never decreases.
+       *   - xp_log:              Union-merge local + cloud arrays; deduplicate by
+       *                          ts+action+xp; sort ascending; cap at 500.
+       *   - streak_freeze_held,
+       *     refresh_tokens:       Cloud wins only when cloud updated_at is
+       *                          strictly newer than local lastUpdatedAt.
+       *   - multiplier_expires_at: Take whichever is further in the future.
        */
       seedFromServer: (profileData) => {
-        console.log('[XP Store] Seeded from server, total_xp:', profileData.total_xp);
+        const state = get();
+
+        const cloudXp          = profileData.total_xp      ?? 0;
+        const cloudUpdatedAt   = profileData.updated_at    ?? null;
+        const localUpdatedAt   = state.lastUpdatedAt       ?? null;
+
+        // ── total_xp: always take the higher value ────────────────────────────
+        const resolvedXp = Math.max(state.confirmedXp ?? 0, cloudXp);
+
+        // ── xp_log: union-merge, deduplicate, sort, cap ───────────────────────
+        const localLog  = state.xpLog ?? [];
+        const cloudLog  = profileData.xp_log ?? [];
+        const combined  = [...localLog, ...cloudLog];
+        const seen      = new Set();
+        const dedupedLog = combined
+          .filter(entry => {
+            const key = `${entry.ts}|${entry.action}|${entry.xp}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          })
+          .sort((a, b) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0))
+          .slice(-500);
+
+        // ── cloud-wins-if-newer helper ────────────────────────────────────────
+        const cloudIsNewer =
+          cloudUpdatedAt && localUpdatedAt
+            ? new Date(cloudUpdatedAt) > new Date(localUpdatedAt)
+            : cloudUpdatedAt !== null; // first sync ever → cloud wins
+
+        // ── streak_freeze_held, refresh_tokens: cloud wins when newer ─────────
+        const resolvedStreakFreezeHeld = cloudIsNewer
+          ? (profileData.streak_freeze_held ?? state.streakFreezeHeld)
+          : state.streakFreezeHeld;
+
+        const resolvedRefreshTokens = cloudIsNewer
+          ? (profileData.refresh_tokens ?? state.refreshTokens)
+          : state.refreshTokens;
+
+        // ── multiplier_expires_at: take whichever is further in the future ────
+        const localExpiry  = state.multiplierExpiresAt;
+        const cloudExpiry  = profileData.multiplier_expires_at ?? null;
+        let resolvedExpiry;
+        if (!localExpiry && !cloudExpiry)   resolvedExpiry = null;
+        else if (!localExpiry)              resolvedExpiry = cloudExpiry;
+        else if (!cloudExpiry)              resolvedExpiry = localExpiry;
+        else resolvedExpiry = new Date(cloudExpiry) > new Date(localExpiry)
+          ? cloudExpiry
+          : localExpiry;
+
+        // ── new lastUpdatedAt: take the more recent of the two ────────────────
+        const resolvedUpdatedAt =
+          cloudUpdatedAt && localUpdatedAt
+            ? (new Date(cloudUpdatedAt) >= new Date(localUpdatedAt) ? cloudUpdatedAt : localUpdatedAt)
+            : (cloudUpdatedAt ?? localUpdatedAt);
+
+        if (import.meta.env.DEV) {
+          console.log(
+            `[XP Store CASA] localXp=${state.confirmedXp} cloudXp=${cloudXp} → ${resolvedXp}`,
+            `| cloudIsNewer=${cloudIsNewer}`,
+            `| logEntries local=${localLog.length} cloud=${cloudLog.length} merged=${dedupedLog.length}`,
+          );
+        }
 
         set({
-          confirmedXp: profileData.total_xp ?? 0,
-          estimatedXp: profileData.total_xp ?? 0,
-          multiplierExpiresAt: profileData.multiplier_expires_at ?? null,
-          streakFreezeHeld: profileData.streak_freeze_held ?? false,
-          refreshTokens: profileData.refresh_tokens ?? 0,
-          lifetimeQuestsCompleted: profileData.lifetime_quests_completed ?? 0,
-          unclaimedRewards: profileData.unclaimed_rewards ?? [],
-          lastSyncedAt: profileData.synced_at ?? null,
+          confirmedXp:              resolvedXp,
+          estimatedXp:              resolvedXp,
+          xpLog:                    dedupedLog,
+          lastUpdatedAt:            resolvedUpdatedAt,
+          multiplierExpiresAt:      resolvedExpiry,
+          lastMultiplierApplied:    profileData.last_multiplier_applied ?? state.lastMultiplierApplied,
+          streakFreezeHeld:         resolvedStreakFreezeHeld,
+          refreshTokens:            resolvedRefreshTokens,
+          lifetimeQuestsCompleted:  profileData.lifetime_quests_completed ?? state.lifetimeQuestsCompleted,
+          unclaimedRewards:         cloudIsNewer
+                                      ? (profileData.unclaimed_rewards ?? state.unclaimedRewards)
+                                      : state.unclaimedRewards,
+          lastSyncedAt:             profileData.synced_at ?? state.lastSyncedAt,
         });
       },
 
@@ -154,13 +246,17 @@ const useXpStore = create(
           confirmedXp: 0,
           estimatedXp: 0,
           pendingXpActions: [],
+          sessionXpActions: [],
           isFlushingXp: false,
           multiplierExpiresAt: null,
+          lastMultiplierApplied: 1.0,
           streakFreezeHeld: false,
           refreshTokens: 0,
           lifetimeQuestsCompleted: 0,
           unclaimedRewards: [],
           lastSyncedAt: null,
+          lastUpdatedAt: null,
+          xpLog: [],
         });
       },
     }),

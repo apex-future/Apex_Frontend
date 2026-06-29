@@ -36,7 +36,7 @@ export const XP_VALUES = {
   quiz_min: 20,                // minimum XP for any quiz
   quiz_per_score_point: 1,     // score% x 1, floored at quiz_min
   ai_explanation: 5,           // per AI question asked
-  highlight_created: 2,        // per highlight, capped at 20/day for XP
+  highlight_created: 3,        // per highlight, capped at 20/day for XP
   note_added: 8,               // per note added to highlight, capped at 10/day
   dictionary_lookup: 2,        // per lookup, capped at 15/day
   tab_added: 5,                // per tab/sticky note saved, capped at 15/day

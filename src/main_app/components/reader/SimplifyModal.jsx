@@ -20,9 +20,9 @@ function SimplifyModal({ originalText, simplifiedText, loading, error, onRetry, 
                 className="fixed z-[320] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] max-w-[92vw] animate-in fade-in zoom-in-95 duration-300"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="bg-bg-elevated border border-border-default shadow-2xl rounded-2xl overflow-hidden font-sans">
+                <div className="bg-white border-t border-t-gray-200 shadow-sm hover:shadow-md transition-shadow rounded-2xl overflow-hidden font-sans">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-border-default/50">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                         <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
                                 <MagicWand size={14} weight="fill" className="text-emerald-600" />
@@ -43,7 +43,7 @@ function SimplifyModal({ originalText, simplifiedText, loading, error, onRetry, 
                     <div className="p-5">
                         {/* Original text — subtle quote */}
                         {originalText && (
-                            <div className="mb-4 bg-bg-subtle/50 p-3 rounded-xl border border-border-default/30">
+                            <div className="mb-4 bg-gray-50/80 p-3 rounded-xl border border-gray-100">
                                 <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-wider mb-1.5 opacity-50">
                                     Original
                                 </p>

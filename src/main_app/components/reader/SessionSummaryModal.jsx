@@ -33,6 +33,7 @@ export default function SessionSummaryModal({
   xpGained,
   pagesRead,
   timeSpentSeconds,
+  breakdown = [],
 }) {
   const isMultiplierActive = useXpStore(state => state.isMultiplierActive());
   const lastMultiplierApplied = useXpStore(state => state.lastMultiplierApplied);
@@ -73,8 +74,18 @@ export default function SessionSummaryModal({
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  const showMultiplier = isMultiplierActive || lastMultiplierApplied > 1.0;
-  const multiplierCount = lastMultiplierApplied > 1.0 ? `${lastMultiplierApplied}x` : null;
+  const showMultiplier = isMultiplierActive && lastMultiplierApplied > 1.0;
+  const multiplierCount = showMultiplier ? `${lastMultiplierApplied}x` : null;
+  const multiplierFactor = showMultiplier ? lastMultiplierApplied : 1.0;
+
+  const multipliedBreakdown = breakdown.map(item => ({
+    ...item,
+    xp: Math.round(item.xp * multiplierFactor)
+  }));
+
+  const displayXp = multipliedBreakdown.length > 0
+    ? multipliedBreakdown.reduce((sum, item) => sum + item.xp, 0)
+    : Math.round(xpGained * multiplierFactor);
 
   // Exact card bg from Header.jsx dashboard
   const cardBase = isDark
@@ -95,7 +106,7 @@ export default function SessionSummaryModal({
       key: 'xp',
       label: 'TOTAL XP',
       icon: <Lightning size={28} />,
-      value: <CountingNumber value={xpGained} />,
+      value: <CountingNumber value={displayXp} />,
       // Purple when multiplier, gold otherwise
       accentLight: showMultiplier ? '#7C3AED' : '#D97706',
       accentDark:  showMultiplier ? '#A78BFA' : '#F59E0B',
@@ -180,7 +191,7 @@ export default function SessionSummaryModal({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.35 }}
-            className="grid grid-cols-3 gap-2 sm:gap-4 w-full mb-10"
+            className={`grid grid-cols-3 gap-2 sm:gap-4 w-full ${multipliedBreakdown.length > 0 ? 'mb-6' : 'mb-10'}`}
           >
             {stats.map(({ key, label, icon, value, accentLight, accentDark, seedBgLight, seedBgDark, cardBorder, sub }) => {
               const accent = isDark ? accentDark : accentLight;
@@ -224,6 +235,36 @@ export default function SessionSummaryModal({
               );
             })}
           </motion.div>
+
+          {/* XP Breakdown Card */}
+          {multipliedBreakdown && multipliedBreakdown.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.35 }}
+              className={`w-full text-left rounded-xl p-4 mb-6 ${
+                isDark 
+                  ? 'bg-white/5 border border-white/10 shadow-inner' 
+                  : 'bg-black/5 border border-black/5 shadow-inner'
+              }`}
+            >
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-text-tertiary mb-3">
+                XP BREAKDOWN
+              </h3>
+              <div className="space-y-2.5">
+                {multipliedBreakdown.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-sm font-semibold">
+                    <span className="text-text-secondary">
+                      {item.label}
+                    </span>
+                    <span className="font-black font-sans" style={{ color: isDark ? '#A78BFA' : '#7C3AED' }}>
+                      +{item.xp} XP
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* Buttons */}
           <motion.div
