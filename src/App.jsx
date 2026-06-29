@@ -122,6 +122,8 @@ function App() {
         apiClient.get('/api/xp/profile')
           .then((xpProfile) => {
             useXpStore.getState().seedFromServer(xpProfile.data);
+            // After seeding, immediately try to flush any pending offline XP
+            useXpStore.getState().flushPendingXp();
           })
           .catch((err) => console.error('[Apex XP] Failed to seed XP profile:', err.message));
 

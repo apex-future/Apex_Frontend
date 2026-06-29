@@ -210,9 +210,12 @@ const useXpStore = create(
           );
         }
 
+        // Calculate total pending XP to preserve optimistic UI on reload
+        const pendingXp = state.pendingXpActions.reduce((sum, a) => sum + (a.estimatedXp || 0), 0);
+
         set({
           confirmedXp:              resolvedXp,
-          estimatedXp:              resolvedXp,
+          estimatedXp:              resolvedXp + pendingXp,
           xpLog:                    dedupedLog,
           lastUpdatedAt:            resolvedUpdatedAt,
           multiplierExpiresAt:      resolvedExpiry,
@@ -262,6 +265,17 @@ const useXpStore = create(
     }),
     {
       name: 'apex-xp-storage',
+      partialize: (state) => {
+        // Omit transient state from persistence to prevent infinite locks
+        const { isFlushingXp, ...rest } = state;
+        return rest;
+      },
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Force it to false on load just in case older storage has it stuck as true
+          state.isFlushingXp = false;
+        }
+      }
     }
   )
 );
