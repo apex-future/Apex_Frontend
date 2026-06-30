@@ -58,6 +58,9 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    include: ['@phosphor-icons/react']
+  },
   build: {
     target: 'es2015',
     sourcemap: true,
