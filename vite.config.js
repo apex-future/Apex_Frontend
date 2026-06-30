@@ -59,7 +59,12 @@ export default defineConfig({
     }),
   ],
   build: {
-    target: 'es2015'
+    target: 'es2015',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
   },
   server: {
     // In development, API calls go directly to VITE_API_BASE_URL (http://127.0.0.1:8000)
