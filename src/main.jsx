@@ -2,6 +2,7 @@ import './lib/gsap'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import { IconContext } from '@phosphor-icons/react'
 import './index.css'
 import App from './App.jsx'
 
@@ -9,9 +10,11 @@ console.log('[Apex SW] Navigation strategy: NetworkFirst — stale deploy fix ac
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <IconContext.Provider value={{ color: "currentColor", size: "1em", weight: "regular", mirrored: false }}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </IconContext.Provider>
   </StrictMode>,
 )
 
