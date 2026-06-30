@@ -24,7 +24,10 @@ const useAuthStore = create(
     }),
     {
       name: 'apex-auth-storage',
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => {
+        if (!state) return state;
+        return { user: state.user, isAuthenticated: state.isAuthenticated };
+      },
     }
   )
 );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { WarningCircle, Eye, EyeClosed } from '@phosphor-icons/react';
+import { Lock, EyeOff } from 'lucide-react';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
 

@@ -222,6 +222,7 @@ const useStudyStore = create(
        * Seeds local store from Supabase data if Supabase has more recent data
        */
       seedFromSupabase: (supabaseData) => {
+        if (!supabaseData) return;
         const {
           current_streak,
           longest_streak,
