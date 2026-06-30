@@ -146,6 +146,7 @@ const useXpStore = create(
        *   - multiplier_expires_at: Take whichever is further in the future.
        */
       seedFromServer: (profileData) => {
+        if (!profileData) return;
         const state = get();
 
         const cloudXp          = profileData.total_xp      ?? 0;
@@ -266,6 +267,7 @@ const useXpStore = create(
     {
       name: 'apex-xp-storage',
       partialize: (state) => {
+        if (!state) return state;
         // Omit transient state from persistence to prevent infinite locks
         const { isFlushingXp, ...rest } = state;
         return rest;
