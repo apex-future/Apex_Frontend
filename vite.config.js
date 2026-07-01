@@ -58,6 +58,9 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    dedupe: ['react', 'react-dom', '@phosphor-icons/react']
+  },
   optimizeDeps: {
     include: ['@phosphor-icons/react']
   },
