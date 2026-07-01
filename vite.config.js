@@ -20,6 +20,7 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/assets\//, /\.(js|css|map)$/],
         skipWaiting: true,
         clientsClaim: true,
+        maximumFileSizeToCacheInBytes: 5000000,
         runtimeCaching: [
           {
             // Network-first or StaleWhileRevalidate for JS/CSS files
