@@ -17,7 +17,7 @@ export default defineConfig({
         importScripts: ['sw-push.js'],
         globPatterns: ['**/*.{js,mjs,css,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/assets\//, /\.(js|css|map)$/],
+        navigateFallbackDenylist: [/^\/assets\//, /\.(js|css|map|webmanifest)$/],
         skipWaiting: true,
         clientsClaim: true,
         maximumFileSizeToCacheInBytes: 5000000,
@@ -83,7 +83,7 @@ export default defineConfig({
   },
   build: {
     target: 'es2015',
-    sourcemap: true, // DIAGNOSTIC ONLY — revert after capturing stack trace
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: undefined
