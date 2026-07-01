@@ -1,26 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Fire, Sparkle, Calendar, Bell, CheckCircle, DotsThreeVertical } from '@phosphor-icons/react';
+import { X, Fire, Sparkle, Calendar, Bell, CheckCircle, DotsThreeVertical, Spinner } from '@phosphor-icons/react';
+import notificationService from '../../services/notificationService';
 
-const MOCK_NOTIFICATIONS = [
-  { id: 1, type: 'streak', title: 'Streak at risk!', message: "You're about to lose your 5-day streak. Read for 10 minutes today to keep it.", time: '2 hours ago', read: false },
-  { id: 2, type: 'cleo', title: 'Cleo has a new quiz', message: "Based on your recent reading of 'Quantum Physics', I've generated a quick 5-question review.", time: '5 hours ago', read: false },
-  { id: 3, type: 'exam', title: 'Exam Reminder', message: "Your Midterm is coming up in 3 days. Time to review your Notes.", time: '1 day ago', read: true },
-  { id: 4, type: 'system', title: 'New Feature: Global Analytics', message: "We've launched the new dynamic analytics dashboard. Check it out now!", time: '2 days ago', read: true },
-];
-
-function NotificationDrawer({ isOpen, onClose }) {
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all'); // 'all', 'unread'
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      notificationService.fetchNotifications().then(data => {
+        setNotifications(data);
+      }).finally(() => {
+        setLoading(false);
+      });
+    }
+  }, [isOpen]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const handleMarkAsRead = (id) => {
+  useEffect(() => {
+    if (onUnreadCountChange) {
+      onUnreadCountChange(unreadCount);
+    }
+  }, [unreadCount, onUnreadCountChange]);
+
+  const handleMarkAsRead = async (id) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    await notificationService.markAsRead(id);
   };
 
-  const handleMarkAllAsRead = () => {
+  const handleMarkAllAsRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    await notificationService.markAllAsRead();
   };
 
   const filteredNotifications = notifications.filter(n => filter === 'all' || !n.read);
@@ -118,7 +132,16 @@ function NotificationDrawer({ isOpen, onClose }) {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
               <div className="flex flex-col gap-3">
                 <AnimatePresence>
-                  {filteredNotifications.length === 0 ? (
+                  {loading ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex flex-col items-center justify-center h-40 text-text-tertiary"
+                    >
+                      <Spinner size={32} className="animate-spin mb-3 text-accent-primary" />
+                      <p className="text-sm font-medium">Loading notifications...</p>
+                    </motion.div>
+                  ) : filteredNotifications.length === 0 ? (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -160,7 +183,7 @@ function NotificationDrawer({ isOpen, onClose }) {
                             {notification.message}
                           </p>
                           <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
-                            {notification.time}
+                            {notification.created_at ? new Date(notification.created_at).toLocaleString() : notification.time || 'Just now'}
                           </span>
                         </div>
 

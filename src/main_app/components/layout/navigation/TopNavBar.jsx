@@ -3,8 +3,8 @@ import { useContext } from 'react';
 import { NavBarContext } from './NavBarContextInstance';
 import CharacterImg from '../../../../assets/Characters/Character1.png';
 
-function TopNavBar({ setIsMobileOpen, onUpload }) {
-  const { setIsNotificationOpen } = useContext(NavBarContext) || {};
+function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
+  const { setIsNotificationOpen, unreadNotificationCount } = useContext(NavBarContext) || {};
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -79,7 +79,11 @@ function TopNavBar({ setIsMobileOpen, onUpload }) {
             >
               <div className="relative flex items-center justify-center">
                 <Bell size={22} weight="regular" className="flex-shrink-0 transition-colors" />
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-accent-primary rounded-full border border-bg-subtle dark:border-bg-elevated" />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-[3px] bg-accent-primary rounded-full border-[1.5px] border-bg-elevated flex items-center justify-center text-[8px] font-bold text-white z-20">
+                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                  </span>
+                )}
               </div>
             </button>
 

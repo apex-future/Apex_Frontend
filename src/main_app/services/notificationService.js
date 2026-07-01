@@ -1,5 +1,7 @@
 
 
+import apiClient from './apiClient';
+
 const NOTIFICATION_PERMISSION_KEY = 'apex_notification_permission_requested';
 
 const notificationService = {
@@ -18,23 +20,41 @@ const notificationService = {
   },
 
   checkAndNotify: async () => {
-    // ─── REPURPOSED — DO NOT DELETE ───────────────────────────────────────────
-    // checkAndNotify originally fired a local push-style reminder when the user
-    // opened the app. That job now belongs to the backend cron (APScheduler).
-    //
-    // This function is kept as the future home of the IN-APP NOTIFICATION POLLER.
-    // When the in-app notification system ships, this function will:
-    //   1. Hit GET /notifications to fetch unread notifications for the current user
-    //   2. Update the notification badge count in the UI
-    //   3. Show in-app toasts for new activity (quest completions, streak milestones,
-    //      collaboration alerts, update announcements, etc.)
-    //
-    // The Supabase schema for this will be:
-    //   notifications(id, user_id, type, message, read, created_at)
-    //
-    // DO NOT restore the old reminder logic here — that now lives in the backend.
-    // ──────────────────────────────────────────────────────────────────────────
-    console.log('[Apex Notifications] checkAndNotify is reserved for in-app notification polling — not yet implemented');
+    try {
+      const response = await apiClient.get('/api/notifications');
+      const unreadCount = response.data?.filter?.(n => !n.read)?.length || 0;
+      if (import.meta.env.DEV) console.log(`[Apex Notifications] Polled unread count: ${unreadCount}`);
+      return unreadCount;
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('[Apex Notifications] Failed to poll notifications:', err);
+      return 0;
+    }
+  },
+
+  fetchNotifications: async () => {
+    try {
+      const response = await apiClient.get('/api/notifications');
+      return response.data || [];
+    } catch (err) {
+      console.error('[Apex Notifications] Failed to fetch notifications:', err);
+      return [];
+    }
+  },
+
+  markAsRead: async (id) => {
+    try {
+      await apiClient.patch(`/api/notifications/${id}/read`);
+    } catch (err) {
+      console.error('[Apex Notifications] Failed to mark as read:', err);
+    }
+  },
+
+  markAllAsRead: async () => {
+    try {
+      await apiClient.post('/api/notifications/read-all');
+    } catch (err) {
+      console.error('[Apex Notifications] Failed to mark all as read:', err);
+    }
   },
 
   showDailyReminder: () => {
@@ -65,41 +85,8 @@ const notificationService = {
   },
 
   scheduleNotification: async () => {
-    // Attempt to schedule a notification for 24h in the future
-    // This uses the experimental Notification Triggers API
-    if (!('Notification' in window) || Notification.permission !== 'granted' || !('serviceWorker' in navigator)) {
-      return;
-    }
-
-    try {
-      const registration = await navigator.serviceWorker.ready;
-
-      // Check if Notification Triggers are supported
-      if ('showTrigger' in Notification.prototype && typeof TimestampTrigger !== 'undefined') {
-        const messages = [
-          "Ready to dive back into your books? 📚",
-          "Don't lose your streak! Time for some reading? ✨",
-          "Your books are waiting for you. Let's make some progress today! 🚀",
-          "A chapter a day keeps the knowledge stay! Open Apex to read now. 📖"
-        ];
-        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-
-        // Schedule for 24 hours from now
-        const triggerTime = Date.now() + 24 * 60 * 60 * 1000;
-
-        await registration.showNotification('Apex Reading Reminder', {
-          body: randomMessage,
-          icon: '/pwa-192x192.png',
-          badge: '/pwa-192x192.png',
-          tag: 'daily-reminder-scheduled',
-          showTrigger: new TimestampTrigger(triggerTime),
-        });
-
-        console.log('[Apex Notification] Scheduled for:', new Date(triggerTime).toLocaleString());
-      }
-    } catch (err) {
-      console.warn('Failed to schedule notification:', err);
-    }
+    // Deprecated: Experimental Notification Triggers API is unsupported in most browsers.
+    // Local daily reminders have been migrated to the backend push cron job.
   },
 
   // ─── PUSH SUBSCRIPTION METHODS ────────────────────────────────────────────

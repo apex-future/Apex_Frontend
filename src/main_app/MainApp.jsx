@@ -40,12 +40,15 @@ function MainApp({ onLogout }) {
   // isMobileOpen: State variable specifically for the mobile slide-over sidebar visibility.
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const { toasts, removeToast } = useToast();
   const asideToggle = {
     closeAside: () => setAsideIsOpen(false),
     openAside: () => setAsideIsOpen(true),
     isNotificationOpen,
-    setIsNotificationOpen
+    setIsNotificationOpen,
+    unreadNotificationCount,
+    setUnreadNotificationCount
   };
 
   const location = useLocation();
@@ -55,8 +58,7 @@ function MainApp({ onLogout }) {
   React.useEffect(() => {
     // Request notification permission and check for missed days
     notificationService.requestPermission().then(() => {
-      notificationService.checkAndNotify();
-      notificationService.scheduleNotification();
+      notificationService.checkAndNotify().then(count => setUnreadNotificationCount(count));
     });
   }, []);
 
@@ -138,6 +140,7 @@ function MainApp({ onLogout }) {
           <NotificationDrawer 
             isOpen={isNotificationOpen} 
             onClose={() => setIsNotificationOpen(false)} 
+            onUnreadCountChange={setUnreadNotificationCount}
           />
           <ToastContainer toasts={toasts} removeToast={removeToast} />
         </NavBarProvider>
