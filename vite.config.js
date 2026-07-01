@@ -16,7 +16,23 @@ export default defineConfig({
       workbox: {
         importScripts: ['sw-push.js'],
         globPatterns: ['**/*.{js,mjs,css,ico,png,svg,woff2}'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/assets\//, /\.(js|css|map)$/],
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
+          {
+            // Network-first or StaleWhileRevalidate for JS/CSS files
+            urlPattern: /\.(?:js|mjs|css)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'static-resources',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 24 * 60 * 60, // 1 day
+              },
+            },
+          },
           {
             // Cache-first for PDF worker — must be first entry
             urlPattern: /pdf\.worker(\.min)?\.mjs$/i,

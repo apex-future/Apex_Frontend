@@ -26,3 +26,14 @@ if ('launchQueue' in window) {
     }
   });
 }
+
+// Automatically reload when a new service worker takes control
+let refreshing = false;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+}
