@@ -1,5 +1,5 @@
 import React from 'react';
-import { Highlighter, ChevronRight, Trash2 } from 'lucide-react';
+import { HighlighterCircle, CaretRight, Trash } from '@phosphor-icons/react';
 
 /**
  * HighlightsView
@@ -14,7 +14,7 @@ function HighlightsView({ highlights = [], onJumpTo, onRemove }) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
         <div className="w-12 h-12 rounded-2xl bg-bg-subtle flex items-center justify-center mb-3">
-          <Highlighter size={22} className="text-text-tertiary" strokeWidth={1.5} />
+          <HighlighterCircle size={22} weight="bold" className="text-text-tertiary" />
         </div>
         <p className="text-sm font-semibold text-text-secondary">No highlights yet</p>
         <p className="text-xs text-text-tertiary mt-1">Select text while reading and pick a color to highlight</p>
@@ -71,10 +71,10 @@ function HighlightsView({ highlights = [], onJumpTo, onRemove }) {
                   className="p-1 rounded-lg hover:bg-bg-subtle text-text-placeholder hover:text-red-500 transition-all"
                   title="Remove highlight"
                 >
-                  <Trash2 size={13} strokeWidth={1.5} />
+                  <Trash size={13} weight="bold" />
                 </button>
               )}
-              <ChevronRight size={14} className="text-text-placeholder shrink-0" strokeWidth={1.5} />
+              <CaretRight size={14} weight="bold" className="text-text-placeholder shrink-0" />
             </div>
           </div>
         );

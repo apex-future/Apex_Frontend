@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Flame, Sparkles, Calendar, Bell, CheckCircle2, MoreVertical, Loader2 } from 'lucide-react';
+import { X, Fire, Sparkle, Calendar, Bell, CheckCircle, DotsThreeVertical, Spinner } from '@phosphor-icons/react';
 import notificationService from '../../services/notificationService';
 
 function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
@@ -41,10 +41,10 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
 
   const getIcon = (type) => {
     switch (type) {
-      case 'streak': return <Flame size={18} className="text-orange-500" />;
-      case 'cleo': return <Sparkles size={18} className="text-purple-500" />;
-      case 'exam': return <Calendar size={18} className="text-blue-500" />;
-      default: return <Bell size={18} className="text-accent-primary" />;
+      case 'streak': return <Fire size={18} weight="fill" className="text-orange-500" />;
+      case 'cleo': return <Sparkle size={18} weight="fill" className="text-purple-500" />;
+      case 'exam': return <Calendar size={18} weight="fill" className="text-blue-500" />;
+      default: return <Bell size={18} weight="fill" className="text-accent-primary" />;
     }
   };
 
@@ -83,7 +83,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-accent-primary/10 text-accent-primary rounded-xl">
-                    <Bell size={24} />
+                    <Bell size={24} weight="fill" />
                   </div>
                   <h2 className="text-xl font-display font-bold text-text-primary">Notifications</h2>
                   {unreadCount > 0 && (
@@ -96,7 +96,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                   onClick={onClose}
                   className="p-2 text-text-tertiary hover:bg-bg-subtle hover:text-text-primary rounded-full transition-colors"
                 >
-                  <X size={20} />
+                  <X size={20} weight="bold" />
                 </button>
               </div>
 
@@ -121,7 +121,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                     onClick={handleMarkAllAsRead}
                     className="text-xs font-semibold text-accent-primary hover:text-accent-hover transition-colors flex items-center gap-1"
                   >
-                    <CheckCircle2 size={14} />
+                    <CheckCircle size={14} weight="fill" />
                     Mark all read
                   </button>
                 )}
@@ -138,7 +138,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                       animate={{ opacity: 1 }}
                       className="flex flex-col items-center justify-center h-40 text-text-tertiary"
                     >
-                      <Loader2 size={32} className="animate-spin mb-3 text-accent-primary" />
+                      <Spinner size={32} className="animate-spin mb-3 text-accent-primary" />
                       <p className="text-sm font-medium">Loading notifications...</p>
                     </motion.div>
                   ) : filteredNotifications.length === 0 ? (
@@ -147,7 +147,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                       animate={{ opacity: 1 }}
                       className="flex flex-col items-center justify-center h-40 text-text-tertiary"
                     >
-                      <Bell size={40} className="mb-3 opacity-20" />
+                      <Bell size={40} weight="fill" className="mb-3 opacity-20" />
                       <p className="text-sm font-medium">No new notifications</p>
                     </motion.div>
                   ) : (
@@ -195,7 +195,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                               className="p-1.5 bg-bg-subtle hover:bg-border-default rounded-md text-text-secondary transition-colors"
                               title="Mark as read"
                             >
-                              <CheckCircle2 size={16} />
+                              <CheckCircle size={16} weight="fill" />
                             </button>
                           </div>
                         )}

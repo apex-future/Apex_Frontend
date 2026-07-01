@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Plus } from '@phosphor-icons/react'
 import { useState } from "react"
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -71,7 +71,7 @@ function FAQ() {
                         >
                             <h3 className="FAQ-question font-display font-bold text-lg sm:text-xl text-text-primary">{item.question}</h3>
                             <div className="p-2 rounded-full hover:bg-neutral-100 transition-colors" aria-hidden="true">
-                                <Plus className={`transition-all duration-500 transform ${activeId === item.id ? "rotate-45 text-accent-primary" : "text-text-tertiary"}`} size={24} />
+                                <Plus className={`transition-all duration-500 transform ${activeId === item.id ? "rotate-45 text-accent-primary" : "text-text-tertiary"}`} size={24} weight="bold" />
                             </div>
                         </div>
                         <div 

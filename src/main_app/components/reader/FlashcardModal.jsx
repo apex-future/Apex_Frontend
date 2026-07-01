@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Loader2, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { X, CaretLeft, CaretRight, Spinner, ArrowsClockwise, CheckCircle } from '@phosphor-icons/react';
 
 function FlashcardModal({ selection, count, onClose, bookId }) {
     const [cards, setCards] = useState([]);
@@ -62,7 +62,7 @@ function FlashcardModal({ selection, count, onClose, bookId }) {
                         <p className="text-xs text-text-tertiary font-bold mt-1 uppercase tracking-wider">{count} Cards Generated</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-bg-subtle rounded-xl transition-colors">
-                        <X size={20} className="text-text-secondary" />
+                        <X size={20} weight="bold" className="text-text-secondary" />
                     </button>
                 </div>
 
@@ -70,13 +70,13 @@ function FlashcardModal({ selection, count, onClose, bookId }) {
                 <div className="flex-1 flex flex-col items-center justify-center p-6 relative bg-bg-subtle/30 overflow-hidden perspective-1000">
                     {loading ? (
                         <div className="flex flex-col items-center gap-4 text-rose-500">
-                            <Loader2 size={40} className="animate-spin" />
+                            <Spinner size={40} weight="bold" className="animate-spin" />
                             <p className="font-bold text-sm text-text-secondary animate-pulse">Generating cards with Groq AI...</p>
                         </div>
                     ) : error ? (
                         <div className="flex flex-col items-center gap-4 text-center">
                             <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center">
-                                <X size={32} />
+                                <X size={32} weight="bold" />
                             </div>
                             <p className="text-red-600 font-bold max-w-md">{error}</p>
                             <button onClick={onClose} className="px-6 py-3 bg-bg-primary border border-border-default rounded-xl font-bold hover:bg-bg-subtle transition-all mt-4">
@@ -102,14 +102,14 @@ function FlashcardModal({ selection, count, onClose, bookId }) {
                                             {cards[currentIndex].front}
                                         </p>
                                         <p className="absolute bottom-6 text-xs text-text-tertiary font-bold uppercase tracking-widest opacity-50 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                                            <RefreshCw size={14} /> Tap to flip
+                                            <ArrowsClockwise size={14} weight="bold" /> Tap to flip
                                         </p>
                                     </div>
 
                                     {/* Back */}
                                     <div className="absolute inset-0 backface-hidden bg-rose-50 dark:bg-rose-950/20 rounded-2xl shadow-xl border border-rose-200 dark:border-rose-900 flex flex-col p-8 items-center justify-center text-center rotate-y-180">
                                         <div className="absolute top-4 left-4 flex items-center gap-2">
-                                            <CheckCircle2 size={16} className="text-emerald-500" />
+                                            <CheckCircle size={16} weight="fill" className="text-emerald-500" />
                                             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Answer</span>
                                         </div>
                                         <p className="text-lg md:text-xl font-medium text-text-secondary leading-relaxed mt-4">
@@ -127,7 +127,7 @@ function FlashcardModal({ selection, count, onClose, bookId }) {
                                     disabled={currentIndex === 0}
                                     className="p-3 rounded-full bg-bg-primary border border-border-default hover:bg-bg-subtle disabled:opacity-30 transition-all active:scale-95"
                                 >
-                                    <ChevronLeft size={24} className="text-text-secondary" />
+                                    <CaretLeft size={24} weight="bold" className="text-text-secondary" />
                                 </button>
 
                                 <div className="text-sm font-bold text-text-tertiary font-sans tracking-widest">
@@ -139,7 +139,7 @@ function FlashcardModal({ selection, count, onClose, bookId }) {
                                     disabled={currentIndex === cards.length - 1}
                                     className="p-3 rounded-full bg-bg-primary border border-border-default hover:bg-bg-subtle disabled:opacity-30 transition-all active:scale-95"
                                 >
-                                    <ChevronRight size={24} className="text-text-secondary" />
+                                    <CaretRight size={24} weight="bold" className="text-text-secondary" />
                                 </button>
                             </div>
                         </>

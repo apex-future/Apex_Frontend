@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import studySetup from "../../assets/study-setup.jpg"
-import { SquareArrowOutUpRight } from 'lucide-react'
+import { ArrowSquareOut } from '@phosphor-icons/react'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -71,7 +71,7 @@ function AboutUs() {
                                 aria-label={isAboutOpen ? "Collapse About Section" : "Expand About Section"}
                                 aria-expanded={isAboutOpen}
                             >
-                                <SquareArrowOutUpRight size={24} />
+                                <ArrowSquareOut size={24} weight="regular" />
                             </button>
                         </header>
 

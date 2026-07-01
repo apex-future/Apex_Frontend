@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import logoLight from "../../assets/logo/logo-light.jpg"
-import { Menu, X } from 'lucide-react';
+import { List, X } from '@phosphor-icons/react';
 
 import { Link } from 'react-router-dom';
 import { useGSAP } from '@gsap/react';
@@ -47,7 +47,7 @@ function NavBar() {
                         aria-expanded={asideIsOpen}
                         aria-controls="mobile-menu"
                     >
-                        <Menu size={24} />
+                        <List size={24} weight="regular" />
                     </button>
                 </div>
 
@@ -85,7 +85,7 @@ function NavBar() {
                         className='md:hidden text-white cursor-pointer hover:text-accent-primary transition-colors p-2 self-start'
                         aria-label="Close navigation menu"
                     >
-                        <X size={24} />
+                        <X size={24} weight="bold" />
                     </button>
                     <div className='flex flex-col justify-between h-full pb-5'>
                         <nav aria-label="Mobile Navigation Links">

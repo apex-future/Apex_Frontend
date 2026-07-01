@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, Plus, X, Calendar, Check, BookOpen, Quote, Type } from 'lucide-react'
+import { ArrowLeft, Plus, X, Calendar, Check, BookOpen, Quotes, TextT } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom'
 import { BookContext } from "../../../context/BookContextInstance"
 import Shelf from './Shelf'
@@ -15,7 +15,7 @@ import useThemeStore from '../../../store/themeStore'
  */
 function BookShelf() {
   const navigate = useNavigate();
-  const { shelves, books } = useContext(BookContext);
+  const { shelves = [], books = [] } = useContext(BookContext) || {};
   const { createSpace, addBookToSpace } = useSpaceStore();
   const { setExamDate: setGlobalExamDate } = useStudyStore();
   const { resolvedTheme } = useThemeStore();
@@ -43,24 +43,30 @@ function BookShelf() {
   return (
     <div className='w-full'>
       {/* Page Header - Glassmorphic with Dark Adaptation */}
-      <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated text-text-secondary rounded-xl transition-all group"
-          >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          </button>
+      <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+            >
+              <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+            </button>
+          </div>
 
-          <h3 className='text-xl font-bold font-display text-text-primary'>Book Spaces</h3>
+          <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <h3 className='text-base md:text-lg font-bold font-display text-text-primary'>Book Spaces</h3>
+          </div>
 
-          <button
-            onClick={() => setIsCreating(true)}
-            className="p-2 hover:bg-accent-primary/10 text-accent-primary rounded-xl transition-all"
-            title="Create Space"
-          >
-            <Plus size={20} />
-          </button>
+          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <button
+              onClick={() => setIsCreating(true)}
+              className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-accent-primary rounded-full transition-all flex items-center justify-center"
+              title="Create Space"
+            >
+              <Plus size={20} weight="bold" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -82,7 +88,7 @@ function BookShelf() {
                 onClick={() => setIsCreating(false)}
                 className="p-2.5 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all"
               >
-                <X size={20} />
+                <X size={20} weight="bold" />
               </button>
             </div>
 
@@ -93,7 +99,7 @@ function BookShelf() {
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1">Space Name *</label>
                   <div className="flex bg-bg-elevated border-2 border-border-default rounded-2xl px-5 py-4 items-center gap-4 focus-within:border-accent-primary/40 transition-all group shadow-sm">
-                    <Type size={20} className="text-text-tertiary group-focus-within:text-accent-primary" />
+                    <TextT size={20} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary" />
                     <input 
                       autoFocus
                       required
@@ -109,7 +115,7 @@ function BookShelf() {
 
               {/* Book Selection */}
               <div className="pt-6 border-t border-border-default/50 space-y-4">
-                <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1 flex items-center gap-1.5"><BookOpen size={12} /> Add Books Now</label>
+                <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1 flex items-center gap-1.5"><BookOpen size={12} weight="fill" /> Add Books Now</label>
                 {books.length > 0 ? (
                   <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide py-4 px-2">
                     {books.map(book => {
@@ -130,7 +136,7 @@ function BookShelf() {
 
                           {isSelected && (
                             <div className="absolute -top-2 -right-2 bg-accent-primary text-white rounded-full p-1 shadow-md scale-in-center z-10">
-                              <Check size={14} strokeWidth={4} />
+                              <Check size={14} weight="bold" />
                             </div>
                           )}
                           

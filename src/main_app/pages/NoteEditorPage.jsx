@@ -12,31 +12,11 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import useBookNotesStore from '../store/bookNotesStore';
 
 import {
-  ArrowLeft,
-  Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  Strikethrough,
-  Highlighter,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Quote,
-  Code,
-  Minus,
-  Undo2,
-  Redo2,
-  ChevronDown,
-  Check,
-  Type,
-  Save,
-} from 'lucide-react';
+  ArrowLeft, TextB, TextItalic, TextUnderline, TextStrikethrough,
+  Highlighter, TextAlignLeft, TextAlignCenter, TextAlignRight, TextAlignJustify,
+  TextHOne, TextHTwo, TextHThree, ListBullets, ListNumbers, Quotes,
+  Code, Minus, ArrowUUpLeft, ArrowUUpRight, CaretDown, Check, TextT, FloppyDisk
+} from '@phosphor-icons/react';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -97,10 +77,10 @@ function ToolbarDivider() {
 // ─── Heading Dropdown ────────────────────────────────────────────────────────
 
 const HEADING_OPTIONS = [
-  { label: 'Paragraph', icon: Type, level: 0 },
-  { label: 'Heading 1', icon: Heading1, level: 1 },
-  { label: 'Heading 2', icon: Heading2, level: 2 },
-  { label: 'Heading 3', icon: Heading3, level: 3 },
+  { label: 'Paragraph', icon: TextT, level: 0 },
+  { label: 'TextHOne 1', icon: TextHOne, level: 1 },
+  { label: 'TextHOne 2', icon: TextHTwo, level: 2 },
+  { label: 'TextHOne 3', icon: TextHThree, level: 3 },
 ];
 
 function HeadingDropdown({ editor }) {
@@ -128,7 +108,7 @@ function HeadingDropdown({ editor }) {
       >
         <current.icon size={14} />
         <span className="hidden sm:inline">{current.label}</span>
-        <ChevronDown size={12} />
+        <CaretDown size={12} weight="bold" />
       </button>
 
       {open && (
@@ -158,7 +138,7 @@ function HeadingDropdown({ editor }) {
               >
                 <Icon size={16} />
                 <span className="font-medium">{opt.label}</span>
-                {isActive && <Check size={14} className="ml-auto" />}
+                {isActive && <Check size={14} weight="bold" className="ml-auto" />}
               </button>
             );
           })}
@@ -206,6 +186,7 @@ function NoteEditorPage() {
       CharacterCount,
       Highlight.configure({ multicolor: false }),
       TextStyle,
+      Underline,
     ],
     content: '',
     onUpdate: ({ editor }) => {
@@ -327,24 +308,26 @@ function NoteEditorPage() {
     <div className="min-h-screen bg-bg-elevated flex flex-col">
 
       {/* ── Top bar ───────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
           {/* Back */}
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-bg-subtle text-text-secondary rounded-xl transition-all group flex-shrink-0"
-          >
-            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-          </button>
+          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex-shrink-0">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+            >
+              <ArrowLeft size={18} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+            </button>
+          </div>
 
           {/* Save status */}
-          <div className="flex items-center gap-2 text-xs text-text-tertiary">
+          <div className="px-4 py-2 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center gap-2 text-xs text-text-tertiary font-bold">
             {saved ? (
-              <span className="flex items-center gap-1.5">
-                <Check size={12} className="text-emerald-500" /> Saved
+              <span className="flex items-center gap-1.5 text-text-primary">
+                <Check size={12} weight="bold" className="text-emerald-500 font-extrabold" /> Saved
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 animate-pulse">
+              <span className="flex items-center gap-1.5 animate-pulse text-text-primary">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
                 Saving…
               </span>
@@ -352,7 +335,7 @@ function NoteEditorPage() {
           </div>
 
           {/* Spacer */}
-          <div className="w-8" />
+          <div className="w-[38px]" />
         </div>
       </div>
 
@@ -413,35 +396,35 @@ function NoteEditorPage() {
               active={editor.isActive('bold')}
               title="Bold"
             >
-              <Bold size={15} />
+              <TextB size={15} weight="bold" />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().toggleItalic().run()}
               active={editor.isActive('italic')}
               title="Italic"
             >
-              <Italic size={15} />
+              <TextItalic size={15} weight="bold" />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().toggleUnderline().run()}
               active={editor.isActive('underline')}
               title="Underline"
             >
-              <UnderlineIcon size={15} />
+              <TextUnderline size={15} weight="bold" />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().toggleStrike().run()}
               active={editor.isActive('strike')}
               title="Strikethrough"
             >
-              <Strikethrough size={15} />
+              <TextStrikethrough size={15} weight="bold" />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().toggleHighlight().run()}
               active={editor.isActive('highlight')}
               title="Highlight"
             >
-              <Highlighter size={15} />
+              <Highlighter size={15} weight="bold" />
             </ToolbarBtn>
 
             <ToolbarDivider />
@@ -451,21 +434,21 @@ function NoteEditorPage() {
               active={editor.isActive({ textAlign: 'left' })}
               title="Align Left"
             >
-              <AlignLeft size={15} />
+              <TextAlignLeft size={15} weight="bold" />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().setTextAlign('center').run()}
               active={editor.isActive({ textAlign: 'center' })}
               title="Align Center"
             >
-              <AlignCenter size={15} />
+              <TextAlignCenter size={15} weight="bold" />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().setTextAlign('right').run()}
               active={editor.isActive({ textAlign: 'right' })}
               title="Align Right"
             >
-              <AlignRight size={15} />
+              <TextAlignRight size={15} weight="bold" />
             </ToolbarBtn>
 
             <ToolbarDivider />
@@ -475,21 +458,21 @@ function NoteEditorPage() {
               active={editor.isActive('bulletList')}
               title="Bullet List"
             >
-              <List size={15} />
+              <ListBullets size={15} weight="bold" />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
               active={editor.isActive('orderedList')}
               title="Numbered List"
             >
-              <ListOrdered size={15} />
+              <ListNumbers size={15} weight="bold" />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().toggleBlockquote().run()}
               active={editor.isActive('blockquote')}
               title="Blockquote"
             >
-              <Quote size={15} />
+              <Quotes size={15} weight="bold" />
             </ToolbarBtn>
 
             <ToolbarDivider />
@@ -500,7 +483,7 @@ function NoteEditorPage() {
               disabled={!editor.can().undo()}
               title="Undo"
             >
-              <Undo2 size={15} />
+              <ArrowUUpLeft size={15} weight="bold" />
             </ToolbarBtn>
             <ToolbarBtn
               onClick={() => editor.chain().focus().redo().run()}
@@ -508,7 +491,7 @@ function NoteEditorPage() {
               disabled={!editor.can().redo()}
               title="Redo"
             >
-              <Redo2 size={15} />
+              <ArrowUUpRight size={15} weight="bold" />
             </ToolbarBtn>
           </div>
         </div>

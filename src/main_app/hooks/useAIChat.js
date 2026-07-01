@@ -33,7 +33,7 @@ export default function useAIChat(options = {}) {
   const loadHistory = useCallback(async () => {
     try {
       const history = await getAllChats();
-      // Filter by scope
+      // Funnel by scope
       const scopedHistory = history.filter(chat => chat.scope === scope || (!chat.scope && scope === 'general'));
       // Sort by last updated (id is timestamp)
       const sortedHistory = scopedHistory.sort((a, b) => b.updatedAt - a.updatedAt);
@@ -147,6 +147,11 @@ export default function useAIChat(options = {}) {
             if (data.done) {
               setIsStreaming(false);
               persistChat(activeSessionId, finalMessages);
+              
+              // Only award XP if it was a successful AI response and not aborted midway
+              const { awardXpOptimistic } = useXpStore.getState();
+              awardXpOptimistic('ai_explanation', {}, 5); // 5 is XP_VALUES.ai_explanation
+              
               return;
             }
           } catch (e) {

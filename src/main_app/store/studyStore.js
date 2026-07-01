@@ -5,10 +5,10 @@ import apiClient from '../services/apiClient';
 const useStudyStore = create(
   persist(
     (set, get) => ({
-      // Streak state
       streakCount: 0,
       longestStreak: 0,
       lastActiveDate: null,      // 'YYYY-MM-DD' string
+      lastStreakUpdatedAt: null, // ISO datetime — server-generated, used for same-day tiebreaker
       streakHistory: [],         // Array of 'YYYY-MM-DD' strings — days user kept streak
 
       // Exam state (reserved for version 2)
@@ -190,12 +190,13 @@ const useStudyStore = create(
        */
       syncStreakToSupabase: async () => {
         try {
-          const { streakCount, longestStreak, lastActiveDate, streakHistory } = get();
+          const { streakCount, longestStreak, lastActiveDate, streakHistory, lastStreakUpdatedAt } = get();
           const response = await apiClient.patch('/api/auth/streak', {
             current_streak: streakCount,
             longest_streak: longestStreak,
             last_active_date: lastActiveDate,
             streak_history: streakHistory,
+            last_streak_updated_at: lastStreakUpdatedAt,  // ← send for tiebreaker
           });
 
           if (response.data) {
@@ -204,6 +205,7 @@ const useStudyStore = create(
               longestStreak: response.data.longest_streak,
               lastActiveDate: response.data.last_active_date,
               streakHistory: response.data.streak_history,
+              lastStreakUpdatedAt: response.data.last_streak_updated_at,  // ← add
             });
             localStorage.removeItem('apex_streak_sync_pending');
             if (import.meta.env.DEV) console.log('[Apex Streak] Server merge applied to local store');
@@ -220,6 +222,7 @@ const useStudyStore = create(
        * Seeds local store from Supabase data if Supabase has more recent data
        */
       seedFromSupabase: (supabaseData) => {
+        if (!supabaseData) return;
         const {
           current_streak,
           longest_streak,
@@ -229,7 +232,18 @@ const useStudyStore = create(
 
         const localDate = get().lastActiveDate || '';
         const cloudDate = last_active_date || '';
-        const cloudWins = cloudDate > localDate;
+        const localUpdatedAt = get().lastStreakUpdatedAt || '';
+        const cloudUpdatedAt = supabaseData.last_streak_updated_at || '';
+
+        let cloudWins;
+        if (cloudDate > localDate) {
+            cloudWins = true;
+        } else if (cloudDate < localDate) {
+            cloudWins = false;
+        } else {
+            // Same date — datetime tiebreaker for same-day device switching
+            cloudWins = cloudUpdatedAt > localUpdatedAt;
+        }
 
         // Streak count comes from whichever side has the more recent date —
         // it is live state, not a lifetime record. Only longest_streak uses max().
@@ -243,6 +257,9 @@ const useStudyStore = create(
           longestStreak: mergedLongestStreak,
           lastActiveDate: mergedLastActiveDate,
           streakHistory: mergedStreakHistory,
+          lastStreakUpdatedAt: cloudWins
+              ? (supabaseData.last_streak_updated_at || null)
+              : (get().lastStreakUpdatedAt || null),
         });
 
         if (import.meta.env.DEV) console.log(
@@ -267,6 +284,7 @@ const useStudyStore = create(
         streakCount: 0,
         longestStreak: 0,
         lastActiveDate: null,
+        lastStreakUpdatedAt: null,  // ISO datetime — server-generated, used for same-day tiebreaker
         streakHistory: [],
         examDate: null,
         examName: '',

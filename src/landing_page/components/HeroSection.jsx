@@ -1,5 +1,5 @@
 import React from 'react'
-import { TextCursor } from 'lucide-react'
+import { TextB } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';

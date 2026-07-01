@@ -1,0 +1,365 @@
+/*
+ * ═══════════════════════════════════════════════════════════════
+ *  APEX — AURA UI TOKEN SYSTEM
+ *  aura-tokens.css
+ *
+ *  Import this at the top of your global CSS file (index.css):
+ *  @import './aura-tokens.css';
+ *
+ *  All values are RGB channels (no rgb() wrapper) so Tailwind
+ *  can compose them with opacity modifiers e.g. bg-surface/60
+ *
+ *  Philosophy:
+ *  Surface over stroke. Depth over decoration.
+ *  Every card gets: border-top (subtle) + shadow-bottom (black-based) +
+ *  a surface one step darker than the background behind it.
+ *  No colored shadows. No glow. No full borders — top only.
+ *
+ *  Aura UI v1.0
+ * ═══════════════════════════════════════════════════════════════
+ */
+
+
+/* ─────────────────────────────────────────────────────────────
+   DARK MODE (default — Apex is dark-first)
+   Surface stack, bottom to top:
+   base → card → raised → overlay
+   Each layer is ~8–10 lightness points above the last.
+───────────────────────────────────────────────────────────── */
+:root,
+.dark {
+
+  /* ── Surfaces ── */
+  --surface-base:    28 28 32;     /* #1C1C20 — base background (swapped) */
+  --surface-card:    20 20 23;     /* #141417 — card surface (swapped) */
+  --surface-raised:  37 37 42;     /* #25252A — raised modals/dropdowns */
+  --surface-sunken:  12 12 14;     /* #0C0C0E — sunken inputs/wells */
+  --surface-overlay: 40 40 46;     /* #28282E — bottom sheets */
+
+  /* ── Text ── */
+  --text-primary:     250 250 250;  /* #FAFAFA */
+  --text-secondary:   163 163 163;  /* #A3A3A3 */
+  --text-tertiary:    82  82  91;   /* #52525B */
+  --text-placeholder: 63  63  70;   /* #3F3F46 */
+
+  /* ── Borders ──
+     border-top applied to ALL cards and the nav bar.
+     Never a full border — top edge only.
+     Dark mode: white channel at low opacity (/6 for cards, /8 for nav).
+     Light mode: black channel at low opacity (/6 for cards, /8 for nav).
+  ── */
+  --border-default: 255 255 255;  /* white at low opacity — use /8 or /10  */
+  --border-subtle:  255 255 255;  /* white at very low opacity — use /5     */
+
+  /* ── Glassmorphism (used sparingly) ── */
+  --card-glass:        255 255 255; /* use at /6 opacity with backdrop-blur  */
+  --card-glass-border: 255 255 255; /* use at /8 opacity                     */
+  --card-glass-hover:  255 255 255; /* use at /10 opacity                    */
+
+  /* ── Brand gradient stops (for reference in CSS) ── */
+  --brand-start: #7C3AED;  /* violet-600 */
+  --brand-end:   #3B0764;  /* violet-950 */
+
+  /* ── Aura shadow values (black-based, never colored) ── */
+  --shadow-sm: 0 2px 8px  rgba(0, 0, 0, 0.20);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  /* ── Gamification rank colors ── */
+  --rank-freshman:  148 163 184;  /* slate-400  */
+  --rank-sophomore: 96  165 250;  /* blue-400   */
+  --rank-junior:    52  211 153;  /* emerald-400*/
+  --rank-senior:    245 158 11;   /* amber-400  */
+  --rank-scholar:   168 85  247;  /* purple-500 */
+  --rank-ace:       236 72  153;  /* pink-500   */
+  --rank-legend:    249 115 22;   /* orange-500 */
+
+  /* ── Semantic ── */
+  --color-success: 16  185 129;   /* #10B981 */
+  --color-error:   239 68  68;    /* #EF4444 */
+  --color-warning: 245 158 11;    /* #F59E0B */
+  --color-info:    59  130 246;   /* #3B82F6 */
+
+  /* ── GSAP Animation Reference ──
+     These are documentation tokens — reference these values
+     in all GSAP calls. Not used by CSS directly.
+  ── */
+
+  /* Easing */
+  --ease-elastic:  back.out(1.2);   /* standard elastic arrival — card entrances, list items */
+  --ease-dramatic: back.out(1.4);   /* level-up modal, rank-up screen, quest complete flash  */
+
+  /* Duration */
+  --dur-micro:    0.2s;   /* press feedback, micro-interactions                */
+  --dur-base:     0.8s;   /* card entrances, standard scroll reveals           */
+  --dur-emphasis: 1.2s;   /* hero sections, exam day message, major reveals    */
+
+  /* Stagger */
+  --stagger-base:  0.1s;   /* standard list stagger — quest cards, book list   */
+  --stagger-tight: 0.06s;  /* dense lists — stat rows, rank ladder items       */
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   LIGHT MODE
+   Surface stack, bottom to top:
+   base → card → raised → overlay
+   Cards go lighter (white), base is off-white grey.
+   Same shadow values — slightly reduced opacity for light.
+───────────────────────────────────────────────────────────── */
+.light {
+  /* ── Surfaces ── */
+  --surface-base: 245 245 245;  /* #F5F5F5 — pure neutral off-white */
+  --surface-card: 232 232 232;  /* #E8E8E8 — card, visibly darker gray */
+  --surface-raised: 215 213 207;  /* #D7D5CF — modals, darkest */
+  --surface-sunken: 250 249 246;  /* #FAF9F6 — inputs, lighter */
+  --surface-overlay: 234 232 226;  /* #EAE8E2 — bottom sheets */
+
+  /* ── Text ── */
+  --text-primary:     10  10  10;   /* #0A0A0A */
+  --text-secondary:   82  82  91;   /* #52525B */
+  --text-tertiary:    161 161 170;  /* #A1A1AA */
+  --text-placeholder: 212 212 216;  /* #D4D4D8 */
+
+  /* ── Borders ── */
+  --border-default: 0 0 0;  /* black at low opacity — use /8  */
+  --border-subtle:  0 0 0;  /* black at very low opacity /5   */
+
+  /* ── Glassmorphism ── */
+  --card-glass:        0 0 0;  /* use at /4 opacity with backdrop-blur */
+  --card-glass-border: 0 0 0;  /* use at /6 opacity                    */
+  --card-glass-hover:  0 0 0;  /* use at /8 opacity                    */
+
+  /* ── Shadows (lighter for light mode) ── */
+  --shadow-sm: 0 2px 8px  rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+
+  /* ── Rank colors unchanged (same in both modes) ── */
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   AURA COMPONENT UTILITIES
+   Ready-to-use CSS classes built on the token system.
+   Use these in components instead of raw Tailwind classes
+   so the entire system updates from one place.
+───────────────────────────────────────────────────────────── */
+
+/* ── Base card — the atomic Aura surface ──
+   Every card gets:
+   - border-top (subtle, top edge only — never full border)
+   - shadow-bottom (black-based, aura-sm)
+   - surface-card background (darker than page base)
+── */
+.aura-card {
+  background-color: rgb(var(--surface-card));
+  box-shadow: var(--shadow-sm);
+  border-radius: 1.25rem; /* 20px */
+  border: none;
+  border-top: 1px solid rgba(var(--border-default), 0.06);
+}
+
+/* ── Raised card — modals, popovers, dropdowns ──
+   Same Aura card rules: border-top + shadow-bottom + darker surface.
+   Uses shadow-md (one level above base card).
+── */
+.aura-card-raised {
+  background-color: rgb(var(--surface-raised));
+  box-shadow: var(--shadow-md);
+  border-radius: 1.25rem;
+  border: none;
+  border-top: 1px solid rgba(var(--border-default), 0.08);
+}
+
+/* ── Sunken surface — inputs, wells, inactive areas ── */
+.aura-sunken {
+  background-color: rgb(var(--surface-sunken));
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+  border-radius: 0.75rem; /* 12px */
+  border: none;
+}
+
+/* ── Glass card — used sparingly, always with backdrop-blur ──
+   Follows the same Aura card rule: border-top + shadow-bottom.
+   Not an exception — all cards have border-top.
+   Glass is distinguished by backdrop-blur + lower surface opacity only.
+── */
+.aura-glass {
+  background-color: rgba(var(--card-glass), 0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-sm);
+  border-radius: 1.25rem;
+  border: none;
+  border-top: 1px solid rgba(var(--card-glass-border), 0.08);
+}
+
+/* ── Nav bar ──
+   Follows the same Aura card rule: border-top only, never full border.
+   Shadow here is inverted (upward) because nav sits at the bottom.
+── */
+.aura-nav {
+  background-color: rgb(var(--surface-overlay));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(var(--border-default), 0.08);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.20);
+}
+
+/* ── Brand gradient button ── */
+.aura-btn-primary {
+  background: linear-gradient(135deg, #7C3AED 0%, #3B0764 100%);
+  border: none;
+  border-radius: 0.875rem; /* 14px */
+  color: #FFFFFF;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+              opacity  200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.aura-btn-primary:hover {
+  /* No glow. Scale only. */
+  transform: scale(1.01);
+  opacity: 0.95;
+}
+
+.aura-btn-primary:active {
+  transform: scale(0.98);
+  opacity: 1;
+}
+
+/* ── Secondary button — surface fill, no border ── */
+.aura-btn-secondary {
+  background-color: rgb(var(--surface-raised));
+  border: none;
+  border-radius: 0.875rem;
+  color: rgb(var(--text-primary));
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.aura-btn-secondary:hover {
+  /* Surface shifts lighter — no glow */
+  filter: brightness(1.08);
+  transform: scale(1.01);
+}
+
+.aura-btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* ── Ghost button — transparent, no border ── */
+.aura-btn-ghost {
+  background-color: transparent;
+  border: none;
+  color: rgb(168 85 247); /* brand.light */
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  transition: opacity 200ms cubic-bezier(0.22, 1, 0.36, 1),
+              transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.aura-btn-ghost:hover  { opacity: 0.75; }
+.aura-btn-ghost:active { transform: scale(0.97); opacity: 1; }
+
+/* ── XP progress bar track ── */
+.aura-xp-track {
+  background-color: rgba(var(--surface-raised), 1);
+  border-radius: 9999px;
+  overflow: hidden;
+  height: 6px;
+}
+
+/* ── XP progress bar fill (animate width via Framer Motion) ── */
+.aura-xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7C3AED 0%, #A855F7 100%);
+  border-radius: 9999px;
+
+  /* No glow on the bar. Color speaks for itself. */
+}
+
+/* ── Rank badge container ── */
+.aura-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem; /* 10px */
+  background-color: rgb(var(--surface-raised));
+
+  /* Color applied via inline style per rank */
+  /* No glow — color only */
+}
+
+/* ── Input / text field ── */
+.aura-input {
+  background-color: rgb(var(--surface-sunken));
+  border: none;
+  border-radius: 0.75rem;
+  color: rgb(var(--text-primary));
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  outline: none;
+}
+
+/* Focus: inner shadow shifts, no colored ring, no glow */
+.aura-input:focus {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12),
+              inset 0 0 0 1.5px rgba(124, 58, 237, 0.35);
+}
+
+/* ── Section label (Space Grotesk, uppercase, tertiary text) ── */
+.aura-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6875rem;   /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(var(--text-tertiary));
+}
+
+/* ── Quest progress bar ── */
+.aura-quest-track {
+  background-color: rgba(var(--surface-raised), 1);
+  border-radius: 9999px;
+  overflow: hidden;
+  height: 4px;
+}
+
+.aura-quest-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7C3AED 0%, #A855F7 100%);
+  border-radius: 9999px;
+  transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   AURA ANIMATION UTILITIES
+───────────────────────────────────────────────────────────── */
+
+/* Stagger helper — set --delay on each child */
+.aura-stagger > * {
+  animation: auraFadeUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+@keyframes auraFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes auraScaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+
+@keyframes auraFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

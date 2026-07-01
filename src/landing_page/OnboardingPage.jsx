@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, ArrowRight } from 'lucide-react';
+import { WarningCircle, ArrowRight } from '@phosphor-icons/react';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
 
@@ -93,7 +93,7 @@ function OnboardingPage({ onComplete }) {
             
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
-                <AlertCircle size={18} />
+                <WarningCircle size={18} weight="regular" />
                 <p className="text-sm font-medium">{error}</p>
               </div>
             )}
@@ -194,7 +194,7 @@ function OnboardingPage({ onComplete }) {
               ) : (
                 <>
                   Personalize
-                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={20} weight="bold" className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </button>

@@ -8,7 +8,7 @@ import TopNavBar from "../layout/navigation/TopNavBar";
 import { BookContext } from "../../context/BookContextInstance";
 
 function HomePage({ setIsMobileOpen }) {
-  const { books, booksLoading, addBookToShelf, handleBookClick } = useContext(BookContext);
+  const { books = [], booksLoading, addBookToShelf, handleBookClick } = useContext(BookContext) || {};
   const { setActiveSpace } = useSpaceStore();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
@@ -50,22 +50,22 @@ function HomePage({ setIsMobileOpen }) {
       <TopNavBar
         setIsMobileOpen={setIsMobileOpen}
         onUpload={onUpload}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
       />
 
       {/* Only show Header and Slider when not searching */}
       {!searchQuery && (
-        <>
+        <div className="flex flex-col gap-2">
           <Header />
           <FeaturedSlider lastReadBook={lastReadBook} isLoading={booksLoading} />
-        </>
+        </div>
       )}
 
       <AllBooks
         books={filteredBooks}
         onBookClick={handleBookNavigate}
         isSearching={!!searchQuery}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
     </div>
   )

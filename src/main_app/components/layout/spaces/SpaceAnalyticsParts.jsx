@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, Check, Zap, BrainCircuit, Target, TrendingUp, AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
+import { CaretLeft, CaretRight, CaretDown, Check, Lightning, Brain, Target, TrendUp, Warning, ArrowRight, Sparkle } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ── CUSTOM SELECT COMPONENT ──
@@ -31,7 +31,7 @@ const CustomSelect = ({ value, onChange, options }) => {
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOption.title}</span>
-        <ChevronDown size={14} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', color: 'rgb(var(--text-tertiary))' }} />
+        <CaretDown size={14} weight="bold" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', color: 'rgb(var(--text-tertiary))' }} />
       </button>
 
       <AnimatePresence>
@@ -62,7 +62,7 @@ const CustomSelect = ({ value, onChange, options }) => {
                 }}
               >
                 <div style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.title}</div>
-                {String(value) === String(opt.id) && <Check size={14} />}
+                {String(value) === String(opt.id) && <Check size={14} weight="bold" />}
               </button>
             ))}
           </motion.div>
@@ -179,7 +179,7 @@ export const CoverageCard = React.memo(({ enrichedBooks }) => {
   const sorts = [['most', 'Most read'], ['least', 'Least read'], ['recent', 'Recent'], ['az', 'A–Z']];
 
   return (
-    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, padding: 24 }}>
+    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-6 shadow-sm hover:shadow-md transition-all duration-300 w-full min-w-0">
       {PARTS_STYLES}
       <div className="cc-header">
         <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))', letterSpacing: '-0.01em' }}>Course coverage</span>
@@ -369,7 +369,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
   const toggleSeg = (name) => setCollapsed(p => ({ ...p, [name]: !p[name] }));
 
   return (
-    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, padding: 24 }}>
+    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-6 shadow-sm hover:shadow-md transition-all duration-300 w-full min-w-0">
       {PARTS_STYLES}
 
       {/* Header */}
@@ -438,7 +438,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
       {/* Day labels + week navigation */}
       <div style={{ display: 'flex', alignItems: 'center', marginTop: 6 }}>
         <button onClick={prevWeek} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgb(var(--text-tertiary))', flexShrink: 0, width: Y_LABEL_W, display: 'flex', justifyContent: 'center' }}>
-          <ChevronLeft size={14} />
+          <CaretLeft size={14} weight="bold" />
         </button>
         <div style={{ flex: 1, display: 'flex' }}>
           {displayWeeklyTime.map((d, i) => {
@@ -457,7 +457,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
           })}
         </div>
         <button onClick={nextWeek} disabled={isFutureWeek} style={{ background: 'none', border: 'none', cursor: isFutureWeek ? 'default' : 'pointer', padding: 2, color: isFutureWeek ? 'rgb(var(--text-tertiary) / 0.3)' : 'rgb(var(--text-tertiary))', flexShrink: 0, width: 20, display: 'flex', justifyContent: 'center' }}>
-          <ChevronRight size={14} />
+          <CaretRight size={14} weight="bold" />
         </button>
       </div>
 
@@ -490,7 +490,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
                     <span style={{ fontSize: 11, fontWeight: 700, flex: 1, textAlign: 'left' }}>{seg.name}</span>
                     <span style={{ fontSize: 9, color: 'rgb(var(--text-tertiary))', fontWeight: 500 }}>{seg.range}</span>
                     <span style={{ fontSize: 9, color: 'rgb(var(--text-tertiary))', fontWeight: 600, marginLeft: 4 }}>{items.length}</span>
-                    <ChevronDown size={12} style={{ color: 'rgb(var(--text-tertiary))', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+                    <CaretDown size={12} weight="bold" style={{ color: 'rgb(var(--text-tertiary))', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
                   </button>
                   {isOpen && (
                     <div style={{ paddingLeft: 20, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -568,7 +568,7 @@ export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends,
   };
 
   return (
-    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, padding: 24 }}>
+    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-6 shadow-sm hover:shadow-md transition-all duration-300 w-full min-w-0">
       {PARTS_STYLES}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Quiz performance</span>
@@ -801,15 +801,15 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
   };
 
   return (
-    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card shadow-sm hover:shadow-md transition-all duration-300 flex flex-col w-full min-w-0">
       {/* Calendar */}
       <div style={{ padding: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Study consistency</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgb(var(--text-tertiary))' }}><ChevronLeft size={14} /></button>
+            <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgb(var(--text-tertiary))' }}><CaretLeft size={14} /></button>
             <span style={{ fontSize: 11, fontWeight: 600, color: 'rgb(var(--text-primary))', minWidth: 100, textAlign: 'center' }}>{monthLabel}</span>
-            <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgb(var(--text-tertiary))' }}><ChevronRight size={14} /></button>
+            <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgb(var(--text-tertiary))' }}><CaretRight size={14} /></button>
           </div>
         </div>
 
@@ -871,7 +871,7 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
                     <span style={{ fontSize: 11, fontWeight: 700, flex: 1, textAlign: 'left' }}>{seg.name}</span>
                     <span style={{ fontSize: 9, color: 'rgb(var(--text-tertiary))', fontWeight: 500 }}>{seg.range}</span>
                     <span style={{ fontSize: 9, color: 'rgb(var(--text-tertiary))', fontWeight: 600, marginLeft: 4 }}>{items.length}</span>
-                    <ChevronDown size={12} style={{ color: 'rgb(var(--text-tertiary))', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+                    <CaretDown size={12} weight="bold" style={{ color: 'rgb(var(--text-tertiary))', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
                   </button>
                   {isOpen && renderEvents(items, seg.name)}
                 </div>
@@ -902,12 +902,12 @@ export const KnowledgeMasteryCard = React.memo(({ spaceBooks, masteryData }) => 
   };
 
   return (
-    <div style={{ background: 'rgb(var(--bg-elevated))', border: '0.5px solid rgb(var(--border-default) / 0.5)', borderRadius: 16, overflow: 'hidden' }}>
+    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
       {PARTS_STYLES}
       <div style={{ padding: 24, borderBottom: '1px solid rgb(var(--border-default) / 0.4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <BrainCircuit size={18} color="#7F77DD" />
+            <Brain size={18} color="#7F77DD" />
             <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Knowledge Mastery</span>
           </div>
           <span style={{ fontSize: 10, fontWeight: 600, color: 'rgb(var(--text-tertiary))', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Beta</span>
@@ -927,7 +927,7 @@ export const KnowledgeMasteryCard = React.memo(({ spaceBooks, masteryData }) => 
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{item.topic}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <TrendingUp size={12} color="#10B981" />
+                  <TrendUp size={12} color="#10B981" />
                   <span style={{ fontSize: 12, fontWeight: 800, color: 'rgb(var(--text-primary))' }}>{item.score}%</span>
                 </div>
               </div>
@@ -938,7 +938,7 @@ export const KnowledgeMasteryCard = React.memo(({ spaceBooks, masteryData }) => 
         {/* Weak Areas */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgb(var(--border-default) / 0.3)', background: 'linear-gradient(to right, rgba(245, 158, 11, 0.03), transparent)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
-            <AlertTriangle size={14} color="#F59E0B" />
+            <Warning size={14} color="#F59E0B" />
             <span style={{ fontSize: 11, fontWeight: 700, color: '#F59E0B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Needs Focus</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -946,7 +946,7 @@ export const KnowledgeMasteryCard = React.memo(({ spaceBooks, masteryData }) => 
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{item.topic}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <TrendingUp size={12} color="#F59E0B" style={{ transform: 'rotate(180deg)' }} />
+                  <TrendUp size={12} color="#F59E0B" style={{ transform: 'rotate(180deg)' }} />
                   <span style={{ fontSize: 12, fontWeight: 800, color: 'rgb(var(--text-primary))' }}>{item.score}%</span>
                 </div>
               </div>
@@ -957,7 +957,7 @@ export const KnowledgeMasteryCard = React.memo(({ spaceBooks, masteryData }) => 
         {/* AI Action Plan */}
         <div style={{ padding: 24, background: 'rgba(127, 119, 221, 0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <Sparkles size={14} color="#7F77DD" />
+            <Sparkle size={14} color="#7F77DD" />
             <span style={{ fontSize: 11, fontWeight: 700, color: '#7F77DD', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cleo's Action Plan</span>
           </div>
           <p style={{ fontSize: 12, color: 'rgb(var(--text-secondary))', lineHeight: 1.6, marginBottom: 16 }}>

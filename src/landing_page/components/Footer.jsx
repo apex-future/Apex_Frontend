@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Twitter, Linkedin, Instagram } from 'lucide-react'
+import { TwitterLogo, LinkedinLogo, InstagramLogo } from '@phosphor-icons/react'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -50,13 +50,13 @@ function Footer() {
         <nav className="flex gap-4" aria-label="Social Media Links">
           <a href="https://x.com/apex_future_" className="text-text-dark-secondary hover:text-accent-primary transition-colors" aria-label="Follow Apex on Twitter">
            
-            <Twitter  className="w-5 h-5" aria-hidden="true" />
+            <TwitterLogo className="w-5 h-5" aria-hidden="true" weight="fill" />
           </a>
           <a href="#" className="text-text-dark-secondary hover:text-accent-primary transition-colors" aria-label="Follow Apex on Instagram">
-            <Instagram className="w-5 h-5" aria-hidden="true" />
+            <InstagramLogo className="w-5 h-5" aria-hidden="true" weight="fill" />
           </a>
           <a href="#" className="text-text-dark-secondary hover:text-accent-primary transition-colors" aria-label="Follow Apex on LinkedIn">
-            <Linkedin className="w-5 h-5" aria-hidden="true" />
+            <LinkedinLogo className="w-5 h-5" aria-hidden="true" weight="fill" />
           </a>
         </nav>
       </div>

@@ -9,12 +9,13 @@ import CharacterCount from '@tiptap/extension-character-count';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import useBookNotesStore from '../../../../store/bookNotesStore';
+import useXpStore from '../../../../store/useXpStore';
 
 import {
-  ArrowLeft, Bold, Italic, Underline as UnderlineIcon, Strikethrough,
-  Highlighter, AlignLeft, AlignCenter, AlignRight, List, ListOrdered,
-  Quote, Undo2, Redo2, ChevronDown, Check, Type, Heading1, Heading2, Heading3,
-} from 'lucide-react';
+  ArrowLeft, TextB, TextItalic, TextUnderline as UnderlineIcon, TextStrikethrough,
+  HighlighterCircle, TextAlignLeft, TextAlignCenter, TextAlignRight, List, ListNumbers,
+  Quotes, ArrowUUpLeft, ArrowUUpRight, CaretDown, Check, TextT, TextHOne, TextHTwo, TextHThree,
+} from '@phosphor-icons/react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -52,7 +53,7 @@ function ToolbarBtn({ onClick, active, title, children, disabled }) {
       className={`p-1.5 rounded-lg transition-all duration-150 ${
         active
           ? 'bg-accent-primary text-white shadow-sm'
-          : 'text-text-secondary hover:text-text-primary hover:bg-bg-subtle'
+          : 'text-text-secondary hover:text-text-primary hover:bg-gray-50'
       } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
     >
       {children}
@@ -65,10 +66,10 @@ function ToolbarDivider() {
 }
 
 const HEADING_OPTIONS = [
-  { label: 'Paragraph', icon: Type, level: 0 },
-  { label: 'H1', icon: Heading1, level: 1 },
-  { label: 'H2', icon: Heading2, level: 2 },
-  { label: 'H3', icon: Heading3, level: 3 },
+  { label: 'Paragraph', icon: TextT, level: 0 },
+  { label: 'H1', icon: TextHOne, level: 1 },
+  { label: 'H2', icon: TextHTwo, level: 2 },
+  { label: 'H3', icon: TextHThree, level: 3 },
 ];
 
 function HeadingDropdown({ editor }) {
@@ -90,13 +91,13 @@ function HeadingDropdown({ editor }) {
     <div className="relative" ref={ref}>
       <button
         onMouseDown={(e) => { e.preventDefault(); setOpen((p) => !p); }}
-        className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-all"
+        className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-all"
       >
         <current.icon size={13} />
-        <ChevronDown size={10} />
+        <CaretDown size={10} weight="bold" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-bg-elevated border border-border-default rounded-xl shadow-xl overflow-hidden min-w-[130px]">
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white rounded-xl shadow-xl overflow-hidden min-w-[130px]">
           {HEADING_OPTIONS.map((opt) => {
             const Icon = opt.icon;
             const isActive = opt.level === 0
@@ -112,12 +113,12 @@ function HeadingDropdown({ editor }) {
                   setOpen(false);
                 }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-all ${
-                  isActive ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-primary hover:bg-bg-subtle'
+                  isActive ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-primary hover:bg-gray-50'
                 }`}
               >
                 <Icon size={14} />
                 <span className="font-medium">{opt.label}</span>
-                {isActive && <Check size={12} className="ml-auto" />}
+                {isActive && <Check size={12} weight="bold" className="ml-auto" />}
               </button>
             );
           })}
@@ -151,6 +152,7 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
   const titleRef = useRef('Untitled');
   const contentRef = useRef(null);
   const initializedRef = useRef(false);
+  const xpAwardedRef = useRef(false);
 
   const editor = useEditor({
     extensions: [
@@ -183,6 +185,7 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
   useEffect(() => {
     if (!editor) return;
     initializedRef.current = false;
+    xpAwardedRef.current = false;
   }, [noteId]);
 
   useEffect(() => {
@@ -238,6 +241,12 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
       const result = await saveNote(noteData);
       setLastEdited(result.updatedAt);
       setSaved(true);
+
+      // Award XP if word count is meaningful (> 5 words) and we haven't yet for this note in this session
+      if (noteData.word_count > 5 && !xpAwardedRef.current) {
+        useXpStore.getState().awardXpOptimistic('note_added', {}, 8); // 8 is XP_VALUES.note_added
+        xpAwardedRef.current = true;
+      }
     } catch (err) {
       console.error('[ReaderNoteEditor] auto-save failed:', err);
     }
@@ -261,23 +270,23 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[210] bg-bg-elevated lg:relative lg:inset-auto lg:w-[400px] lg:h-full lg:border-r lg:border-border-default lg:shrink-0 shadow-2xl lg:shadow-none animate-in slide-in-from-left duration-300 font-sans"
+      className="flex flex-col absolute inset-0 z-[210] bg-white lg:relative lg:inset-auto lg:w-[400px] lg:h-full lg:border-0 lg:shrink-0 shadow-2xl lg:shadow-sm animate-in slide-in-from-left duration-300 font-sans"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Top bar ── */}
-      <div className="sticky top-0 z-50 bg-bg-elevated/95 backdrop-blur-xl border-b border-border-default shrink-0">
+      <div className="sticky top-0 z-50 bg-white shrink-0">
         <div className="px-4 py-3 flex items-center justify-between gap-3">
           <button
             onClick={onClose}
-            className="p-2 hover:bg-bg-subtle text-text-secondary rounded-xl transition-all group flex-shrink-0"
+            className="p-2 hover:bg-gray-50 text-text-secondary rounded-xl transition-all group flex-shrink-0"
             title="Back to notebook"
           >
-            <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+            <ArrowLeft size={16} weight="bold" className="group-hover:-translate-x-0.5 transition-transform" />
           </button>
 
           <div className="flex-1 text-center">
             <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-widest">
-              {noteId === 'new' ? 'New Note' : 'Edit Note'}
+              {noteId === 'new' ? 'New Note' : 'PencilSimple Note'}
             </p>
           </div>
 
@@ -285,7 +294,7 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
           <div className="flex items-center gap-1.5 text-[10px] text-text-tertiary flex-shrink-0">
             {saved ? (
               <span className="flex items-center gap-1">
-                <Check size={10} className="text-emerald-500" /> Saved
+                <Check size={10} weight="bold" className="text-emerald-500" /> Saved
               </span>
             ) : (
               <span className="flex items-center gap-1 animate-pulse">
@@ -330,29 +339,29 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
         </div>
 
         {/* Separator */}
-        <div className="border-t border-border-default mb-6" />
+        <div className="mb-6" />
 
         {/* Sticky Floating Toolbar */}
         <div className="sticky top-0 z-30 mb-4 -mx-1">
-          <div className="bg-bg-elevated/95 backdrop-blur-xl border border-border-default rounded-2xl shadow-lg px-2 py-1.5 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
+          <div className="bg-white rounded-2xl shadow-lg px-2 py-1.5 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
             <HeadingDropdown editor={editor} />
             <ToolbarDivider />
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold"><Bold size={13} /></ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic"><Italic size={13} /></ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline"><UnderlineIcon size={13} /></ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough"><Strikethrough size={13} /></ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleHighlight().run()} active={editor.isActive('highlight')} title="Highlight"><Highlighter size={13} /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold"><TextB size={13} weight="bold" /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic"><TextItalic size={13} weight="bold" /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline"><UnderlineIcon size={13} weight="bold" /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough"><TextStrikethrough size={13} weight="bold" /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleHighlight().run()} active={editor.isActive('highlight')} title="Highlight"><HighlighterCircle size={13} weight="bold" /></ToolbarBtn>
             <ToolbarDivider />
-            <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} title="Align Left"><AlignLeft size={13} /></ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} title="Center"><AlignCenter size={13} /></ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} title="Align Right"><AlignRight size={13} /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} title="Align Left"><TextAlignLeft size={13} weight="bold" /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} title="Center"><TextAlignCenter size={13} weight="bold" /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} title="Align Right"><TextAlignRight size={13} weight="bold" /></ToolbarBtn>
             <ToolbarDivider />
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet List"><List size={13} /></ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Numbered List"><ListOrdered size={13} /></ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Quote"><Quote size={13} /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet List"><List size={13} weight="bold" /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Numbered List"><ListNumbers size={13} weight="bold" /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Quote"><Quotes size={13} weight="fill" /></ToolbarBtn>
             <ToolbarDivider />
-            <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} active={false} disabled={!editor.can().undo()} title="Undo"><Undo2 size={13} /></ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} active={false} disabled={!editor.can().redo()} title="Redo"><Redo2 size={13} /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} active={false} disabled={!editor.can().undo()} title="Undo"><ArrowUUpLeft size={13} weight="bold" /></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} active={false} disabled={!editor.can().redo()} title="Redo"><ArrowUUpRight size={13} weight="bold" /></ToolbarBtn>
           </div>
         </div>
 

@@ -4,6 +4,14 @@ All notable changes to Apex are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
 
+## [2.2.1] - 2026-06-30
+### Fixed
+- **LoginPage**: Added missing `Lock` and `EyeOff` icon imports from `lucide-react` — page crashed on render when `/login` was visited because both components were undefined
+- **studyStore**: Added null guard (`if (!supabaseData) return`) to `seedFromSupabase` before destructuring — prevents crash if called with null/undefined, matching the pattern in `useXpStore.seedFromServer` and `settingsStore.seedFromSupabase`
+- **authStore**: Added null guard (`if (!state) return state`) to `partialize` callback — prevents Zustand persist hydration edge case in production where `state` can be null, matching the fix already applied to `useXpStore` in v2.2.0
+
+---
+
 ## [1.9.3] - 2026-05-26
 ### Improved
 - Home library shows skeleton placeholders while Dexie loads books — no flash of empty state on startup

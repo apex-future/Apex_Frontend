@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@phosphor-icons/react';
 
 const privacyCSS = `
   [data-custom-class='body'], [data-custom-class='body'] * {

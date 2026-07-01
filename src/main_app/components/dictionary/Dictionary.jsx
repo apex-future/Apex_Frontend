@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Book, Volume2, ArrowLeft, Loader2, Sparkles, History, WifiOff } from 'lucide-react';
+import { MagnifyingGlass, Book, SpeakerHigh, ArrowLeft, Spinner, Sparkle, ClockCounterClockwise, WifiSlash } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import dictionaryService from '../../services/dictionaryService';
 
@@ -94,25 +94,27 @@ function Dictionary() {
     return (
         <div className="w-full min-h-screen bg-bg-primary overflow-x-hidden">
             {/* Header - Glassmorphic with Dark Adaptation */}
-            <div className="sticky top-0 z-50 bg-card-glass/80 backdrop-blur-xl border-b border-border-default">
-                <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-neutral-100 rounded-xl transition-all group"
-                    >
-                        <ArrowLeft size={20} className="text-text-secondary group-hover:-translate-x-1 transition-transform" />
-                    </button>
-
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-xl font-bold font-display text-text-primary">Dictionary</h1>
+            <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+                <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+                    <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+                        >
+                            <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+                        </button>
                     </div>
 
-                    <div className="w-10"></div> {/* Spacer */}
+                    <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <h1 className="text-base md:text-lg font-bold font-display text-text-primary">Dictionary</h1>
+                    </div>
+
+                    <div className="w-[42px]" /> {/* Spacer */}
                 </div>
             </div>
 
             <div className="max-w-4xl mx-auto px-4 py-8">
-                {/* Search Bar - Premium Thick Border System */}
+                {/* MagnifyingGlass Bar - Premium Thick Border System */}
                 <form onSubmit={handleSearch} className="mb-10">
                     <div className="relative group">
                         <input
@@ -120,21 +122,21 @@ function Dictionary() {
                             value={word}
                             onChange={(e) => setWord(e.target.value)}
                             placeholder="Search for a word..."
-                            className="w-full h-16 pl-6 pr-6 bg-card-glass backdrop-blur-md border-2 border-border-default rounded-2xl text-lg font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm placeholder:text-sm group-hover:border-text-tertiary"
+                            className="w-full h-16 pl-6 pr-6 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl text-lg font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm placeholder:text-sm group-hover:border-accent-primary/30"
                         />
                         <button
                             type="submit"
                             disabled={loading}
                             className="absolute right-3 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-accent-primary hover:bg-accent-hover text-white rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-accent-primary/20 disabled:opacity-50"
                         >
-                            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Search'}
+                            {loading ? <Spinner size={20} weight="bold" className="animate-spin" /> : 'Search'}
                         </button>
                     </div>
                 </form>
 
                 {loading && (
                     <div className="flex flex-col items-center justify-center py-20 text-text-tertiary animate-in fade-in zoom-in duration-500">
-                        <Loader2 size={48} className="animate-spin mb-4 text-accent-primary/40" />
+                        <Spinner size={48} weight="bold" className="animate-spin mb-4 text-accent-primary/40" />
                         <p className="font-medium">Discovering definition...</p>
                     </div>
                 )}
@@ -142,7 +144,7 @@ function Dictionary() {
                 {error && !loading && (
                     <div className="bg-red-50/50 border-2 border-red-100 rounded-2xl p-8 text-center animate-in slide-in-from-top-4 duration-500">
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
-                            {error.includes('internet') ? <WifiOff size={28} /> : <Sparkles size={28} />}
+                            {error.includes('internet') ? <WifiSlash size={28} weight="bold" /> : <Sparkle size={28} weight="fill" />}
                         </div>
                         <h3 className="text-lg font-bold text-red-900 mb-2">
                             {error.includes('internet') ? 'You\'re offline' : 'Word not found'}
@@ -158,7 +160,7 @@ function Dictionary() {
                                 onClick={() => navigate('/ai', { state: { initialPrompt: `Can you define the word "${word}" for me?` } })}
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-xl transition-all font-bold text-sm shadow-sm"
                             >
-                                <Sparkles size={18} className="text-purple-600" />
+                                <Sparkle size={18} weight="fill" className="text-purple-600" />
                                 Ask Cleo instead
                             </button>
                         )}
@@ -168,7 +170,7 @@ function Dictionary() {
                 {!word && !definition && !loading && history.length > 0 && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex items-center gap-2 mb-6 text-text-tertiary">
-                            <History size={18} />
+                            <ClockCounterClockwise size={18} weight="bold" />
                             <h3 className="text-sm font-bold uppercase tracking-widest">Recent Searches</h3>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -179,7 +181,7 @@ function Dictionary() {
                                         setWord(prevWord);
                                         fetchDefinition(prevWord);
                                     }}
-                                    className="px-4 py-2 bg-white dark:bg-bg-dark-elevated border-2 border-border-default rounded-xl text-text-secondary hover:border-accent-primary hover:text-accent-primary transition-all font-medium"
+                                    className="px-4 py-2 bg-white dark:bg-bg-dark-elevated border border-black/10 dark:border-white/10 rounded-xl text-text-secondary hover:border-accent-primary hover:text-accent-primary transition-all font-medium"
                                 >
                                     {prevWord}
                                 </button>
@@ -188,12 +190,12 @@ function Dictionary() {
                     </div>
                 )}
 
-                {/* Offline Dictionary Settings */}
+                {/* Offline Dictionary Gear */}
                 {!loading && (
-                    <div className="mt-10 p-6 bg-card-glass backdrop-blur-md border-2 border-border-default rounded-3xl animate-in fade-in slide-in-from-bottom-2">
+                    <div className="mt-10 p-6 bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-3xl shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-base font-bold text-text-primary flex items-center gap-2">
-                                <WifiOff size={18} className="text-accent-primary" />
+                                <WifiSlash size={18} weight="bold" className="text-accent-primary" />
                                 Offline Dictionary Support
                             </h4>
                             {offlineReady ? (
@@ -211,7 +213,7 @@ function Dictionary() {
                                 onClick={handleDownloadOfflineDictionary}
                                 className="px-6 py-3 bg-accent-primary hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-accent-primary/20 active:scale-95"
                             >
-                                {offlineReady ? 'Update Offline Package' : 'Download Offline Package'}
+                                {offlineReady ? 'Update Offline Package' : 'DownloadSimple Offline Package'}
                             </button>
                         )}
                         
@@ -252,7 +254,7 @@ function Dictionary() {
                                     onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)}
                                     className="w-14 h-14 bg-accent-primary/10 text-accent-primary rounded-2xl flex items-center justify-center hover:bg-accent-primary hover:text-white transition-all active:scale-95 group"
                                 >
-                                    <Volume2 size={24} className="group-hover:scale-110 transition-transform" />
+                                    <SpeakerHigh size={24} weight="fill" className="group-hover:scale-110 transition-transform" />
                                 </button>
                             )}
                         </div>
@@ -260,7 +262,7 @@ function Dictionary() {
                         {/* Meanings */}
                         <div className="space-y-8">
                             {(definition.meanings || []).slice(0, 3).map((meaning, idx) => (
-                                <div key={idx} className="bg-card-glass backdrop-blur-md border-2 border-border-default rounded-3xl p-6 md:p-8 hover:border-text-tertiary transition-all shadow-sm">
+                                <div key={idx} className="bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-3xl p-6 md:p-8 hover:shadow-md transition-all shadow-sm">
                                     <div className="flex items-center gap-4 mb-6">
                                         <span className="text-sm font-bold uppercase tracking-[0.2em] text-accent-primary">
                                             {meaning.partOfSpeech}
@@ -301,7 +303,7 @@ function Dictionary() {
                                     {(meaning.synonyms?.length > 0) && (
                                         <div className="mt-8 pt-8 border-t border-border-default">
                                             <div className="flex items-center gap-2 mb-4">
-                                                <Sparkles size={14} className="text-accent-primary" />
+                                                <Sparkle size={14} weight="fill" className="text-accent-primary" />
                                                 <h4 className="text-xs font-bold text-text-tertiary uppercase tracking-widest">Synonyms</h4>
                                             </div>
                                             <div className="flex flex-wrap gap-2">

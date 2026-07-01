@@ -3,7 +3,7 @@ import { KnowledgeMasteryCard, CoverageCard, CalendarActivityCard, QuizCard, PAR
 import { BookContext } from '../../context/BookContextInstance';
 import apiClient from '../../services/apiClient';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@phosphor-icons/react';
 
 const EMPTY_BOOKS = [];
 
@@ -29,7 +29,7 @@ function GlobalAnalytics() {
         console.log('[GlobalAnalytics] useEffect running, bookIds key:', analyticsBookIdsKey || '(none)');
 
         if (!analyticsBookIdsKey) {
-            console.log('[GlobalAnalytics] No synced books — skipping fetch');
+            console.log('[GlobalAnalytics] No synced books â€” skipping fetch');
             setAnalyticsData(null);
             setLoading(false);
             return;
@@ -210,21 +210,25 @@ function GlobalAnalytics() {
     }
 
     return (
-        <div className="w-full min-h-screen pb-20 bg-bg-elevated">
+        <div className="w-full min-h-screen pb-20">
             {PARTS_STYLES}
-            <div className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-                <div className="max-w-6xl mx-auto px-4 py-6 flex items-center gap-4">
-                    <button 
-                        onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-white/10 rounded-full transition-colors group"
-                    >
-                        <ArrowLeft size={20} className="text-text-secondary group-hover:text-text-primary" />
-                    </button>
-                    <div className="flex-1 flex items-center justify-between">
-                        <h3 className="text-xl font-bold font-display text-text-primary">Global Analytics</h3>
-                        <div className="px-3 py-1 rounded-full bg-accent-primary/10 border border-accent-primary/20">
-                            <p className="text-[10px] text-accent-primary font-bold uppercase tracking-wider">Live Dashboard</p>
-                        </div>
+            <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+                <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+                    <div className="px-1 py-1 rounded-full bg-bg-subtle dark:bg-bg-elevated backdrop-blur-xl border border-black/5 dark:border-white/5 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <button 
+                            onClick={() => navigate(-1)}
+                            className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+                        >
+                            <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+                        </button>
+                    </div>
+
+                    <div className="px-5 py-2.5 rounded-full bg-bg-subtle dark:bg-bg-elevated backdrop-blur-xl border border-black/5 dark:border-white/5 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex-1 text-center max-w-md">
+                        <h3 className="text-base md:text-lg font-bold font-display text-text-primary">Global Analytics</h3>
+                    </div>
+
+                    <div className="px-3 py-2 rounded-full bg-bg-subtle dark:bg-bg-elevated backdrop-blur-xl border border-black/5 dark:border-white/5 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <p className="text-[10px] text-accent-primary font-bold uppercase tracking-wider">Live Dashboard</p>
                     </div>
                 </div>
             </div>
@@ -258,3 +262,4 @@ function GlobalAnalytics() {
 }
 
 export default GlobalAnalytics;
+

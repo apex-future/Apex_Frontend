@@ -1,4 +1,4 @@
-import { Home, Plus, User, TrendingUp, Bell, ScrollText } from 'lucide-react'
+import { House, Plus, User, Scroll } from '@phosphor-icons/react'
 import React, { useContext, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BookContext } from '../../../context/BookContextInstance';
@@ -10,7 +10,7 @@ import { useGSAP } from '@gsap/react';
 gsap.registerPlugin(ScrollTrigger);
 
 function BottomNavBar() {
-  const { addBookToShelf } = useContext(BookContext);
+  const { addBookToShelf } = useContext(BookContext) || {};
   const { setIsNotificationOpen, unreadNotificationCount } = useContext(NavBarContext) || {};
   const navRef = useRef(null);
 
@@ -44,7 +44,7 @@ function BottomNavBar() {
   return (
     <div
       ref={navRef}
-      className='fixed bottom-8 md:hidden left-1/2 -translate-x-1/2 flex justify-between w-[92%] sm:w-[64%] max-w-[400px] z-[100] min-h-12 border-2 border-border-default dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full items-center p-2 px-4 shadow-2xl shadow-neutral-400/20 dark:shadow-none'
+      className='fixed bottom-0 left-0 right-0 md:hidden flex justify-between w-full z-[100] min-h-14 border-t border-black/10 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xl items-center p-2 px-8 shadow-sm'
     >
       <NavLink
         to="/"
@@ -52,7 +52,10 @@ function BottomNavBar() {
       >
         {({ isActive }) => (
           <>
-            <Home size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040] dark:text-zinc-400'} />
+            {isActive
+              ? <House size={20} weight="fill" className="text-accent-primary" />
+              : <House size={20} weight="bold" className="text-[#404040] dark:text-zinc-400" />
+            }
             {isActive && (
               <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
             )}
@@ -66,7 +69,11 @@ function BottomNavBar() {
       >
         {({ isActive }) => (
           <>
-            <ScrollText size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040] dark:text-zinc-400'} />
+            {/* migrated from lucide: ScrollText */}
+            {isActive
+              ? <Scroll size={20} weight="fill" className="text-accent-primary" />
+              : <Scroll size={20} weight="bold" className="text-[#404040] dark:text-zinc-400" />
+            }
             {isActive && (
               <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
             )}
@@ -90,7 +97,7 @@ function BottomNavBar() {
           htmlFor="nav-upload"
           className='bg-accent-primary hover:bg-accent-hover size-11 rounded-full shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center transform'
         >
-          <Plus className='text-white' size={24} />
+          <Plus className='text-white' size={24} weight="bold" />
         </label>
       </div>
 
@@ -101,7 +108,7 @@ function BottomNavBar() {
         className="p-2 hover:bg-neutral-100/50 dark:hover:bg-white/10 rounded-full transition-all relative flex flex-col items-center group text-[#404040] dark:text-zinc-400"
       >
         <div className="relative">
-          <Bell size={20} />
+          <Bell size={20} weight="bold" />
           {unreadNotificationCount > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-[3px] bg-accent-primary rounded-full border-2 border-white dark:border-zinc-900 flex items-center justify-center text-[8px] font-bold text-white z-20">
               {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
@@ -109,14 +116,16 @@ function BottomNavBar() {
           )}
         </div>
       </button>
-
       <NavLink
         to="/profile"
         className={() => `p-2 hover:bg-neutral-100/50 dark:hover:bg-white/10 rounded-full transition-all relative flex flex-col items-center group`}
       >
         {({ isActive }) => (
           <>
-            <User size={20} className={isActive ? 'text-accent-primary' : 'text-[#404040] dark:text-zinc-400'} />
+            {isActive
+              ? <User size={20} weight="fill" className="text-accent-primary" />
+              : <User size={20} weight="bold" className="text-[#404040] dark:text-zinc-400" />
+            }
             {isActive && (
               <div className="absolute -bottom-1 w-5 h-0.5 bg-accent-primary rounded-full shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
             )}

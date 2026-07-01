@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { 
-    AlarmClock, Plus, ArrowLeft, Calendar, Link as LinkIcon, 
-    Edit2, Trash2, Pause, Play, Clock, Search, LayoutGrid, CheckCircle2, AlertCircle
-} from 'lucide-react';
+    Alarm, Plus, ArrowLeft, CalendarBlank, Link, 
+    PencilSimple, Trash, Pause, Play, Clock, MagnifyingGlass, SquaresFour, CheckCircle, WarningCircle, X
+} from '@phosphor-icons/react';
 import useStudyStore from '../store/studyStore';
 import useSpaceStore from '../store/spaceStore';
 import useThemeStore from '../store/themeStore';
@@ -112,7 +112,7 @@ const ExamPage = () => {
                     </div>
                     {type === 'ongoing' && exams.length > 0 && (
                         <span className="text-[10px] font-bold text-accent-primary flex items-center gap-1.5">
-                            <Clock size={12} />
+                            <Clock size={12} weight="bold" />
                             Sorting Active
                         </span>
                     )}
@@ -145,33 +145,39 @@ const ExamPage = () => {
     return (
         <div className={`min-h-screen bg-bg-primary pb-20 ${resolvedTheme}`}>
             {/* Standardized Sticky Header */}
-            <header className="sticky top-0 z-50 bg-card-glass backdrop-blur-xl border-b border-border-default">
-                <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 flex items-center justify-between">
-                    <button 
-                        onClick={() => navigate(-1)} 
-                        className="p-2.5 hover:bg-neutral-100 dark:hover:bg-bg-subtle text-text-secondary rounded-xl transition-all group"
-                    >
-                        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                    </button>
+            <header className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
+                <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+                    <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <button 
+                            onClick={() => navigate(-1)} 
+                            className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+                        >
+                            <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+                        </button>
+                    </div>
 
-                    <h3 className='text-xl font-bold font-display text-text-primary'>Exam Reminders</h3>
+                    <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <h3 className='text-base md:text-lg font-bold font-display text-text-primary'>Exam Reminders</h3>
+                    </div>
 
-                    <button 
-                        onClick={() => { setSelectedExam(null); setIsEditModalOpen(true); }}
-                        className="p-2.5 bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20 rounded-xl transition-all"
-                        title="Create New Exam"
-                    >
-                        <Plus size={20} />
-                    </button>
+                    <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <button 
+                            onClick={() => { setSelectedExam(null); setIsEditModalOpen(true); }}
+                            className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-accent-primary rounded-full transition-all flex items-center justify-center"
+                            title="Create New Exam"
+                        >
+                            <Plus size={20} weight="bold" />
+                        </button>
+                    </div>
                 </div>
             </header>
 
             <main className="max-w-7xl mx-auto px-4 md:px-8 mt-10">
                 {/* Responsive Controls Bar */}
                 <div className="flex flex-col gap-6 mb-12">
-                    {/* Search Bar */}
+                    {/* MagnifyingGlass Bar */}
                     <div className="relative group">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-accent-primary transition-colors" size={20} />
+                        <MagnifyingGlass className="absolute left-5 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-accent-primary transition-colors" size={20} weight="regular" />
                         <input 
                             type="text"
                             placeholder="Search your exams..."
@@ -181,7 +187,7 @@ const ExamPage = () => {
                         />
                     </div>
                     
-                    {/* Filter & Sort Bar */}
+                    {/* Funnel & Sort Bar */}
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex flex-wrap bg-bg-elevated p-1 rounded-[1.5rem] border-2 border-border-default shadow-sm min-w-max">
                             {['all', 'ongoing', 'paused', 'completed'].map((status) => (
@@ -197,10 +203,10 @@ const ExamPage = () => {
 
                         <div className="flex flex-wrap bg-bg-elevated p-1 rounded-[1.5rem] border-2 border-border-default shadow-sm min-w-max">
                             {[
-                                { id: 'urgency', label: 'Urgency', icon: AlertCircle },
+                                { id: 'urgency', label: 'Urgency', icon: WarningCircle },
                                 { id: 'newest', label: 'Newest Set', icon: Plus },
                                 { id: 'oldest', label: 'Oldest Set', icon: Clock },
-                                { id: 'name', label: 'A-Z', icon: Search }
+                                { id: 'name', label: 'A-Z', icon: MagnifyingGlass }
                             ].map((sort) => (
                                 <button
                                     key={sort.id}
@@ -223,7 +229,7 @@ const ExamPage = () => {
                     {allExams.length === 0 && (
                         <div className="py-20 flex flex-col items-center justify-center text-center bg-bg-elevated/50 rounded-[3rem] border-2 border-dashed border-border-default">
                             <div className="size-20 bg-bg-subtle rounded-full flex items-center justify-center text-text-tertiary mb-6">
-                                <AlarmClock size={40} />
+                                <Alarm size={40} weight="thin" />
                             </div>
                             <h3 className="text-xl font-black text-text-primary mb-2">No exams found</h3>
                             <p className="text-sm font-bold text-text-tertiary max-w-xs">Create your first exam reminder to start tracking.</p>
@@ -255,7 +261,7 @@ const ExamPage = () => {
                         className="relative w-full max-w-md bg-bg-elevated/95 backdrop-blur-2xl rounded-[2.5rem] border-2 border-border-default shadow-2xl p-8 flex flex-col items-center text-center"
                     >
                         <div className="size-16 bg-red-500/10 rounded-[2rem] flex items-center justify-center text-red-500 mb-6">
-                            <Trash2 size={32} />
+                            <Trash size={32} weight="regular" />
                         </div>
                         <h2 className="text-2xl font-black text-text-primary tracking-tight mb-2">Delete Reminder?</h2>
                         <p className="text-sm font-bold text-text-tertiary mb-8">This will permanently remove <span className="text-text-primary">"{examToDelete?.name}"</span> and unlink its study shelves.</p>
@@ -347,7 +353,7 @@ const ExamCard = ({ exam, linkedSpaces, onEdit, onDelete, onTogglePause }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={`group bg-bg-elevated border-2 border-border-default rounded-[2.5rem] p-6 sm:p-8 flex flex-col transition-all hover:shadow-2xl hover:shadow-accent-primary/5 hover:border-accent-primary/20 relative overflow-hidden h-full ${isPaused ? 'opacity-80' : ''}`}
+            className={`group bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-[2.5rem] p-6 sm:p-8 flex flex-col transition-all shadow-sm hover:shadow-md relative overflow-hidden h-full ${isPaused ? 'opacity-80' : ''}`}
         >
             {/* Ambient Background Glow */}
             <div className={`absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-16 blur-3xl opacity-30 transition-all duration-700 pointer-events-none bg-gradient-to-br ${moodAmbientBg}`} />
@@ -361,9 +367,9 @@ const ExamCard = ({ exam, linkedSpaces, onEdit, onDelete, onTogglePause }) => {
                     </div>
                     
                     <div className="flex gap-1 backdrop-blur-xl bg-white/50 dark:bg-black/20 rounded-xl p-0.5 shadow-sm transition-all">
-                        <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="p-1.5 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-lg transition-all" title="Edit"><Edit2 size={14}/></button>
-                        <button onClick={(e) => { e.stopPropagation(); onTogglePause(); }} className="p-1.5 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-lg transition-all" title={isPaused ? "Resume" : "Pause"}>{isPaused ? <Play size={14} fill="currentColor" /> : <Pause size={14} fill="currentColor" />}</button>
-                        <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1.5 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-lg transition-all" title="Delete"><Trash2 size={14}/></button>
+                        <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="p-1.5 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-lg transition-all" title="Edit"><PencilSimple size={14} weight="regular"/></button>
+                        <button onClick={(e) => { e.stopPropagation(); onTogglePause(); }} className="p-1.5 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-lg transition-all" title={isPaused ? "Resume" : "Pause"}>{isPaused ? <Play size={14} weight="fill" /> : <Pause size={14} weight="fill" />}</button>
+                        <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1.5 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-lg transition-all" title="Delete"><Trash size={14} weight="regular"/></button>
                     </div>
                 </div>
 
@@ -382,7 +388,7 @@ const ExamCard = ({ exam, linkedSpaces, onEdit, onDelete, onTogglePause }) => {
                     <div>
                         <h3 className="text-xl font-black text-text-primary tracking-tight leading-tight group-hover:text-accent-primary transition-colors line-clamp-1">{exam.name || 'Untitled Exam'}</h3>
                         <p className="flex items-center gap-1.5 text-[10px] font-bold text-text-tertiary mt-1">
-                            <Calendar size={12} className="text-accent-primary" />
+                            <CalendarBlank size={12} weight="regular" className="text-accent-primary" />
                             {new Date(exam.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                         </p>
                     </div>
@@ -391,7 +397,7 @@ const ExamCard = ({ exam, linkedSpaces, onEdit, onDelete, onTogglePause }) => {
                     <div className="space-y-2.5">
                         <div className="flex items-center justify-between px-1">
                             <div className="flex items-center gap-2 text-[9px] font-black text-text-tertiary uppercase tracking-widest opacity-60">
-                                <LinkIcon size={10} />
+                                <Link size={10} weight="regular" />
                                 Connected Shelves
                             </div>
                             {linkedSpaces.length > 0 && (
@@ -486,9 +492,9 @@ const ExamEditModal = ({ isOpen, onClose, exam, resolvedTheme }) => {
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-8 py-6">
-                    <h2 className="text-xl font-black text-text-primary tracking-tight">{exam ? 'Edit Exam' : 'New Exam'}</h2>
+                    <h2 className="text-xl font-black text-text-primary tracking-tight">{exam ? 'PencilSimple Exam' : 'New Exam'}</h2>
                     <button onClick={onClose} className="p-2.5 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all">
-                        <X size={20} className="rotate-45" />
+                        <X size={20} weight="bold" className="rotate-45" />
                     </button>
                 </div>
 
@@ -502,7 +508,7 @@ const ExamEditModal = ({ isOpen, onClose, exam, resolvedTheme }) => {
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1">Exam Title</label>
                             <div className="flex bg-bg-elevated border-2 border-border-default rounded-2xl px-5 py-4 items-center gap-4 focus-within:border-accent-primary/40 transition-all group shadow-sm">
-                                <Edit2 size={20} className="text-text-tertiary group-focus-within:text-accent-primary" />
+                                <PencilSimple size={20} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary" />
                                 <input 
                                     type="text" 
                                     value={tempName} 
@@ -515,7 +521,7 @@ const ExamEditModal = ({ isOpen, onClose, exam, resolvedTheme }) => {
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1">Deadline Date</label>
                             <div className="flex bg-bg-elevated border-2 border-border-default rounded-2xl px-5 py-4 items-center gap-4 focus-within:border-accent-primary/40 transition-all group shadow-sm">
-                                <Calendar size={20} className="text-text-tertiary group-focus-within:text-accent-primary" />
+                                <CalendarBlank size={20} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary" />
                                 <input 
                                     type="date" 
                                     value={tempDate} 
@@ -538,14 +544,14 @@ const ExamEditModal = ({ isOpen, onClose, exam, resolvedTheme }) => {
                                         className={`p-4 rounded-3xl border-2 transition-all cursor-pointer flex items-center gap-4 group/item ${isSelected ? 'border-accent-primary bg-accent-primary/10 shadow-lg shadow-accent-primary/10' : 'border-border-default bg-bg-elevated hover:border-accent-primary/30'}`}
                                     >
                                         <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${isSelected ? 'bg-accent-primary/20 text-accent-primary scale-110' : 'bg-bg-subtle text-text-tertiary group-hover/item:text-accent-primary'}`}>
-                                            <LayoutGrid size={20} />
+                                            <SquaresFour size={20} weight="regular" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className={`text-sm font-black truncate ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>{sp.name}</p>
                                             <p className="text-[10px] font-bold text-text-tertiary">{sp.bookIds?.length || 0} Books</p>
                                         </div>
                                         <div className={`size-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-accent-primary bg-accent-primary' : 'border-border-default'}`}>
-                                            {isSelected && <Plus size={14} className="text-white rotate-45" />}
+                                            {isSelected && <Plus size={14} weight="bold" className="text-white rotate-45" />}
                                         </div>
                                     </div>
                                 );

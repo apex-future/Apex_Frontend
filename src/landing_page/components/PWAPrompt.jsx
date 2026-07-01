@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, X, Sparkles } from 'lucide-react';
+import { DownloadSimple, X, Sparkle } from '@phosphor-icons/react';
 
 const PWAPrompt = ({ deferredPrompt }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -51,14 +51,14 @@ const PWAPrompt = ({ deferredPrompt }) => {
         {/* Row 1: Icons */}
         <div className="flex items-center justify-between mb-5 relative z-10">
           <div className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-violet-600 dark:text-violet-400 shadow-inner">
-            <Download size={24} />
+            <DownloadSimple size={24} weight="bold" />
           </div>
           <button 
             type="button"
             onClick={handleDismiss}
             className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-all"
           >
-            <X size={20} />
+            <X size={20} weight="bold" />
           </button>
         </div>
 
@@ -66,7 +66,7 @@ const PWAPrompt = ({ deferredPrompt }) => {
         <div className="space-y-2 mb-6 relative z-10">
           <div className="flex items-center gap-2">
             <h3 className="text-zinc-900 dark:text-zinc-100 font-bold text-xl leading-tight">Install Apex App</h3>
-            <Sparkles size={16} className="text-amber-500 animate-pulse" />
+            <Sparkle size={16} weight="fill" className="text-amber-500 animate-pulse" />
           </div>
           <p className="text-zinc-600 dark:text-zinc-400 text-sm md:text-base leading-relaxed">
             Get the full experience. Faster access, offline reading, and better focus.
