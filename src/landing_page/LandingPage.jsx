@@ -54,7 +54,7 @@ function LandingPage({ onLogin, deferredPrompt }) {
   }, [])
 
   return (
-    <>
+    <div className="light">
       {isLoading && (
         <div 
           className="fixed inset-0 z-[10000] transition-opacity duration-200"
@@ -63,7 +63,7 @@ function LandingPage({ onLogin, deferredPrompt }) {
           <LandingLoadingScreen />
         </div>
       )}
-      <div className='bg-bg-subtle overflow-x-hidden'>
+      <div className='bg-bg-subtle overflow-x-hidden min-h-screen text-text-primary'>
         <NavBar />    
         <HeroSection />
         <Features />
@@ -73,7 +73,7 @@ function LandingPage({ onLogin, deferredPrompt }) {
         <Footer />
         <PWAPrompt deferredPrompt={deferredPrompt} />
       </div>
-    </>
+    </div>
   )
 }   
 

@@ -59,18 +59,18 @@ function LoginPage({ onLogin }) {
               aria-label="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value.toLowerCase())}
-              className="w-full px-4 py-3.5 border border-[#D1D5DB] rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#10a37f] focus:border-transparent text-base transition-colors"
+              className="w-full px-5 py-3.5 border border-[#D1D5DB] rounded-full focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-colors"
               required
             />
           </div>
 
-            <div className="space-y-2">
+            <div className="mb-6 space-y-2">
               <div className="flex justify-between items-center ml-1">
-                <label className="text-sm font-semibold text-white/90">Password</label>
-                <Link to="/forgot-password" className="text-xs font-semibold text-white/70 hover:text-white hover:underline">Forgot password?</Link>
+                <label className="text-sm font-semibold text-gray-700">Password</label>
+                <Link to="/forgot-password" className="text-xs font-semibold text-[#7C3AED] hover:underline">Forgot password?</Link>
               </div>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/50 group-focus-within:text-white transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#7C3AED] transition-colors">
                   <Lock size={18} />
                 </div>
                 <input
@@ -78,13 +78,13 @@ function LoginPage({ onLogin }) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white transition-all backdrop-blur-md"
+                  className="w-full pl-11 pr-12 py-3.5 bg-white border border-[#D1D5DB] rounded-full text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-colors"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-black  transition-colors cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -94,7 +94,7 @@ function LoginPage({ onLogin }) {
           <button 
             type="submit"
             disabled={loading}
-            className="w-full bg-black hover:bg-neutral-800 disabled:bg-black/50 disabled:cursor-not-allowed text-white py-3.5 rounded-[6px] font-medium text-[15px] transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-black hover:bg-neutral-800 disabled:bg-black/50 disabled:cursor-not-allowed text-white py-3.5 rounded-full font-medium text-[15px] transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -106,7 +106,7 @@ function LoginPage({ onLogin }) {
 
         <div className="w-full mb-6 mt-4 text-center">
           <p className="text-[14px] text-gray-600">
-            Don't have an account? <Link to="/signup" className="text-[#10a37f] hover:underline">Sign up</Link>
+            Don't have an account? <Link to="/signup" className="text-[#7C3AED] hover:underline">Sign up</Link>
           </p>
         </div>
 
@@ -117,7 +117,7 @@ function LoginPage({ onLogin }) {
         </div>
 
         <div className="w-full space-y-3">
-          <button type="button" className="w-full flex items-center bg-white border border-[#D1D5DB] rounded-[6px] py-3.5 hover:bg-gray-50 transition-colors px-4 relative">
+          <button type="button" className="w-full flex items-center bg-white border border-[#D1D5DB] rounded-full py-3.5 hover:bg-gray-50 transition-colors px-4 relative">
             <svg className="w-[18px] h-[18px] absolute left-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>

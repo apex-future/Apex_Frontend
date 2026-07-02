@@ -91,9 +91,9 @@ function SignupPage({ onLogin }) {
       role="button"
       aria-pressed={ariaPressed !== undefined ? ariaPressed : selected}
       onClick={onClick}
-      className={`px-3 py-2 rounded-md border text-sm font-medium cursor-pointer transition-all ${
+      className={`px-4 py-2 rounded-full border text-sm font-medium cursor-pointer transition-all ${
         selected
-          ? 'bg-[#10a37f]/10 text-[#10a37f] border-[#10a37f]'
+          ? 'bg-[#7C3AED]/10 text-[#7C3AED] border-[#7C3AED]'
           : 'bg-white text-gray-700 border-[#D1D5DB] hover:bg-gray-50'
       }`}
     >
@@ -133,7 +133,7 @@ function SignupPage({ onLogin }) {
                 aria-label="Full Name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-3.5 border border-[#D1D5DB] rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#10a37f] focus:border-transparent text-base transition-colors"
+                className="w-full px-5 py-3.5 border border-[#D1D5DB] rounded-full focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-colors"
                 required
               />
             </div>
@@ -147,7 +147,7 @@ function SignupPage({ onLogin }) {
                 aria-label="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value.toLowerCase())}
-                className="w-full px-4 py-3.5 border border-[#D1D5DB] rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#10a37f] focus:border-transparent text-base transition-colors"
+                className="w-full px-5 py-3.5 border border-[#D1D5DB] rounded-full focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-colors"
                 required
               />
             </div>
@@ -161,7 +161,7 @@ function SignupPage({ onLogin }) {
                 aria-label="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3.5 border border-[#D1D5DB] rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#10a37f] focus:border-transparent text-base transition-colors pr-12"
+                className="w-full pl-5 pr-12 py-3.5 border border-[#D1D5DB] rounded-full focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-colors"
                 required
               />
               <button
@@ -177,14 +177,14 @@ function SignupPage({ onLogin }) {
 
             <button 
               type="submit"
-              className="w-full bg-black hover:bg-neutral-800 text-white py-3.5 rounded-[6px] font-medium text-[15px] transition-colors mt-2"
+              className="w-full bg-black hover:bg-neutral-800 text-white py-3.5 rounded-full font-medium text-[15px] transition-colors mt-2"
             >
               Continue
             </button>
 
             <div className="w-full mb-6 mt-4 text-center">
               <p className="text-[14px] text-gray-600">
-                Already have an account? <Link to="/login" className="text-[#10a37f] hover:underline">Log in</Link>
+                Already have an account? <Link to="/login" className="text-[#7C3AED] hover:underline">Log in</Link>
               </p>
             </div>
 
@@ -195,7 +195,7 @@ function SignupPage({ onLogin }) {
             </div>
 
             <div className="w-full space-y-3">
-              <button type="button" className="w-full flex items-center bg-white border border-[#D1D5DB] rounded-[6px] py-3.5 hover:bg-gray-50 transition-colors px-4 relative">
+              <button type="button" className="w-full flex items-center bg-white border border-[#D1D5DB] rounded-full py-3.5 hover:bg-gray-50 transition-colors px-4 relative">
                 <svg className="w-[18px] h-[18px] absolute left-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -265,7 +265,7 @@ function SignupPage({ onLogin }) {
                   <select
                     value={examDate.month}
                     onChange={(e) => setExamDate({ ...examDate, month: e.target.value })}
-                    className="flex-1 bg-white border border-[#D1D5DB] text-gray-800 rounded-[6px] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10a37f] appearance-none cursor-pointer text-sm"
+                    className="flex-1 bg-white border border-[#D1D5DB] text-gray-800 rounded-full px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7C3AED] appearance-none cursor-pointer text-sm"
                   >
                     <option value="" className="text-gray-400">Month</option>
                     {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m => (
@@ -275,7 +275,7 @@ function SignupPage({ onLogin }) {
                   <select
                     value={examDate.year}
                     onChange={(e) => setExamDate({ ...examDate, year: e.target.value })}
-                    className="flex-1 bg-white border border-[#D1D5DB] text-gray-800 rounded-[6px] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10a37f] appearance-none cursor-pointer text-sm"
+                    className="flex-1 bg-white border border-[#D1D5DB] text-gray-800 rounded-full px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7C3AED] appearance-none cursor-pointer text-sm"
                   >
                     <option value="" className="text-gray-400">Year</option>
                     {[2026, 2027, 2028, 2029].map(y => (
@@ -306,7 +306,7 @@ function SignupPage({ onLogin }) {
                   type="button"
                   onClick={handleSignup}
                   disabled={!userType || loading}
-                  className={`group w-full h-14 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-3 active:scale-95 mt-4 ${(!userType || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`group w-full h-14 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-full font-bold text-lg transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-3 active:scale-95 mt-4 ${(!userType || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {loading ? (
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -320,7 +320,7 @@ function SignupPage({ onLogin }) {
 
                 <p className="text-gray-500 text-xs text-center mt-3">
                   By creating an account, you agree to our{' '}
-                  <Link to="/privacy" className="underline text-[#10a37f] hover:text-[#0e8f6f] transition-colors">Privacy Policy</Link>.
+                  <Link to="/privacy" className="underline text-[#7C3AED] hover:text-[#6D28D9] transition-colors">Privacy Policy</Link>.
                 </p>
               </div>
             )}
