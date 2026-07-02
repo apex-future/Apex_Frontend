@@ -167,21 +167,21 @@ function Settings({ onLogout }) {
                         <div className="flex bg-bg-elevated/50 p-1 rounded-xl border border-black/10 dark:border-white/10 shadow-inner">
                             <button
                                 onClick={() => handleThemeChange('light')}
-                                className={`p-2 rounded-lg transition-all ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                                className={`p-2 rounded-lg transition-all ${theme === 'light' ? 'bg-bg-primary shadow-sm text-accent-primary border border-transparent' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                                 title="Light Theme"
                             >
                                 <Sun size={16} weight="bold" />
                             </button>
                             <button
                                 onClick={() => handleThemeChange('dark')}
-                                className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                                className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-bg-primary shadow-sm text-accent-primary border border-transparent' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                                 title="Dark Theme"
                             >
                                 <Moon size={16} weight="bold" />
                             </button>
                             <button
                                 onClick={() => handleThemeChange('system')}
-                                className={`p-2 rounded-lg transition-all ${theme === 'system' ? 'bg-bg-primary shadow-sm text-accent-primary border border-border-default' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
+                                className={`p-2 rounded-lg transition-all ${theme === 'system' ? 'bg-bg-primary shadow-sm text-accent-primary border border-transparent' : 'text-text-tertiary hover:text-text-primary border border-transparent'}`}
                                 title="System Default"
                             >
                                 <Monitor size={16} weight="bold" />
@@ -218,7 +218,7 @@ function Settings({ onLogout }) {
                         className={`flex-1 py-2.5 rounded-xl border-2 text-xs font-bold transition-all ${
                           scrollOrientation === 'vertical'
                             ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
-                            : 'border-border-default text-text-tertiary hover:border-text-tertiary/30'
+                            : 'border-black/10 dark:border-white/10 text-text-tertiary hover:border-text-tertiary/30'
                         }`}
                       >
                         Up & Down
@@ -228,7 +228,7 @@ function Settings({ onLogout }) {
                         className={`flex-1 py-2.5 rounded-xl border-2 text-xs font-bold transition-all ${
                           scrollOrientation === 'horizontal'
                             ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
-                            : 'border-border-default text-text-tertiary hover:border-text-tertiary/30'
+                            : 'border-black/10 dark:border-white/10 text-text-tertiary hover:border-text-tertiary/30'
                         }`}
                       >
                         Left & Right
@@ -250,7 +250,7 @@ function Settings({ onLogout }) {
                           checked={pageAnimations}
                           onChange={(e) => updateSetting('pageAnimations', e.target.checked)}
                         />
-                        <div className="w-11 h-6 bg-border-default peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border-default after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-primary" />
+                        <div className="w-11 h-6 bg-black/10 dark:bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-transparent after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-primary" />
                       </label>
                     </div>
 
@@ -262,7 +262,7 @@ function Settings({ onLogout }) {
                           className={`flex flex-col items-center gap-2 p-3 rounded-card border-2 text-xs font-bold transition-all ${
                             scrollAnimation === 'slide'
                               ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
-                              : 'border-border-default text-text-tertiary hover:border-text-tertiary/30'
+                              : 'border-black/10 dark:border-white/10 text-text-tertiary hover:border-text-tertiary/30'
                           }`}
                         >
                           {/* Smooth Slide icon — two rectangles sliding */}
@@ -277,7 +277,7 @@ function Settings({ onLogout }) {
                           className={`flex flex-col items-center gap-2 p-3 rounded-card border-2 text-xs font-bold transition-all ${
                             scrollAnimation === 'fade'
                               ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
-                              : 'border-border-default text-text-tertiary hover:border-text-tertiary/30'
+                              : 'border-black/10 dark:border-white/10 text-text-tertiary hover:border-text-tertiary/30'
                           }`}
                         >
                           {/* Fade icon — rectangle fading out */}
@@ -338,7 +338,7 @@ function Settings({ onLogout }) {
                               }
                             }}
                           />
-                          <div className="w-11 h-6 bg-border-default peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border-default after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-primary" />
+                          <div className="w-11 h-6 bg-black/10 dark:bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-transparent after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-primary" />
                         </label>
                       </div>
 
@@ -486,7 +486,7 @@ const ToggleRow = ({ label, desc, checked, onChange }) => (
         </div>
         <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
             <input type="checkbox" className="sr-only peer" checked={checked} onChange={onChange} />
-            <div className={`w-11 h-6 bg-border-default peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border-default after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-primary`}></div>
+            <div className={`w-11 h-6 bg-black/10 dark:bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-transparent after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-primary`}></div>
         </label>
     </div>
 );

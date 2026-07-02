@@ -80,7 +80,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                     className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all group ${
                       scrollAnimation === 'slide'
                         ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
-                        : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
+                        : 'border-black/10 dark:border-white/10 bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
                     }`}
                   >
                     {/* Slide icon */}
@@ -96,7 +96,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                     className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all group ${
                       scrollAnimation === 'fade'
                         ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
-                        : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
+                        : 'border-black/10 dark:border-white/10 bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
                     }`}
                   >
                     {/* Fade icon */}
@@ -120,7 +120,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                   className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border transition-all group ${
                     scrollOrientation === 'vertical'
                       ? 'border-accent-primary bg-accent-primary/5 text-accent-primary shadow-sm'
-                      : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20 hover:bg-bg-subtle'
+                      : 'border-black/10 dark:border-white/10 bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20 hover:bg-bg-subtle'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
@@ -136,7 +136,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                   className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border transition-all group ${
                     scrollOrientation === 'horizontal'
                       ? 'border-accent-primary bg-accent-primary/5 text-accent-primary shadow-sm'
-                      : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20 hover:bg-bg-subtle'
+                      : 'border-black/10 dark:border-white/10 bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20 hover:bg-bg-subtle'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${

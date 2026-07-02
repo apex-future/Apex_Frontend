@@ -175,7 +175,7 @@ function NotebookDetailPage() {
   const tabsCount = tabs.length;
 
   return (
-    <div className="min-h-screen bg-bg-elevated w-full overflow-x-hidden">
+    <div className="min-h-screen bg-bg-primary w-full overflow-x-hidden">
       {/* Header — standard Apex glassmorphic pattern */}
       <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">

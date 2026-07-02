@@ -139,7 +139,7 @@ function SpaceDetail() {
                     <div className="w-full">
                       {/* Add Books Inline UI */}
                       {isAddingBooks && (
-                        <div className="w-full p-6 sm:p-8 mb-8 bg-bg-elevated/50 backdrop-blur-xl border border-border-default rounded-card shadow-lg animate-in fade-in zoom-in-95 duration-300">
+                        <div className="w-full p-6 sm:p-8 mb-8 bg-bg-subtle dark:bg-bg-elevated border-0 border-t border-black/10 dark:border-white/10 rounded-card shadow-sm shadow-black/10 dark:shadow-black/40 animate-in fade-in zoom-in-95 duration-300">
                           <div className="flex justify-between items-center mb-6 px-1">
                              <h3 className="text-lg font-black text-text-primary tracking-tight">Select Books to Add</h3>
                              <button 
@@ -149,7 +149,7 @@ function SpaceDetail() {
                                <X size={20} weight="bold" />
                              </button>
                           </div>
-                          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide py-4 px-1">
+                          <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar py-4 px-1">
                             {books.filter(b => !selectedShelf.bookIds?.includes(b.id)).map(book => {
                               const isSelected = selectedBooksToAdd.includes(book.id);
                               return (
