@@ -25,6 +25,16 @@ const authService = {
     return response.data;
   },
 
+  async googleAuth(token) {
+    const response = await apiClient.post('/api/auth/google', {
+      token,
+    });
+    if (response.data.access_token) {
+      localStorage.setItem('apex_token', response.data.access_token);
+    }
+    return response.data;
+  },
+
   async logout() {
     // We can call the logout endpoint if needed, but primarily clear local state
     try {
