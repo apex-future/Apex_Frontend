@@ -110,10 +110,7 @@ function ReaderView() {
     const sessionStartTime = useRef(Date.now());
     const visitedPages = useRef(new Set());
 
-    useEffect(() => {
-        // Record pages as they are visited
-        if (pageNumber) visitedPages.current.add(pageNumber);
-    }, [pageNumber]);
+    // removed immediate page visit tracking
 
     useEffect(() => {
         // Start tracking XP actions for this session
@@ -220,7 +217,7 @@ function ReaderView() {
     }, []);
 
     // ============================================
-    // PAGE VISIT TRACKER — 5s foreground visit recording
+    // PAGE VISIT TRACKER — 4s foreground visit recording
     // ============================================
     usePageVisitTracker({
         bookId: book?.id,
@@ -228,6 +225,7 @@ function ReaderView() {
         currentPage: pageNumber,
         totalPages: numPages || book?.totalPages,
         isEnabled: !!book?.supabaseId,
+        onVisitRecorded: (page) => visitedPages.current.add(page)
     });
 
     // ============================================

@@ -18,13 +18,19 @@ export default function usePageVisitTracker({
   currentPage,
   totalPages,
   isEnabled,
+  onVisitRecorded
 }) {
   const timerRef = useRef(null);
   const elapsedRef = useRef(0);        // ms elapsed while visible
   const intervalStartRef = useRef(null); // Date.now() when last interval segment started
   const currentPageRef = useRef(currentPage);
+  const onVisitRecordedRef = useRef(onVisitRecorded);
 
-  const VISIT_THRESHOLD_MS = 5000; // 5 seconds
+  useEffect(() => {
+    onVisitRecordedRef.current = onVisitRecorded;
+  }, [onVisitRecorded]);
+
+  const VISIT_THRESHOLD_MS = 4000; // 4 seconds
   const TICK_INTERVAL_MS = 250;    // check every 250ms for precision
 
   // ── Record a visit to Dexie + sync queue ──
@@ -104,6 +110,9 @@ export default function usePageVisitTracker({
           // Fire the visit and stop ticking for this page
           clearInterval(timerRef.current);
           timerRef.current = null;
+          if (onVisitRecordedRef.current) {
+            onVisitRecordedRef.current(currentPageRef.current);
+          }
           recordVisit(currentPageRef.current);
         }
       }, TICK_INTERVAL_MS);
