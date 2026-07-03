@@ -103,8 +103,11 @@ function ReaderView() {
 
     // Session Summary State
     const [showSessionSummary, setShowSessionSummary] = useState(false);
+    const showSessionSummaryRef = useRef(false);
+    useEffect(() => { showSessionSummaryRef.current = showSessionSummary; }, [showSessionSummary]);
     const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [] });
-    const mountTime = useRef(Date.now());
+    const sessionActiveSeconds = useRef(0);
+    const sessionStartTime = useRef(Date.now());
     const visitedPages = useRef(new Set());
 
     useEffect(() => {
@@ -121,10 +124,16 @@ function ReaderView() {
         // 1. Stop the timer immediately — no more minutes accumulate
         stopTick();
 
+        // Calculate time spent so far in this chunk
+        if (sessionStartTime.current) {
+            sessionActiveSeconds.current += Math.floor((Date.now() - sessionStartTime.current) / 1000);
+            sessionStartTime.current = null; // paused
+        }
+
         // 2. Compute XP from actual session minutes (does NOT flush or award yet)
         const readingXp = await computeSessionXp();
         const pagesRead = visitedPages.current.size;
-        const timeSpentSeconds = Math.floor((Date.now() - mountTime.current) / 1000);
+        const timeSpentSeconds = sessionActiveSeconds.current;
         const timeSpentMinutes = Math.floor(timeSpentSeconds / 60);
 
         // Fetch session XP actions
@@ -264,25 +273,33 @@ function ReaderView() {
         streakStartTimeRef.current = Date.now();
 
         const runInterval = () => {
+            if (streakTimerRef.current) clearInterval(streakTimerRef.current);
             streakTimerRef.current = setInterval(() => {
-                console.log('[Apex Reader] 60 seconds passed - logging activity');
+                if (showSessionSummaryRef.current) return; // skip if modal is open
 
-                // Always runs — reading time and space activity are not streak-gated
-                if (activeSpaceId) {
-                    logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
-                }
+                streakElapsedRef.current += 1000;
 
-                // Streak fires once per day only. Fetch today dynamically in case it crossed midnight
-                const today = new Date().toLocaleDateString('en-CA');
-                const lastFired = localStorage.getItem('apex_streak_fired_today');
-                
-                if (lastFired !== today) {
-                    updateStreakRef.current();
-                    setShowStreakCelebration(true);
-                    streakFiredTodayRef.current = true; // Still keep ref updated for other possible checks
-                    localStorage.setItem('apex_streak_fired_today', today);
+                if (streakElapsedRef.current >= STREAK_DURATION) {
+                    streakElapsedRef.current = 0; // reset
+                    console.log('[Apex Reader] 60 seconds passed - logging activity');
+
+                    // Always runs — reading time and space activity are not streak-gated
+                    if (activeSpaceId) {
+                        logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
+                    }
+
+                    // Streak fires once per day only. Fetch today dynamically in case it crossed midnight
+                    const today = new Date().toLocaleDateString('en-CA');
+                    const lastFired = localStorage.getItem('apex_streak_fired_today');
+                    
+                    if (lastFired !== today) {
+                        updateStreakRef.current();
+                        setShowStreakCelebration(true);
+                        streakFiredTodayRef.current = true; // Still keep ref updated for other possible checks
+                        localStorage.setItem('apex_streak_fired_today', today);
+                    }
                 }
-            }, STREAK_DURATION);
+            }, 1000); // 1-second ticks for accurate pausing
         };
 
         runInterval();
@@ -1487,6 +1504,7 @@ function ReaderView() {
                         onCancel={() => {
                             // User clicked X — cancel exit, resume timer
                             setShowSessionSummary(false);
+                            sessionStartTime.current = Date.now();
                             startTick();
                         }}
                         onStartQuiz={() => {

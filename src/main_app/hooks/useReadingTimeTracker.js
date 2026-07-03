@@ -139,10 +139,12 @@ export function useReadingTimeTracker({ bookId, supabaseBookId, isEnabled }) {
     sessionStartRef.current = Date.now();
     tickIntervalRef.current = setInterval(() => {
       if (!visibilityPausedRef.current) {
-        elapsedSecondsRef.current += 60;
-        incrementLocalMinute();
+        elapsedSecondsRef.current += 1;
+        if (elapsedSecondsRef.current > 0 && elapsedSecondsRef.current % 60 === 0) {
+          incrementLocalMinute();
+        }
       }
-    }, TICK_INTERVAL_MS);
+    }, 1000); // Check every second to allow precise pause/resume without losing progress
     console.log('[ReadingTimeTracker] Tick started for book', bookId);
   }
 
