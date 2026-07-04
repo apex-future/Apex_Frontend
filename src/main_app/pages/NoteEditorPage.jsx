@@ -305,13 +305,13 @@ function NoteEditorPage() {
   if (!editor) return null;
 
   return (
-    <div className="min-h-screen bg-bg-elevated flex flex-col">
+    <div className="min-h-screen bg-surface-base flex flex-col">
 
       {/* ── Top bar ───────────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
           {/* Back */}
-          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex-shrink-0">
+          <div className="px-1 py-1 rounded-full bg-surface-overlay border border-border-default shadow-aura-sm flex-shrink-0">
             <button
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
@@ -321,7 +321,7 @@ function NoteEditorPage() {
           </div>
 
           {/* Save status */}
-          <div className="px-4 py-2 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center gap-2 text-xs text-text-tertiary font-bold">
+          <div className="px-4 py-2 rounded-full bg-surface-overlay border border-border-default shadow-aura-sm flex items-center gap-2 text-xs text-text-tertiary font-bold">
             {saved ? (
               <span className="flex items-center gap-1.5 text-text-primary">
                 <Check size={12} weight="bold" className="text-emerald-500 font-extrabold" /> Saved
@@ -386,7 +386,7 @@ function NoteEditorPage() {
 
         {/* ── Floating Toolbar ─────────────────────────────────────────── */}
         <div className="sticky top-[61px] z-40 mb-4 -mx-2">
-          <div className="bg-bg-elevated/95 backdrop-blur-xl border border-border-default rounded-2xl shadow-lg px-3 py-2 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
+          <div className="aura-card-raised rounded-2xl px-3 py-2 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
 
             <HeadingDropdown editor={editor} />
             <ToolbarDivider />

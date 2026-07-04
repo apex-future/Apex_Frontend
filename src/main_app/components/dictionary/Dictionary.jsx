@@ -96,16 +96,16 @@ function Dictionary() {
             {/* Header - Glassmorphic with Dark Adaptation */}
             <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
                 <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-                    <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    <div className="px-1 py-1 rounded-full bg-surface-overlay border border-border-default shadow-aura-sm">
                         <button
                             onClick={() => navigate(-1)}
-                            className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
+                            className="p-2 hover:bg-bg-subtle text-text-secondary rounded-full transition-all group flex items-center justify-center"
                         >
                             <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
                         </button>
                     </div>
 
-                    <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    <div className="px-5 py-2.5 rounded-full bg-surface-overlay border border-border-default shadow-aura-sm">
                         <h1 className="text-base md:text-lg font-bold font-display text-text-primary">Dictionary</h1>
                     </div>
 
@@ -121,8 +121,7 @@ function Dictionary() {
                             type="text"
                             value={word}
                             onChange={(e) => setWord(e.target.value)}
-                            placeholder="Search for a word..."
-                            className="w-full h-16 pl-6 pr-6 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl text-lg font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm placeholder:text-sm group-hover:border-accent-primary/30"
+                            className="w-full h-16 pl-6 pr-6 bg-surface-sunken border border-border-default rounded-2xl text-lg font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm placeholder:text-sm group-hover:border-accent-primary/30"
                         />
                         <button
                             type="submit"
@@ -181,7 +180,7 @@ function Dictionary() {
                                         setWord(prevWord);
                                         fetchDefinition(prevWord);
                                     }}
-                                    className="px-4 py-2 bg-white dark:bg-bg-dark-elevated border border-black/10 dark:border-white/10 rounded-xl text-text-secondary hover:border-accent-primary hover:text-accent-primary transition-all font-medium"
+                                    className="px-4 py-2 bg-surface-card border border-border-default rounded-xl text-text-secondary hover:border-accent-primary hover:text-accent-primary transition-all font-medium"
                                 >
                                     {prevWord}
                                 </button>
@@ -192,7 +191,7 @@ function Dictionary() {
 
                 {/* Offline Dictionary Gear */}
                 {!loading && (
-                    <div className="mt-10 p-6 bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-3xl shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
+                    <div className="mt-10 p-6 bg-bg-subtle border-t border-border-default rounded-3xl shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-base font-bold text-text-primary flex items-center gap-2">
                                 <WifiSlash size={18} weight="bold" className="text-accent-primary" />
@@ -259,10 +258,9 @@ function Dictionary() {
                             )}
                         </div>
 
-                        {/* Meanings */}
                         <div className="space-y-8">
                             {(definition.meanings || []).slice(0, 3).map((meaning, idx) => (
-                                <div key={idx} className="bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-3xl p-6 md:p-8 hover:shadow-md transition-all shadow-sm">
+                                <div key={idx} className="bg-surface-card border-t border-border-default rounded-3xl p-6 md:p-8 hover:shadow-md transition-all shadow-sm">
                                     <div className="flex items-center gap-4 mb-6">
                                         <span className="text-sm font-bold uppercase tracking-[0.2em] text-accent-primary">
                                             {meaning.partOfSpeech}

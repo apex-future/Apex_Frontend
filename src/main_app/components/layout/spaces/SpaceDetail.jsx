@@ -139,7 +139,7 @@ function SpaceDetail() {
                     <div className="w-full">
                       {/* Add Books Inline UI */}
                       {isAddingBooks && (
-                        <div className="w-full p-6 sm:p-8 mb-8 bg-bg-subtle dark:bg-bg-elevated border-0 border-t border-black/10 dark:border-white/10 rounded-card shadow-sm shadow-black/10 dark:shadow-black/40 animate-in fade-in zoom-in-95 duration-300">
+                        <div className="w-full p-6 sm:p-8 mb-8 bg-surface-sunken border-t border-border-default rounded-card shadow-aura-sm animate-in fade-in zoom-in-95 duration-300">
                           <div className="flex justify-between items-center mb-6 px-1">
                              <h3 className="text-lg font-black text-text-primary tracking-tight">Select Books to Add</h3>
                              <button 
@@ -221,7 +221,7 @@ function SpaceDetail() {
                           </div>
                         ) : (
                           <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-6 border border-border-default">
+                            <div className="w-20 h-20 bg-bg-subtle rounded-full flex items-center justify-center mb-6 border border-border-default">
                               <BookOpen className="text-text-tertiary" size={40} weight="fill" />
                             </div>
                             <h3 className="text-xl font-bold text-text-primary">Empty Space</h3>

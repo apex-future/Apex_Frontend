@@ -238,10 +238,10 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                 className={`flex flex-col min-w-[200px] w-full max-w-[400px] ${
                     showTab
                         ? 'shadow-sm overflow-visible relative'
-                        : 'bg-white shadow-md rounded-2xl border border-transparent border-t-gray-200 overflow-hidden'
+                        : 'aura-card-raised overflow-hidden'
                 }`}
                 style={showTab ? {
-                    background: isDark ? 'hsl(270 60% 14%)' : 'hsl(270 55% 93%)',
+                    backgroundColor: 'rgb(var(--surface-sunken))',
                     borderRadius: '5px',
                     transform: 'rotate(-2deg)',
                 } : undefined}
@@ -430,15 +430,13 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                     >
                         {/* Context Header */}
                         <div
-                            className="px-4 pt-3 pb-2.5 flex items-start gap-2 select-none"
+                            className="px-4 pt-3 pb-2.5 flex items-start gap-2 select-none bg-bg-subtle"
                             style={{
-                                background: isDark ? 'hsl(270 50% 10%)' : 'hsl(270 45% 87%)',
                                 borderRadius: '5px 5px 0 0',
                             }}
                         >
-                            <Quotes size={15} weight="fill" style={{ color: isDark ? 'hsl(270 80% 70%)' : 'hsl(270 50% 45%)', flexShrink: 0, marginTop: 2 }} />
-                            <p className="text-[12px] italic leading-relaxed line-clamp-2"
-                               style={{ color: isDark ? 'hsl(270 20% 58%)' : 'hsl(270 25% 40%)' }}>
+                            <Quotes size={15} weight="fill" className="text-accent-primary flex-shrink-0 mt-0.5" />
+                            <p className="text-[12px] italic leading-relaxed line-clamp-2 text-text-secondary">
                                 {selection}
                             </p>
                         </div>
@@ -448,21 +446,13 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             value={tabText}
                             onChange={(e) => setTabText(e.target.value)}
                             placeholder="Write your tab here..."
-                            className="flex-1 w-full p-4 text-[14px] leading-relaxed resize-none focus:outline-none"
-                            style={{
-                                background: 'transparent',
-                                color: isDark ? 'hsl(270 20% 90%)' : 'hsl(270 30% 22%)',
-                                caretColor: isDark ? 'hsl(270 80% 70%)' : 'hsl(270 60% 50%)',
-                            }}
+                            className="flex-1 w-full p-4 text-[14px] leading-relaxed resize-none focus:outline-none text-text-primary bg-transparent"
                             autoFocus
                         />
 
                         {/* Footer */}
-                        <div className="flex items-center justify-between px-4 py-2"
-                             style={{
-                                 borderTop: `1px solid ${isDark ? 'hsl(270 45% 20%)' : 'hsl(270 30% 82%)'}`,
-                             }}>
-                            <span className="text-[10px]" style={{ color: isDark ? 'hsl(270 20% 55%)' : 'hsl(270 25% 55%)' }}>
+                        <div className="flex items-center justify-between px-4 py-2 border-t border-border-default">
+                            <span className="text-[10px] text-text-tertiary">
                                 {tabText.trim().split(/\s+/).filter(Boolean).length} words
                             </span>
 
@@ -471,8 +461,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <button
                                     onClick={handleSaveTab}
                                     disabled={tabSaved || !tabText.trim()}
-                                    className="p-1.5 rounded-lg transition-all hover:bg-black/10"
-                                    style={{ color: (tabSaved || !tabText.trim()) ? (isDark ? 'hsl(270 20% 45%)' : 'hsl(270 20% 70%)') : (isDark ? 'hsl(270 80% 70%)' : 'hsl(270 60% 45%)') }}
+                                    className={`p-1.5 rounded-lg transition-all hover:bg-black/10 ${tabSaved || !tabText.trim() ? 'text-text-placeholder' : 'text-accent-primary'}`}
                                     title="Save & Close"
                                 >
                                     <Check size={16} weight="bold" />
@@ -481,8 +470,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 {/* Bin - Close without saving */}
                                 <button
                                     onClick={handleCancelTab}
-                                    className="p-1.5 rounded-lg transition-all hover:bg-red-500/10"
-                                    style={{ color: isDark ? 'hsl(270 20% 55%)' : 'hsl(270 20% 60%)' }}
+                                    className="p-1.5 rounded-lg transition-all hover:bg-red-500/10 text-text-tertiary"
                                     title="Cancel"
                                 >
                                     <Trash size={16} weight="bold" />

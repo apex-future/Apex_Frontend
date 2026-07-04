@@ -23,7 +23,7 @@ function PageSettings({ setPageSettings, readerControls }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[200] bg-white md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-left duration-300"
+      className="flex flex-col absolute inset-0 z-[200] bg-surface-raised md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-left duration-300"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
@@ -80,7 +80,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                     className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all group ${
                       scrollAnimation === 'slide'
                         ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
-                        : 'border-black/10 dark:border-white/10 bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
+                        : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
                     }`}
                   >
                     {/* Slide icon */}
@@ -96,7 +96,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                     className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all group ${
                       scrollAnimation === 'fade'
                         ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
-                        : 'border-black/10 dark:border-white/10 bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
+                        : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
                     }`}
                   >
                     {/* Fade icon */}
@@ -120,7 +120,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                   className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border transition-all group ${
                     scrollOrientation === 'vertical'
                       ? 'border-accent-primary bg-accent-primary/5 text-accent-primary shadow-sm'
-                      : 'border-black/10 dark:border-white/10 bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20 hover:bg-bg-subtle'
+                      : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20 hover:bg-bg-subtle'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
@@ -136,7 +136,7 @@ function PageSettings({ setPageSettings, readerControls }) {
                   className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border transition-all group ${
                     scrollOrientation === 'horizontal'
                       ? 'border-accent-primary bg-accent-primary/5 text-accent-primary shadow-sm'
-                      : 'border-black/10 dark:border-white/10 bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20 hover:bg-bg-subtle'
+                      : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20 hover:bg-bg-subtle'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${

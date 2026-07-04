@@ -126,7 +126,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
           
           {/* Expandable MagnifyingGlass Input Container */}
           <div className="flex items-center">
-            <div className={`flex items-center transition-all duration-300 ease-in-out ${isSearchOpen ? 'w-48 sm:w-64 border-accent-primary bg-card-glass px-3 py-1.5' : 'w-0 border-transparent bg-transparent overflow-hidden'} border-2 rounded-full backdrop-blur-md relative`}>
+            <div className={`flex items-center transition-all duration-300 ease-in-out ${isSearchOpen ? 'w-48 sm:w-64 border-accent-primary bg-surface-sunken px-3 py-1.5' : 'w-0 border-transparent bg-transparent overflow-hidden'} border rounded-full relative`}>
               <MagnifyingGlass className={`text-text-placeholder mr-2 ${isSearchOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`} size={16} weight="regular" />
               <input
                 ref={searchInputRef}
@@ -166,9 +166,9 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
               <Sliders size={20} weight="regular" />
             </button>
 
-            {/* Dropdown List - Glassmorphic */}
+            {/* Dropdown List */}
             {isFilterOpen && (
-              <div className="absolute right-0 mt-2.5 w-60 sm:w-64 bg-card-glass backdrop-blur-xl border border-border-default/80 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-3 duration-200">
+              <div className="absolute right-0 mt-2.5 w-60 sm:w-64 aura-card-raised p-4 z-50 animate-in fade-in slide-in-from-top-3 duration-200">
                 {/* Section: Funnel By */}
                 <div className="mb-4">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-text-tertiary block mb-2">Filter By</span>
@@ -239,24 +239,24 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
         </div>
       ) : (!processedBooks || processedBooks.length === 0) ? (
         isSearching ? (
-          <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
-            <div className="w-20 h-20 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-6 text-text-tertiary">
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-surface-card rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-bg-subtle rounded-full flex items-center justify-center mb-6 text-text-tertiary">
               {/* migrated from lucide: MagnifyingGlassMinus */}
               <MagnifyingGlass size={32} />
             </div>
             <h3 className="text-2xl font-display font-bold text-text-primary mb-2">No matching books</h3>
-            <p className="text-gray-500 max-w-xs mx-auto">
+            <p className="text-text-secondary max-w-xs mx-auto">
               We couldn't find any books matching your search. Try a different title or author.
             </p>
           </div>
         ) : books.length > 0 ? (
           /* Filtered empty state */
-          <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
-            <div className="w-20 h-20 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-6 text-text-tertiary">
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-surface-card rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-bg-subtle rounded-full flex items-center justify-center mb-6 text-text-tertiary">
               <SlidersHorizontal size={32} />
             </div>
             <h3 className="text-xl font-display font-bold text-text-primary mb-2">No books found</h3>
-            <p className="text-gray-500 max-w-xs mx-auto mb-6">
+            <p className="text-text-secondary max-w-xs mx-auto mb-6">
               No books in your library match the selected filter.
             </p>
             <button
@@ -270,12 +270,12 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
             </button>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card-glass rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-surface-card rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
             <div className="w-20 h-20 bg-accent-primary/10 rounded-full flex items-center justify-center mb-6 text-accent-primary">
               <BookmarkSimple size={32} />
             </div>
             <h3 className="text-2xl font-display font-bold text-text-primary mb-2">Your library is empty</h3>
-            <p className="text-gray-500 max-w-xs mx-auto mb-8">
+            <p className="text-text-secondary max-w-xs mx-auto mb-8">
               Ready to start reading? Upload your first book.
             </p>
           </div>

@@ -52,7 +52,7 @@ function Shelf({ shelves }) {
           className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
           onClick={() => setIsDeleteModalOpen(false)}
         />
-        <div className="relative w-full max-w-md bg-bg-elevated/95 backdrop-blur-2xl rounded-[2.5rem] border-2 border-border-default shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 fade-in duration-300">
+        <div className="relative w-full max-w-md aura-card-raised p-8 flex flex-col items-center text-center animate-in zoom-in-95 fade-in duration-300">
           <div className="size-16 bg-red-500/10 rounded-[2rem] flex items-center justify-center text-red-500 mb-6">
             <Trash size={32} weight="fill" />
           </div>
@@ -71,7 +71,7 @@ function Shelf({ shelves }) {
             </button>
             <button 
               onClick={() => setIsDeleteModalOpen(false)}
-              className="w-full py-4 font-black text-text-secondary bg-neutral-100 dark:bg-zinc-800 hover:bg-neutral-200 dark:hover:bg-zinc-700 transition-all active:scale-95 border-2 border-border-default rounded-3xl"
+              className="w-full py-4 font-black text-text-secondary bg-bg-subtle hover:bg-bg-elevated transition-all active:scale-95 border-t border-border-default rounded-3xl"
             >
               Cancel
             </button>

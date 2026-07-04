@@ -75,7 +75,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
             onClick={onClose}
         >
             <div 
-                className="bg-white w-full max-w-lg rounded-card shadow-sm hover:shadow-md transition-shadow border border-transparent border-t-gray-200 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[80vh]"
+                className="aura-card-raised w-full max-w-lg transition-shadow overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[80vh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -104,9 +104,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                                 type="text"
                                 value={word}
                                 onChange={(e) => setWord(e.target.value)}
-                                placeholder="Search for a word..."
-                                className="w-full h-14 pl-12 pr-6 bg-white shadow-sm rounded-2xl text-base font-medium text-text-primary focus:outline-none transition-all placeholder:text-sm font-sans"
-                                autoFocus
+                                className="w-full h-14 pl-12 pr-6 bg-surface-sunken rounded-2xl text-base font-medium text-text-primary focus:outline-none transition-all placeholder:text-sm font-sans"
                             />
                         </div>
                     </form>
@@ -213,7 +211,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
 
                     {/* Offline Dictionary Gear */}
                     {!loading && (
-                        <div className="mt-8 p-4 bg-white shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-2">
+                        <div className="mt-8 p-4 bg-bg-subtle rounded-2xl animate-in fade-in slide-in-from-bottom-2">
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="text-sm font-bold text-text-primary flex items-center gap-2">
                                     <WifiSlash size={16} weight="bold" className="text-accent-primary" />
@@ -232,7 +230,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                             {!downloadingOffline && (
                                 <button 
                                     onClick={handleDownloadOfflineDictionary}
-                                    className="w-full py-2.5 bg-white shadow-sm hover:shadow-md hover:text-accent-primary text-text-secondary text-sm font-bold rounded-xl transition-all"
+                                    className="w-full py-2.5 bg-surface-sunken hover:bg-bg-elevated hover:text-accent-primary text-text-secondary text-sm font-bold rounded-xl transition-all"
                                 >
                                     {offlineReady ? 'Update Dictionary' : 'DownloadSimple Dictionary'}
                                 </button>
