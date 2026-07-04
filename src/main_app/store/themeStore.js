@@ -15,13 +15,14 @@ const useThemeStore = create((set, get) => ({
     },
     updateResolvedTheme: () => {
         const { theme } = get();
+        let resolved;
         if (theme === 'system') {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            set({ resolvedTheme: systemTheme });
+            resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         } else {
-            const resolved = theme && theme.includes('dark') ? 'dark' : 'light';
-            set({ resolvedTheme: resolved });
+            resolved = theme && theme.includes('dark') ? 'dark' : 'light';
         }
+        set({ resolvedTheme: resolved });
+        document.documentElement.classList.toggle('dark', resolved === 'dark');
     },
     initTheme: () => {
         get().updateResolvedTheme();
@@ -30,14 +31,16 @@ const useThemeStore = create((set, get) => ({
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const listener = (e) => {
             if (get().theme === 'system') {
-                set({ resolvedTheme: e.matches ? 'dark' : 'light' });
+                const resolved = e.matches ? 'dark' : 'light';
+                set({ resolvedTheme: resolved });
+                document.documentElement.classList.toggle('dark', resolved === 'dark');
             }
         };
 
         mediaQuery.addEventListener('change', listener);
         
         // Remove global classes just in case they were set by a previous version
-        window.document.documentElement.classList.remove('dark', 'light');
+        window.document.documentElement.classList.remove('light');
     }
 }));
 
