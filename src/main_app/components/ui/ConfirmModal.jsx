@@ -22,7 +22,7 @@ export default function ConfirmModal({ isOpen, title, message, actions = [], onC
         return 'w-full py-3.5 rounded-xl bg-accent-primary text-white font-semibold text-sm active:scale-95 transition-all';
       case 'ghost':
       default:
-        return 'w-full py-3.5 rounded-xl bg-bg-subtle text-text-secondary font-semibold text-sm active:scale-95 transition-all border border-border-default';
+        return 'w-full py-3.5 rounded-xl bg-transparent text-text-secondary font-semibold text-sm active:scale-95 transition-all border border-text-tertiary/40 hover:bg-text-tertiary/10';
     }
   };
 
@@ -36,7 +36,7 @@ export default function ConfirmModal({ isOpen, title, message, actions = [], onC
 
       {/* Modal card */}
       <div
-        className="relative bg-surface border-t border-border-default/6 shadow-aura-sm rounded-[20px] p-6 w-full max-w-sm mx-4 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300"
+        className="relative bg-surface-sunken dark:bg-surface-raised border-t border-text-tertiary/30 rounded-[20px] p-6 w-full max-w-sm mx-4 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-text-primary font-bold text-lg font-display break-words">{title}</h2>
