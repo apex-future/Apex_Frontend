@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { showToastGlobal } from '../../../hooks/useToast';
 import {
   ArrowLeft, Moon, Sun, Monitor, Bell, HardDrives, DownloadSimple, Trash, Question,
-  FileText, ArrowSquareOut, BookOpen, Robot, SignOut, User, UserMinus, SlidersHorizontal
+  FileText, ArrowSquareOut, BookOpen, Robot, SignOut, User, UserMinus, SlidersHorizontal, Bug
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,6 +14,7 @@ import db from '../../../db/apex.db';
 import syncService from '../../../services/syncService';
 import apiClient from '../../../services/apiClient';
 import notificationService from '../../../services/notificationService';
+import BugReportModal from '../../modals/BugReportModal';
 
 function Settings({ onLogout }) {
     const navigate = useNavigate();
@@ -43,6 +44,7 @@ function Settings({ onLogout }) {
     // State for clear data confirmation modal
     const [showClearModal, setShowClearModal] = useState(false);
     const [clearing, setClearing] = useState(false);
+    const [showBugReport, setShowBugReport] = useState(false);
 
     /**
      * clearDeviceOnly — Wipes all local Dexie data and localStorage
@@ -428,6 +430,12 @@ function Settings({ onLogout }) {
                         label="Help Center"
                         onClick={() => { }}
                     />
+                    <ActionRow
+                        icon={<Bug size={16} weight="bold" className="text-text-secondary" />}
+                        label="Report a Bug"
+                        desc="Help us squash issues you find"
+                        onClick={() => setShowBugReport(true)}
+                    />
                     <div className="p-4 text-center">
                         <p className="text-xs text-text-tertiary">Apex App Version {APP_VERSION}</p>
                     </div>
@@ -458,6 +466,12 @@ function Settings({ onLogout }) {
                   onClick: () => setShowClearModal(false),
                 },
               ]}
+            />
+
+            {/* Bug report modal */}
+            <BugReportModal
+              isOpen={showBugReport}
+              onClose={() => setShowBugReport(false)}
             />
         </div>
     );
