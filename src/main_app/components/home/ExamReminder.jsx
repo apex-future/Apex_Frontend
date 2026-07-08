@@ -7,6 +7,7 @@ import useThemeStore from '../../store/themeStore';
 import { useNavigate } from 'react-router-dom';
 import { showToastGlobal } from '../../hooks/useToast';
 import examBgPattern from '../../../assets/exam-bg-pattern.png';
+import Card from '../ui/Card';
 const CardContainer = ({ children, onClick, className = '', title = '', activeExam, isEditing, examsList, currentIndex, onAdd }) => (
     <div className="w-full h-full relative group/container flex flex-col">
         <div className="flex justify-between items-center mb-2 px-2">
@@ -29,9 +30,10 @@ const CardContainer = ({ children, onClick, className = '', title = '', activeEx
                 )}
             </div>
         </div>
-        <div
+        <Card
             onClick={onClick}
-            className={`bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 transition-all duration-500 group relative min-h-[14rem] flex-1 flex flex-col cursor-pointer rounded-card p-4 px-6 ${className} ${isEditing ? 'overflow-visible z-[60]' : 'overflow-hidden'} ${(activeExam?.isPaused && !isEditing) ? 'opacity-70 grayscale-[0.3]' : ''}`}
+            variant={onClick ? "interactive" : "default"}
+            className={`transition-all duration-500 group relative min-h-[14rem] flex-1 flex flex-col p-4 px-6 ${className} ${isEditing ? 'overflow-visible z-[60]' : 'overflow-hidden'} ${(activeExam?.isPaused && !isEditing) ? 'opacity-70 grayscale-[0.3]' : ''}`}
         >
             {/* Background effects layer - clipped */}
             <div className="absolute inset-0 rounded-card overflow-hidden pointer-events-none">
@@ -45,7 +47,7 @@ const CardContainer = ({ children, onClick, className = '', title = '', activeEx
             <div className="relative z-10 flex-1 flex flex-col">
                 {children}
             </div>
-        </div>
+        </Card>
     </div>
 );
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import BookCover from '../books/BookCover';
+import Card from '../ui/Card';
 
 const LastReadCard = ({ book, isLoading }) => {
     const navigate = useNavigate();
@@ -9,7 +10,7 @@ const LastReadCard = ({ book, isLoading }) => {
         return (
             <div className="w-full h-full flex flex-col">
                 <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Last Read</h2>
-                <div className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 rounded-card p-4 min-h-[14rem] flex-1 flex flex-col justify-between">
+                <Card className="p-4 min-h-[14rem] flex-1 flex flex-col justify-between">
                     <div className="flex gap-4 md:gap-8 flex-1 mb-4">
                         {/* Cover skeleton */}
                         <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md flex-shrink-0 bg-neutral-200 dark:bg-bg-subtle animate-pulse" />
@@ -33,7 +34,7 @@ const LastReadCard = ({ book, isLoading }) => {
                         <div className="flex-1 h-8 rounded-xl bg-white/5 animate-pulse" />
                         <div className="flex-1 h-8 rounded-xl bg-white/5 animate-pulse" />
                     </div>
-                </div>
+                </Card>
             </div>
         );
     }
@@ -42,9 +43,9 @@ const LastReadCard = ({ book, isLoading }) => {
         return (
             <div className="w-full h-full flex flex-col">
                 <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Last Read</h2>
-                <div className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 rounded-card p-4 min-h-[14rem] flex-1 flex items-center justify-center">
+                <Card className="p-4 min-h-[14rem] flex-1 flex items-center justify-center">
                     <p className="text-text-tertiary font-medium">No recent books</p>
-                </div>
+                </Card>
             </div>
         );
     }
@@ -54,8 +55,8 @@ const LastReadCard = ({ book, isLoading }) => {
     return (
         <div className="w-full h-full flex flex-col">
             <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Last Read</h2>
-            <div
-                className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 rounded-card p-4 transition-all duration-300 group overflow-hidden relative min-h-[14rem] flex-1 flex flex-col justify-between"
+            <Card
+                className="p-4 transition-all duration-300 group overflow-hidden relative min-h-[14rem] flex-1 flex flex-col justify-between"
             >
                 <div className="flex gap-4 md:gap-8 w-full overflow-hidden flex-1 mb-4">
                     <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-sm flex-shrink-0 bg-bg-subtle group-hover:scale-[1.02] transition-transform duration-300">
@@ -108,7 +109,7 @@ const LastReadCard = ({ book, isLoading }) => {
                         Practice
                     </button>
                 </div>
-            </div>
+            </Card>
         </div>
     );
 };
