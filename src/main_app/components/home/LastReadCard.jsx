@@ -59,7 +59,7 @@ const LastReadCard = ({ book, isLoading }) => {
                 className="p-4 transition-all duration-300 group overflow-hidden relative min-h-[14rem] flex-1 flex flex-col justify-between"
             >
                 <div className="flex gap-4 md:gap-8 w-full overflow-hidden flex-1 mb-4">
-                    <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-sm flex-shrink-0 bg-bg-subtle group-hover:scale-[1.02] transition-transform duration-300">
+                    <div className="w-24 h-36 xs:w-32 xs:h-44 rounded-md overflow-hidden shadow-sm flex-shrink-0 bg-bg-subtle">
                         {currentBook.cover ? (
                             <img src={currentBook.cover} alt="Book cover" className="w-full h-full object-cover" />
                         ) : (
