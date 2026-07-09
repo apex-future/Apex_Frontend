@@ -107,8 +107,34 @@ function ReaderView() {
     useEffect(() => { showSessionSummaryRef.current = showSessionSummary; }, [showSessionSummary]);
     const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [] });
     const sessionActiveSeconds = useRef(0);
-    const sessionStartTime = useRef(Date.now());
+    const sessionStartTime = useRef(Date.now()); // null when tab is hidden
     const visitedPages = useRef(new Set());
+
+    // ── Visibility-aware session wall-clock tracker ──────────────────────────
+    // Mirrors how useReadingTimeTracker pauses on tab hide.
+    // When the tab is hidden: flush the current chunk into sessionActiveSeconds
+    // and null sessionStartTime so no wall-clock time leaks while backgrounded.
+    // When the tab becomes visible: restart sessionStartTime.
+    useEffect(() => {
+        const handleSessionVisibility = () => {
+            if (document.hidden) {
+                // Pause — accumulate elapsed seconds so far
+                if (sessionStartTime.current !== null) {
+                    sessionActiveSeconds.current += Math.floor((Date.now() - sessionStartTime.current) / 1000);
+                    sessionStartTime.current = null;
+                }
+                console.log('[Apex Session] Tab hidden — session timer paused, accumulated:', sessionActiveSeconds.current, 's');
+            } else {
+                // Resume — restart the chunk clock
+                sessionStartTime.current = Date.now();
+                console.log('[Apex Session] Tab visible — session timer resumed');
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleSessionVisibility);
+        return () => document.removeEventListener('visibilitychange', handleSessionVisibility);
+    }, []);
+    // ────────────────────────────────────────────────────────────────────────
 
     // removed immediate page visit tracking
 
@@ -118,16 +144,16 @@ function ReaderView() {
     }, [bookId]);
 
     const handleExitReader = async () => {
-        // 1. Stop the timer immediately — no more minutes accumulate
+        // 1. Stop the XP timer immediately — no more minutes accumulate
         stopTick();
 
-        // Calculate time spent so far in this chunk
-        if (sessionStartTime.current) {
+        // 2. Flush the active chunk into sessionActiveSeconds (if tab is currently visible)
+        if (sessionStartTime.current !== null) {
             sessionActiveSeconds.current += Math.floor((Date.now() - sessionStartTime.current) / 1000);
-            sessionStartTime.current = null; // paused
+            sessionStartTime.current = null; // closed
         }
 
-        // 2. Compute XP from actual session minutes (does NOT flush or award yet)
+        // 3. Compute XP from actual session minutes (does NOT flush or award yet)
         const readingXp = await computeSessionXp();
         const pagesRead = visitedPages.current.size;
         const timeSpentSeconds = sessionActiveSeconds.current;
@@ -137,6 +163,8 @@ function ReaderView() {
         const sessionXpActions = useXpStore.getState().sessionXpActions || [];
         const activityXp = sessionXpActions.reduce((sum, act) => sum + act.estimatedXp, 0);
         const totalXp = readingXp + activityXp;
+
+        console.log('[Apex Session] Exit — active reading time:', timeSpentSeconds, 's');
 
         if (totalXp > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
             setSessionStats({ 
