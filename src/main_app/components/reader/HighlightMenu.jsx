@@ -287,6 +287,16 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
 
                             <button
+                                onClick={() => toggleFlashcards(true)}
+                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
+                            >
+                                <Stack size={20} weight="fill" className="text-text-secondary group-hover:text-rose-500 transition-colors" />
+                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Cards</span>
+                            </button>
+
+                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
+
+                            <button
                                 onClick={() => toggleTab(true)}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
