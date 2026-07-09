@@ -110,7 +110,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[200] bg-white shadow-sm hover:shadow-md transition-shadow md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans"
+      className="flex flex-col absolute inset-0 z-[200] bg-bg-subtle dark:bg-bg-elevated shadow-sm hover:shadow-md transition-shadow md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
@@ -155,9 +155,9 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
                 <button
                   key={id}
                   onClick={() => handleNavClick(id)}
-                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-text-secondary bg-white hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full shadow-sm group"
+                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-text-secondary bg-bg-subtle dark:bg-bg-elevated hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full shadow-sm group"
                 >
-                  <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-text-tertiary group-hover:text-accent-primary transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-bg-subtle dark:bg-bg-elevated shadow-sm flex items-center justify-center text-text-tertiary group-hover:text-accent-primary transition-colors">
                     <ItemIcon size={20} weight="bold" />
                   </div>
                   <span className="flex-1 tracking-tight">{label}</span>

@@ -23,7 +23,7 @@ function PageSettings({ setPageSettings, readerControls }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[200] bg-surface-raised md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-left duration-300"
+      className="flex flex-col absolute inset-0 z-[200] bg-bg-subtle dark:bg-bg-elevated md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-left duration-300"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}

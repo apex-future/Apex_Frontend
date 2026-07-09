@@ -31,7 +31,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
         {/* Left: List — opens LeftPanel */}
         <div className='left-side pt-1 sm:pt-0'>
           <button
-            className="w-10 h-10 flex items-center justify-center bg-surface-overlay border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setLeftPanel(prev => !prev); }}
           >
             <List size={18} weight="bold" />
@@ -39,7 +39,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
         </div>
 
         {/* Center: Wrench buttons */}
-        <div className="middle-tool-bar flex items-center justify-center gap-1 bg-surface-overlay border border-border-default shadow-aura-sm rounded-full p-1.5 px-3">
+        <div className="middle-tool-bar flex items-center justify-center gap-1 bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full p-1.5 px-3">
           <button
             className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 text-text-secondary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); zoomOut?.(); }}
@@ -76,14 +76,14 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
         {/* Right: Sparkle & Quiz — opens AI and Quiz panels */}
         <div className='flex flex-col sm:flex-row gap-2 right-side items-center'>
           <button
-            className="w-10 h-10 flex shrink-0 items-center justify-center bg-surface-overlay border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setAiModal(prev => !prev); }}
             title="AI Tools"
           >
             <Sparkle size={18} weight="fill" />
           </button>
           <button
-            className="w-10 h-10 flex shrink-0 items-center justify-center bg-surface-overlay border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+            className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setQuizModal(prev => !prev); }}
             title="Quiz Generation Settings"
           >

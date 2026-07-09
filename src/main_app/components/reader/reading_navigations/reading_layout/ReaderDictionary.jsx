@@ -75,7 +75,7 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
             onClick={onClose}
         >
             <div 
-                className="aura-card-raised w-full max-w-lg transition-shadow overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[80vh]"
+                className="aura-card-raised bg-bg-subtle dark:bg-bg-elevated w-full max-w-lg transition-shadow overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[80vh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
