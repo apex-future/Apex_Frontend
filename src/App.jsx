@@ -130,6 +130,13 @@ function App() {
         if (user.settings) {
           useSettingsStore.getState().seedFromSupabase(user.settings);
           if (import.meta.env.DEV) console.log('[Apex Gear] Seed attempted from cloud');
+          
+          if ('Notification' in window && Notification.permission === 'granted' && user.settings.notifications?.readingReminders) {
+            import('./main_app/services/notificationService').then(mod => {
+              const authToken = localStorage.getItem('apex_token');
+              mod.default.subscribeToPush(authToken);
+            });
+          }
         }
 
         if (!user.user_type) {
