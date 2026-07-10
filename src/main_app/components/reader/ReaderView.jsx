@@ -292,10 +292,11 @@ function ReaderView() {
             streakFiredTodayRef.current = true;
         }
 
-        // Timer always starts regardless of streak state
-        const STREAK_DURATION = 60 * 1000;
+        // Streak timer requires 3 minutes, but we still log space activity every 1 minute
+        const STREAK_DURATION = 3 * 60 * 1000;
+        const MINUTE_DURATION = 60 * 1000;
 
-        console.log('[Apex Streak] Starting 1-minute reading timer...');
+        console.log('[Apex Streak] Starting 3-minute reading timer...');
         streakStartTimeRef.current = Date.now();
 
         const runInterval = () => {
@@ -305,15 +306,18 @@ function ReaderView() {
 
                 streakElapsedRef.current += 1000;
 
-                if (streakElapsedRef.current >= STREAK_DURATION) {
-                    streakElapsedRef.current = 0; // reset
+                // Always log space activity every 60 seconds
+                if (streakElapsedRef.current % MINUTE_DURATION === 0) {
                     console.log('[Apex Reader] 60 seconds passed - logging activity');
-
-                    // Always runs — reading time and space activity are not streak-gated
                     if (activeSpaceId) {
                         logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
                     }
+                }
 
+                // Streak triggers only when it hits 3 minutes
+                if (streakElapsedRef.current >= STREAK_DURATION) {
+                    streakElapsedRef.current = 0; // reset
+                    
                     // Streak fires once per day only. Fetch today dynamically in case it crossed midnight
                     const today = new Date().toLocaleDateString('en-CA');
                     const lastFired = localStorage.getItem('apex_streak_fired_today');

@@ -127,23 +127,26 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         setWordSaved(true);
     };
 
-    const handleSaveTab = async () => {
+    const handleSaveTab = () => {
         if (!tabText.trim()) return;
         setTabSaved(true);
 
-        if (savedTabIdRef.current) {
-            if (onUpdateNote) {
-                await onUpdateNote(savedTabIdRef.current, tabText.trim());
+        // Save in the background (fire and forget)
+        (async () => {
+            if (savedTabIdRef.current) {
+                if (onUpdateNote) {
+                    await onUpdateNote(savedTabIdRef.current, tabText.trim());
+                }
+            } else {
+                if (onAddNote) {
+                    await onAddNote({
+                        text: tabText.trim(),
+                        context: selection,
+                        type: 'highlight_note'
+                    });
+                }
             }
-        } else {
-            if (onAddNote) {
-                await onAddNote({
-                    text: tabText.trim(),
-                    context: selection,
-                    type: 'highlight_note'
-                });
-            }
-        }
+        })();
 
         try {
             const { awardXpOptimistic } = useXpStore.getState();
@@ -153,13 +156,12 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
             console.error('[XP Wire] tab_added XP failed silently:', xpErr);
         }
 
-        setTimeout(() => {
-            toggleTab(false);
-            setTabSaved(false);
-            setTabText('');
-            setSavedTabId(null);
-            savedTabIdRef.current = null;
-        }, 1000);
+        toggleTab(false);
+        setTabSaved(false);
+        setTabText('');
+        setSavedTabId(null);
+        savedTabIdRef.current = null;
+        handleCloseModal();
     };
 
     const handleCancelTab = async () => {
