@@ -3,6 +3,7 @@ import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, BookmarkSimple, Ch
 import dictionaryService from '../../services/dictionaryService';
 import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
+import Card from '../ui/Card';
 
 function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards }) {
     const { resolvedTheme } = useThemeStore();
@@ -234,14 +235,14 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                 <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white mx-auto" />
             )}
 
-            <div
-                className={`flex flex-col min-w-[200px] w-full max-w-[400px] ${
+            <Card
+                variant={showTab ? 'sunken' : 'default'}
+                className={`flex flex-col min-w-[200px] w-full max-w-[400px] hover:!scale-100 ${
                     showTab
-                        ? 'shadow-sm overflow-visible relative'
-                        : 'aura-card-raised overflow-hidden'
+                        ? 'shadow-sm overflow-visible relative !bg-surface-sunken'
+                        : 'overflow-hidden'
                 }`}
                 style={showTab ? {
-                    backgroundColor: 'rgb(var(--surface-sunken))',
                     borderRadius: '5px',
                     transform: 'rotate(-2deg)',
                 } : undefined}
@@ -502,10 +503,10 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             </div>
                         ) : (
                             <div className="space-y-5">
-                                <div className="bg-bg-subtle/50 p-3 rounded-xl border border-border-default/50">
+                                <Card variant="sunken" className="p-3">
                                     <p className="text-[11px] text-text-tertiary font-bold uppercase tracking-wider mb-1 opacity-50">Source Material</p>
                                     <p className="text-sm text-text-secondary line-clamp-3 italic">"{selection}"</p>
-                                </div>
+                                </Card>
 
                                 <div>
                                     <label className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 block">
@@ -540,7 +541,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         )}
                     </div>
                 ) : null}
-            </div>
+            </Card>
 
             {/* Arrow when menu is placed above the text (pointing down) */}
             {!isMobile && !showDict && !showTab && !showFlashcards && !showBelow && (
