@@ -63,7 +63,7 @@ const FeaturedSlider = ({ lastReadBook, isLoading }) => {
  <div 
  ref={scrollRef}
  onScroll={handleScroll}
- className="w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth gap-4 h-full py-4 px-4 -mx-4"
+ className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth gap-4 h-full py-4 px-4 -mx-4"
  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
  >
  {slides.map((slide) => (

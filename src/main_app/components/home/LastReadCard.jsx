@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import BookCover from '../books/BookCover';
 import Card from '../ui/Card';
+import Button from '../ui/Button';
 
 const LastReadCard = ({ book, isLoading }) => {
     const navigate = useNavigate();
@@ -51,6 +52,7 @@ const LastReadCard = ({ book, isLoading }) => {
     }
 
     const currentBook = book;
+    console.log('[LastReadCard] buttons refactored');
 
     return (
         <div className="w-full h-full flex flex-col">
@@ -95,19 +97,13 @@ const LastReadCard = ({ book, isLoading }) => {
                 </div>
 
                 {/* Bottom buttons row */}
-                <div className="flex gap-3 w-full">
-                    <button 
-                        onClick={() => navigate(`/reader/${currentBook.id}`)}
-                        className="flex-1 py-2 px-4 rounded-xl font-bold text-xs bg-accent-primary text-white hover:brightness-110 active:scale-95 transition-all shadow-md shadow-accent-primary/20 text-center"
-                    >
+                <div className="flex gap-3 justify-center">
+                    <Button variant="primary" onClick={() => navigate(`/reader/${currentBook.id}`)}>
                         Continue
-                    </button>
-                    <button 
-                        onClick={() => navigate(`/book/${currentBook.id}`)}
-                        className="flex-1 py-2 px-4 rounded-xl font-bold text-xs bg-bg-subtle hover:bg-bg-elevated text-text-secondary border-t border-black/10 dark:border-white/10 shadow-sm active:scale-95 transition-all text-center"
-                    >
+                    </Button>
+                    <Button variant="ghost" onClick={() => navigate(`/book/${currentBook.id}`)}>
                         Practice
-                    </button>
+                    </Button>
                 </div>
             </Card>
         </div>
