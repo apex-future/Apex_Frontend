@@ -3,6 +3,8 @@ import { BookmarkSimple, MagnifyingGlass, Sliders, X, Check } from '@phosphor-ic
 import BookCard from '../books/BookCard';
 import { BookContext } from '../../context/BookContextInstance';
 import Card from '../ui/Card';
+import EmptyState from '../ui/EmptyState';
+import Button from '../ui/Button';
 
 function BookCardSkeleton() {
  return (
@@ -240,47 +242,32 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
  </div>
  ) : (!processedBooks || processedBooks.length === 0) ? (
  isSearching ? (
- <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-surface-card rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
- <div className="w-20 h-20 bg-bg-subtle rounded-full flex items-center justify-center mb-6 text-text-tertiary">
- {/* migrated from lucide: MagnifyingGlassMinus */}
- <MagnifyingGlass size={32} />
- </div>
- <h3 className="text-2xl font-display font-bold text-text-primary mb-2">No matching books</h3>
- <p className="text-text-secondary max-w-xs mx-auto">
- We couldn't find any books matching your search. Try a different title or author.
- </p>
- </div>
- ) : books.length > 0 ? (
+      <EmptyState
+        icon={MagnifyingGlass}
+        title="No matching books"
+        description="We couldn't find any books matching your search. Try a different title or author."
+        className="py-20"
+      />
+    ) : books.length > 0 ? (
  /* Filtered empty state */
- <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-surface-card rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
- <div className="w-20 h-20 bg-bg-subtle rounded-full flex items-center justify-center mb-6 text-text-tertiary">
- <SlidersHorizontal size={32} />
- </div>
- <h3 className="text-xl font-display font-bold text-text-primary mb-2">No books found</h3>
- <p className="text-text-secondary max-w-xs mx-auto mb-6">
- No books in your library match the selected filter.
- </p>
- <button
- onClick={() => {
- setActiveFilter('all');
- setActiveSort('recent');
- }}
- className="px-4 py-2 bg-accent-primary hover:bg-accent-hover text-white text-sm font-medium rounded-full transition-all"
- >
- Clear Filters
- </button>
- </div>
- ) : (
- <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-surface-card rounded-3xl border-2 border-dashed border-border-default animate-in fade-in zoom-in duration-300">
- <div className="w-20 h-20 bg-accent-primary/10 rounded-full flex items-center justify-center mb-6 text-accent-primary">
- <BookmarkSimple size={32} />
- </div>
- <h3 className="text-2xl font-display font-bold text-text-primary mb-2">Your library is empty</h3>
- <p className="text-text-secondary max-w-xs mx-auto mb-8">
- Ready to start reading? Upload your first book.
- </p>
- </div>
- )
+      <EmptyState
+        icon={Sliders}
+        title="No books found"
+        description="No books in your library match the selected filter."
+        action={{
+          label: 'Clear Filters',
+          onClick: () => { setActiveFilter('all'); setActiveSort('recent'); }
+        }}
+        className="py-20"
+      />
+    ) : (
+      <EmptyState
+        icon={BookmarkSimple}
+        title="Your library is empty"
+        description="Ready to start reading? Upload your first book."
+        className="py-20"
+      />
+    )
  ) : (
  <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-6 lg:gap-8 transition-all duration-500">
  {processedBooks.map((book) => (

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import EmptyState from '../../layout/placeholders/EmptyState';
+import EmptyState from '../../ui/EmptyState';
 import { TextAa, Trash } from '@phosphor-icons/react';
 import { BookContext } from '../../../context/BookContextInstance';
 
@@ -8,7 +8,13 @@ function DocumentsWords({ book }) {
     const words = book?.metadata?.words || [];
 
     if (!words || words.length === 0) {
-        return <EmptyState itemName="saved words" />;
+        return (
+            <EmptyState 
+                icon={TextAa}
+                title="No saved words"
+                description="Words you save while reading will appear here."
+            />
+        );
     }
 
     const formatDate = (dateStr) => {
