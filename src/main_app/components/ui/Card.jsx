@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Card({ children, className = '', onClick, variant = 'default' }) {
+export default function Card({ children, className = '', onClick, variant = 'default', style, ...rest }) {
  const base = `
  bg-bg-subtle dark:bg-bg-elevated
  border-t border-black/10 dark:border-white/10
@@ -15,12 +15,12 @@ export default function Card({ children, className = '', onClick, variant = 'def
  sunken: '!bg-black/5 dark:!bg-white/5 !shadow-none !border-t-0',
  };
 
- console.log('[Card] variant:', variant);
-
  return (
  <div
  onClick={onClick}
  className={`${base} ${variants[variant]} ${className}`}
+ style={style}
+ {...rest}
  >
  {children}
  </div>

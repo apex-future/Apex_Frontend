@@ -238,10 +238,10 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
             )}
 
             <Card
-                variant={showTab ? 'sunken' : 'default'}
+                variant="default"
                 className={`flex flex-col min-w-[200px] w-full max-w-[400px] hover:!scale-100 ${
                     showTab
-                        ? 'shadow-sm overflow-visible relative !bg-surface-sunken'
+                        ? 'shadow-sm overflow-visible relative'
                         : 'overflow-hidden'
                 }`}
                 style={showTab ? {
