@@ -391,6 +391,7 @@ const PDFReader = ({
             const text = h.text || h.highlightedText || '';
             let color = h.color || '#fef08a';
             const isSimplified = h.isSimplified === true;
+            const isDictionary = h.isDictionaryWord === true;
             if (!text) continue;
 
             const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
@@ -398,9 +399,9 @@ const PDFReader = ({
             const ranges = getHighlightRanges(textLayer, text, h.startOffset);
             if (ranges.length === 0) continue;
 
-            if (isSimplified) {
-                // Simplified text: render as underline, not background
-                if (useCSSHighlight) {
+            if (isSimplified || isDictionary) {
+                // Simplified/Dictionary text: render as underline, not background
+                if (useCSSHighlight && !isDictionary) {
                     const safeColor = color.replace(/[^a-zA-Z0-9]/g, '');
                     const highlightName = `apex-simplified-${safeColor}-${ranges.length}`;
                     try {
@@ -409,10 +410,18 @@ const PDFReader = ({
                     } catch (e) {
                         console.warn('[Apex Highlight] Failed to apply simplified CSS highlight:', e);
                     }
-                    // CSS Highlight API only supports background-color and color,
-                    // so we use a transparent background and render underline via fallback overlay
+                } else if (useCSSHighlight && isDictionary) {
+                    // For dictionary words, we can use CSS highlight for wavy underline
+                    const highlightName = `apex-dict-${h.id || Date.now()}`;
+                    try {
+                        const highlight = new Highlight(...ranges);
+                        CSS.highlights.set(highlightName, highlight);
+                    } catch (e) {
+                        console.warn('[Apex Highlight] Failed to apply dict CSS highlight:', e);
+                    }
                 }
-                // Always use fallback overlay for underline rendering (works on all devices)
+                
+                // Always use fallback overlay for underline rendering (works on all devices) if not using CSS highlights or if we need consistent cross-browser wavy lines
                 if (!hlLayer) {
                     hlLayer = document.createElement('div');
                     hlLayer.className = 'apex-fallback-hl-layer';
@@ -435,9 +444,33 @@ const PDFReader = ({
                         div.style.top = `${rect.top - pageRect.top + rect.height - 2}px`;
                         div.style.width = `${rect.width}px`;
                         div.style.height = '2px';
-                        div.style.backgroundColor = color;
-                        div.style.opacity = '0.6';
-                        div.style.borderRadius = '1px';
+                        
+                        if (isDictionary) {
+                            div.style.background = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 20 8\'%3E%3Cpath fill=\'none\' stroke=\'gray\' stroke-width=\'2\' d=\'M0 4 Q 5 8, 10 4 T 20 4\'/%3E%3C/svg%3E") repeat-x bottom';
+                            div.style.backgroundSize = '18px 7px';
+                            div.style.opacity = '0.8';
+                        } else {
+                            div.style.backgroundColor = color;
+                            div.style.opacity = '0.6';
+                            div.style.borderRadius = '1px';
+                        }
+                        
+                        // Add data attributes for click detection
+                        if (isDictionary) {
+                            div.dataset.dictWord = text;
+                            div.dataset.dictId = h.id;
+                            // Make it clickable by slightly increasing height and pointer events
+                            div.style.height = `${rect.height}px`;
+                            div.style.top = `${rect.top - pageRect.top}px`;
+                            div.style.pointerEvents = 'auto';
+                            div.style.cursor = 'pointer';
+                            div.onclick = (e) => {
+                                e.stopPropagation();
+                                const event = new CustomEvent('apex-dict-click', { detail: { wordObj: h.wordObj, rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height } } });
+                                window.dispatchEvent(event);
+                            };
+                        }
+                        
                         hlLayer.appendChild(div);
                     }
                 }

@@ -799,10 +799,16 @@ export const BookProvider = ({ children }) => {
         books: shelf.books.map((book) => {
           if (book.id !== targetId) return book;
           const existingWords = book.metadata?.words || [];
-          // Deduplicate by word string (case-insensitive)
-          if (existingWords.some(w => w.word.toLowerCase() === wordObj.word.toLowerCase())) {
+          
+          // If we already have the exact word on the SAME page and offset, don't duplicate
+          if (existingWords.some(w => 
+             w.word.toLowerCase() === wordObj.word.toLowerCase() && 
+             w.pageNumber === wordObj.pageNumber && 
+             w.startOffset === wordObj.startOffset
+          )) {
             return book;
           }
+          
           updatedBook = {
             ...book,
             metadata: {

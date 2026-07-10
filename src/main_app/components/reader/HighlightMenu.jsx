@@ -1,22 +1,29 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, BookmarkSimple, Check, WifiSlash, Note, FloppyDisk, MagicWand, Stack, WarningCircle, Trash, Quotes } from '@phosphor-icons/react';
+import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, Note, MagicWand, Stack, WarningCircle, Trash, Quotes } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
 import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
 import Card from '../ui/Card';
 
-function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards }) {
+function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards, cachedDefinition }) {
     const { resolvedTheme } = useThemeStore();
     const isDark = resolvedTheme === 'dark';
 
-    const [definition, setDefinition] = useState(null);
+    const [definition, setDefinition] = useState(cachedDefinition ? {
+        word: cachedDefinition.word,
+        phonetic: cachedDefinition.phonetic,
+        meanings: [{
+            partOfSpeech: cachedDefinition.partOfSpeech,
+            definitions: [{ definition: cachedDefinition.definition }]
+        }]
+    } : null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [showDict, setShowDict] = useState(false);
+    const [showDict, setShowDict] = useState(!!cachedDefinition);
     const [showTab, setShowTab] = useState(false);
     const [tabText, setTabText] = useState('');
     const [tabSaved, setTabSaved] = useState(false);
-    const [wordSaved, setWordSaved] = useState(false);
+    const [wordSaved, setWordSaved] = useState(!!cachedDefinition);
     const [showFlashcards, setShowFlashcards] = useState(false);
     const [flashcardCount, setFlashcardCount] = useState(5);
     const [flashcardError, setFlashcardError] = useState('');
@@ -104,7 +111,20 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
             const defData = Array.isArray(result) ? result[0] : result;
             setDefinition(defData);
 
-
+            // Automatically save the word
+            if (defData && onSaveWord && bookId) {
+                const firstMeaning = defData.meanings?.[0];
+                const wordObj = {
+                    word: defData.word,
+                    definition: firstMeaning?.definitions?.[0]?.definition || '',
+                    partOfSpeech: firstMeaning?.partOfSpeech || '',
+                    phonetic: defData.phonetic || '',
+                    startOffset: position.startOffset,
+                    pageNumber: position.pageNumber
+                };
+                onSaveWord(bookId, wordObj);
+                setWordSaved(true);
+            }
 
         } catch (err) {
             setError(err.message);
@@ -112,19 +132,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleSaveWord = () => {
-        if (!definition || !onSaveWord || !bookId) return;
-        const firstMeaning = definition.meanings?.[0];
-        const wordObj = {
-            word: definition.word,
-            definition: firstMeaning?.definitions?.[0]?.definition || '',
-            partOfSpeech: firstMeaning?.partOfSpeech || '',
-            phonetic: definition.phonetic || '',
-        };
-        onSaveWord(bookId, wordObj);
-        setWordSaved(true);
     };
 
     const handleSaveTab = () => {
@@ -407,19 +414,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                         </ul>
                                     </div>
                                 ))}
-                                {onSaveWord && bookId && (
-                                    <button
-                                        onClick={handleSaveWord}
-                                        disabled={wordSaved}
-                                        className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${wordSaved
-                                            ? 'bg-green-50 text-green-600 border border-green-200'
-                                            : 'bg-text-primary text-bg-elevated hover:bg-black active:scale-[0.98]'
-                                            }`}
-                                    >
-                                        {wordSaved ? <Check size={18} weight="bold" /> : <BookmarkSimple size={18} weight="bold" />}
-                                        {wordSaved ? 'Word Saved' : 'Save to Vocabulary'}
-                                    </button>
-                                )}
                             </div>
                         )}
                     </div>

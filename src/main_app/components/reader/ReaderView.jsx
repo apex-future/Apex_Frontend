@@ -584,11 +584,52 @@ function ReaderView() {
     // Bookmarks — loaded from book context instead of manually from Dexie to prevent async UI lag
     const bookmarks = book?.metadata?.bookmarks || [];
     const highlights = book?.metadata?.highlights || [];
-    const stableHighlights = useMemo(() => highlights, [highlights]);
+    const dictionaryWords = book?.metadata?.words || [];
+    const stableHighlights = useMemo(() => {
+        const dictHighlights = dictionaryWords.filter(w => w.startOffset != null && w.pageNumber != null).map(w => ({
+            id: `dict-${w.word}-${w.startOffset}`,
+            text: w.word,
+            color: 'gray', // handled by PDFReader internally
+            page: w.pageNumber,
+            startOffset: w.startOffset,
+            isDictionaryWord: true,
+            wordObj: w
+        }));
+        return [...highlights, ...dictHighlights];
+    }, [highlights, dictionaryWords]);
 
     const isCurrentPageBookmarked = bookmarks.some(
         bm => bm.pageNumber === pageNumber || bm.page === pageNumber
     );
+
+    // Dictionary click listener
+    useEffect(() => {
+        const handleDictClick = (e) => {
+            const { wordObj, rect } = e.detail;
+            
+            // Set up selection as if user highlighted the word
+            const mockSelection = {
+                text: wordObj.word,
+                x: rect.left + rect.width / 2,
+                y: rect.top,
+                startOffset: wordObj.startOffset,
+                bottom: rect.bottom,
+                pageNumber: wordObj.pageNumber,
+                cachedDefinition: wordObj
+            };
+            
+            selectionRef.current = mockSelection;
+            setSelectionData(mockSelection);
+            setShowHighlightMenu(true);
+            
+            // We don't need to force open anymore since HighlightMenu initializes with it!
+            // But we can set isDictOpen to keep ReaderView state in sync
+            setIsDictOpen(true);
+        };
+        
+        window.addEventListener('apex-dict-click', handleDictClick);
+        return () => window.removeEventListener('apex-dict-click', handleDictClick);
+    }, []);
 
     // Ref-stable callback — identity never changes, so PDFReader never re-renders due to this prop
     const syncProgressRef = useRef(syncProgress);
@@ -897,7 +938,8 @@ function ReaderView() {
                             x: rect.left + rect.width / 2,
                             y: rect.top,
                             startOffset: foundOffset !== -1 ? foundOffset : null,
-                            bottom: rect.bottom
+                            bottom: rect.bottom,
+                            pageNumber: pageNumber
                         };
                         selectionRef.current = newData;
                         setSelectionData(newData);
@@ -1238,8 +1280,11 @@ function ReaderView() {
                         position={{ 
                             x: selectionRef.current.x, 
                             y: selectionRef.current.y,
-                            bottom: selectionRef.current.bottom
+                            bottom: selectionRef.current.bottom,
+                            startOffset: selectionRef.current.startOffset,
+                            pageNumber: selectionRef.current.pageNumber
                         }}
+                        cachedDefinition={selectionRef.current.cachedDefinition}
                         onAskAI={() => {
                             window.getSelection()?.removeAllRanges();
                             setAiModal(true);

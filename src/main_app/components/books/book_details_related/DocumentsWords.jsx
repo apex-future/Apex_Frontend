@@ -29,7 +29,7 @@ function DocumentsWords({ book }) {
         <div className='grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500'>
             {words.map((wordItem, index) => (
                 <div key={index} className='flex items-center gap-4 p-4 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-xl hover:shadow-md transition-all group'>
-                     <div className="p-2 bg-accent-subtle dark:bg-accent-subtle-dark rounded-lg text-accent-primary dark:text-accent-primary-dark group-hover:bg-accent-primary group-hover:text-white transition-colors flex-shrink-0">
+                    <div className="p-2 bg-accent-subtle dark:bg-accent-subtle-dark rounded-lg text-accent-primary dark:text-accent-primary-dark group-hover:bg-accent-primary group-hover:text-white transition-colors flex-shrink-0">
                         <TextAa size={20} weight="bold" />
                     </div>
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
