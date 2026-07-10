@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Heart, Eye, FolderSimplePlus, Trash, X, Info, PencilSimple } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
-import ConfirmModal from '../ui/ConfirmModal';
+import Modal from '../ui/Modal';
 import { BookContext } from '../../context/BookContextInstance';
 import useSpaceStore from '../../store/spaceStore';
 import useThemeStore from '../../store/themeStore';
@@ -243,9 +243,9 @@ export default function BookCard({ book, onClick }) {
  </Card>
 
  {/* Delete confirmation modal */}
- <ConfirmModal
+ <Modal
  isOpen={showDeleteModal}
- hideOverlay={true}
+
  title={`Delete "${book.title}"?`}
  message="This will permanently remove the book and all your highlights, bookmarks, and reading progress. This cannot be undone."
  onClose={() => setShowDeleteModal(false)}
@@ -269,72 +269,56 @@ export default function BookCard({ book, onClick }) {
  />
 
  {/* Save to Space Modal */}
- {showSpaceModal && createPortal(
- <div 
- className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" 
- onClick={(e) => { e.stopPropagation(); setShowSpaceModal(false); }}
+ <Modal
+   isOpen={showSpaceModal}
+   title="Save to Space"
+   onClose={() => setShowSpaceModal(false)}
+   actions={[
+     {
+       label: (
+         <div className="flex items-center justify-center gap-2">
+           {isInAnySpace ? <PencilSimple size={18} weight="fill" /> : <FolderSimplePlus size={18} weight="fill" />}
+           <span>{isInAnySpace ? "Update Space" : "Add to Bookspace"}</span>
+         </div>
+       ),
+       variant: 'primary',
+       onClick: handleConfirmAddToSpace
+     }
+   ]}
  >
- <div 
- className="bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-neutral-100 dark:border-neutral-800 flex flex-col" 
- onClick={e => e.stopPropagation()}
- >
- <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/50">
- <h3 className="font-bold text-lg text-neutral-900 dark:text-neutral-100 font-display">Save to Space</h3>
- <button 
- onClick={() => setShowSpaceModal(false)} 
- className="p-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
- >
- <X size={18} weight="bold" />
- </button>
- </div>
- 
- <div className="p-3 max-h-[50vh] overflow-y-auto space-y-1 custom-scrollbar">
- {/* Custom Spaces */}
- {spaces.filter(s => !s.isSystem).map(space => {
- const isSelected = selectedIds.includes(space.id);
- return (
- <div 
- key={space.id}
- className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all group ${isSelected ? 'bg-accent-primary/5 border border-accent-primary/20' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 border border-transparent'}`}
- onClick={() => toggleSelection(space.id)}
- >
- <div className="flex items-center gap-3">
- <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-500/20 dark:to-blue-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold uppercase text-xs border border-indigo-100/50 dark:border-indigo-500/20">
- {space.name.substring(0, 2)}
- </div>
- <span className="font-semibold text-neutral-700 dark:text-neutral-200 text-sm block">{space.name}</span>
- </div>
- <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${isSelected ? 'bg-accent-primary border-accent-primary' : 'border-neutral-300 dark:border-neutral-600 group-hover:border-accent-primary/50'}`}>
- {isSelected && <span className="text-white text-[10px] font-bold">✓</span>}
- </div>
- </div>
- );
- })}
- 
- {spaces.filter(s => !s.isSystem).length === 0 && (
- <div className="text-center py-8 px-4">
- <div className="w-12 h-12 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-3">
- <FolderSimplePlus size={20} weight="bold" className="text-neutral-400" />
- </div>
- <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">No custom spaces yet</p>
- <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Create spaces to organize your library.</p>
- </div>
- )}
- </div>
-
- {/* Footer Action Button */}
- <div className="p-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
- <button
- onClick={handleConfirmAddToSpace}
- className="w-full py-3.5 px-4 bg-accent-primary hover:bg-accent-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-accent-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
- >
- {isInAnySpace ? <PencilSimple size={18} weight="fill" /> : <FolderSimplePlus size={18} weight="fill" />}
- <span>{isInAnySpace ? "PencilSimple" : "Add to Bookspace"}</span>
- </button>
- </div>
- </div>
- </div>
- , document.body)}
+   <div className="flex flex-col gap-1">
+     {spaces.filter(s => !s.isSystem).map(space => {
+       const isSelected = selectedIds.includes(space.id);
+       return (
+         <div 
+           key={space.id}
+           className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all group ${isSelected ? 'bg-accent-primary/5 border border-accent-primary/20' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 border border-transparent'}`}
+           onClick={() => toggleSelection(space.id)}
+         >
+           <div className="flex items-center gap-3">
+             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-500/20 dark:to-blue-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold uppercase text-xs border border-indigo-100/50 dark:border-indigo-500/20">
+               {space.name.substring(0, 2)}
+             </div>
+             <span className="font-semibold text-neutral-700 dark:text-neutral-200 text-sm block">{space.name}</span>
+           </div>
+           <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${isSelected ? 'bg-accent-primary border-accent-primary' : 'border-neutral-300 dark:border-neutral-600 group-hover:border-accent-primary/50'}`}>
+             {isSelected && <span className="text-white text-[10px] font-bold">✓</span>}
+           </div>
+         </div>
+       );
+     })}
+     
+     {spaces.filter(s => !s.isSystem).length === 0 && (
+       <div className="text-center py-8 px-4">
+         <div className="w-12 h-12 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-3">
+           <FolderSimplePlus size={20} weight="bold" className="text-neutral-400" />
+         </div>
+         <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">No custom spaces yet</p>
+         <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Create spaces to organize your library.</p>
+       </div>
+     )}
+   </div>
+ </Modal>
  </>
  );
 }
