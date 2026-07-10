@@ -801,6 +801,9 @@ function ReaderView() {
         initialScale: 1.0,
         isPinching: false
     });
+    // Ref to track current scale without re-running the touch/selection effect
+    const scaleRef = useRef(scale);
+    useEffect(() => { scaleRef.current = scale; }, [scale]);
 
     // Track last selected text to avoid unnecessary position jitter
     const lastSelTextRef = useRef('');
@@ -828,7 +831,7 @@ function ReaderView() {
                 e.preventDefault();
                 touchState.current.isPinching = true;
                 touchState.current.initialDist = getDistance(e.touches);
-                touchState.current.initialScale = scale;
+                touchState.current.initialScale = scaleRef.current;
             }
         };
 
@@ -972,7 +975,7 @@ function ReaderView() {
             document.removeEventListener('mousedown', handleInteractionStart);
             document.removeEventListener('touchstart', handleInteractionStart);
         };
-    }, [scale, isDictOpen, getSelectionRect]);
+    }, [isDictOpen, getSelectionRect]);
 
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
