@@ -1,5 +1,5 @@
 import React from 'react'
-import EmptyState from '../../layout/placeholders/EmptyState';
+import EmptyState from '../../ui/EmptyState';
 import { BookmarkSimple } from '@phosphor-icons/react';
 
 function DocumentBookmarks({ book }) {
@@ -31,10 +31,11 @@ function DocumentBookmarks({ book }) {
                 </div>
 
                 {bookmarks.length === 0 ? (
-                    <div className="p-8 text-center bg-neutral-50 dark:bg-bg-dark-elevated rounded-2xl border border-dashed border-border-default dark:border-border-default-dark">
-                        <p className="text-xs font-semibold text-text-tertiary dark:text-text-tertiary-dark tracking-tight uppercase">No snapshots saved yet</p>
-                        <p className="text-[10px] text-text-placeholder dark:text-text-placeholder-dark mt-1">Tap the bookmark icon while reading to save specific pages here.</p>
-                    </div>
+                    <EmptyState 
+                        icon={BookmarkSimple}
+                        title="No snapshots saved yet"
+                        description="Tap the bookmark icon while reading to save specific pages here."
+                    />
                 ) : (
                     <div className='grid grid-cols-1 gap-3'>
                         {bookmarks.map((bookmark, index) => (

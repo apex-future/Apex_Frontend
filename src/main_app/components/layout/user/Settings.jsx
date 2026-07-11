@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import useThemeStore from '../../../store/themeStore';
 import useSettingsStore from '../../../store/settingsStore';
 import { APP_VERSION } from '../../../constants/version';
-import ConfirmModal from '../../ui/ConfirmModal';
+import Modal from '../../ui/Modal';
 import db from '../../../db/apex.db';
 import syncService from '../../../services/syncService';
 import apiClient from '../../../services/apiClient';
@@ -444,7 +444,7 @@ function Settings({ onLogout }) {
             </div>
 
             {/* Clear app data confirmation modal — two danger options */}
-            <ConfirmModal
+            <Modal
               isOpen={showClearModal}
               title="Clear App Data"
               message="Choose what you want to clear. Your AI conversation history will always be preserved."

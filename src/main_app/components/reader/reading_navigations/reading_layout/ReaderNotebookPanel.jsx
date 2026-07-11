@@ -134,7 +134,7 @@ function NotesSection({ bookId, onAddNote }) {
             return (
               <div
                 key={note.local_id}
-                className="bg-white rounded-2xl overflow-hidden hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer flex flex-col shadow-sm hover:shadow-md"
+                className="bg-white dark:bg-bg-elevated shrink-0 rounded-2xl overflow-hidden hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer flex flex-col shadow-sm hover:shadow-md"
                 onClick={() => onAddNote(note.local_id)}
               >
                 <div className="p-4 pb-3">
@@ -283,7 +283,7 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
           filteredTabs.map(tab => (
             <div
               key={tab.id}
-              className="group flex flex-col gap-3 p-4 rounded-2xl bg-white shadow-sm transition-all duration-300 relative overflow-hidden"
+              className="group flex flex-col shrink-0 gap-3 p-4 rounded-2xl bg-white dark:bg-bg-elevated shadow-sm transition-all duration-300 relative overflow-hidden"
             >
               {tab.type === 'highlight_note' && !editingId && (
                 <div className="absolute top-0 right-0 w-10 h-10 bg-accent-primary/5 rounded-bl-[2rem] flex items-start justify-end p-1.5 text-accent-primary opacity-20 pointer-events-none">
@@ -360,7 +360,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[200] bg-white md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-left duration-300"
+      className="flex flex-col absolute inset-0 z-[200] bg-bg-subtle dark:bg-bg-elevated md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-left duration-300"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Header ── */}
@@ -376,12 +376,12 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
 
       {/* ── Tab Switcher ── */}
       <div className="px-4 pt-3 pb-0 shrink-0">
-        <div className="flex items-center gap-1 bg-white shadow-sm rounded-full p-1">
+        <div className="flex items-center gap-1 bg-surface-sunken shadow-sm rounded-full p-1">
           <button
             onClick={() => setActiveTab('notes')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
               activeTab === 'notes'
-                ? 'bg-white text-text-primary shadow-md'
+                ? 'bg-white dark:bg-bg-elevated text-text-primary shadow-md'
                 : 'text-text-tertiary hover:text-text-secondary'
             }`}
           >
@@ -394,7 +394,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
             onClick={() => setActiveTab('tabs')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
               activeTab === 'tabs'
-                ? 'bg-white text-text-primary shadow-md'
+                ? 'bg-white dark:bg-bg-elevated text-text-primary shadow-md'
                 : 'text-text-tertiary hover:text-text-secondary'
             }`}
           >

@@ -35,7 +35,9 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    self.registration.showNotification(data.title, options).catch((err) => {
+      console.error('[Apex SW] Failed to show notification:', err);
+    })
   );
 });
 

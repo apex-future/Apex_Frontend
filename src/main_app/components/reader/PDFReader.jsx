@@ -105,18 +105,33 @@ function getHighlightRanges(container, searchText, targetStartOffset) {
 }
 
 // ─── Memoized page component ───
-// Manual canvas render removed — react-pdf Page handles canvas internally. Document ref caching on load prevents document recreation which was the original source of the render flash.
-const VirtualPage = memo(({ pageNumber, rotation, scale, width, onRenderSuccess }) => {
+// Uses a two-phase zoom approach to eliminate flicker:
+// 1. `committedScale` is the scale the canvas is actually rendered at (full resolution)
+// 2. `cssZoomRatio` is a CSS transform applied on top for instant visual feedback
+// The old canvas stays visible while re-rendering at a new scale, so no skeleton flash.
+const VirtualPage = memo(({ pageNumber, rotation, baseScale, cssZoomRatio, width, onRenderSuccess }) => {
   return (
     <div 
-      className="relative flex flex-col items-center justify-center bg-white mx-auto"
-      style={{ width: width * scale, height: Math.round(width * 1.41 * scale) }}
+      className="relative bg-white mx-auto"
+      style={{
+        width: width * baseScale * cssZoomRatio,
+        height: Math.round(width * 1.41 * baseScale * cssZoomRatio),
+        overflow: 'hidden',
+      }}
     >
-      <div className="relative z-10 w-full h-full">
+      <div
+        className="absolute top-0 left-0 z-10"
+        style={{
+          transform: `scale(${cssZoomRatio})`,
+          transformOrigin: 'top left',
+          width: width * baseScale,
+          height: Math.round(width * 1.41 * baseScale),
+        }}
+      >
         <Page
           pageNumber={pageNumber}
           rotate={rotation}
-          scale={scale}
+          scale={baseScale}
           renderMode="canvas"
           renderTextLayer={true}
           renderAnnotationLayer={true}
@@ -133,7 +148,8 @@ const VirtualPage = memo(({ pageNumber, rotation, scale, width, onRenderSuccess 
   return (
     prev.pageNumber === next.pageNumber &&
     prev.rotation === next.rotation &&
-    prev.scale === next.scale &&
+    prev.baseScale === next.baseScale &&
+    prev.cssZoomRatio === next.cssZoomRatio &&
     prev.width === next.width
   );
 });
@@ -184,6 +200,13 @@ const PDFReader = ({
   const [isFading, setIsFading] = useState(false);
   const isVertical = scrollOrientation === 'vertical';
   const { pageAnimations, scrollAnimation } = useSettingsStore();
+
+  // ── True CSS Zoom: eliminates flicker entirely ──
+  // We ALWAYS render the actual canvas at a high resolution (scale=2.5) to keep text crisp.
+  // We never change the canvas scale after it mounts, so it never destroys/rebuilds itself.
+  // All zooming is handled purely through CSS transforms, making it instant and buttery smooth.
+  const BASE_CANVAS_SCALE = 2.5;
+  const cssZoomRatio = scale / BASE_CANVAS_SCALE;
 
   // Stable estimateSize callback — prevents virtualizer from reinitializing size cache
   const estimateSize = useCallback(
@@ -368,6 +391,7 @@ const PDFReader = ({
             const text = h.text || h.highlightedText || '';
             let color = h.color || '#fef08a';
             const isSimplified = h.isSimplified === true;
+            const isDictionary = h.isDictionaryWord === true;
             if (!text) continue;
 
             const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
@@ -375,9 +399,9 @@ const PDFReader = ({
             const ranges = getHighlightRanges(textLayer, text, h.startOffset);
             if (ranges.length === 0) continue;
 
-            if (isSimplified) {
-                // Simplified text: render as underline, not background
-                if (useCSSHighlight) {
+            if (isSimplified || isDictionary) {
+                // Simplified/Dictionary text: render as underline, not background
+                if (useCSSHighlight && !isDictionary) {
                     const safeColor = color.replace(/[^a-zA-Z0-9]/g, '');
                     const highlightName = `apex-simplified-${safeColor}-${ranges.length}`;
                     try {
@@ -386,10 +410,18 @@ const PDFReader = ({
                     } catch (e) {
                         console.warn('[Apex Highlight] Failed to apply simplified CSS highlight:', e);
                     }
-                    // CSS Highlight API only supports background-color and color,
-                    // so we use a transparent background and render underline via fallback overlay
+                } else if (useCSSHighlight && isDictionary) {
+                    // For dictionary words, we can use CSS highlight for wavy underline
+                    const highlightName = `apex-dict-${h.id || Date.now()}`;
+                    try {
+                        const highlight = new Highlight(...ranges);
+                        CSS.highlights.set(highlightName, highlight);
+                    } catch (e) {
+                        console.warn('[Apex Highlight] Failed to apply dict CSS highlight:', e);
+                    }
                 }
-                // Always use fallback overlay for underline rendering (works on all devices)
+                
+                // Always use fallback overlay for underline rendering (works on all devices) if not using CSS highlights or if we need consistent cross-browser wavy lines
                 if (!hlLayer) {
                     hlLayer = document.createElement('div');
                     hlLayer.className = 'apex-fallback-hl-layer';
@@ -412,9 +444,33 @@ const PDFReader = ({
                         div.style.top = `${rect.top - pageRect.top + rect.height - 2}px`;
                         div.style.width = `${rect.width}px`;
                         div.style.height = '2px';
-                        div.style.backgroundColor = color;
-                        div.style.opacity = '0.6';
-                        div.style.borderRadius = '1px';
+                        
+                        if (isDictionary) {
+                            div.style.background = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 20 8\'%3E%3Cpath fill=\'none\' stroke=\'gray\' stroke-width=\'2\' d=\'M0 4 Q 5 8, 10 4 T 20 4\'/%3E%3C/svg%3E") repeat-x bottom';
+                            div.style.backgroundSize = '18px 7px';
+                            div.style.opacity = '0.8';
+                        } else {
+                            div.style.backgroundColor = color;
+                            div.style.opacity = '0.6';
+                            div.style.borderRadius = '1px';
+                        }
+                        
+                        // Add data attributes for click detection
+                        if (isDictionary) {
+                            div.dataset.dictWord = text;
+                            div.dataset.dictId = h.id;
+                            // Make it clickable by slightly increasing height and pointer events
+                            div.style.height = `${rect.height}px`;
+                            div.style.top = `${rect.top - pageRect.top}px`;
+                            div.style.pointerEvents = 'auto';
+                            div.style.cursor = 'pointer';
+                            div.onclick = (e) => {
+                                e.stopPropagation();
+                                const event = new CustomEvent('apex-dict-click', { detail: { wordObj: h.wordObj, rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height } } });
+                                window.dispatchEvent(event);
+                            };
+                        }
+                        
                         hlLayer.appendChild(div);
                     }
                 }
@@ -663,7 +719,8 @@ const PDFReader = ({
                     <VirtualPage
                       pageNumber={pageIdx}
                       rotation={rotation}
-                      scale={scale}
+                      baseScale={BASE_CANVAS_SCALE}
+                      cssZoomRatio={cssZoomRatio}
                       width={renderWidth}
                       onRenderSuccess={handlePageRenderSuccess}
                     />
@@ -704,8 +761,8 @@ const PDFReader = ({
                     : 'none',
                   top: isActive ? 'auto' : 0,
                   left: isActive ? 'auto' : 0,
-                  width: isActive ? `${renderWidth * cssScale}px` : '100%',
-                  height: isActive ? `${renderWidth * 1.41 * scale * cssScale}px` : 'auto',
+                  width: isActive ? `${renderWidth * cssScale * cssZoomRatio}px` : '100%',
+                  height: isActive ? `${renderWidth * 1.41 * BASE_CANVAS_SCALE * cssScale * cssZoomRatio}px` : 'auto',
                   zIndex: isActive ? 1 : 0,
                   display: 'flex',
                   justifyContent: 'center'
@@ -718,36 +775,29 @@ const PDFReader = ({
                     width: `${renderWidth}px`,
                   }}
                 >
-                  <Page
-                    pageNumber={bufferPageNum}
-                    rotate={rotation}
-                    scale={scale}
-                    renderTextLayer={true}
-                    renderAnnotationLayer={true}
-                    onRenderSuccess={() => {
-                      renderedPagesRef.current.add(bufferPageNum);
-                      if (isActive) handlePageRenderSuccess();
+                  <div
+                    style={{
+                      transform: `scale(${cssZoomRatio})`,
+                      transformOrigin: 'top left',
+                      width: renderWidth * BASE_CANVAS_SCALE,
+                      height: Math.round(renderWidth * 1.41 * BASE_CANVAS_SCALE),
                     }}
-                    width={renderWidth}
-                    className="bg-bg-elevated"
-                    loading={
-                      isActive ? (
-                        <div
-                          className="flex flex-col items-center justify-center bg-bg-elevated animate-pulse"
-                          style={{ width: renderWidth, height: renderWidth * 1.41 * scale }}
-                        >
-                          <div className="w-full h-full p-8 space-y-4">
-                            <div className="h-4 w-1/3 bg-bg-subtle rounded-full" />
-                            <div className="space-y-4">
-                              <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                              <div className="h-2 w-full bg-bg-subtle rounded-full" />
-                              <div className="h-2 w-2/3 bg-bg-subtle rounded-full" />
-                            </div>
-                          </div>
-                        </div>
-                      ) : <div style={{ width: renderWidth, height: renderWidth * 1.41 * scale }} />
-                    }
-                  />
+                  >
+                    <Page
+                      pageNumber={bufferPageNum}
+                      rotate={rotation}
+                      scale={BASE_CANVAS_SCALE}
+                      renderTextLayer={true}
+                      renderAnnotationLayer={true}
+                      onRenderSuccess={() => {
+                        renderedPagesRef.current.add(bufferPageNum);
+                        if (isActive) handlePageRenderSuccess();
+                      }}
+                      width={renderWidth}
+                      className="bg-bg-elevated"
+                      loading={null}
+                    />
+                  </div>
                 </div>
               </div>
             );

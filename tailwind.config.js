@@ -380,5 +380,6 @@ export default {
 
   plugins: [
     typography,
+    require('tailwindcss-animate'),
   ],
 }

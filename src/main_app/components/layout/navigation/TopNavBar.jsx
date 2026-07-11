@@ -2,6 +2,7 @@ import { List, Plus, Bell, Crown } from '@phosphor-icons/react';
 import { useContext } from 'react';
 import { NavBarContext } from './NavBarContextInstance';
 import CharacterImg from '../../../../assets/Characters/Character1.png';
+import Button from '../../ui/Button';
 
 function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
   const { setIsNotificationOpen, unreadNotificationCount } = useContext(NavBarContext) || {};
@@ -51,7 +52,7 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
           {/* Glassmorphic Pill container for upload button, notification bell, profile picture icon */}
           <div className="flex items-center gap-3.5 md:gap-5 px-4 py-2 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             
-            {/* UploadSimple Button - Hidden on mobile */}
+            {/* Upload Button - Hidden on mobile */}
             <div className="hidden md:flex items-center h-full">
               <input
                 type="file"
@@ -61,13 +62,13 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
                 accept=".pdf,.epub,.docx,.doc"
                 multiple
               />
-              <label
-                htmlFor="top-nav-upload"
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-accent-primary hover:bg-accent-hover text-white rounded-full transition-all cursor-pointer shadow-sm text-sm font-semibold"
+              <Button 
+                variant="primary" 
+                onClick={() => document.getElementById('top-nav-upload').click()}
               >
                 <Plus size={18} weight="bold" />
                 <span className="hidden md:inline">Upload</span>
-              </label>
+              </Button>
             </div>
 
             {/* Notification Bell */}

@@ -75,13 +75,16 @@ const useSettingsStore = create(
             scrollOrientation, scrollAnimation, reminderTime,
           } = get();
 
+          const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          const notificationsWithTz = { ...notifications, timezone: localTimezone };
+
           const response = await apiClient.patch('/api/settings', {
             theme,
             auto_save_progress: autoSaveProgress,
             page_animations: pageAnimations,
             save_chat_history: saveChatHistory,
             auto_explain: autoExplain,
-            notifications,
+            notifications: notificationsWithTz,
             scroll_orientation: scrollOrientation,
             scroll_animation: scrollAnimation,
             reminder_time: reminderTime,

@@ -1,21 +1,29 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, BookmarkSimple, Check, WifiSlash, Note, FloppyDisk, MagicWand, Stack, WarningCircle, Trash, Quotes } from '@phosphor-icons/react';
+import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, Note, MagicWand, Stack, WarningCircle, Trash, Quotes } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
 import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
+import Card from '../ui/Card';
 
-function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards }) {
+function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards, cachedDefinition }) {
     const { resolvedTheme } = useThemeStore();
     const isDark = resolvedTheme === 'dark';
 
-    const [definition, setDefinition] = useState(null);
+    const [definition, setDefinition] = useState(cachedDefinition ? {
+        word: cachedDefinition.word,
+        phonetic: cachedDefinition.phonetic,
+        meanings: [{
+            partOfSpeech: cachedDefinition.partOfSpeech,
+            definitions: [{ definition: cachedDefinition.definition }]
+        }]
+    } : null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [showDict, setShowDict] = useState(false);
+    const [showDict, setShowDict] = useState(!!cachedDefinition);
     const [showTab, setShowTab] = useState(false);
     const [tabText, setTabText] = useState('');
     const [tabSaved, setTabSaved] = useState(false);
-    const [wordSaved, setWordSaved] = useState(false);
+    const [wordSaved, setWordSaved] = useState(!!cachedDefinition);
     const [showFlashcards, setShowFlashcards] = useState(false);
     const [flashcardCount, setFlashcardCount] = useState(5);
     const [flashcardError, setFlashcardError] = useState('');
@@ -103,7 +111,20 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
             const defData = Array.isArray(result) ? result[0] : result;
             setDefinition(defData);
 
-
+            // Automatically save the word
+            if (defData && onSaveWord && bookId) {
+                const firstMeaning = defData.meanings?.[0];
+                const wordObj = {
+                    word: defData.word,
+                    definition: firstMeaning?.definitions?.[0]?.definition || '',
+                    partOfSpeech: firstMeaning?.partOfSpeech || '',
+                    phonetic: defData.phonetic || '',
+                    startOffset: position.startOffset,
+                    pageNumber: position.pageNumber
+                };
+                onSaveWord(bookId, wordObj);
+                setWordSaved(true);
+            }
 
         } catch (err) {
             setError(err.message);
@@ -113,36 +134,26 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         }
     };
 
-    const handleSaveWord = () => {
-        if (!definition || !onSaveWord || !bookId) return;
-        const firstMeaning = definition.meanings?.[0];
-        const wordObj = {
-            word: definition.word,
-            definition: firstMeaning?.definitions?.[0]?.definition || '',
-            partOfSpeech: firstMeaning?.partOfSpeech || '',
-            phonetic: definition.phonetic || '',
-        };
-        onSaveWord(bookId, wordObj);
-        setWordSaved(true);
-    };
-
-    const handleSaveTab = async () => {
+    const handleSaveTab = () => {
         if (!tabText.trim()) return;
         setTabSaved(true);
 
-        if (savedTabIdRef.current) {
-            if (onUpdateNote) {
-                await onUpdateNote(savedTabIdRef.current, tabText.trim());
+        // Save in the background (fire and forget)
+        (async () => {
+            if (savedTabIdRef.current) {
+                if (onUpdateNote) {
+                    await onUpdateNote(savedTabIdRef.current, tabText.trim());
+                }
+            } else {
+                if (onAddNote) {
+                    await onAddNote({
+                        text: tabText.trim(),
+                        context: selection,
+                        type: 'highlight_note'
+                    });
+                }
             }
-        } else {
-            if (onAddNote) {
-                await onAddNote({
-                    text: tabText.trim(),
-                    context: selection,
-                    type: 'highlight_note'
-                });
-            }
-        }
+        })();
 
         try {
             const { awardXpOptimistic } = useXpStore.getState();
@@ -152,13 +163,12 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
             console.error('[XP Wire] tab_added XP failed silently:', xpErr);
         }
 
-        setTimeout(() => {
-            toggleTab(false);
-            setTabSaved(false);
-            setTabText('');
-            setSavedTabId(null);
-            savedTabIdRef.current = null;
-        }, 1000);
+        toggleTab(false);
+        setTabSaved(false);
+        setTabText('');
+        setSavedTabId(null);
+        savedTabIdRef.current = null;
+        handleCloseModal();
     };
 
     const handleCancelTab = async () => {
@@ -234,14 +244,14 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                 <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white mx-auto" />
             )}
 
-            <div
-                className={`flex flex-col min-w-[200px] w-full max-w-[400px] ${
+            <Card
+                variant="default"
+                className={`flex flex-col min-w-[200px] w-full max-w-[400px] hover:!scale-100 ${
                     showTab
                         ? 'shadow-sm overflow-visible relative'
-                        : 'aura-card-raised overflow-hidden'
+                        : 'overflow-hidden'
                 }`}
                 style={showTab ? {
-                    backgroundColor: 'rgb(var(--surface-sunken))',
                     borderRadius: '5px',
                     transform: 'rotate(-2deg)',
                 } : undefined}
@@ -414,19 +424,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                         </ul>
                                     </div>
                                 ))}
-                                {onSaveWord && bookId && (
-                                    <button
-                                        onClick={handleSaveWord}
-                                        disabled={wordSaved}
-                                        className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${wordSaved
-                                            ? 'bg-green-50 text-green-600 border border-green-200'
-                                            : 'bg-text-primary text-bg-elevated hover:bg-black active:scale-[0.98]'
-                                            }`}
-                                    >
-                                        {wordSaved ? <Check size={18} weight="bold" /> : <BookmarkSimple size={18} weight="bold" />}
-                                        {wordSaved ? 'Word Saved' : 'Save to Vocabulary'}
-                                    </button>
-                                )}
                             </div>
                         )}
                     </div>
@@ -512,10 +509,10 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             </div>
                         ) : (
                             <div className="space-y-5">
-                                <div className="bg-bg-subtle/50 p-3 rounded-xl border border-border-default/50">
+                                <Card variant="sunken" className="p-3">
                                     <p className="text-[11px] text-text-tertiary font-bold uppercase tracking-wider mb-1 opacity-50">Source Material</p>
                                     <p className="text-sm text-text-secondary line-clamp-3 italic">"{selection}"</p>
-                                </div>
+                                </Card>
 
                                 <div>
                                     <label className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 block">
@@ -550,7 +547,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         )}
                     </div>
                 ) : null}
-            </div>
+            </Card>
 
             {/* Arrow when menu is placed above the text (pointing down) */}
             {!isMobile && !showDict && !showTab && !showFlashcards && !showBelow && (

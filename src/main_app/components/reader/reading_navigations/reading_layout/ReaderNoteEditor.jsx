@@ -270,7 +270,7 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
 
   return (
     <aside
-      className="flex flex-col absolute inset-0 z-[210] bg-white lg:relative lg:inset-auto lg:w-[400px] lg:h-full lg:border-0 lg:shrink-0 shadow-2xl lg:shadow-sm animate-in slide-in-from-left duration-300 font-sans"
+      className="flex flex-col absolute inset-0 z-[210] bg-bg-subtle dark:bg-bg-elevated lg:relative lg:inset-auto lg:w-[400px] lg:h-full lg:border-0 lg:shrink-0 shadow-2xl lg:shadow-sm animate-in slide-in-from-left duration-300 font-sans"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ── Top bar ── */}

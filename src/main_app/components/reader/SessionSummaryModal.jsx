@@ -101,45 +101,45 @@ export default function SessionSummaryModal({
   const darkGradient = 'bg-[#0D0D0F] [background:radial-gradient(125%_125%_at_50%_10%,#141416_40%,#3b0764_100%)]';
   const bgGradient = isDark ? darkGradient : lightGradient;
 
-  const stats = [
-    {
-      key: 'xp',
-      label: 'TOTAL XP',
-      icon: <Lightning size={28} />,
-      value: <CountingNumber value={displayXp} />,
-      // Purple when multiplier, gold otherwise
-      accentLight: showMultiplier ? '#7C3AED' : '#D97706',
-      accentDark:  showMultiplier ? '#A78BFA' : '#F59E0B',
-      seedBgLight: showMultiplier ? 'rgba(124,58,237,0.10)' : 'rgba(217,119,6,0.10)',
-      seedBgDark:  showMultiplier ? 'rgba(167,139,250,0.15)' : 'rgba(245,158,11,0.15)',
-      cardBorder: showMultiplier
-        ? (isDark ? 'border border-purple-500 shadow-sm shadow-black/40 bg-bg-elevated' : 'border border-purple-500 shadow-sm shadow-black/10 bg-bg-subtle')
-        : null,
-      sub: showMultiplier ? multiplierCount : null,
-    },
-    {
-      key: 'pages',
-      label: 'PAGES',
-      icon: <Target size={28} />,
-      value: <CountingNumber value={pagesRead} />,
-      accentLight: '#059669',
-      accentDark:  '#34D399',
-      seedBgLight: 'rgba(5,150,105,0.10)',
-      seedBgDark:  'rgba(52,211,153,0.15)',
-      cardBorder: null,
-    },
-    {
-      key: 'time',
-      label: 'TIME',
-      icon: <Clock size={28} />,
-      value: <span>{formatTime(timeSpentSeconds)}</span>,
-      accentLight: '#0284C7',
-      accentDark:  '#38BDF8',
-      seedBgLight: 'rgba(2,132,199,0.10)',
-      seedBgDark:  'rgba(56,189,248,0.15)',
-      cardBorder: null,
-    },
-  ];
+    const stats = [
+        {
+            key: 'xp',
+            label: 'TOTAL XP',
+            icon: <Lightning size={24} />,
+            value: <CountingNumber value={displayXp} />,
+            // Purple when multiplier, gold otherwise
+            accentLight: showMultiplier ? '#7C3AED' : '#D97706',
+            accentDark:  showMultiplier ? '#A78BFA' : '#F59E0B',
+            seedBgLight: showMultiplier ? 'rgba(124,58,237,0.10)' : 'rgba(217,119,6,0.10)',
+            seedBgDark:  showMultiplier ? 'rgba(167,139,250,0.15)' : 'rgba(245,158,11,0.15)',
+            cardBorder: showMultiplier
+                ? (isDark ? 'border border-purple-500 shadow-sm shadow-black/40 bg-bg-elevated' : 'border border-purple-500 shadow-sm shadow-black/10 bg-bg-subtle')
+                : null,
+            sub: showMultiplier ? multiplierCount : null,
+        },
+        {
+            key: 'pages',
+            label: 'PAGES',
+            icon: <Target size={24} />,
+            value: <CountingNumber value={pagesRead} />,
+            accentLight: '#059669',
+            accentDark:  '#34D399',
+            seedBgLight: 'rgba(5,150,105,0.10)',
+            seedBgDark:  'rgba(52,211,153,0.15)',
+            cardBorder: null,
+        },
+        {
+            key: 'time',
+            label: 'TIME',
+            icon: <Clock size={24} />,
+            value: <span>{formatTime(timeSpentSeconds)}</span>,
+            accentLight: '#0284C7',
+            accentDark:  '#38BDF8',
+            seedBgLight: 'rgba(2,132,199,0.10)',
+            seedBgDark:  'rgba(56,189,248,0.15)',
+            cardBorder: null,
+        },
+    ];
 
   return (
     <div className={`fixed inset-0 z-[1000] flex items-center justify-center font-sans ${bgGradient} sm:bg-transparent sm:backdrop-blur-sm`}>
@@ -207,7 +207,7 @@ export default function SessionSummaryModal({
                 >
                   {/* Seed label */}
                   <div
-                    className="mb-2 px-2 py-0.5 rounded-full text-[11px] font-black tracking-widest uppercase"
+                    className="mb-2 px-2 py-0.5 rounded-full text-[9px] font-black tracking-widest uppercase"
                     style={{ backgroundColor: seedBg, color: accent }}
                   >
                     {label}
@@ -216,7 +216,7 @@ export default function SessionSummaryModal({
                   {/* Value */}
                   <div
                     className="flex items-center gap-1.5 font-black font-sans"
-                    style={{ color: accent, fontSize: '1.5rem', lineHeight: 1 }}
+                    style={{ color: accent, fontSize: '1.25rem', lineHeight: 1 }}
                   >
                     {icon}
                     <span>{value}</span>

@@ -171,7 +171,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
       {/* Mobile overlay */}
       <div className="fixed inset-0 bg-black/40 z-[190] md:hidden animate-in fade-in" onClick={onClose} />
       <aside
-        className="flex flex-col fixed inset-0 z-[200] bg-white h-[100dvh] md:relative md:inset-auto md:w-96 md:h-full md:border-0 md:shrink-0 shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden"
+        className="flex flex-col fixed inset-0 z-[200] bg-bg-subtle dark:bg-bg-elevated h-[100dvh] md:relative md:inset-auto md:w-96 md:h-full md:border-0 md:shrink-0 shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}

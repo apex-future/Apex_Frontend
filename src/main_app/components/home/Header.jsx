@@ -9,6 +9,8 @@ import { Lightning, Fire, Sparkle, Hexagon, Scroll } from '@phosphor-icons/react
 import useGreeting from '../../hooks/useGreeting';
 import Typewriter from '../ui/Typewriter';
 import { useNavigate } from 'react-router-dom';
+import Card from '../ui/Card';
+import StatCard from '../ui/StatCard';
 
 export default function Header() {
     const { user } = useAuthStore();
@@ -38,10 +40,7 @@ export default function Header() {
     const levelData = computeLevel(estimatedXp);
     const multiplierActive = isMultiplierActive();
 
-    // Theme-aware card classes
-    const cardClasses = isDark
-        ? "bg-bg-elevated border-t border-white/10 shadow-sm shadow-black/40"
-        : "bg-bg-subtle border-t border-black/10 shadow-sm shadow-black/10";
+    console.log('[Header] rendered');
 
     return (
         <div className={`w-full font-sans ${resolvedTheme}`}>
@@ -61,47 +60,39 @@ export default function Header() {
 
                 {/* 3 Cards Section */}
                 <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-                    {/* Daily Streak Card */}
-                    <div 
+                    <StatCard
+                        label="Daily Streak"
+                        value={streakCount}
+                        icon={Fire}
+                        colorScheme="orange"
+                        unit="days"
                         onClick={() => navigate('/streak')}
-                        className={`${cardClasses} rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
-                    >
-                        <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">Daily Streak</span>
-                        <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Fire className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" weight="fill" />
-                            <span className={`text-xl sm:text-2xl md:text-3xl font-bold ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>{streakCount}</span>
-                        </div>
-                        <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium">days</span>
-                    </div>
+                    />
 
-                    {/* XP Today Card */}
-                    <div className={`${cardClasses} rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2`}>
-                        <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">
-                            XP Today
-                            {multiplierActive && (
-                                <Lightning className="inline-block ml-1 w-3 h-3 text-amber-400" weight="fill" />
-                            )}
-                        </span>
-                        <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Sparkle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" weight="fill" />
-                            <span className={`text-xl sm:text-2xl md:text-3xl font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{estimatedXp}</span>
-                        </div>
-                        <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">gained</span>
-                    </div>
+                    <StatCard
+                        label="XP Today"
+                        value={estimatedXp}
+                        icon={Sparkle}
+                        colorScheme="amber"
+                        unit="gained"
+                        badge={
+                            multiplierActive
+                                ? <Lightning className="w-3 h-3 text-amber-400" weight="fill" />
+                                : null
+                        }
+                    />
 
-                    {/* Study Quest Card */}
-                    <div className={`${cardClasses} rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2`}>
-                        <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium whitespace-nowrap">Study Quest</span>
-                        <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Scroll className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" weight="fill" />
-                            <span className={`text-xl sm:text-2xl md:text-3xl font-bold whitespace-nowrap ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>1</span>
-                        </div>
-                        <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium text-center whitespace-nowrap">/ 3 completed</span>
-                    </div>
+                    <StatCard
+                        label="Study Quest"
+                        value="1"
+                        icon={Scroll}
+                        colorScheme="emerald"
+                        unit="/ 3 completed"
+                    />
                 </div>
 
                 {/* Level Progress Card */}
-                <div className={`${cardClasses} rounded-xl sm:rounded-2xl p-4 sm:p-5 flex items-center gap-3 sm:gap-5`}>
+                <Card className="p-4 sm:p-5 flex items-center gap-3 sm:gap-5">
                     {/* Level Hexagon Icon - Left */}
                     <div className="relative flex items-center justify-center shrink-0 w-12 h-12 sm:w-14 sm:h-14">
                         {/* migrated from lucide: Hexagon -- decorative level icon */}
@@ -142,7 +133,7 @@ export default function Header() {
                         <Hexagon className="absolute inset-0 text-text-placeholder w-full h-full" weight="thin" />
                         <span className="text-lg sm:text-xl font-bold text-text-tertiary relative z-10">{levelData.level + 1}</span>
                     </div>
-                </div>
+                </Card>
 
             </div>
         </div>

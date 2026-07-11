@@ -13,6 +13,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'inline',
       manifest: false,
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
       workbox: {
         importScripts: ['sw-push.js'],
         globPatterns: ['**/*.{js,mjs,css,ico,png,svg,woff2}'],

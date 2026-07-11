@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import EmptyState from '../../layout/placeholders/EmptyState';
+import EmptyState from '../../ui/EmptyState';
 import { getAllChats } from '../../../utils/db';
 import { ChatCircle, Spinner } from '@phosphor-icons/react';
 import { cleanUserMessage, stripMarkdown, getChatTitle } from '../../../utils/aiUtils';
@@ -39,7 +39,13 @@ function DocumentChatHistory({ book }) {
     }
 
     if (!chatHistory || chatHistory.length === 0) {
-        return <EmptyState itemName="chat history" />;
+        return (
+            <EmptyState 
+                icon={ChatCircle}
+                title="No chat history"
+                description="Your conversations with the AI assistant will appear here."
+            />
+        );
     }
 
     const formatDate = (timestamp) => {

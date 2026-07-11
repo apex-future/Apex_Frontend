@@ -2,6 +2,7 @@ import React from 'react';
 import { Fire } from '@phosphor-icons/react';
 import useStudyStore from '../../store/studyStore';
 import { useNavigate } from 'react-router-dom';
+import Card from '../ui/Card';
 
 const StreakCard = () => {
     const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -26,9 +27,10 @@ const StreakCard = () => {
     return (
         <div className="w-full h-full flex flex-col">
             <h2 className='text-xs font-bold uppercase tracking-wider text-text-tertiary px-2 mb-2'>Activity Streak</h2>
-            <div 
+            <Card 
                 onClick={() => navigate('/streak')}
-                className="bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm shadow-black/10 dark:shadow-black/40 hover:border-t-orange-500/60 hover:shadow-md transition-all duration-500 rounded-card p-4 px-6 group overflow-hidden relative min-h-[14rem] flex-1 flex flex-col justify-center items-center cursor-pointer"
+                variant="interactive"
+                className="hover:border-t-orange-500/60 hover:shadow-md transition-all duration-500 p-4 px-6 group overflow-hidden relative min-h-[14rem] flex-1 flex flex-col justify-center items-center"
             >
                 
                 {/* Background Icon Asset - Matched with ExamReminder */}
@@ -80,7 +82,7 @@ const StreakCard = () => {
                         );
                     })}
                 </div>
-            </div>
+            </Card>
         </div>
     );
 };

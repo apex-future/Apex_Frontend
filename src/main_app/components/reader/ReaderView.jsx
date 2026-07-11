@@ -108,8 +108,34 @@ function ReaderView() {
     useEffect(() => { showSessionSummaryRef.current = showSessionSummary; }, [showSessionSummary]);
     const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [] });
     const sessionActiveSeconds = useRef(0);
-    const sessionStartTime = useRef(Date.now());
+    const sessionStartTime = useRef(Date.now()); // null when tab is hidden
     const visitedPages = useRef(new Set());
+
+    // ── Visibility-aware session wall-clock tracker ──────────────────────────
+    // Mirrors how useReadingTimeTracker pauses on tab hide.
+    // When the tab is hidden: flush the current chunk into sessionActiveSeconds
+    // and null sessionStartTime so no wall-clock time leaks while backgrounded.
+    // When the tab becomes visible: restart sessionStartTime.
+    useEffect(() => {
+        const handleSessionVisibility = () => {
+            if (document.hidden) {
+                // Pause — accumulate elapsed seconds so far
+                if (sessionStartTime.current !== null) {
+                    sessionActiveSeconds.current += Math.floor((Date.now() - sessionStartTime.current) / 1000);
+                    sessionStartTime.current = null;
+                }
+                console.log('[Apex Session] Tab hidden — session timer paused, accumulated:', sessionActiveSeconds.current, 's');
+            } else {
+                // Resume — restart the chunk clock
+                sessionStartTime.current = Date.now();
+                console.log('[Apex Session] Tab visible — session timer resumed');
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleSessionVisibility);
+        return () => document.removeEventListener('visibilitychange', handleSessionVisibility);
+    }, []);
+    // ────────────────────────────────────────────────────────────────────────
 
     // removed immediate page visit tracking
 
@@ -119,16 +145,16 @@ function ReaderView() {
     }, [bookId]);
 
     const handleExitReader = async () => {
-        // 1. Stop the timer immediately — no more minutes accumulate
+        // 1. Stop the XP timer immediately — no more minutes accumulate
         stopTick();
 
-        // Calculate time spent so far in this chunk
-        if (sessionStartTime.current) {
+        // 2. Flush the active chunk into sessionActiveSeconds (if tab is currently visible)
+        if (sessionStartTime.current !== null) {
             sessionActiveSeconds.current += Math.floor((Date.now() - sessionStartTime.current) / 1000);
-            sessionStartTime.current = null; // paused
+            sessionStartTime.current = null; // closed
         }
 
-        // 2. Compute XP from actual session minutes (does NOT flush or award yet)
+        // 3. Compute XP from actual session minutes (does NOT flush or award yet)
         const readingXp = await computeSessionXp();
         const pagesRead = visitedPages.current.size;
         const timeSpentSeconds = sessionActiveSeconds.current;
@@ -138,6 +164,8 @@ function ReaderView() {
         const sessionXpActions = useXpStore.getState().sessionXpActions || [];
         const activityXp = sessionXpActions.reduce((sum, act) => sum + act.estimatedXp, 0);
         const totalXp = readingXp + activityXp;
+
+        console.log('[Apex Session] Exit — active reading time:', timeSpentSeconds, 's');
 
         if (totalXp > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
             setSessionStats({ 
@@ -265,10 +293,11 @@ function ReaderView() {
             streakFiredTodayRef.current = true;
         }
 
-        // Timer always starts regardless of streak state
-        const STREAK_DURATION = 60 * 1000;
+        // Streak timer requires 3 minutes, but we still log space activity every 1 minute
+        const STREAK_DURATION = 3 * 60 * 1000;
+        const MINUTE_DURATION = 60 * 1000;
 
-        console.log('[Apex Streak] Starting 1-minute reading timer...');
+        console.log('[Apex Streak] Starting 3-minute reading timer...');
         streakStartTimeRef.current = Date.now();
 
         const runInterval = () => {
@@ -278,15 +307,18 @@ function ReaderView() {
 
                 streakElapsedRef.current += 1000;
 
-                if (streakElapsedRef.current >= STREAK_DURATION) {
-                    streakElapsedRef.current = 0; // reset
+                // Always log space activity every 60 seconds
+                if (streakElapsedRef.current % MINUTE_DURATION === 0) {
                     console.log('[Apex Reader] 60 seconds passed - logging activity');
-
-                    // Always runs — reading time and space activity are not streak-gated
                     if (activeSpaceId) {
                         logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
                     }
+                }
 
+                // Streak triggers only when it hits 3 minutes
+                if (streakElapsedRef.current >= STREAK_DURATION) {
+                    streakElapsedRef.current = 0; // reset
+                    
                     // Streak fires once per day only. Fetch today dynamically in case it crossed midnight
                     const today = new Date().toLocaleDateString('en-CA');
                     const lastFired = localStorage.getItem('apex_streak_fired_today');
@@ -556,11 +588,52 @@ function ReaderView() {
     // Bookmarks — loaded from book context instead of manually from Dexie to prevent async UI lag
     const bookmarks = book?.metadata?.bookmarks || [];
     const highlights = book?.metadata?.highlights || [];
-    const stableHighlights = useMemo(() => highlights, [highlights]);
+    const dictionaryWords = book?.metadata?.words || [];
+    const stableHighlights = useMemo(() => {
+        const dictHighlights = dictionaryWords.filter(w => w.startOffset != null && w.pageNumber != null).map(w => ({
+            id: `dict-${w.word}-${w.startOffset}`,
+            text: w.word,
+            color: 'gray', // handled by PDFReader internally
+            page: w.pageNumber,
+            startOffset: w.startOffset,
+            isDictionaryWord: true,
+            wordObj: w
+        }));
+        return [...highlights, ...dictHighlights];
+    }, [highlights, dictionaryWords]);
 
     const isCurrentPageBookmarked = bookmarks.some(
         bm => bm.pageNumber === pageNumber || bm.page === pageNumber
     );
+
+    // Dictionary click listener
+    useEffect(() => {
+        const handleDictClick = (e) => {
+            const { wordObj, rect } = e.detail;
+            
+            // Set up selection as if user highlighted the word
+            const mockSelection = {
+                text: wordObj.word,
+                x: rect.left + rect.width / 2,
+                y: rect.top,
+                startOffset: wordObj.startOffset,
+                bottom: rect.bottom,
+                pageNumber: wordObj.pageNumber,
+                cachedDefinition: wordObj
+            };
+            
+            selectionRef.current = mockSelection;
+            setSelectionData(mockSelection);
+            setShowHighlightMenu(true);
+            
+            // We don't need to force open anymore since HighlightMenu initializes with it!
+            // But we can set isDictOpen to keep ReaderView state in sync
+            setIsDictOpen(true);
+        };
+        
+        window.addEventListener('apex-dict-click', handleDictClick);
+        return () => window.removeEventListener('apex-dict-click', handleDictClick);
+    }, []);
 
     // Ref-stable callback — identity never changes, so PDFReader never re-renders due to this prop
     const syncProgressRef = useRef(syncProgress);
@@ -808,6 +881,9 @@ function ReaderView() {
         initialScale: 1.0,
         isPinching: false
     });
+    // Ref to track current scale without re-running the touch/selection effect
+    const scaleRef = useRef(scale);
+    useEffect(() => { scaleRef.current = scale; }, [scale]);
 
     // Track last selected text to avoid unnecessary position jitter
     const lastSelTextRef = useRef('');
@@ -835,7 +911,7 @@ function ReaderView() {
                 e.preventDefault();
                 touchState.current.isPinching = true;
                 touchState.current.initialDist = getDistance(e.touches);
-                touchState.current.initialScale = scale;
+                touchState.current.initialScale = scaleRef.current;
             }
         };
 
@@ -897,7 +973,8 @@ function ReaderView() {
                             x: rect.left + rect.width / 2,
                             y: rect.top,
                             startOffset: foundOffset !== -1 ? foundOffset : null,
-                            bottom: rect.bottom
+                            bottom: rect.bottom,
+                            pageNumber: pageNumber
                         };
                         selectionRef.current = newData;
                         setSelectionData(newData);
@@ -979,7 +1056,7 @@ function ReaderView() {
             document.removeEventListener('mousedown', handleInteractionStart);
             document.removeEventListener('touchstart', handleInteractionStart);
         };
-    }, [scale, isDictOpen, getSelectionRect]);
+    }, [isDictOpen, getSelectionRect]);
 
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
@@ -1238,8 +1315,11 @@ function ReaderView() {
                         position={{ 
                             x: selectionRef.current.x, 
                             y: selectionRef.current.y,
-                            bottom: selectionRef.current.bottom
+                            bottom: selectionRef.current.bottom,
+                            startOffset: selectionRef.current.startOffset,
+                            pageNumber: selectionRef.current.pageNumber
                         }}
+                        cachedDefinition={selectionRef.current.cachedDefinition}
                         onAskAI={() => {
                             window.getSelection()?.removeAllRanges();
                             setAiModal(true);

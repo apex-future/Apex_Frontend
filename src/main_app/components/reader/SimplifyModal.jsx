@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Spinner, MagicWand, ArrowCounterClockwise, Sparkle } from '@phosphor-icons/react';
+import Card from '../ui/Card';
 
 /**
  * SimplifyModal
@@ -20,9 +21,9 @@ function SimplifyModal({ originalText, simplifiedText, loading, error, onRetry, 
                 className="fixed z-[320] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] max-w-[92vw] animate-in fade-in zoom-in-95 duration-300"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="aura-card-raised rounded-2xl overflow-hidden font-sans">
+                <Card className="overflow-hidden font-sans !p-0">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-border-default">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-black/10 dark:border-white/10">
                         <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
                                 <MagicWand size={14} weight="fill" className="text-emerald-600" />
@@ -43,7 +44,7 @@ function SimplifyModal({ originalText, simplifiedText, loading, error, onRetry, 
                     <div className="p-5">
                         {/* Original text — subtle quote */}
                         {originalText && (
-                            <div className="mb-4 bg-bg-subtle p-3 rounded-xl border border-border-default">
+                            <div className="mb-4 bg-black/10 dark:bg-white/10 p-3 rounded-xl">
                                 <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-wider mb-1.5 opacity-50">
                                     Original
                                 </p>
@@ -86,7 +87,7 @@ function SimplifyModal({ originalText, simplifiedText, loading, error, onRetry, 
 
                         {/* Simplified result */}
                         {simplifiedText && !loading && !error && (
-                            <div className="bg-surface-sunken border border-border-default rounded-xl p-4 animate-in slide-in-from-bottom-2 duration-300">
+                            <div className="bg-black/10 dark:bg-white/10 rounded-xl p-4 animate-in slide-in-from-bottom-2 duration-300">
                                 <div className="flex items-center gap-2 mb-2.5">
                                     <Sparkle size={12} weight="fill" className="text-emerald-500" />
                                     <p className="text-[10px] text-emerald-600 font-black uppercase tracking-wider">
@@ -99,7 +100,7 @@ function SimplifyModal({ originalText, simplifiedText, loading, error, onRetry, 
                             </div>
                         )}
                     </div>
-                </div>
+                </Card>
             </div>
         </>
     );
