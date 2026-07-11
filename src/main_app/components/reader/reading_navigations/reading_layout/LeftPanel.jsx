@@ -3,6 +3,7 @@ import { List, BookmarkSimple, X, CaretLeft, CaretDown, HighlighterCircle, Magic
 import BookmarksView from './BookmarksView'
 import HighlightsView from './HighlightsView'
 import SimplifiedView from './SimplifiedView'
+import ListItem from '../../../ui/ListItem'
 
 const NAV_ITEMS = [
   { id: 'toc', icon: List, label: 'Table of Contents' },
@@ -142,32 +143,29 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
           <div className="p-4 flex flex-col gap-4">
             {NAV_ITEMS.map((item) => {
               const { id, label, icon: ItemIcon } = item;
-              const isBookmarksItem = id === 'bookmarks';
-              const isHighlightsItem = id === 'highlights';
-              const isSimplifiedItem = id === 'simplified';
 
               let count = 0;
-              if (isBookmarksItem) count = bookmarks.length;
-              if (isHighlightsItem) count = highlights.length;
-              if (isSimplifiedItem) count = simplifications.length;
+              if (id === 'bookmarks') count = bookmarks.length;
+              if (id === 'highlights') count = highlights.length;
+              if (id === 'simplified') count = simplifications.length;
+
+              const badge = count > 0
+                ? (
+                  <span className="text-[11px] font-black bg-accent-primary text-white rounded-full px-2.5 py-0.5 tabular-nums">
+                    {count}
+                  </span>
+                )
+                : null;
 
               return (
-                <button
+                <ListItem
                   key={id}
+                  icon={ItemIcon}
+                  label={label}
+                  right={badge}
+                  isActive={activeSection === id}
                   onClick={() => handleNavClick(id)}
-                  className="flex items-center gap-4 p-2 rounded-2xl text-[15px] font-bold text-text-secondary bg-bg-subtle dark:bg-bg-elevated hover:bg-accent-primary/5 hover:text-accent-primary transition-all text-left w-full shadow-sm group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-bg-subtle dark:bg-bg-elevated shadow-sm flex items-center justify-center text-text-tertiary group-hover:text-accent-primary transition-colors">
-                    <ItemIcon size={20} weight="bold" />
-                  </div>
-                  <span className="flex-1 tracking-tight">{label}</span>
-                  {/* Show count badge */}
-                  {(isBookmarksItem || isHighlightsItem || isSimplifiedItem) && count > 0 && (
-                    <span className="text-[11px] font-black bg-accent-primary text-bg-elevated rounded-full px-2.5 py-0.5 tabular-nums shadow-sm">
-                      {count}
-                    </span>
-                  )}
-                </button>
+                />
               );
             })}
           </div>
