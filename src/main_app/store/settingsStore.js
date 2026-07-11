@@ -33,6 +33,7 @@ const useSettingsStore = create(
       // ── Reader ──
       scrollOrientation: 'vertical',    // 'vertical' | 'horizontal'
       scrollAnimation: 'none',          // 'none' | 'slide' | 'fade'
+      streakThresholdMinutes: 5,        // 3 | 5 | 10 | 15 | 20 | 30
 
       // ── Setters ──
 
@@ -73,6 +74,7 @@ const useSettingsStore = create(
             theme, autoSaveProgress, pageAnimations,
             saveChatHistory, autoExplain, notifications,
             scrollOrientation, scrollAnimation, reminderTime,
+            streakThresholdMinutes,
           } = get();
 
           const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -88,6 +90,7 @@ const useSettingsStore = create(
             scroll_orientation: scrollOrientation,
             scroll_animation: scrollAnimation,
             reminder_time: reminderTime,
+            streak_threshold_minutes: streakThresholdMinutes,
           });
           if (response.data?.updated_at) {
             set({ settingsLastSyncedAt: response.data.updated_at });
@@ -140,6 +143,7 @@ const useSettingsStore = create(
           scrollOrientation: data.scroll_orientation || 'vertical',
           scrollAnimation: data.scroll_animation || 'none',
           reminderTime: data.reminder_time ? data.reminder_time.slice(0, 5) : '18:00',
+          streakThresholdMinutes: data.streak_threshold_minutes ?? 5,
           settingsLastSyncedAt: cloudUpdatedAt,
         });
       },

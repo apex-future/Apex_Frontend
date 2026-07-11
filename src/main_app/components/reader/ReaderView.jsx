@@ -197,7 +197,7 @@ function ReaderView() {
     const { user: authUser } = useAuthStore();
     const [leftPanel, setLeftPanel] = useState(false);
     const [pageSettings, setPageSettings] = useState(false);
-    const { scrollOrientation: savedOrientation, updateSetting } = useSettingsStore();
+    const { scrollOrientation: savedOrientation, updateSetting, streakThresholdMinutes } = useSettingsStore();
     const [scrollOrientation, setScrollOrientation] = useState(savedOrientation || 'vertical'); // 'vertical' or 'horizontal'
 
     // Deep loading state
@@ -292,9 +292,13 @@ function ReaderView() {
             streakFiredTodayRef.current = true;
         }
 
-        // Streak timer requires 3 minutes, but we still log space activity every 1 minute
-        const STREAK_DURATION = 3 * 60 * 1000;
+        // Streak timer reads threshold from user settings — default 5 minutes
+        const STREAK_DURATION = Math.max(5, streakThresholdMinutes) * 60 * 1000;
         const MINUTE_DURATION = 60 * 1000;
+        console.log(`[Apex Streak] Threshold set to ${streakThresholdMinutes} minutes`);
+        if (streakThresholdMinutes < 5) {
+            console.warn('[Apex Streak] Threshold below minimum — clamping to 5 minutes');
+        }
 
         console.log('[Apex Streak] Starting 3-minute reading timer...');
         streakStartTimeRef.current = Date.now();
@@ -351,7 +355,7 @@ function ReaderView() {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             console.log('[Apex Reader] Timer cleaned up');
         };
-    }, [isLoading, bookId]);
+    }, [isLoading, bookId, streakThresholdMinutes]);
 
     const handleHighlight = (color) => {
         if (!book || !selectionRef.current.text) return;

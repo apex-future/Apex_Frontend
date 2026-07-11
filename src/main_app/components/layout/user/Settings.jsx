@@ -31,6 +31,7 @@ function Settings({ onLogout }) {
       scrollOrientation,
       scrollAnimation,
       reminderTime,
+      streakThresholdMinutes,
       updateSetting,
       updateNotification,
     } = useSettingsStore();
@@ -206,6 +207,25 @@ function Settings({ onLogout }) {
                         checked={pageAnimations}
                         onChange={(e) => updateSetting('pageAnimations', e.target.checked)}
                     />
+                    <div className="p-4">
+                      <p className="text-sm font-medium text-text-primary mb-1">Streak Threshold</p>
+                      <p className="text-xs text-text-tertiary mb-3">Minutes of reading needed to count a study day</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {[5, 10, 15, 20, 30].map((mins) => (
+                          <button
+                            key={mins}
+                            onClick={() => updateSetting('streakThresholdMinutes', mins)}
+                            className={`px-3 py-2 rounded-xl border-2 text-xs font-bold transition-all ${
+                              streakThresholdMinutes === mins
+                                ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                                : 'border-black/10 dark:border-white/10 text-text-tertiary hover:border-text-tertiary/30'
+                            }`}
+                          >
+                            {mins}m
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                 </SettingSection>
 
                 {/* Reading Experience */}
