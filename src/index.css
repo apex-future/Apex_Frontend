@@ -74,11 +74,25 @@
     .prose h6,
     .prose p,
     .prose li,
-    .prose strong,
-    .prose blockquote,
-    .prose th,
     .prose td {
         color: rgb(var(--text-primary));
+    }
+}
+
+@layer utilities {
+    .glass-card {
+        @apply bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xl border border-black/5 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)];
+    }
+
+    /* 3D Transform Utilities for Flashcards */
+    .preserve-3d {
+        transform-style: preserve-3d;
+    }
+    .backface-hidden {
+        backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+        transform: rotateY(180deg);
     }
 }
 

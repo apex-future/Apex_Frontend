@@ -16,6 +16,7 @@ import useXpStore from '../../store/useXpStore';
 import AIModal from './reading_navigations/reading_layout/AIModal';
 import QuizPanel from './reading_navigations/reading_layout/QuizPanel';
 import QuizView from './QuizView';
+import useFlashcardStore from '../../store/useFlashcardStore';
 import apiClient from '../../services/apiClient';
 import syncService from '../../services/syncService';
 import useToast from '../../hooks/useToast';
@@ -193,7 +194,7 @@ function ReaderView() {
     const [aiModal, setAiModal] = useState(false);
     const [quizModal, setQuizModal] = useState(false);
     const [activeQuizSession, setActiveQuizSession] = useState(null);
-    const { addToast } = useToast();
+    const { showToast } = useToast();
     const { user: authUser } = useAuthStore();
     const [leftPanel, setLeftPanel] = useState(false);
     const [pageSettings, setPageSettings] = useState(false);
@@ -487,7 +488,10 @@ function ReaderView() {
         setScale(1.0);
     }, []);
 
+    const pdfDocumentRef = useRef(null);
+
     async function handleDocumentLoad(pdf) {
+        pdfDocumentRef.current = pdf;
         const total = pdf.numPages;
         setNumPages(total);
 
@@ -681,6 +685,37 @@ function ReaderView() {
         isBookmarkedBook: book?.isBookmarked,
         onToggleBookmarkedBook: () => toggleBookmarkedBook(book.id),
         onProgressBarClick: openPageStrip,
+        onGenerateFlashcards: async (startPage, endPage) => {
+            if (!pdfDocumentRef.current) return;
+            const pdf = pdfDocumentRef.current;
+            const pageTexts = [];
+            
+            showToast('Extracting text from pages...', 'info');
+            
+            for (let i = startPage; i <= endPage; i++) {
+                try {
+                    const page = await pdf.getPage(i);
+                    const tc = await page.getTextContent();
+                    const text = tc.items.map(item => item.str).join(' ');
+                    pageTexts.push({ page: i, text });
+                } catch (err) {
+                    console.error('[Flashcards] Failed to extract text for page', i, err);
+                }
+            }
+            
+            if (pageTexts.length === 0) {
+                showToast('Could not extract any text from those pages.', 'error');
+                return;
+            }
+            
+            // Open modal ONCE with the real data
+            useFlashcardStore.getState().openFlashcardModal({
+                sourceType: 'book_pages',
+                textContent: pageTexts.map(pt => `[Page ${pt.page}]\n${pt.text}`).join('\n\n'),
+                pageTexts,
+                numCards: 10
+            });
+        },
         pageSettings,
         setPageSettings: (val) => {
             if (val) setLeftPanel(false); // Close left panel if settings open
@@ -1318,7 +1353,11 @@ function ReaderView() {
                         onDeleteNote={readerControls.deleteTab}
                         onGenerateFlashcards={(selection, count) => {
                             setShowHighlightMenu(false);
-                            setActiveFlashcardSession({ selection, count });
+                            useFlashcardStore.getState().openFlashcardModal({
+                                sourceType: 'highlight',
+                                textContent: selection,
+                                numCards: count
+                            });
                         }}
                     />
                 )}
@@ -1332,16 +1371,6 @@ function ReaderView() {
                         error={activeSimplification.error}
                         onRetry={handleRetrySimplify}
                         onClose={() => setShowSimplifyModal(false)}
-                    />
-                )}
-
-                {/* Flashcard Modal */}
-                {activeFlashcardSession && (
-                    <FlashcardModal
-                        selection={activeFlashcardSession.selection}
-                        count={activeFlashcardSession.count}
-                        bookId={bookId}
-                        onClose={() => setActiveFlashcardSession(null)}
                     />
                 )}
 

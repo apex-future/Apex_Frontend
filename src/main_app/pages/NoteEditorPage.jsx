@@ -10,12 +10,13 @@ import CharacterCount from '@tiptap/extension-character-count';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import useBookNotesStore from '../store/bookNotesStore';
+import useFlashcardStore from '../store/useFlashcardStore';
 
 import {
   ArrowLeft, TextB, TextItalic, TextUnderline, TextStrikethrough,
   Highlighter, TextAlignLeft, TextAlignCenter, TextAlignRight, TextAlignJustify,
   TextHOne, TextHTwo, TextHThree, ListBullets, ListNumbers, Quotes,
-  Code, Minus, ArrowUUpLeft, ArrowUUpRight, CaretDown, Check, TextT, FloppyDisk
+  Code, Minus, ArrowUUpLeft, ArrowUUpRight, CaretDown, Check, TextT, FloppyDisk, Stack
 } from '@phosphor-icons/react';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -473,6 +474,28 @@ function NoteEditorPage() {
               title="Blockquote"
             >
               <Quotes size={15} weight="bold" />
+            </ToolbarBtn>
+
+            <ToolbarDivider />
+            <ToolbarBtn
+              onClick={() => {
+                const selection = editor.state.selection;
+                let text = '';
+                if (!selection.empty) {
+                  text = editor.state.doc.textBetween(selection.from, selection.to, ' ');
+                } else {
+                  text = editor.getText();
+                }
+                useFlashcardStore.getState().openFlashcardModal({
+                  sourceType: 'note',
+                  textContent: text,
+                  numCards: 5
+                });
+              }}
+              active={false}
+              title="Generate Flashcards"
+            >
+              <Stack size={15} weight="bold" className="text-rose-500" />
             </ToolbarBtn>
 
             <ToolbarDivider />

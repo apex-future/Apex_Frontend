@@ -10,12 +10,12 @@ import { showToastGlobal } from '../../hooks/useToast';
 
 // ─── Category definitions ───────────────────────────────────────
 const CATEGORIES = [
-  { id: 'ui',          label: 'UI / Design',   icon: PaintBrush },
-  { id: 'reading',     label: 'Reading',       icon: BookOpen },
-  { id: 'ai',          label: 'AI / Cleo',     icon: Robot },
-  { id: 'sync',        label: 'Sync',          icon: ArrowsClockwise },
-  { id: 'performance', label: 'Performance',   icon: Lightning },
-  { id: 'other',       label: 'Other',         icon: DotsThree },
+  { id: 'ui', label: 'UI / Design', icon: PaintBrush },
+  { id: 'reading', label: 'Reading', icon: BookOpen },
+  { id: 'ai', label: 'AI / Cleo', icon: Robot },
+  { id: 'sync', label: 'Sync', icon: ArrowsClockwise },
+  { id: 'performance', label: 'Performance', icon: Lightning },
+  { id: 'other', label: 'Other', icon: DotsThree },
 ];
 
 // ─── Severity definitions ───────────────────────────────────────
@@ -238,10 +238,10 @@ export default function BugReportModal({ isOpen, onClose }) {
               placeholder="e.g. Page doesn't load after login"
               maxLength={120}
               className={`
-                w-full px-4 py-3 rounded-xl text-sm font-medium text-text-primary placeholder:text-text-placeholder
-                bg-surface-sunken border transition-all duration-200 outline-none
+                w-full px-4 py-3 rounded-xl text-sm font-medium text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500
+                bg-white dark:bg-neutral-900 border transition-all duration-200 outline-none
                 focus:ring-2 focus:ring-brand/30 focus:border-brand/60
-                ${errors.title ? 'border-red-500' : 'border-border-default hover:border-border-subtle'}
+                ${errors.title ? 'border-red-500' : 'border-gray-300 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600'}
               `}
             />
           </div>
@@ -258,10 +258,10 @@ export default function BugReportModal({ isOpen, onClose }) {
               rows={3}
               maxLength={1000}
               className={`
-                w-full px-4 py-3 rounded-xl text-sm font-medium text-text-primary placeholder:text-text-placeholder
-                bg-surface-sunken border transition-all duration-200 outline-none resize-none
+                w-full px-4 py-3 rounded-xl text-sm font-medium text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500
+                bg-white dark:bg-neutral-900 border transition-all duration-200 outline-none resize-none
                 focus:ring-2 focus:ring-brand/30 focus:border-brand/60
-                ${errors.description ? 'border-red-500' : 'border-border-default hover:border-border-subtle'}
+                ${errors.description ? 'border-red-500' : 'border-gray-300 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600'}
               `}
             />
           </div>
@@ -289,8 +289,8 @@ export default function BugReportModal({ isOpen, onClose }) {
                   rows={3}
                   maxLength={1000}
                   className="
-                    w-full px-4 py-3 rounded-xl text-sm font-medium text-text-primary placeholder:text-text-placeholder
-                    bg-surface-sunken border border-border-default hover:border-border-subtle
+                    w-full px-4 py-3 rounded-xl text-sm font-medium text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500
+                    bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600
                     transition-all duration-200 outline-none resize-none
                     focus:ring-2 focus:ring-brand/30 focus:border-brand/60
                   "

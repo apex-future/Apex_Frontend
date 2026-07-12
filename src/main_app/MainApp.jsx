@@ -20,6 +20,7 @@ import ApexAI from './components/ai/ApexAI';
 import TabsPage from './components/tabs/TabsPage';
 import Settings from './components/layout/user/Settings';
 import DuplicateBookModal from './components/modals/DuplicateBookModal';
+import FlashcardStudyModal from './components/ai/FlashcardStudyModal';
 import ImportPage from './pages/ImportPage';
 import StreakPage from './pages/StreakPage';
 import ExamPage from './pages/ExamPage';
@@ -28,6 +29,7 @@ import NotebooksPage from './pages/NotebooksPage';
 import NotebookDetailPage from './pages/NotebookDetailPage';
 import NoteEditorPage from './pages/NoteEditorPage';
 import NotificationDrawer from './components/notifications/NotificationDrawer';
+import FlashcardsPage from './pages/FlashcardsPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
@@ -126,6 +128,7 @@ function MainApp({ onLogout }) {
                 <Route path="/notes/:bookId" element={<NotebookDetailPage />} />
                 <Route path="/notes/:bookId/new" element={<NoteEditorPage />} />
                 <Route path="/notes/:bookId/:noteId" element={<NoteEditorPage />} />
+                <Route path="/flashcards" element={<FlashcardsPage />} />
               </Routes>
             </main>
 
@@ -137,6 +140,7 @@ function MainApp({ onLogout }) {
             isOpen={showDuplicateModal}
             onClose={() => setShowDuplicateModal(false)}
           />
+          <FlashcardStudyModal />
           <NotificationDrawer 
             isOpen={isNotificationOpen} 
             onClose={() => setIsNotificationOpen(false)} 
