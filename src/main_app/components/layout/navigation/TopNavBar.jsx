@@ -1,4 +1,5 @@
 import { List, Plus, Bell, Crown } from '@phosphor-icons/react';
+import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { NavBarContext } from './NavBarContextInstance';
 import CharacterImg from '../../../../assets/Characters/Character1.png';
@@ -6,6 +7,7 @@ import Button from '../../ui/Button';
 
 function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
   const { setIsNotificationOpen, unreadNotificationCount } = useContext(NavBarContext) || {};
+  const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -89,9 +91,14 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
             </button>
 
             {/* Profile Picture */}
-            <div className="flex items-center">
-              <img src={CharacterImg} alt="Profile" className="w-9 h-9 rounded-full border border-white/20 bg-white/5 object-cover cursor-pointer hover:opacity-80 transition-opacity" />
-            </div>
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center"
+              aria-label="Go to Profile"
+              title="Profile"
+            >
+              <img src={CharacterImg} alt="Profile" className="w-9 h-9 rounded-full border border-white/20 bg-white/5 object-cover cursor-pointer hover:opacity-80 hover:scale-105 transition-all" />
+            </button>
 
           </div>
         </div>

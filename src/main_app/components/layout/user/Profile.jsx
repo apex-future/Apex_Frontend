@@ -1,12 +1,13 @@
-import { ArrowLeft, Gear, Fire, Book, BookOpen, Calendar, TrendUp } from '@phosphor-icons/react';
+import { ArrowLeft, Gear, Fire, Book, BookOpen, Calendar, TrendUp, Lightning, Brain, Star } from '@phosphor-icons/react';
 import useAuthStore from '../../../store/authStore'
 import useStudyStore from '../../../store/studyStore'
 import useQuizStore from '../../../store/quizStore'
 import { BookContext } from '../../../context/BookContextInstance'
 import React, { useContext, useMemo } from 'react'
-import dummyProfileImg from "../../../../assets/user_imgs/user_img_1.jpg"
+import ProfileAvatarImg from "../../../../assets/Characters/Character1.png"
 import { useNavigate } from 'react-router-dom'
 import OnlineStatusBadge from '../OnlineStatusBadge'
+import useThemeStore from '../../../store/themeStore'
 
 function Profile() {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ function Profile() {
   const streakCount = useStudyStore(state => state.streakCount);
   const getGlobalStats = useQuizStore(state => state.getGlobalStats);
   const globalQuizStats = getGlobalStats();
+  const { resolvedTheme } = useThemeStore();
+  const isDark = resolvedTheme === 'dark';
 
   const stats = useMemo(() => {
     const totalBooks = books.length;
@@ -27,17 +30,11 @@ function Profile() {
       currentlyReading,
       completedBooks,
       totalPagesRead,
-      streak: 0, // Streak calculation would require historic data
+      streak: 0,
       highlightsCreated: books.reduce((acc, b) => acc + (b.metadata?.highlights?.length || 0), 0),
       notesTaken: books.reduce((acc, b) => acc + (b.metadata?.notes?.length || 0), 0),
       wordsSaved: books.reduce((acc, b) => acc + (b.metadata?.words?.length || 0), 0)
     };
-  }, [books]);
-
-  const recentBooks = useMemo(() => {
-    return [...books]
-      .sort((a, b) => new Date(b.lastAccessed || 0) - new Date(a.lastAccessed || 0))
-      .slice(0, 3);
   }, [books]);
 
   const formattedJoinDate = useMemo(() => {
@@ -49,183 +46,191 @@ function Profile() {
   }, [user]);
 
   return (
-    <div className='w-full min-h-screen flex flex-col bg-bg-primary'>
-      {/* Header Section - Glassmorphic Purple Gradient */}
-      <div className="top-wrapper relative flex-shrink-0 overflow-hidden bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] rounded-b-[2.5rem] pb-6">
-        {/* Glassmorphic overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,255,255,0.1),rgba(255,255,255,0))]"></div>
+    <div className='w-full min-h-screen flex flex-col bg-bg-primary font-sans'>
+      {/* Header Section - World Class Black & Blue Aura */}
+      <div className="top-wrapper relative flex-shrink-0 overflow-hidden bg-black rounded-b-[2.5rem] sm:rounded-b-[3rem] pb-8 pt-2 sm:pt-4 shadow-2xl">
+        {/* Dynamic Blue Aura Background */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_100%_100%_at_50%_-20%,rgba(37,99,235,0.4),rgba(0,0,0,1))]"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_50%,rgba(59,130,246,0.15),transparent_50%)]"></div>
+        <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_80%_80%,rgba(14,165,233,0.15),transparent_50%)]"></div>
+        
+        {/* Glassmorphic border effect at the bottom */}
+        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
 
-        {/* NavigationArrow */}
-        <div className="relative flex justify-between items-center p-4">
+        {/* Navigation */}
+        <div className="relative flex justify-between items-center p-4 sm:px-6">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-white/10 rounded-lg transition-all"
+            className="p-2 sm:p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all backdrop-blur-md"
           >
             <ArrowLeft className='text-white' size={20} weight="bold" />
           </button>
-          <h3 className='text-white text-lg font-semibold font-display'>Profile</h3>
-          <button onClick={() => navigate('/settings')} className="p-2 hover:bg-white/10 rounded-lg transition-all">
+          <h3 className='text-white text-lg font-bold tracking-widest uppercase text-white/90'>Profile</h3>
+          <button onClick={() => navigate('/settings')} className="p-2 sm:p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all backdrop-blur-md">
             <Gear className='text-white' size={20} weight="fill" />
           </button>
         </div>
 
-        {/* Profile Info - MORE COMPACT ON MOBILE */}
-        <div className="relative flex items-center gap-4 px-6 mt-2">
-          {/* Avatar with glassmorphic ring */}
-          <div className="relative flex flex-col items-center gap-1.5 flex-shrink-0">
-            <div className="absolute inset-0 bg-white/20 rounded-full blur-md"></div>
-            <img
-              src={dummyProfileImg}
-              alt="Profile"
-              className='relative size-16 sm:size-20 object-cover rounded-full ring-4 ring-white/30'
-            />
-            <OnlineStatusBadge />
+        {/* Profile Info */}
+        <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-5 px-6 sm:px-8 mt-4 sm:mt-6">
+          {/* Avatar Area */}
+          <div className="relative flex flex-col items-center gap-2 flex-shrink-0">
+            {/* Glowing Ring */}
+            <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-xl scale-110 animate-pulse"></div>
+            <div className="relative p-1 rounded-full bg-gradient-to-b from-blue-400 to-blue-900">
+              <img
+                src={ProfileAvatarImg}
+                alt="Profile"
+                className='relative size-24 sm:size-28 object-cover rounded-full border-4 border-black bg-zinc-900'
+              />
+            </div>
+            <div className="-mt-3 z-10">
+              <OnlineStatusBadge />
+            </div>
           </div>
 
           {/* User Details */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-white text-xl sm:text-2xl font-bold mb-0.5 truncate">{user?.full_name || 'User'}</h1>
-            <p className="text-purple-100/80 text-xs sm:text-sm mb-2 truncate">{user?.email || 'user@apex.com'}</p>
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 text-purple-100 text-[10px] sm:text-xs">
-                <Calendar size={12} weight="bold" />
-                {formattedJoinDate}
+          <div className="flex-1 min-w-0 flex flex-col items-center sm:items-start text-center sm:text-left mt-2 sm:mt-4">
+            <h1 className="text-white text-2xl sm:text-3xl font-black mb-1 truncate tracking-tight">{user?.full_name || 'User'}</h1>
+            <p className="text-blue-200/70 text-sm sm:text-base font-medium mb-3 truncate">{user?.email || 'user@apex.com'}</p>
+            <div className="flex flex-wrap justify-center sm:justify-start items-center gap-3">
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-white text-xs font-bold border border-white/10">
+                <Calendar size={14} weight="bold" className="text-blue-400" />
+                Joined {formattedJoinDate}
               </span>
-              <span className="px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-[10px] sm:text-xs font-medium border border-white/10">
-                Free
+              <span className="px-3 py-1 bg-gradient-to-r from-blue-600 to-blue-900 rounded-full text-white text-xs font-bold shadow-[0_0_15px_rgba(37,99,235,0.5)] border border-blue-400/50">
+                PRO
               </span>
             </div>
           </div>
 
-          {/* Streak Badge - MORE FLUID */}
-          <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-card p-2 sm:p-3 min-w-[64px] sm:min-w-[70px]">
-            <Fire className='text-orange-400' size={20} weight="fill" />
-            <p className='text-white text-lg sm:text-xl font-bold leading-none mt-1'>{streakCount}</p>
-            <p className='text-purple-100 text-[9px] sm:text-[10px] uppercase tracking-wider font-medium'>days</p>
+          {/* Premium Streak Badge */}
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 min-w-[80px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] mt-4 sm:mt-2 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 to-transparent"></div>
+            <Fire className='text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)] relative z-10 group-hover:scale-110 transition-transform duration-300' size={28} weight="fill" />
+            <p className='text-white text-2xl font-black leading-none mt-2 relative z-10'>{streakCount}</p>
+            <p className='text-white/50 text-[10px] uppercase tracking-widest font-bold mt-1 relative z-10'>Streak</p>
           </div>
         </div>
       </div>
 
-      {/* Main Content - SCROLLABLE AREA */}
-      <div className="flex-1 px-4 py-6 pb-28 space-y-8">
+      {/* Main Content - Black & White Premium Aesthetic */}
+      <div className="flex-1 px-4 sm:px-6 md:px-8 py-8 pb-28 space-y-10 max-w-5xl mx-auto w-full">
         
-        {/* Stats GridFour - FLUID AND COMPACT */}
+        {/* Statistics Section */}
         <section>
-          <div className="flex items-center justify-between mb-4 px-1">
-            <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-              <TrendUp size={14} weight="bold" />
+          <div className="flex items-center justify-between mb-5 px-1">
+            <h2 className="text-sm font-black text-text-primary dark:text-white uppercase tracking-[0.2em] flex items-center gap-3 border-l-4 border-blue-500 pl-3">
               Statistics
             </h2>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             <StatCard
-              icon={<Book weight="fill" />}
+              icon={<Book weight="duotone" />}
               label="Total Books"
               value={stats.totalBooks}
+              highlight={true}
             />
             <StatCard
-              icon={<BookOpen weight="fill" />}
+              icon={<BookOpen weight="duotone" />}
               label="Reading Now"
               value={stats.currentlyReading}
             />
             <StatCard
-              icon={<Book weight="fill" />}
+              icon={<Star weight="duotone" />}
               label="Completed"
               value={stats.completedBooks}
             />
             <StatCard
-              icon={<TrendUp weight="bold" />}
+              icon={<TrendUp weight="duotone" />}
               label="Pages Read"
               value={stats.totalPagesRead}
             />
           </div>
+        </section>
 
-          <div className="flex items-center justify-between mt-8 mb-4 px-1">
-            <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-              <Fire size={14} weight="fill" />
-              Interactions & Memory
+        {/* Interactions & Memory Section */}
+        <section>
+          <div className="flex items-center justify-between mb-5 px-1 mt-10">
+            <h2 className="text-sm font-black text-text-primary dark:text-white uppercase tracking-[0.2em] flex items-center gap-3 border-l-4 border-blue-500 pl-3">
+              Memory & Interactions
             </h2>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             <StatCard
-              icon={<TrendUp weight="bold" />}
-              label="Total Highlights"
+              icon={<Lightning weight="duotone" />}
+              label="Highlights"
               value={stats.highlightsCreated}
             />
             <StatCard
-              icon={<BookOpen weight="fill" />}
+              icon={<BookOpen weight="duotone" />}
               label="Notes Taken"
               value={stats.notesTaken}
             />
             <StatCard
-              icon={<Book weight="fill" />}
+              icon={<Brain weight="duotone" />}
               label="Words Saved"
               value={stats.wordsSaved}
+              highlight={true}
             />
             <StatCard
-              icon={<TrendUp weight="bold" />}
+              icon={<TrendUp weight="duotone" />}
               label="Quizzes Done"
               value={globalQuizStats?.attemptsCount || 0}
             />
             <StatCard
-              icon={<TrendUp weight="bold" />}
-              label="Avg Quiz Score"
+              icon={<Star weight="duotone" />}
+              label="Avg Score"
               value={globalQuizStats ? `${globalQuizStats.averageScore}%` : 'N/A'}
+              highlight={globalQuizStats?.averageScore >= 80}
             />
           </div>
         </section>
 
-        {/* Placeholder for Recent Activity if needed later */}
-        <div className="h-px bg-border-default/50 mx-4" />
       </div>
     </div>
-
   )
 }
 
-// Stat Card Component with PREMIUM BACKGROUND-ICON DESIGN
-const StatCard = ({ icon, label, value }) => (
-  <div className="relative overflow-hidden bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-card p-5 sm:p-6 hover:border-accent-primary/50 transition-all duration-300 shadow-sm hover:shadow-md group flex flex-col justify-end min-h-[110px]">
-    {/* Background Icon - LEFT POSITIONED, ROTATED */}
-    <div className="absolute -left-2 -top-2 text-text-primary/10 dark:text-white/10 transition-all duration-500 transform rotate-12 group-hover:rotate-0 group-hover:scale-110 group-hover:text-accent-primary/20">
-      {React.cloneElement(icon, { size: 80 })}
-    </div>
-    
-    {/* Content - Positioned relative to background icon */}
-    <div className="relative z-10">
-      <div className="text-2xl sm:text-3xl font-bold text-text-primary dark:text-white mb-0.5 tracking-tight">{value}</div>
-      <div className="text-[10px] sm:text-xs text-text-tertiary dark:text-zinc-400 font-bold uppercase tracking-widest">{label}</div>
-    </div>
-  </div>
-);
+// Ultra Premium Stat Card
+const StatCard = ({ icon, label, value, highlight = false }) => {
+  const { resolvedTheme } = useThemeStore();
+  const isDark = resolvedTheme === 'dark';
 
-// Activity Row Component
-const ActivityRow = ({ label, value }) => (
-  <div className="flex justify-between items-center">
-    <span className="text-sm text-text-secondary">{label}</span>
-    <span className="font-semibold text-sm text-text-primary">{value}</span>
-  </div>
-);
+  return (
+    <div className={`relative overflow-hidden 
+      ${highlight 
+        ? 'bg-gradient-to-br from-blue-600 to-blue-900 border-transparent shadow-[0_8px_30px_rgba(37,99,235,0.3)]' 
+        : 'bg-white dark:bg-zinc-900 border-black/5 dark:border-white/10 shadow-sm'} 
+      border rounded-[1.5rem] p-5 sm:p-6 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl group flex flex-col justify-end min-h-[120px]`}
+    >
+      {/* Background Icon */}
+      <div className={`absolute -right-4 -bottom-4 transition-all duration-700 transform group-hover:rotate-12 group-hover:scale-110 
+        ${highlight ? 'text-white/10' : 'text-black/5 dark:text-white/5'} 
+      `}>
+        {React.cloneElement(icon, { size: 100 })}
+      </div>
+      
+      {/* Glow Effect for Highlighted Cards */}
+      {highlight && (
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      )}
 
-// Book Row Component with Progress Bar
-const BookRow = ({ book }) => (
-  <div className="flex items-center gap-3 p-3 hover:bg-bg-subtle/50 rounded-xl transition-all cursor-pointer">
-    <div className="w-10 h-14 bg-border-default rounded-lg overflow-hidden flex-shrink-0">
-      <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
-    </div>
-    <div className="flex-1 min-w-0">
-      <h3 className="font-medium text-sm text-text-primary truncate mb-1.5">{book.title}</h3>
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-1.5 bg-border-default rounded-full overflow-hidden">
-          <div
-            className="h-full bg-accent-primary rounded-full transition-all"
-            style={{ width: `${book.progress}%` }}
-          />
+      {/* Content */}
+      <div className="relative z-10 flex flex-col gap-1">
+        <div className={`text-2xl sm:text-3xl lg:text-4xl font-black tracking-tighter
+          ${highlight ? 'text-white drop-shadow-md' : 'text-text-primary dark:text-white'}
+        `}>
+          {value}
         </div>
-        <span className="text-[10px] text-text-tertiary font-semibold min-w-[35px] text-right">{book.progress}%</span>
+        <div className={`text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em]
+          ${highlight ? 'text-blue-100' : 'text-text-tertiary dark:text-zinc-500'}
+        `}>
+          {label}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Profile
