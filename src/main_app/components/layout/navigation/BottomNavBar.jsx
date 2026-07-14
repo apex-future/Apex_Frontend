@@ -81,7 +81,7 @@ function BottomNavBar() {
       </NavLink>
 
       <NavLink
-        to="/quests"
+        to="/quest"
         className={() => `p-2 hover:bg-neutral-100/50 dark:hover:bg-white/10 rounded-full transition-all relative flex flex-col items-center group`}
       >
         {({ isActive }) => (
