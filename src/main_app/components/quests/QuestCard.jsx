@@ -141,7 +141,7 @@ export default function QuestCard({ quest, onProgressUpdate }) {
   };
 
   return (
-    <div ref={particleContainerRef} className="w-full flex flex-col gap-0.5">
+    <div ref={particleContainerRef} className="w-full">
       <ListItem
         icon={Icon}
         label={
@@ -165,30 +165,32 @@ export default function QuestCard({ quest, onProgressUpdate }) {
             )}
           </div>
         }
+        subComponent={
+          <>
+            {!completed && (
+              <div className="w-full h-3.5 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden shadow-inner">
+                <div
+                  className={`h-full bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] transition-all duration-[400ms] ease-out ${
+                    inProgress ? 'quest-shimmer' : ''
+                  }`}
+                  style={{ width: `${fillPercent}%` }}
+                />
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-text-primary mix-blend-overlay dark:text-white dark:mix-blend-normal">
+                  {progress} / {target}{unit ? ` ${unit}` : ''}
+                </span>
+              </div>
+            )}
+            {completed && (
+              <div className="w-full h-3.5 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] w-full" />
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
+                  Complete
+                </span>
+              </div>
+            )}
+          </>
+        }
       />
-      
-      {/* Progress bar underneath with counter inside */}
-      {!completed && (
-        <div className="w-full h-3.5 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden shadow-inner">
-          <div
-            className={`h-full bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] transition-all duration-[400ms] ease-out ${
-              inProgress ? 'quest-shimmer' : ''
-            }`}
-            style={{ width: `${fillPercent}%` }}
-          />
-          <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-text-primary mix-blend-overlay dark:text-white dark:mix-blend-normal">
-            {progress} / {target}{unit ? ` ${unit}` : ''}
-          </span>
-        </div>
-      )}
-      {completed && (
-        <div className="w-full h-3.5 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] w-full" />
-          <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
-            Complete
-          </span>
-        </div>
-      )}
     </div>
   );
 }

@@ -17,11 +17,12 @@ export default function ListItem({
   isActive = false,
   onClick,
   className = '',
+  subComponent,
 }) {
   console.log('[ListItem] label:', label, '| isActive:', isActive);
 
   const base = `
-    w-full flex items-center gap-3
+    w-full flex flex-col
     px-3 py-2.5
     rounded-xl
     text-sm font-semibold
@@ -39,25 +40,35 @@ export default function ListItem({
       onClick={onClick}
       className={`${base} ${states} ${className}`}
     >
-      {/* Left slot — icon */}
-      {Icon && (
-        <Icon
-          size={20}
-          weight="bold"
-          className="shrink-0"
-        />
-      )}
+      {/* Main row */}
+      <div className="w-full flex items-center gap-3">
+        {/* Left slot — icon */}
+        {Icon && (
+          <Icon
+            size={20}
+            weight="bold"
+            className="shrink-0"
+          />
+        )}
 
-      {/* Label */}
-      <span className="flex-1 text-left tracking-tight truncate">
-        {label}
-      </span>
-
-      {/* Right slot — badge, count, chevron, or nothing */}
-      {right && (
-        <span className="shrink-0">
-          {right}
+        {/* Label */}
+        <span className="flex-1 text-left tracking-tight truncate">
+          {label}
         </span>
+
+        {/* Right slot — badge, count, chevron, or nothing */}
+        {right && (
+          <span className="shrink-0">
+            {right}
+          </span>
+        )}
+      </div>
+
+      {/* Optional sub-component underneath */}
+      {subComponent && (
+        <div className="w-full mt-2">
+          {subComponent}
+        </div>
       )}
     </button>
   );

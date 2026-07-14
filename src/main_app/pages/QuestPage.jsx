@@ -7,7 +7,6 @@ import useXpStore from '../store/useXpStore';
 import WeeklyGoldenBar from '../components/quests/WeeklyGoldenBar';
 import QuestCard from '../components/quests/QuestCard';
 import QuestCompleteModal from '../components/quests/QuestCompleteModal';
-import StatCard from '../components/ui/StatCard';
 import EmptyState from '../components/ui/EmptyState';
 import Card from '../components/ui/Card';
 
@@ -267,29 +266,7 @@ export default function QuestPage() {
           ) : null}
         </div>
 
-        {/* SECTION 5 — Lifetime stats row */}
-        {!loading && stats && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.35 }}
-            className="grid grid-cols-2 gap-3 pt-2"
-          >
-            <StatCard
-              label="Total Quests"
-              value={stats.lifetime_quests_completed ?? 0}
-              icon={Trophy}
-              colorScheme="amber"
-            />
-            <StatCard
-              label="Reading Goal"
-              value={stats.current_progressive_target ?? 5}
-              icon={Target}
-              colorScheme="purple"
-              unit="min"
-            />
-          </motion.div>
-        )}
+
       </div>
 
       {/* SECTION 6 — Quest complete modal */}
