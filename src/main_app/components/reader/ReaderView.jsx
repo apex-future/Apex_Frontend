@@ -144,7 +144,7 @@ function ReaderView() {
         useXpStore.getState().startSessionTracker();
     }, [bookId]);
 
-    const handleExitReader = async () => {
+    const handleExitReader = async (fromPopState = false) => {
         // 1. Stop the XP timer immediately — no more minutes accumulate
         stopTick();
 
@@ -168,6 +168,9 @@ function ReaderView() {
         console.log('[Apex Session] Exit — active reading time:', timeSpentSeconds, 's');
 
         if (totalXp > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
+            if (fromPopState === true) {
+                window.history.pushState(null, '', window.location.href);
+            }
             setSessionStats({ 
                 xpGained: Math.max(0, readingXp), 
                 pagesRead, 
@@ -177,9 +180,28 @@ function ReaderView() {
             });
             setShowSessionSummary(true);
         } else {
-            navigate('/');
+            if (fromPopState === true) {
+                navigate(-1);
+            } else {
+                navigate('/');
+            }
         }
     };
+
+    const handleExitReaderRef = useRef(handleExitReader);
+    useEffect(() => { handleExitReaderRef.current = handleExitReader; }, [handleExitReader]);
+
+    useEffect(() => {
+        // Push dummy state to intercept hardware back button
+        window.history.pushState(null, '', window.location.href);
+        const handlePopState = () => {
+            if (handleExitReaderRef.current) {
+                handleExitReaderRef.current(true);
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     // Progress state
     const [localProgress, setLocalProgress] = useState(book?.progress || 0);
@@ -1682,7 +1704,7 @@ function ReaderView() {
                             }
                             // Reset session tracking
                             useXpStore.getState().startSessionTracker();
-                            navigate('/');
+                            navigate('/', { replace: true });
                         }}
                         onCancel={() => {
                             // User clicked X — cancel exit, resume timer
