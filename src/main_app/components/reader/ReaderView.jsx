@@ -270,7 +270,12 @@ function ReaderView() {
     // 1-MINUTE READING TIMER — Streak & Space Tracking
     // ============================================
     const { activeSpaceId, logSpaceActivity } = useSpaceStore();
-    const { updateStreak, streakCount, streakHistory } = useStudyStore();
+    const { updateStreak } = useStudyStore();
+    const streakCount = useStudyStore(s => s.streakCount);
+    const streakHistory = useStudyStore(s => s.streakHistory);
+
+    // Authoritative snapshot for the celebration modal — set AFTER updateStreak() mutates the store
+    const [celebrationData, setCelebrationData] = useState(null);
     const updateStreakRef = useRef(updateStreak);
     const logSpaceActivityRef = useRef(logSpaceActivity);
     useEffect(() => { updateStreakRef.current = updateStreak; }, [updateStreak]);
@@ -329,6 +334,9 @@ function ReaderView() {
                     
                     if (lastFired !== today) {
                         updateStreakRef.current();
+                        // Read AFTER the synchronous store mutation — this is the authoritative snapshot
+                        const store = useStudyStore.getState();
+                        setCelebrationData({ streakCount: store.streakCount, streakHistory: store.streakHistory });
                         setShowStreakCelebration(true);
                         streakFiredTodayRef.current = true; // Still keep ref updated for other possible checks
                         localStorage.setItem('apex_streak_fired_today', today);
@@ -1648,10 +1656,10 @@ function ReaderView() {
             <ReaderDictionary isOpen={isReaderDictOpen} onClose={() => setIsReaderDictOpen(false)} bookId={book?.id} initialWord={selectionData.text} />
             
             <AnimatePresence>
-                {showStreakCelebration && (
+                {showStreakCelebration && celebrationData && (
                     <StreakCelebration 
-                        streakCount={streakCount} 
-                        streakHistory={streakHistory} 
+                        streakCount={celebrationData.streakCount} 
+                        streakHistory={celebrationData.streakHistory} 
                         onClose={() => setShowStreakCelebration(false)} 
                     />
                 )}
