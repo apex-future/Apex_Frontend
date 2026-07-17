@@ -5,7 +5,7 @@ import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
 import Card from '../ui/Card';
 
-function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards, cachedDefinition }) {
+function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards, cachedDefinition, cachedTab }) {
     const { resolvedTheme } = useThemeStore();
     const isDark = resolvedTheme === 'dark';
 
@@ -20,45 +20,24 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showDict, setShowDict] = useState(!!cachedDefinition);
-    const [showTab, setShowTab] = useState(false);
-    const [tabText, setTabText] = useState('');
-    const [tabSaved, setTabSaved] = useState(false);
+    const [showTab, setShowTab] = useState(!!cachedTab);
+    const [tabText, setTabText] = useState(cachedTab ? cachedTab.text : '');
+    const [tabSaved, setTabSaved] = useState(!!cachedTab);
     const [wordSaved, setWordSaved] = useState(!!cachedDefinition);
     const [showFlashcards, setShowFlashcards] = useState(false);
     const [flashcardCount, setFlashcardCount] = useState(5);
     const [flashcardError, setFlashcardError] = useState('');
 
-    const [savedTabId, setSavedTabId] = useState(null);
-    const savedTabIdRef = useRef(null);
+    const [savedTabId, setSavedTabId] = useState(cachedTab ? (cachedTab.id || cachedTab.dexieId || cachedTab.supabaseId) : null);
+    const savedTabIdRef = useRef(cachedTab ? (cachedTab.id || cachedTab.dexieId || cachedTab.supabaseId) : null);
 
-    // Auto-save debounce effect (2 seconds)
+    // When tab is open (new or editing), keep the menu alive (same mechanism as dict)
+    // so that clicking elsewhere doesn't immediately close it.
     useEffect(() => {
-        if (!showTab || !tabText.trim()) return;
-
-        const delayDebounceFn = setTimeout(async () => {
-            if (savedTabIdRef.current) {
-                // Update
-                if (onUpdateNote) {
-                    onUpdateNote(savedTabIdRef.current, tabText.trim());
-                }
-            } else {
-                // Add
-                if (onAddNote) {
-                    const result = await onAddNote({
-                        text: tabText.trim(),
-                        context: selection,
-                        type: 'highlight_note'
-                    });
-                    if (result && result.id) {
-                        savedTabIdRef.current = result.id;
-                        setSavedTabId(result.id);
-                    }
-                }
-            }
-        }, 2000);
-
-        return () => clearTimeout(delayDebounceFn);
-    }, [tabText, showTab, onAddNote, onUpdateNote, selection]);
+        if (showTab) {
+            onDictToggle?.(true);
+        }
+    }, [showTab]);
 
     const toggleDict = (val) => {
         setShowDict(val);
@@ -136,33 +115,33 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
 
     const handleSaveTab = () => {
         if (!tabText.trim()) return;
-        setTabSaved(true);
 
-        // Save in the background (fire and forget)
-        (async () => {
-            if (savedTabIdRef.current) {
-                if (onUpdateNote) {
-                    await onUpdateNote(savedTabIdRef.current, tabText.trim());
-                }
-            } else {
-                if (onAddNote) {
-                    await onAddNote({
-                        text: tabText.trim(),
-                        context: selection,
-                        type: 'highlight_note'
-                    });
-                }
+        // Fire-and-forget — optimistic update in BookContext fires synchronously,
+        // so the marker appears immediately. Modal closes without waiting for DB.
+        if (savedTabIdRef.current) {
+            // Existing tab — just update text, no new marker
+            if (onUpdateNote) onUpdateNote(savedTabIdRef.current, tabText.trim());
+        } else {
+            // New tab — create it now (only on explicit ✓ click, never from debounce)
+            if (onAddNote) {
+                onAddNote({
+                    text: tabText.trim(),
+                    context: selection,
+                    type: 'highlight_note',
+                    startOffset: position?.startOffset,
+                    pageNumber: position?.pageNumber
+                });
             }
-        })();
+        }
 
         try {
             const { awardXpOptimistic } = useXpStore.getState();
             awardXpOptimistic('tab_added', {}, 5);
-            console.log('[XP Wire] tab_added optimistic award fired');
         } catch (xpErr) {
             console.error('[XP Wire] tab_added XP failed silently:', xpErr);
         }
 
+        onDictToggle?.(false); // Release the menu-stay-open lock
         toggleTab(false);
         setTabSaved(false);
         setTabText('');
@@ -175,6 +154,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         if (savedTabIdRef.current && onDeleteNote) {
             await onDeleteNote(savedTabIdRef.current);
         }
+        onDictToggle?.(false); // Release the menu-stay-open lock
         setTabText('');
         setSavedTabId(null);
         savedTabIdRef.current = null;
@@ -284,7 +264,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Define</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
+                            <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
 
                             <button
                                 onClick={onAskAI}
@@ -294,17 +274,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
-
-                            <button
-                                onClick={() => toggleFlashcards(true)}
-                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
-                            >
-                                <Stack size={20} weight="fill" className="text-text-secondary group-hover:text-rose-500 transition-colors" />
-                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Cards</span>
-                            </button>
-
-                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
+                            <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
 
                             <button
                                 onClick={() => toggleTab(true)}
@@ -314,7 +284,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Tab</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
+                            <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
 
                             <button
                                 onClick={() => onSimplify?.()}
@@ -451,7 +421,10 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         {/* Text Area */}
                         <textarea
                             value={tabText}
-                            onChange={(e) => setTabText(e.target.value)}
+                            onChange={(e) => {
+                                setTabText(e.target.value);
+                                setTabSaved(false);
+                            }}
                             placeholder="Write your tab here..."
                             className="flex-1 w-full p-4 text-[14px] leading-relaxed resize-none focus:outline-none text-text-primary bg-transparent"
                             autoFocus

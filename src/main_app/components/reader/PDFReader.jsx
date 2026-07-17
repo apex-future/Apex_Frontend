@@ -14,8 +14,28 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 /**
+ * Normalize ligatures and special characters for robust text matching.
+ * PDF text layers often contain ligature glyphs (ﬁ, ﬀ, ﬂ, etc.) that the browser
+ * expands to individual characters during text selection, causing mismatches.
+ */
+const LIGATURE_MAP = {
+  '\uFB00': 'ff', '\uFB01': 'fi', '\uFB02': 'fl',
+  '\uFB03': 'ffi', '\uFB04': 'ffl', '\uFB05': 'st', '\uFB06': 'st',
+};
+const LIGATURE_REGEX = /[\uFB00-\uFB06]/g;
+
+// Broader strip regex: whitespace (incl. non-breaking, thin, zero-width),
+// hyphens, soft hyphens, en/em dashes, and zero-width joiners/chars
+const STRIP_REGEX = /[\s\u00A0\u00AD\u2000-\u200F\u2028\u2029\u202F\u205F\u2060\uFEFF\-\u2010-\u2015]/;
+const STRIP_REGEX_G = /[\s\u00A0\u00AD\u2000-\u200F\u2028\u2029\u202F\u205F\u2060\uFEFF\-\u2010-\u2015]/g;
+
+function normalizeLigatures(text) {
+  return text.replace(LIGATURE_REGEX, (ch) => LIGATURE_MAP[ch] || ch);
+}
+
+/**
  * Scans all text nodes inside `container`, finds `searchText`, and returns an array of Range objects.
- * Adds spaces between text nodes to match browser selection behavior across PDF text spans.
+ * Handles ligatures, soft hyphens, zero-width chars, and various dash types for robust matching.
  */
 function getHighlightRanges(container, searchText, targetStartOffset) {
   if (!container || !searchText) return [];
@@ -25,8 +45,10 @@ function getHighlightRanges(container, searchText, targetStartOffset) {
   while ((node = walker.nextNode())) {
     textNodes.push(node);
   }
+  if (textNodes.length === 0) return [];
 
   // Build full text with space separators between nodes
+  // We track each node's character range in the concatenated string
   let fullText = '';
   const nodeMap = [];
   for (let i = 0; i < textNodes.length; i++) {
@@ -40,30 +62,66 @@ function getHighlightRanges(container, searchText, targetStartOffset) {
     nodeMap.push({ node: tn, start, end: fullText.length });
   }
 
-  // Escape special regex characters
-  const escapeRegExp = (string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  };
-
-  // Create a regex that matches the search text while ignoring whitespace differences
-  const words = searchText.replace(/\s+/g, ' ').trim().split(' ');
-  const regexStr = words.map(word => escapeRegExp(word)).join('\\s+');
-  let regex;
-  try {
-    regex = new RegExp(regexStr, 'gi');
-  } catch (e) {
-    return [];
+  // Normalize ligatures in the full text for matching
+  // We need to track position mapping because ligature expansion changes string length
+  const normalizedChars = [];
+  const normalizedToOriginal = []; // normalizedIndex -> originalIndex
+  for (let i = 0; i < fullText.length; i++) {
+    const ch = fullText[i];
+    const replacement = LIGATURE_MAP[ch];
+    if (replacement) {
+      for (let j = 0; j < replacement.length; j++) {
+        normalizedChars.push(replacement[j]);
+        normalizedToOriginal.push(i);
+      }
+    } else {
+      normalizedChars.push(ch);
+      normalizedToOriginal.push(i);
+    }
   }
+  const normalizedFullText = normalizedChars.join('');
+
+  // Strip whitespace/hyphens/dashes for fuzzy matching
+  let strippedFullText = '';
+  const strippedToNormalized = [];
+
+  for (let i = 0; i < normalizedFullText.length; i++) {
+    if (!STRIP_REGEX.test(normalizedFullText[i])) {
+      strippedToNormalized.push(i);
+      strippedFullText += normalizedFullText[i];
+    }
+  }
+
+  // Normalize and strip the search text the same way
+  const normalizedSearch = normalizeLigatures(searchText);
+  const strippedSearch = normalizedSearch.replace(STRIP_REGEX_G, '');
+  if (!strippedSearch) return [];
+
+  const searchTarget = strippedSearch.toLowerCase();
+  const searchSource = strippedFullText.toLowerCase();
 
   const ranges = [];
-  let match;
-  let matches = [];
-
-  while ((match = regex.exec(fullText)) !== null) {
-    matches.push({ start: match.index, end: regex.lastIndex });
+  const matches = [];
+  let startIndex = 0;
+  while ((startIndex = searchSource.indexOf(searchTarget, startIndex)) !== -1) {
+    // Map from stripped space back to original fullText positions
+    const normStart = strippedToNormalized[startIndex];
+    const normEnd = strippedToNormalized[startIndex + searchTarget.length - 1];
+    const originalStart = normalizedToOriginal[normStart];
+    const originalEnd = normalizedToOriginal[normEnd] + 1;
+    matches.push({ start: originalStart, end: originalEnd });
+    startIndex += 1;
   }
 
-  if (matches.length === 0) return [];
+  if (matches.length === 0) {
+    // Fallback: try without any normalization (exact substring match)
+    const directIdx = fullText.toLowerCase().indexOf(searchText.toLowerCase());
+    if (directIdx !== -1) {
+      matches.push({ start: directIdx, end: directIdx + searchText.length });
+    } else {
+      return [];
+    }
+  }
 
   // If we have a target offset, find the closest match
   let bestMatch = matches[0];
@@ -78,20 +136,20 @@ function getHighlightRanges(container, searchText, targetStartOffset) {
     }
   }
 
-  // Create ranges for the best match (or all matches if no target offset was used, 
-  // though target offset is usually provided for specific highlights)
+  // Create Range objects spanning the matched text across text nodes
   const applyMatch = (m) => {
     for (let i = 0; i < nodeMap.length; i++) {
       const nm = nodeMap[i];
       if (nm.end <= m.start || nm.start >= m.end) continue;
       const overlapStart = Math.max(0, m.start - nm.start);
       const overlapEnd = Math.min(nm.node.textContent.length, m.end - nm.start);
+      if (overlapStart >= overlapEnd) continue;
       try {
         const range = document.createRange();
         range.setStart(nm.node, overlapStart);
         range.setEnd(nm.node, overlapEnd);
         ranges.push(range);
-      } catch (e) {}
+      } catch (e) { /* node may have been detached */ }
     }
   };
 
@@ -111,7 +169,7 @@ function getHighlightRanges(container, searchText, targetStartOffset) {
 // The old canvas stays visible while re-rendering at a new scale, so no skeleton flash.
 const VirtualPage = memo(({ pageNumber, rotation, baseScale, cssZoomRatio, width, onRenderSuccess }) => {
   return (
-    <div 
+    <div
       className="relative bg-white mx-auto"
       style={{
         width: width * baseScale * cssZoomRatio,
@@ -173,7 +231,7 @@ const PDFReader = ({
   onPageChange,
 }) => {
   const containerRef = useRef(null);
-  
+
   // [FIX]: The PDF Document proxy was completely hidden inside react-pdf's Document component and recreated when unmounted.
   // We now cache it in a ref to prevent document recreation which was the original source of the render flash.
   const pdfDocumentRef = useRef(null);
@@ -187,10 +245,10 @@ const PDFReader = ({
   }, []);
 
   const isDesktop = windowWidth > 1024;
-  
+
   // The fixed width we render the PDF canvas at
   const renderWidth = isDesktop ? Math.min(windowWidth - 120, 1100) : windowWidth;
-  
+
   // Calculate how much we need to scale it down via CSS if the container shrinks
   // We cap it at 1 so we don't scale up via CSS (which would look blurry)
   const cssScale = containerWidth > 0 ? Math.min(1, containerWidth / renderWidth) : 1;
@@ -336,7 +394,7 @@ const PDFReader = ({
       if (isVertical && rowVirtualizer && numPages) {
         // Use a timeout to ensure virtualizer has updated its internal measurements
         setTimeout(() => {
-            rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start' });
+          rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start' });
         }, 10);
       }
     }
@@ -347,200 +405,280 @@ const PDFReader = ({
     setPageRendered(prev => prev + 1);
   }, []);
 
-  // Post-render: apply highlights to the text layer DOM safely without breaking React Node hierarchy
-  // Uses requestIdleCallback for non-blocking highlight painting
+  // ─── Highlight rendering engine ───
+  // Applies highlights, tabs, dictionary markers, and simplification underlines
+  // to the PDF text layer DOM. Uses overlay divs positioned relative to each
+  // page's .react-pdf__Page element (inside the same transform context as the
+  // text layer) to eliminate coordinate mismatches from nested CSS transforms.
+
+  // Ref to hold current highlights for the MutationObserver callback
+  const highlightsRef = useRef(highlights);
+  useEffect(() => { highlightsRef.current = highlights; }, [highlights]);
+
+  // Core function: apply highlights to a single page element
+  const applyHighlightsToPage = useCallback((pageNum, pageEl, currentHighlights, collectedRanges, useCSSHighlight) => {
+    const pageHighlights = currentHighlights.filter(
+      (h) => (h.page || h.pageNumber) === pageNum
+    );
+    if (pageHighlights.length === 0) return;
+
+    const textLayer = pageEl.querySelector('.react-pdf__Page__textContent');
+    if (!textLayer) return;
+    // Ensure text layer has actual text content before proceeding
+    if (!textLayer.textContent || textLayer.textContent.trim().length === 0) return;
+
+    // Find the .react-pdf__Page element — the stable positioning ancestor
+    // This is inside the same transform context as the text layer, so
+    // getClientRects() coordinates map correctly to absolute positioning here.
+    const pageContainer = pageEl.querySelector('.react-pdf__Page') || pageEl;
+    // Ensure it has position:relative so absolute children are positioned correctly
+    if (pageContainer !== pageEl && getComputedStyle(pageContainer).position === 'static') {
+      pageContainer.style.position = 'relative';
+    }
+
+    // Clean up old fallback overlays from this specific page container
+    pageContainer.querySelectorAll('.apex-fallback-hl-layer').forEach(el => el.remove());
+
+    let hlLayer = null;
+    const createHlLayer = () => {
+      const layer = document.createElement('div');
+      layer.className = 'apex-fallback-hl-layer';
+      layer.style.position = 'absolute';
+      layer.style.top = '0';
+      layer.style.left = '0';
+      layer.style.width = '100%';
+      layer.style.height = '100%';
+      layer.style.pointerEvents = 'none';
+      layer.style.zIndex = '10';
+      layer.style.mixBlendMode = 'multiply';
+      pageContainer.appendChild(layer);
+      return layer;
+    };
+
+    if (!useCSSHighlight) {
+      hlLayer = createHlLayer();
+    }
+
+    // Use pageContainer as the coordinate reference — it's in the same transform context
+    const anchorRect = pageContainer.getBoundingClientRect();
+
+    for (const h of pageHighlights) {
+      const text = h.text || h.highlightedText || '';
+      let color = h.color || '#fef08a';
+      const isSimplified = h.isSimplified === true;
+      const isDictionary = h.isDictionaryWord === true;
+      const isTab = h.isTab === true;
+      if (!text) continue;
+
+      const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
+
+      const ranges = getHighlightRanges(textLayer, text, h.startOffset);
+      if (ranges.length === 0) continue;
+
+      if (isSimplified || isDictionary || isTab) {
+        // Ensure overlay layer exists for interactive markers
+        if (!hlLayer) hlLayer = createHlLayer();
+
+        let isFirstRectOverall = true;
+        for (const range of ranges) {
+          const rects = range.getClientRects();
+          for (let ri = 0; ri < rects.length; ri++) {
+            const rect = rects[ri];
+            if (rect.width === 0 || rect.height === 0) continue;
+
+            const div = document.createElement('div');
+            div.className = 'apex-hl-overlay';
+            div.style.position = 'absolute';
+            div.style.left = `${rect.left - anchorRect.left}px`;
+            div.style.top = `${rect.top - anchorRect.top}px`;
+            div.style.width = `${rect.width}px`;
+            div.style.height = `${rect.height}px`;
+            div.style.pointerEvents = 'auto';
+            div.style.cursor = 'pointer';
+            div.style.boxSizing = 'border-box';
+
+            if (isDictionary) {
+              const svgStr = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 8'><path fill='none' stroke='gray' stroke-width='2' d='M0 4 Q 5 8, 10 4 T 20 4'/></svg>`;
+              div.style.background = `url("data:image/svg+xml,${encodeURIComponent(svgStr)}") repeat-x bottom`;
+              div.style.backgroundSize = '18px 7px';
+              div.style.opacity = '1';
+              div.dataset.dictWord = text;
+              div.dataset.dictId = h.id;
+            } else if (isSimplified) {
+              div.style.borderBottom = `2.5px solid ${color}`;
+              div.style.opacity = '0.8';
+            } else if (isTab) {
+              div.style.backgroundColor = color;
+              div.style.opacity = '1';
+              div.style.borderRadius = '2px';
+
+              // Only add quote icon on the very first rect across ALL ranges
+              if (isFirstRectOverall) {
+                const quoteIcon = document.createElement('span');
+                quoteIcon.innerHTML = '\u201C';
+                quoteIcon.style.position = 'absolute';
+                quoteIcon.style.left = '2px';
+                quoteIcon.style.top = '-4px';
+                quoteIcon.style.color = '#a855f7';
+                quoteIcon.style.fontSize = '18px';
+                quoteIcon.style.fontFamily = 'Georgia, serif';
+                quoteIcon.style.fontWeight = 'bold';
+                quoteIcon.style.lineHeight = '1';
+                quoteIcon.style.textShadow = '0 1px 2px rgba(0,0,0,0.2)';
+                div.appendChild(quoteIcon);
+                isFirstRectOverall = false;
+              }
+            }
+
+            div.onclick = (e) => {
+              e.stopPropagation();
+              if (isDictionary) {
+                const event = new CustomEvent('apex-dict-click', { detail: { wordObj: h.wordObj, rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height } } });
+                window.dispatchEvent(event);
+              } else if (isSimplified) {
+                const event = new CustomEvent('apex-simplify-click', { detail: { text: h.text } });
+                window.dispatchEvent(event);
+              } else if (isTab) {
+                const event = new CustomEvent('apex-tab-click', { detail: { tabObj: h.tabObj, rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height } } });
+                window.dispatchEvent(event);
+              }
+            };
+
+            hlLayer.appendChild(div);
+          }
+        }
+      } else if (useCSSHighlight) {
+        if (!collectedRanges[color]) collectedRanges[color] = [];
+        collectedRanges[color].push(...ranges);
+      } else {
+        if (!hlLayer) hlLayer = createHlLayer();
+        for (const range of ranges) {
+          const rects = range.getClientRects();
+          for (let ri = 0; ri < rects.length; ri++) {
+            const rect = rects[ri];
+            if (rect.width === 0 || rect.height === 0) continue;
+            const div = document.createElement('div');
+            div.style.position = 'absolute';
+            div.style.left = `${rect.left - anchorRect.left}px`;
+            div.style.top = `${rect.top - anchorRect.top}px`;
+            div.style.width = `${rect.width}px`;
+            div.style.height = `${rect.height}px`;
+            div.style.backgroundColor = displayColor;
+            div.style.borderRadius = '2px';
+            hlLayer.appendChild(div);
+          }
+        }
+      }
+    }
+  }, []);
+
+  // Main highlight effect — runs when highlights change, pages render, or zoom changes
   useEffect(() => {
     if (!highlights || highlights.length === 0) return;
     const container = containerRef.current;
     if (!container) return;
 
-    const collectedRanges = {};
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const useCSSHighlight = !isTouchDevice && 'highlights' in CSS;
+    const collectedRanges = {};
 
-    const applyToPage = (pageNum, pageEl) => {
-        const pageHighlights = highlights.filter(
-            (h) => (h.page || h.pageNumber) === pageNum
-        );
-        if (pageHighlights.length === 0) return;
+    const runHighlightPass = () => {
+      if (useCSSHighlight) CSS.highlights.clear();
 
-        const textLayer = pageEl.querySelector('.react-pdf__Page__textContent');
-        if (!textLayer) return;
+      // Clean up all existing overlay layers first
+      container.querySelectorAll('.apex-fallback-hl-layer').forEach(el => el.remove());
 
-        // Clean up old fallback overlays
-        pageEl.querySelectorAll('.apex-fallback-hl-layer').forEach(el => el.remove());
+      const freshCollectedRanges = {};
 
-        let hlLayer = null;
-        if (!useCSSHighlight) {
-            hlLayer = document.createElement('div');
-            hlLayer.className = 'apex-fallback-hl-layer';
-            hlLayer.style.position = 'absolute';
-            hlLayer.style.top = '0';
-            hlLayer.style.left = '0';
-            hlLayer.style.width = '100%';
-            hlLayer.style.height = '100%';
-            hlLayer.style.pointerEvents = 'none';
-            hlLayer.style.zIndex = '10';
-            hlLayer.style.mixBlendMode = 'multiply';
-            pageEl.appendChild(hlLayer);
+      container.querySelectorAll('.pdf-page-wrapper').forEach((wrapper) => {
+        const pageNum = parseInt(wrapper.dataset.pageIndex, 10);
+        if (!isNaN(pageNum)) {
+          applyHighlightsToPage(pageNum, wrapper, highlights, freshCollectedRanges, useCSSHighlight);
         }
+      });
 
-        const pageRect = pageEl.getBoundingClientRect();
-
-        for (const h of pageHighlights) {
-            const text = h.text || h.highlightedText || '';
-            let color = h.color || '#fef08a';
-            const isSimplified = h.isSimplified === true;
-            const isDictionary = h.isDictionaryWord === true;
-            if (!text) continue;
-
-            const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
-
-            const ranges = getHighlightRanges(textLayer, text, h.startOffset);
-            if (ranges.length === 0) continue;
-
-            if (isSimplified || isDictionary) {
-                // Simplified/Dictionary text: render as underline, not background
-                if (useCSSHighlight && !isDictionary) {
-                    const safeColor = color.replace(/[^a-zA-Z0-9]/g, '');
-                    const highlightName = `apex-simplified-${safeColor}-${ranges.length}`;
-                    try {
-                        const highlight = new Highlight(...ranges);
-                        CSS.highlights.set(highlightName, highlight);
-                    } catch (e) {
-                        console.warn('[Apex Highlight] Failed to apply simplified CSS highlight:', e);
-                    }
-                } else if (useCSSHighlight && isDictionary) {
-                    // For dictionary words, we can use CSS highlight for wavy underline
-                    const highlightName = `apex-dict-${h.id || Date.now()}`;
-                    try {
-                        const highlight = new Highlight(...ranges);
-                        CSS.highlights.set(highlightName, highlight);
-                    } catch (e) {
-                        console.warn('[Apex Highlight] Failed to apply dict CSS highlight:', e);
-                    }
-                }
-                
-                // Always use fallback overlay for underline rendering (works on all devices) if not using CSS highlights or if we need consistent cross-browser wavy lines
-                if (!hlLayer) {
-                    hlLayer = document.createElement('div');
-                    hlLayer.className = 'apex-fallback-hl-layer';
-                    hlLayer.style.position = 'absolute';
-                    hlLayer.style.top = '0';
-                    hlLayer.style.left = '0';
-                    hlLayer.style.width = '100%';
-                    hlLayer.style.height = '100%';
-                    hlLayer.style.pointerEvents = 'none';
-                    hlLayer.style.zIndex = '10';
-                    pageEl.appendChild(hlLayer);
-                }
-                for (const range of ranges) {
-                    const rects = range.getClientRects();
-                    for (let i = 0; i < rects.length; i++) {
-                        const rect = rects[i];
-                        const div = document.createElement('div');
-                        div.style.position = 'absolute';
-                        div.style.left = `${rect.left - pageRect.left}px`;
-                        div.style.top = `${rect.top - pageRect.top + rect.height - 2}px`;
-                        div.style.width = `${rect.width}px`;
-                        div.style.height = '2px';
-                        
-                        if (isDictionary) {
-                            div.style.background = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 20 8\'%3E%3Cpath fill=\'none\' stroke=\'gray\' stroke-width=\'2\' d=\'M0 4 Q 5 8, 10 4 T 20 4\'/%3E%3C/svg%3E") repeat-x bottom';
-                            div.style.backgroundSize = '18px 7px';
-                            div.style.opacity = '0.8';
-                        } else {
-                            div.style.backgroundColor = color;
-                            div.style.opacity = '0.6';
-                            div.style.borderRadius = '1px';
-                        }
-                        
-                        // Add data attributes for click detection
-                        if (isDictionary) {
-                            div.dataset.dictWord = text;
-                            div.dataset.dictId = h.id;
-                            // Make it clickable by slightly increasing height and pointer events
-                            div.style.height = `${rect.height}px`;
-                            div.style.top = `${rect.top - pageRect.top}px`;
-                            div.style.pointerEvents = 'auto';
-                            div.style.cursor = 'pointer';
-                            div.onclick = (e) => {
-                                e.stopPropagation();
-                                const event = new CustomEvent('apex-dict-click', { detail: { wordObj: h.wordObj, rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height } } });
-                                window.dispatchEvent(event);
-                            };
-                        }
-                        
-                        hlLayer.appendChild(div);
-                    }
-                }
-            } else if (useCSSHighlight) {
-                if (!collectedRanges[color]) collectedRanges[color] = [];
-                collectedRanges[color].push(...ranges);
-            } else if (hlLayer) {
-                for (const range of ranges) {
-                    const rects = range.getClientRects();
-                    for (let i = 0; i < rects.length; i++) {
-                        const rect = rects[i];
-                        const div = document.createElement('div');
-                        div.style.position = 'absolute';
-                        div.style.left = `${rect.left - pageRect.left}px`;
-                        div.style.top = `${rect.top - pageRect.top}px`;
-                        div.style.width = `${rect.width}px`;
-                        div.style.height = `${rect.height}px`;
-                        div.style.backgroundColor = displayColor;
-                        div.style.borderRadius = '2px';
-                        hlLayer.appendChild(div);
-                    }
-                }
-            }
+      if (useCSSHighlight) {
+        let styleText = '';
+        for (const [color, ranges] of Object.entries(freshCollectedRanges)) {
+          if (ranges.length === 0) continue;
+          const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
+          const safeColor = color.replace(/[^a-zA-Z0-9]/g, '');
+          const highlightName = `apex-hl-${safeColor}`;
+          try {
+            const highlight = new Highlight(...ranges);
+            CSS.highlights.set(highlightName, highlight);
+            // Fix: don't set color:transparent — it makes text invisible if ranges misalign
+            styleText += `::highlight(${highlightName}) { background-color: ${displayColor}; }\n`;
+          } catch (e) {
+            // Range may have been detached by virtualizer recycling
+          }
         }
+        let styleEl = document.getElementById('apex-css-highlights');
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = 'apex-css-highlights';
+          document.head.appendChild(styleEl);
+        }
+        if (styleEl.textContent !== styleText) {
+          styleEl.textContent = styleText;
+        }
+      }
     };
 
-    // Use requestIdleCallback to apply highlights without blocking main thread
-    const scheduleHighlights = typeof requestIdleCallback === 'function' ? requestIdleCallback : (fn) => setTimeout(fn, 100);
-    const cancelHighlights = typeof cancelIdleCallback === 'function' ? cancelIdleCallback : clearTimeout;
+    // Run immediately via microtask so highlights appear without delay
+    const timerId = setTimeout(runHighlightPass, 0);
 
-    const idleId = scheduleHighlights(() => {
-        if (useCSSHighlight) CSS.highlights.clear();
+    // MutationObserver: watch for text layer DOM changes (react-pdf adding spans)
+    // This catches pages that render asynchronously after the effect first ran.
+    // IMPORTANT: We use a guard flag to prevent infinite loops — runHighlightPass
+    // itself adds/removes overlay divs which would trigger the observer again.
+    let mutationRafId = null;
+    let isApplyingHighlights = false;
 
-        container.querySelectorAll('.pdf-page-wrapper').forEach((wrapper) => {
-            const pageNum = parseInt(wrapper.dataset.pageIndex, 10);
-            if (!isNaN(pageNum)) applyToPage(pageNum, wrapper);
-        });
+    const guardedRunHighlightPass = () => {
+      isApplyingHighlights = true;
+      runHighlightPass();
+      // Reset flag after a microtask to allow the browser to flush all
+      // synchronous mutation records triggered by our DOM changes
+      queueMicrotask(() => { isApplyingHighlights = false; });
+    };
 
-        if (useCSSHighlight) {
-            let styleText = '';
-            for (const [color, ranges] of Object.entries(collectedRanges)) {
-                if (ranges.length === 0) continue;
-                const displayColor = color.length === 7 && color.startsWith('#') ? color + '66' : color;
-                const safeColor = color.replace(/[^a-zA-Z0-9]/g, '');
-                const highlightName = `apex-hl-${safeColor}`;
-                try {
-                    const highlight = new Highlight(...ranges);
-                    CSS.highlights.set(highlightName, highlight);
-                    styleText += `::highlight(${highlightName}) { background-color: ${displayColor}; color: transparent; }\n`;
-                } catch (e) {
-                    console.warn('[Apex Highlight] Failed to apply CSS highlight (range detached):', e);
-                }
-            }
-            let styleEl = document.getElementById('apex-css-highlights');
-            if (!styleEl) {
-                styleEl = document.createElement('style');
-                styleEl.id = 'apex-css-highlights';
-                document.head.appendChild(styleEl);
-            }
-            if (styleEl.textContent !== styleText) {
-                styleEl.textContent = styleText;
-            }
-        }
+    // Swap the initial run to use the guarded version too
+    clearTimeout(timerId);
+    const guardedTimerId = setTimeout(guardedRunHighlightPass, 0);
+
+    const observer = new MutationObserver((mutations) => {
+      // Skip mutations caused by our own overlay div additions/removals
+      if (isApplyingHighlights) return;
+
+      // Only react to mutations inside text layers, not our overlay layers
+      const isTextLayerChange = mutations.some(m =>
+        m.target.classList?.contains('react-pdf__Page__textContent') ||
+        m.target.closest?.('.react-pdf__Page__textContent') ||
+        m.target.closest?.('.react-pdf__Page')
+      );
+      if (!isTextLayerChange) return;
+
+      // Batch mutations with rAF to avoid running on every individual span insertion
+      if (mutationRafId) cancelAnimationFrame(mutationRafId);
+      mutationRafId = requestAnimationFrame(guardedRunHighlightPass);
+    });
+
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+      // Only watch for structural changes (new text spans), not attribute/text changes
+      attributes: false,
+      characterData: false,
     });
 
     return () => {
-        cancelHighlights(idleId);
-        if (useCSSHighlight) CSS.highlights.clear();
+      clearTimeout(guardedTimerId);
+      if (mutationRafId) cancelAnimationFrame(mutationRafId);
+      observer.disconnect();
+      if (useCSSHighlight) CSS.highlights.clear();
     };
-  }, [highlights, pageNumber, isVertical]);
+  }, [highlights, pageNumber, isVertical, pageRendered, scale, applyHighlightsToPage]);
 
   const customTextRenderer = React.useCallback(
     ({ str }) => str,
@@ -574,17 +712,17 @@ const PDFReader = ({
   const handleWheel = useCallback((e) => {
     if (isVertical) return;
     if (swipeLocked || window.getSelection()?.toString().trim()) return;
-    
+
     const now = Date.now();
-    
+
     // Reset accumulator if it's been a while since last event
     if (now - (window.lastWheelEventTime || 0) > 150) {
-        window.wheelDeltaY = 0;
+      window.wheelDeltaY = 0;
     }
     window.lastWheelEventTime = now;
-    
+
     window.wheelDeltaY = (window.wheelDeltaY || 0) + e.deltaY;
-    
+
     // Cooldown between page flips
     if (now - (window.lastWheelFlipTime || 0) < 300) return;
 
@@ -612,8 +750,8 @@ const PDFReader = ({
 
         const now = Date.now();
         if (now - lastEdgeHit.current.right > 2000) {
-            lastEdgeHit.current.right = now;
-            return;
+          lastEdgeHit.current.right = now;
+          return;
         }
         lastEdgeHit.current.right = 0;
       }
@@ -633,8 +771,8 @@ const PDFReader = ({
 
         const now = Date.now();
         if (now - lastEdgeHit.current.left > 2000) {
-            lastEdgeHit.current.left = now;
-            return;
+          lastEdgeHit.current.left = now;
+          return;
         }
         lastEdgeHit.current.left = 0;
       }
@@ -756,8 +894,8 @@ const PDFReader = ({
                     ? scrollAnimation === 'fade'
                       ? 'opacity 150ms ease-in-out'
                       : scrollAnimation === 'slide'
-                      ? 'opacity 100ms ease-in-out, transform 150ms ease-out'
-                      : 'none'
+                        ? 'opacity 100ms ease-in-out, transform 150ms ease-out'
+                        : 'none'
                     : 'none',
                   top: isActive ? 'auto' : 0,
                   left: isActive ? 'auto' : 0,

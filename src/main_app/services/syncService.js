@@ -189,9 +189,7 @@ const syncService = {
       formData.append('local_id', dexieBookId.toString());
       if (totalPages > 1) formData.append('total_pages', totalPages.toString());
 
-      const response = await apiClient.post('/api/books/upload', formData, {
-        headers: { 'Content-TextT': 'multipart/form-data' },
-      });
+      const response = await apiClient.post('/api/books/upload', formData);
 
       if (response.data && response.data.id) {
         // Update Dexie with the Supabase UUID

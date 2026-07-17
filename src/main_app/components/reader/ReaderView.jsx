@@ -593,18 +593,31 @@ function ReaderView() {
     const bookmarks = book?.metadata?.bookmarks || [];
     const highlights = book?.metadata?.highlights || [];
     const dictionaryWords = book?.metadata?.words || [];
+    const tabs = book?.metadata?.tabs || [];
+    
     const stableHighlights = useMemo(() => {
         const dictHighlights = dictionaryWords.filter(w => w.startOffset != null && w.pageNumber != null).map(w => ({
             id: `dict-${w.word}-${w.startOffset}`,
             text: w.word,
-            color: 'gray', // handled by PDFReader internally
+            color: 'gray',
             page: w.pageNumber,
             startOffset: w.startOffset,
             isDictionaryWord: true,
             wordObj: w
         }));
-        return [...highlights, ...dictHighlights];
-    }, [highlights, dictionaryWords]);
+
+        const tabHighlights = tabs.filter(t => t.startOffset != null && t.pageNumber != null).map(t => ({
+            id: `tab-${t.id}`,
+            text: t.context || '', // context contains the highlighted text
+            color: 'rgba(128, 128, 128, 0.3)', // grey highlight
+            page: t.pageNumber,
+            startOffset: t.startOffset,
+            isTab: true,
+            tabObj: t
+        }));
+
+        return [...highlights, ...dictHighlights, ...tabHighlights];
+    }, [highlights, dictionaryWords, tabs]);
 
     const isCurrentPageBookmarked = bookmarks.some(
         bm => bm.pageNumber === pageNumber || bm.page === pageNumber
@@ -630,13 +643,55 @@ function ReaderView() {
             setSelectionData(mockSelection);
             setShowHighlightMenu(true);
             
-            // We don't need to force open anymore since HighlightMenu initializes with it!
-            // But we can set isDictOpen to keep ReaderView state in sync
             setIsDictOpen(true);
         };
         
         window.addEventListener('apex-dict-click', handleDictClick);
         return () => window.removeEventListener('apex-dict-click', handleDictClick);
+    }, []);
+
+    // Simplify click listener
+    const handleSimplifyRef = useRef();
+    // Keep ref updated without triggering re-renders
+    useEffect(() => {
+        handleSimplifyRef.current = handleSimplify;
+    });
+
+    useEffect(() => {
+        const handleSimplifyClick = (e) => {
+            const { text } = e.detail;
+            selectionRef.current = { text };
+            if (handleSimplifyRef.current) {
+                handleSimplifyRef.current();
+            }
+        };
+        window.addEventListener('apex-simplify-click', handleSimplifyClick);
+        return () => window.removeEventListener('apex-simplify-click', handleSimplifyClick);
+    }, []);
+
+    // Tab click listener
+    useEffect(() => {
+        const handleTabClick = (e) => {
+            const { tabObj, rect } = e.detail;
+
+            const mockSelection = {
+                text: tabObj.context || '',
+                x: rect.left + rect.width / 2,
+                y: rect.top,
+                startOffset: tabObj.startOffset,
+                bottom: rect.bottom,
+                pageNumber: tabObj.pageNumber,
+                cachedTab: tabObj
+            };
+            
+            selectionRef.current = mockSelection;
+            setSelectionData(mockSelection);
+            // Keep the menu alive past selectionchange (same guard as dict click)
+            setIsDictOpen(true);
+            setShowHighlightMenu(true);
+        };
+        window.addEventListener('apex-tab-click', handleTabClick);
+        return () => window.removeEventListener('apex-tab-click', handleTabClick);
     }, []);
 
     // Ref-stable callback — identity never changes, so PDFReader never re-renders due to this prop
@@ -998,6 +1053,14 @@ function ReaderView() {
         // Hide the menu immediately when user starts interacting (dragging/highlighting) again
         const handleInteractionStart = (e) => {
             if (e.target.closest('.highlight-menu-container')) return;
+            // Don't close if tapping a highlight overlay (dict/simplified/tab marker).
+            // Also suppress selectionchange for the next 200ms so the handler
+            // (which fires before onclick on mobile) cannot close the modal.
+            if (e.target.classList.contains('apex-hl-overlay')) {
+                ignoreSelectionChangeRef.current = true;
+                setTimeout(() => { ignoreSelectionChangeRef.current = false; }, 200);
+                return;
+            }
             setShowHighlightMenu(false);
         };
 
@@ -1324,6 +1387,7 @@ function ReaderView() {
                             pageNumber: selectionRef.current.pageNumber
                         }}
                         cachedDefinition={selectionRef.current.cachedDefinition}
+                        cachedTab={selectionRef.current.cachedTab}
                         onAskAI={() => {
                             window.getSelection()?.removeAllRanges();
                             setAiModal(true);
