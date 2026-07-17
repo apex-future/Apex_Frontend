@@ -88,6 +88,7 @@ export default function Header() {
                         icon={Scroll}
                         colorScheme="emerald"
                         unit="/ 3 completed"
+                        onClick={() => navigate('/quest')}
                     />
                 </div>
 
