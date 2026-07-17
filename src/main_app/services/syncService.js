@@ -183,13 +183,17 @@ const syncService = {
       } catch (_) {}
 
       const formData = new FormData();
-      formData.append('file', fileObject);
       formData.append('title', title);
       formData.append('author', author || 'Unknown');
       formData.append('local_id', dexieBookId.toString());
       if (totalPages > 1) formData.append('total_pages', totalPages.toString());
+      formData.append('file', fileObject);
 
-      const response = await apiClient.post('/api/books/upload', formData);
+      const response = await apiClient.post('/api/books/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
       if (response.data && response.data.id) {
         // Update Dexie with the Supabase UUID
