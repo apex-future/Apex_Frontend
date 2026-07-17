@@ -462,6 +462,13 @@ const PDFReader = ({
     // Use pageContainer as the coordinate reference — it's in the same transform context
     const anchorRect = pageContainer.getBoundingClientRect();
 
+    // FIX: getBoundingClientRect() returns viewport-space coords (post CSS transforms).
+    // Absolute positioning uses layout-space (pre-transform). With scale(cssZoomRatio)
+    // and scale(cssScale) applied by ancestors, these spaces differ significantly.
+    // Derive the actual scale factor from the DOM to convert between them.
+    const scaleX = pageContainer.offsetWidth  > 0 ? anchorRect.width  / pageContainer.offsetWidth  : 1;
+    const scaleY = pageContainer.offsetHeight > 0 ? anchorRect.height / pageContainer.offsetHeight : 1;
+
     for (const h of pageHighlights) {
       const text = h.text || h.highlightedText || '';
       let color = h.color || '#fef08a';
@@ -489,10 +496,10 @@ const PDFReader = ({
             const div = document.createElement('div');
             div.className = 'apex-hl-overlay';
             div.style.position = 'absolute';
-            div.style.left = `${rect.left - anchorRect.left}px`;
-            div.style.top = `${rect.top - anchorRect.top}px`;
-            div.style.width = `${rect.width}px`;
-            div.style.height = `${rect.height}px`;
+            div.style.left   = `${(rect.left - anchorRect.left) / scaleX}px`;
+            div.style.top    = `${(rect.top  - anchorRect.top)  / scaleY}px`;
+            div.style.width  = `${rect.width  / scaleX}px`;
+            div.style.height = `${rect.height / scaleY}px`;
             div.style.pointerEvents = 'auto';
             div.style.cursor = 'pointer';
             div.style.boxSizing = 'border-box';
@@ -559,10 +566,10 @@ const PDFReader = ({
             if (rect.width === 0 || rect.height === 0) continue;
             const div = document.createElement('div');
             div.style.position = 'absolute';
-            div.style.left = `${rect.left - anchorRect.left}px`;
-            div.style.top = `${rect.top - anchorRect.top}px`;
-            div.style.width = `${rect.width}px`;
-            div.style.height = `${rect.height}px`;
+            div.style.left   = `${(rect.left - anchorRect.left) / scaleX}px`;
+            div.style.top    = `${(rect.top  - anchorRect.top)  / scaleY}px`;
+            div.style.width  = `${rect.width  / scaleX}px`;
+            div.style.height = `${rect.height / scaleY}px`;
             div.style.backgroundColor = displayColor;
             div.style.borderRadius = '2px';
             hlLayer.appendChild(div);
