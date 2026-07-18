@@ -3,6 +3,7 @@ import { X, CaretLeft, CaretRight, Stack, Sparkle, CheckCircle } from '@phosphor
 import Flashcard3D from './Flashcard3D';
 import useFlashcardStore from '../../store/useFlashcardStore';
 import apiClient from '../../services/apiClient';
+import db from '../../db/apex.db';
 import { showToastGlobal } from '../../hooks/useToast';
 import useThemeStore from '../../store/themeStore';
 
@@ -90,13 +91,51 @@ const FlashcardStudyModal = () => {
     }
   };
 
-  const handleSaveDeck = () => {
-    setIsSaved(true);
-    showToastGlobal('Deck saved to your Study Decks!', 'success');
-    // In the future, this will save to Supabase via apiClient
-    setTimeout(() => {
-      closeFlashcardModal();
-    }, 1500);
+  const handleSaveDeck = async () => {
+    const state = useFlashcardStore.getState();
+    const bookName = state.bookTitle || 'Selection';
+    const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const defaultName = `Flashcards from ${bookName} (${dateStr})`;
+    const deckName = window.prompt("Name your new study deck (or leave blank for automatic):", defaultName);
+    
+    if (deckName === null) return; // User cancelled
+
+    const finalName = deckName.trim() || defaultName;
+
+    try {
+      const localDeckId = `deck_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+      // Save deck
+      await db.study_decks.add({
+        local_id: localDeckId,
+        title: finalName,
+        source_type: state.sourceType || 'unknown',
+        bookId: state.bookId || null,
+        createdAt: new Date().toISOString(),
+        synced: 0,
+      });
+
+      // Save all flashcards
+      const cardsToSave = flashcards.map(card => ({
+        local_id: `card_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        deckId: localDeckId,
+        question: card.question,
+        answer: card.answer,
+        createdAt: new Date().toISOString(),
+        synced: 0
+      }));
+
+      await db.flashcards.bulkAdd(cardsToSave);
+
+      setIsSaved(true);
+      showToastGlobal('Deck saved to your Study Decks!', 'success');
+      setTimeout(() => {
+        closeFlashcardModal();
+      }, 1500);
+    } catch (err) {
+      console.error('Failed to save deck:', err);
+      showToastGlobal('Failed to save deck locally', 'error');
+    }
   };
 
   if (!isOpen) return null;

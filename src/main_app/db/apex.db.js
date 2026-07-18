@@ -226,4 +226,12 @@ db.version(19).stores({
   console.log('[Apex DB] v19: offline_dictionary table added');
 });
 
+// Version 20: Add study_decks and flashcards for local flashcard saving
+db.version(20).stores({
+  study_decks: '++id, local_id, title, source_type, bookId, createdAt, synced',
+  flashcards: '++id, local_id, deckId, question, answer, createdAt, synced',
+}).upgrade(async () => {
+  console.log('[Apex DB] v20: study_decks and flashcards tables added');
+});
+
 export default db;

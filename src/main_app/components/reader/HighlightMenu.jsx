@@ -300,7 +300,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 onClick={() => toggleFlashcards(true)}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
-                                <Stack size={20} weight="fill" className="text-text-secondary group-hover:text-rose-500 transition-colors" />
+                                <Stack size={20} weight="fill" className="text-text-secondary group-hover:text-accent-primary transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Cards</span>
                             </button>
 
@@ -488,7 +488,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                 ) : showFlashcards ? (
                     <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] font-sans flex items-center gap-2">
+                            <h3 className="text-[10px] font-black text-accent-primary uppercase tracking-[0.2em] font-sans flex items-center gap-2">
                                 <Stack size={14} weight="fill" /> Flashcards
                             </h3>
                             <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
@@ -516,7 +516,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
 
                                 <div>
                                     <label className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 block">
-                                        Number of Cards: <span className="text-rose-500 text-base">{flashcardCount}</span>
+                                        Number of Cards: <span className="text-accent-primary text-base">{flashcardCount}</span>
                                     </label>
                                     <input
                                         type="range"
@@ -524,7 +524,8 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                         max="10"
                                         value={flashcardCount}
                                         onChange={(e) => setFlashcardCount(parseInt(e.target.value))}
-                                        className="w-full accent-rose-500"
+                                        className="w-full"
+                                        style={{ accentColor: 'rgb(var(--accent-primary))' }}
                                     />
                                     <div className="flex justify-between text-[10px] text-text-tertiary font-bold mt-1">
                                         <span>3</span>
@@ -538,7 +539,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                             onGenerateFlashcards(selection, flashcardCount);
                                         }
                                     }}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white rounded-xl text-sm font-bold transition-all shadow-md active:scale-95"
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent-primary text-white hover:bg-accent-primary/90 hover:shadow-[0_10px_40px_rgba(139,92,246,0.3)] rounded-xl text-sm font-bold transition-all shadow-md active:scale-95"
                                 >
                                     <Sparkle size={18} weight="fill" />
                                     Generate Cards
