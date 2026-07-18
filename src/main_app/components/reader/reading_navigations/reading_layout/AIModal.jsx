@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { X, PaperPlaneTilt, Sparkle, Info, ArrowCounterClockwise, Trash, WarningCircle, HighlighterCircle, User, NotePencil, ChatCircle, ClockCounterClockwise, ArrowLeft, BookOpen, Square, Plus } from '@phosphor-icons/react'
+import { X, PaperPlaneTilt, Sparkle, Info, ArrowCounterClockwise, Trash, WarningCircle, HighlighterCircle, User, NotePencil, ChatCircle, ClockCounterClockwise, ArrowLeft, BookOpen, Square, Plus, Copy, Check } from '@phosphor-icons/react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
@@ -40,8 +40,17 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
 
   const [inputValue, setInputValue] = useState('');
   const [showHistory, setShowHistory] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
   const chatContainerRef = useRef(null);
   const inputRef = useRef(null);
+
+  const handleCopy = (id, content) => {
+      navigator.clipboard.writeText(content);
+      setCopiedId(id);
+      setTimeout(() => {
+          setCopiedId(null);
+      }, 3000);
+  };
 
   // State for active context
   const [activeContext, setActiveContext] = useState(selectedText);
@@ -404,9 +413,22 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                           )}
                         </div>
                       </div>
-                      <span className="text-[9px] text-text-tertiary mt-1 font-medium tracking-wide opacity-60 text-center">
-                        {msg.id ? formatTime(msg.id) : '--:--'}
-                      </span>
+                      <div className="flex items-center justify-center gap-4 mt-2 w-full max-w-[95%]">
+                        <span className="text-[9px] text-text-tertiary font-medium tracking-wide opacity-60">
+                          {msg.id ? formatTime(msg.id) : '--:--'}
+                        </span>
+                        {msg.content && !isStreaming && index === messages.length - 1 && (
+                            <button onClick={retry} className="text-[9px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Regenerate response">
+                                <ArrowCounterClockwise size={12} weight="bold" /> Retry
+                            </button>
+                        )}
+                        {msg.content && !isStreaming && (
+                            <button onClick={() => handleCopy(msg.id, msg.content)} className="text-[9px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Copy response">
+                                {copiedId === msg.id ? <Check size={12} weight="bold" className="text-green-500" /> : <Copy size={12} weight="bold" />} 
+                                <span className={copiedId === msg.id ? "text-green-500" : ""}>{copiedId === msg.id ? 'Copied' : 'Copy'}</span>
+                            </button>
+                        )}
+                      </div>
                     </div>
                   ) : (() => {
                     /* ── User message: border-t card bubble ── */

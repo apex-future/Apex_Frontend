@@ -7,24 +7,29 @@ import { XP_VALUES } from '../../config/xpConfig';
  * All streaming endpoints return a ReadableStream reader for SSE consumption.
  */
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL || ''}/api/ai`;
-const FETCH_TIMEOUT_MS = 30000; // 30s — fail fast when backend is unreachable
+const FETCH_TIMEOUT_MS = 30000; // 30s — fail fast when backend is unreachable for TTFB
 
 /**
- * Combine an optional user-abort signal with a timeout signal so fetch
- * never hangs forever when the backend is down.
+ * Combine an optional user-abort signal with a TTFB (Time to First Byte) timeout.
+ * Returns { signal, clearTimeout } so the timeout can be cleared once streaming begins.
  */
-function buildSignal(userSignal) {
-  const timeoutSignal = AbortSignal.timeout(FETCH_TIMEOUT_MS);
-  if (!userSignal) return timeoutSignal;
-  // AbortSignal.any is supported in all modern browsers (Chrome 116+, Safari 17.4+)
-  if (typeof AbortSignal.any === 'function') {
-    return AbortSignal.any([userSignal, timeoutSignal]);
-  }
-  // Fallback for older browsers — prefer the user signal but add a manual timeout
+function buildSignalWithTTFB(userSignal) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(new DOMException('The operation timed out.', 'TimeoutError')), FETCH_TIMEOUT_MS);
-  userSignal.addEventListener('abort', () => { clearTimeout(timer); controller.abort(userSignal.reason); }, { once: true });
-  return controller.signal;
+  const timer = setTimeout(() => {
+    controller.abort(new DOMException('Desktop is not responding. Please check your connection and try again.', 'TimeoutError'));
+  }, FETCH_TIMEOUT_MS);
+
+  if (userSignal) {
+    userSignal.addEventListener('abort', () => { 
+      clearTimeout(timer); 
+      controller.abort(userSignal.reason); 
+    }, { once: true });
+  }
+  
+  return {
+    signal: controller.signal,
+    clearTimeout: () => clearTimeout(timer)
+  };
 }
 
 /**
@@ -48,11 +53,13 @@ const getHeaders = (contentType = 'application/json') => {
  */
 export async function streamExplain({ selectedText, context, bookTitle, bookId, chatType, conversationHistory = [] }, signal) {
   let response;
+  const { signal: fetchSignal, clearTimeout: clearFetchTimeout } = buildSignalWithTTFB(signal);
+
   try {
     response = await fetch(`${API_BASE}/explain`, {
       method: 'POST',
       headers: getHeaders(),
-      signal: buildSignal(signal),
+      signal: fetchSignal,
       body: JSON.stringify({
         selected_text: selectedText,
         context: context || null,
@@ -65,7 +72,10 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
         })),
       }),
     });
+    // Connection established (headers received), clear the timeout so streaming can take as long as it needs
+    clearFetchTimeout();
   } catch (err) {
+    clearFetchTimeout();
     if (err.name === 'TimeoutError') {
       throw new Error('Desktop is not responding. Please check your connection and try again.');
     }
@@ -88,11 +98,13 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
 export async function streamAsk({ message, bookTitle, bookId, chatType, conversationHistory = [], pageImageBase64 = null }, signal) {
   if (import.meta.env.DEV) console.log('[Apex Cleo Debug] streamAsk — pageImageBase64 length:', pageImageBase64?.length);
   let response;
+  const { signal: fetchSignal, clearTimeout: clearFetchTimeout } = buildSignalWithTTFB(signal);
+
   try {
     response = await fetch(`${API_BASE}/ask`, {
       method: 'POST',
       headers: getHeaders(),
-      signal: buildSignal(signal),
+      signal: fetchSignal,
       body: JSON.stringify({
         message,
         book_title: bookTitle || null,
@@ -105,7 +117,10 @@ export async function streamAsk({ message, bookTitle, bookId, chatType, conversa
         page_image_base64: pageImageBase64 || null,
       }),
     });
+    // Connection established (headers received), clear the timeout so streaming can take as long as it needs
+    clearFetchTimeout();
   } catch (err) {
+    clearFetchTimeout();
     if (err.name === 'TimeoutError') {
       throw new Error('Desktop is not responding. Please check your connection and try again.');
     }
