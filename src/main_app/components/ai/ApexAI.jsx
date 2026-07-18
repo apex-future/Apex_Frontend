@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { PaperPlaneRight, ArrowLeft, User, Sparkle, ArrowCounterClockwise, Trash, WarningCircle, Plus, ChatCircle, Sidebar, DotsThreeVertical, X, PencilSimpleLine, BookOpen, Square, Highlighter } from '@phosphor-icons/react'
+import { PaperPlaneRight, ArrowLeft, User, Sparkle, ArrowCounterClockwise, Trash, WarningCircle, Plus, ChatCircle, Sidebar, DotsThreeVertical, X, PencilSimpleLine, BookOpen, Square, Highlighter, Copy, Check } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -26,6 +26,7 @@ function ApexAI() {
 
     const [inputValue, setInputValue] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
+    const [copiedId, setCopiedId] = useState(null);
     const chatEndRef = useRef(null);
     const inputRef = useRef(null);
 
@@ -42,6 +43,14 @@ function ApexAI() {
     const handleSubmit = (e) => {
         e.preventDefault();
         handleSend();
+    };
+
+    const handleCopy = (id, content) => {
+        navigator.clipboard.writeText(content);
+        setCopiedId(id);
+        setTimeout(() => {
+            setCopiedId(null);
+        }, 3000);
     };
 
     useEffect(() => {
@@ -187,9 +196,22 @@ function ApexAI() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <span className="text-[10px] text-text-tertiary mt-1 font-medium tracking-wide opacity-60 text-center">
-                                                {msg.id ? formatTime(msg.id) : '--:--'}
-                                            </span>
+                                            <div className="flex items-center justify-center gap-4 mt-2 w-full max-w-[88%] md:max-w-[78%]">
+                                                <span className="text-[10px] text-text-tertiary font-medium tracking-wide opacity-60">
+                                                    {msg.id ? formatTime(msg.id) : '--:--'}
+                                                </span>
+                                                {msg.content && !isStreaming && index === messages.length - 1 && (
+                                                    <button onClick={retry} className="text-[10px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Regenerate response">
+                                                        <ArrowCounterClockwise size={12} weight="bold" /> Retry
+                                                    </button>
+                                                )}
+                                                {msg.content && !isStreaming && (
+                                                    <button onClick={() => handleCopy(msg.id, msg.content)} className="text-[10px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Copy response">
+                                                        {copiedId === msg.id ? <Check size={12} weight="bold" className="text-green-500" /> : <Copy size={12} weight="bold" />} 
+                                                        <span className={copiedId === msg.id ? "text-green-500" : ""}>{copiedId === msg.id ? 'Copied' : 'Copy'}</span>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ) : (() => {
                                         /* ── User message: pill bubble, right-aligned ── */

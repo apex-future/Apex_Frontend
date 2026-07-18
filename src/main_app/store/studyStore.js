@@ -103,9 +103,9 @@ const useStudyStore = create(
             newStreak = currentStreak + 1;
             if (import.meta.env.DEV) console.log('[Apex Streak] Consecutive day — streak:', newStreak);
           } else {
-            // Streak broken — reset to 0
-            newStreak = 0;
-            if (import.meta.env.DEV) console.log('[Apex Streak] Streak broken after', diffDays, 'days — resetting to 0');
+            // Streak broken — but user IS reading right now, so today is day 1 of a new streak
+            newStreak = 1;
+            if (import.meta.env.DEV) console.log('[Apex Streak] Streak broken after', diffDays, 'days — starting fresh at 1');
           }
         }
 

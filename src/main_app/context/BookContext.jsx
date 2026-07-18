@@ -981,42 +981,90 @@ export const BookProvider = ({ children }) => {
 
     console.log('[Apex] addTab called for bookId:', targetId, '| type:', tabObj.type);
 
-    // Find the book's supabaseId for sync resolution
-    const bookObj = books.find(b => b.id === targetId);
-    // Save to Dexie + Supabase via syncService
-    const savedTab = await syncService.saveTab(targetId, { ...tabObj, _supabase_book_id: bookObj?.supabaseId || null });
-    if (!savedTab) return;
+    const tempId = Date.now();
 
-    // Build UI tab object
-    const uiTab = {
-      id: savedTab.id,
-      dexieId: savedTab.id,
-      supabaseId: savedTab.supabaseId || null,
-      text: savedTab.text,
-      context: savedTab.context || null,
-      type: savedTab.noteType || 'manual_note',
-      noteType: savedTab.noteType || 'manual_note',
-      createdAt: savedTab.createdAt,
-      updatedAt: savedTab.updatedAt,
-      local_id: savedTab.local_id,
+    // Build optimistic UI tab object
+    const optimisticUiTab = {
+      id: tempId,
+      dexieId: tempId,
+      supabaseId: null,
+      text: tabObj.text,
+      context: tabObj.context || null,
+      type: tabObj.type || 'manual_note',
+      startOffset: tabObj.startOffset,
+      pageNumber: tabObj.pageNumber,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      local_id: tempId,
     };
 
-    // Update UI state immediately
+    // Update UI state immediately (optimistic)
+    let bookSupabaseId = null;
+    let alreadyExists = false;
     setShelves(prev => prev.map(shelf => ({
       ...shelf,
       books: shelf.books.map(book => {
         if (book.id !== targetId) return book;
+        bookSupabaseId = book.supabaseId || null;
+        const existingTabs = book.metadata?.tabs || [];
+        // Deduplicate: don't add a second tab for the same exact text position
+        if (tabObj.startOffset != null && tabObj.pageNumber != null) {
+          const dup = existingTabs.find(
+            t => t.startOffset === tabObj.startOffset && t.pageNumber === tabObj.pageNumber
+          );
+          if (dup) { alreadyExists = true; return book; }
+        }
         return {
           ...book,
           metadata: {
             ...(book.metadata || {}),
-            tabs: [uiTab, ...(book.metadata?.tabs || [])],
+            tabs: [optimisticUiTab, ...existingTabs],
           },
         };
       }),
     })));
-    return uiTab;
-  }, []);
+
+    if (alreadyExists) {
+      console.log('[Apex] addTab: duplicate startOffset+pageNumber, skipping.');
+      return;
+    }
+
+    // Save to Dexie + Supabase via syncService
+    try {
+      const savedTab = await syncService.saveTab(targetId, { ...tabObj, _supabase_book_id: bookSupabaseId });
+      if (!savedTab) return;
+
+      // Patch the in-memory tab with the real Dexie ID + supabaseId
+      setShelves(prev => prev.map(shelf => ({
+        ...shelf,
+        books: shelf.books.map(book => {
+          if (book.id !== targetId) return book;
+          return {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              tabs: (book.metadata?.tabs || []).map(t =>
+                t.id === tempId
+                  ? {
+                      ...t,
+                      id: savedTab.id,
+                      dexieId: savedTab.id,
+                      supabaseId: savedTab.supabaseId || null,
+                      local_id: savedTab.local_id,
+                      createdAt: savedTab.createdAt,
+                      updatedAt: savedTab.updatedAt,
+                    }
+                  : t
+              ),
+            },
+          };
+        }),
+      })));
+      return { id: savedTab.id };
+    } catch (err) {
+      console.error('[Apex] Failed to save tab via syncService:', err);
+    }
+  }, [books]);
 
   const updateTab = useCallback(async (bookId, tabId, text) => {
     const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;

@@ -1,11 +1,11 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, Note, MagicWand, Stack, WarningCircle, Trash, Quotes } from '@phosphor-icons/react';
+import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, Note, MagicWand, Stack, WarningCircle, Trash, Quotes, Copy } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
 import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
 import Card from '../ui/Card';
 
-function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards, cachedDefinition }) {
+function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards, cachedDefinition, cachedTab }) {
     const { resolvedTheme } = useThemeStore();
     const isDark = resolvedTheme === 'dark';
 
@@ -20,45 +20,106 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showDict, setShowDict] = useState(!!cachedDefinition);
-    const [showTab, setShowTab] = useState(false);
-    const [tabText, setTabText] = useState('');
-    const [tabSaved, setTabSaved] = useState(false);
+    const [showTab, setShowTab] = useState(!!cachedTab);
+    const [tabText, setTabText] = useState(cachedTab ? cachedTab.text : '');
+    const [tabSaved, setTabSaved] = useState(!!cachedTab);
     const [wordSaved, setWordSaved] = useState(!!cachedDefinition);
     const [showFlashcards, setShowFlashcards] = useState(false);
     const [flashcardCount, setFlashcardCount] = useState(5);
     const [flashcardError, setFlashcardError] = useState('');
 
-    const [savedTabId, setSavedTabId] = useState(null);
-    const savedTabIdRef = useRef(null);
+    const [savedTabId, setSavedTabId] = useState(cachedTab ? (cachedTab.id || cachedTab.dexieId || cachedTab.supabaseId) : null);
+    const savedTabIdRef = useRef(cachedTab ? (cachedTab.id || cachedTab.dexieId || cachedTab.supabaseId) : null);
 
-    // Auto-save debounce effect (2 seconds)
+    const [copied, setCopied] = useState(false);
+    const draftKey = bookId && (position?.startOffset || position?.startOffset === 0) ? `draft_tab_${bookId}_${position.startOffset}` : null;
+
+    // Refs for auto-save cleanup — always hold the latest values
+    const tabTextRef = useRef(tabText);
+    const explicitActionRef = useRef(false);
+    const onAddNoteRef = useRef(onAddNote);
+    const onUpdateNoteRef = useRef(onUpdateNote);
+    const selectionRef = useRef(selection);
+    const positionRef = useRef(position);
+    const draftKeyRef = useRef(draftKey);
+
+    // Keep all refs in sync
+    useEffect(() => { tabTextRef.current = tabText; }, [tabText]);
+    useEffect(() => { onAddNoteRef.current = onAddNote; }, [onAddNote]);
+    useEffect(() => { onUpdateNoteRef.current = onUpdateNote; }, [onUpdateNote]);
+    useEffect(() => { selectionRef.current = selection; }, [selection]);
+    useEffect(() => { positionRef.current = position; }, [position]);
+    useEffect(() => { draftKeyRef.current = draftKey; }, [draftKey]);
+
+    // Auto-save: when tab closes (showTab→false OR unmount) without explicit save/trash
     useEffect(() => {
-        if (!showTab || !tabText.trim()) return;
+        if (showTab) {
+            // Tab just opened — reset the flag
+            explicitActionRef.current = false;
+            return;
+        }
+        // showTab is false, nothing to clean up
+    }, [showTab]);
 
-        const delayDebounceFn = setTimeout(async () => {
+    useEffect(() => {
+        if (!showTab) return; // Only set up cleanup when tab is actually open
+
+        return () => {
+            // Fires when showTab flips false OR component unmounts
+            if (explicitActionRef.current) return; // User clicked ✓ or 🗑 — skip
+
+            const text = tabTextRef.current?.trim();
+            if (!text) return; // Nothing typed — skip
+
+            // Perform the real save (creates marker + persists note)
             if (savedTabIdRef.current) {
-                // Update
-                if (onUpdateNote) {
-                    onUpdateNote(savedTabIdRef.current, tabText.trim());
-                }
+                onUpdateNoteRef.current?.(savedTabIdRef.current, text);
             } else {
-                // Add
-                if (onAddNote) {
-                    const result = await onAddNote({
-                        text: tabText.trim(),
-                        context: selection,
-                        type: 'highlight_note'
-                    });
-                    if (result && result.id) {
-                        savedTabIdRef.current = result.id;
-                        setSavedTabId(result.id);
-                    }
-                }
+                onAddNoteRef.current?.({
+                    text,
+                    context: selectionRef.current,
+                    type: 'highlight_note',
+                    startOffset: positionRef.current?.startOffset,
+                    pageNumber: positionRef.current?.pageNumber
+                });
             }
-        }, 2000);
 
-        return () => clearTimeout(delayDebounceFn);
-    }, [tabText, showTab, onAddNote, onUpdateNote, selection]);
+            // Award XP
+            try {
+                useXpStore.getState().awardXpOptimistic('tab_added', {}, 5);
+            } catch (e) { /* silently ignore */ }
+
+            // Clean up localStorage draft
+            if (draftKeyRef.current) localStorage.removeItem(draftKeyRef.current);
+        };
+    }, [showTab]);
+
+    // Restore draft from localStorage (crash recovery)
+    useEffect(() => {
+        if (!cachedTab && draftKey) {
+            const draft = localStorage.getItem(draftKey);
+            if (draft && !tabText) {
+                setTabText(draft);
+            }
+        }
+    }, [draftKey, cachedTab]);
+
+    const handleTextChange = (e) => {
+        const val = e.target.value;
+        setTabText(val);
+        setTabSaved(false);
+        if (draftKey) {
+            localStorage.setItem(draftKey, val);
+        }
+    };
+
+    // When tab is open (new or editing), keep the menu alive (same mechanism as dict)
+    // so that clicking elsewhere doesn't immediately close it.
+    useEffect(() => {
+        if (showTab) {
+            onDictToggle?.(true);
+        }
+    }, [showTab]);
 
     const toggleDict = (val) => {
         setShowDict(val);
@@ -136,33 +197,38 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
 
     const handleSaveTab = () => {
         if (!tabText.trim()) return;
-        setTabSaved(true);
 
-        // Save in the background (fire and forget)
-        (async () => {
-            if (savedTabIdRef.current) {
-                if (onUpdateNote) {
-                    await onUpdateNote(savedTabIdRef.current, tabText.trim());
-                }
-            } else {
-                if (onAddNote) {
-                    await onAddNote({
-                        text: tabText.trim(),
-                        context: selection,
-                        type: 'highlight_note'
-                    });
-                }
+        // Mark as explicit so the auto-save cleanup won't double-fire
+        explicitActionRef.current = true;
+
+        // Fire-and-forget — optimistic update in BookContext fires synchronously,
+        // so the marker appears immediately. Modal closes without waiting for DB.
+        if (savedTabIdRef.current) {
+            // Existing tab — just update text, no new marker
+            if (onUpdateNote) onUpdateNote(savedTabIdRef.current, tabText.trim());
+        } else {
+            // New tab — create it now
+            if (onAddNote) {
+                onAddNote({
+                    text: tabText.trim(),
+                    context: selection,
+                    type: 'highlight_note',
+                    startOffset: position?.startOffset,
+                    pageNumber: position?.pageNumber
+                });
             }
-        })();
+        }
 
         try {
             const { awardXpOptimistic } = useXpStore.getState();
             awardXpOptimistic('tab_added', {}, 5);
-            console.log('[XP Wire] tab_added optimistic award fired');
         } catch (xpErr) {
             console.error('[XP Wire] tab_added XP failed silently:', xpErr);
         }
 
+        if (draftKey) localStorage.removeItem(draftKey);
+
+        onDictToggle?.(false);
         toggleTab(false);
         setTabSaved(false);
         setTabText('');
@@ -172,13 +238,26 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     };
 
     const handleCancelTab = async () => {
+        // Mark as explicit so the auto-save cleanup won't fire
+        explicitActionRef.current = true;
+
         if (savedTabIdRef.current && onDeleteNote) {
             await onDeleteNote(savedTabIdRef.current);
         }
+        if (draftKey) localStorage.removeItem(draftKey);
+        
+        onDictToggle?.(false);
         setTabText('');
         setSavedTabId(null);
         savedTabIdRef.current = null;
         handleCloseModal();
+    };
+
+    const handleCopy = () => {
+        if (!tabText) return;
+        navigator.clipboard.writeText(tabText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     const playAudio = (url) => {
@@ -284,7 +363,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Define</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
+                            <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
 
                             <button
                                 onClick={onAskAI}
@@ -294,7 +373,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Ask</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
+                            <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
 
                             <button
                                 onClick={() => toggleFlashcards(true)}
@@ -304,8 +383,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Cards</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
-
+                            <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
                             <button
                                 onClick={() => toggleTab(true)}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
@@ -314,7 +392,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Tab</span>
                             </button>
 
-                            <div className="w-[1px] h-8 bg-gray-200 dark:bg-neutral-800/80" />
+                            <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
 
                             <button
                                 onClick={() => onSimplify?.()}
@@ -451,7 +529,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         {/* Text Area */}
                         <textarea
                             value={tabText}
-                            onChange={(e) => setTabText(e.target.value)}
+                            onChange={handleTextChange}
                             placeholder="Write your tab here..."
                             className="flex-1 w-full p-4 text-[14px] leading-relaxed resize-none focus:outline-none text-text-primary bg-transparent"
                             autoFocus
@@ -464,7 +542,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             </span>
 
                             <div className="flex items-center gap-1">
-                                {/* Tick - Save and Close */}
                                 <button
                                     onClick={handleSaveTab}
                                     disabled={tabSaved || !tabText.trim()}
@@ -474,11 +551,21 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                     <Check size={16} weight="bold" />
                                 </button>
 
+                                {/* Copy Button */}
+                                <button
+                                    onClick={handleCopy}
+                                    disabled={!tabText.trim()}
+                                    className={`p-1.5 rounded-lg transition-all hover:bg-blue-500/10 ${!tabText.trim() ? 'text-text-placeholder' : 'text-blue-500'}`}
+                                    title="Copy to Clipboard"
+                                >
+                                    {copied ? <Check size={16} weight="bold" /> : <Copy size={16} weight="bold" />}
+                                </button>
+
                                 {/* Bin - Close without saving */}
                                 <button
                                     onClick={handleCancelTab}
-                                    className="p-1.5 rounded-lg transition-all hover:bg-red-500/10 text-text-tertiary"
-                                    title="Cancel"
+                                    className="p-1.5 rounded-lg transition-all hover:bg-red-500/10 text-text-tertiary hover:text-red-500"
+                                    title="Delete / Cancel"
                                 >
                                     <Trash size={16} weight="bold" />
                                 </button>
