@@ -722,24 +722,36 @@ const PDFReader = ({
 
     const now = Date.now();
 
-    // Reset accumulator if it's been a while since last event
+    // Reset accumulator if the user pauses scrolling
     if (now - (window.lastWheelEventTime || 0) > 150) {
-      window.wheelDeltaY = 0;
+      window.wheelDelta = 0;
     }
     window.lastWheelEventTime = now;
 
-    window.wheelDeltaY = (window.wheelDeltaY || 0) + e.deltaY;
+    // Support horizontal scroll (deltaX) for trackpads and vertical scroll (deltaY) for mice
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
 
-    // Cooldown between page flips
-    if (now - (window.lastWheelFlipTime || 0) < 300) return;
+    // If direction changes (scrolling up then down), reset accumulator to prevent accidental wiggling
+    if ((window.wheelDelta > 0 && delta < 0) || (window.wheelDelta < 0 && delta > 0)) {
+        window.wheelDelta = 0;
+    }
 
-    if (window.wheelDeltaY > 30) {
+    window.wheelDelta = (window.wheelDelta || 0) + delta;
+
+    // Cooldown between page flips to prevent blinking/flapping
+    if (now - (window.lastWheelFlipTime || 0) < 800) {
+        window.wheelDelta = 0; // Prevent momentum from building up during cooldown
+        return;
+    }
+
+    // Require a more deliberate scroll
+    if (window.wheelDelta > 250) {
       window.lastWheelFlipTime = now;
-      window.wheelDeltaY = 0;
+      window.wheelDelta = 0;
       onNextPage?.();
-    } else if (window.wheelDeltaY < -30) {
+    } else if (window.wheelDelta < -250) {
       window.lastWheelFlipTime = now;
-      window.wheelDeltaY = 0;
+      window.wheelDelta = 0;
       onPrevPage?.();
     }
   }, [isVertical, swipeLocked, onNextPage, onPrevPage]);
