@@ -720,6 +720,12 @@ const PDFReader = ({
     if (isVertical) return;
     if (swipeLocked || window.getSelection()?.toString().trim()) return;
 
+    // If the user is primarily scrolling vertically (up/down), do NOT intercept it.
+    // This allows the browser to natively scroll the PDF page if it's taller than the screen.
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        return;
+    }
+
     const now = Date.now();
 
     // Reset accumulator if the user pauses scrolling
@@ -728,10 +734,9 @@ const PDFReader = ({
     }
     window.lastWheelEventTime = now;
 
-    // Support horizontal scroll (deltaX) for trackpads and vertical scroll (deltaY) for mice
-    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    const delta = e.deltaX;
 
-    // If direction changes (scrolling up then down), reset accumulator to prevent accidental wiggling
+    // If direction changes (scrolling left then right), reset accumulator to prevent accidental wiggling
     if ((window.wheelDelta > 0 && delta < 0) || (window.wheelDelta < 0 && delta > 0)) {
         window.wheelDelta = 0;
     }
@@ -744,12 +749,12 @@ const PDFReader = ({
         return;
     }
 
-    // Require a more deliberate scroll
-    if (window.wheelDelta > 250) {
+    // Require a more deliberate horizontal scroll
+    if (window.wheelDelta > 200) {
       window.lastWheelFlipTime = now;
       window.wheelDelta = 0;
       onNextPage?.();
-    } else if (window.wheelDelta < -250) {
+    } else if (window.wheelDelta < -200) {
       window.lastWheelFlipTime = now;
       window.wheelDelta = 0;
       onPrevPage?.();
@@ -761,33 +766,16 @@ const PDFReader = ({
     if (swipeLocked || isVertical) return;
     // Don't navigate during text selection
     if (window.getSelection()?.toString().trim()) return;
-    if (scale > 1) {
-      const el = containerRef.current;
-      if (el) {
-        const isAtRightEdge = el.scrollLeft + el.clientWidth >= el.scrollWidth - 50;
-        if (!isAtRightEdge) return;
-
-        const now = Date.now();
-        if (now - lastEdgeHit.current.right > 2000) {
-          lastEdgeHit.current.right = now;
-          return;
-        }
-        lastEdgeHit.current.right = 0;
-      }
-    }
     onNextPage?.();
   };
 
-  const handleSwipedRight = () => {
+  const handleSwipedRight = (e) => {
     if (swipeLocked || isVertical) return;
-    // Don't navigate during text selection
     if (window.getSelection()?.toString().trim()) return;
-    if (scale > 1) {
-      const el = containerRef.current;
-      if (el) {
-        const isAtLeftEdge = el.scrollLeft <= 50;
-        if (!isAtLeftEdge) return;
-
+    // Special logic for mobile zoomed panning
+    if (!isDesktop && e && e.event) {
+      const touch = e.event.changedTouches?.[0];
+      if (touch) {
         const now = Date.now();
         if (now - lastEdgeHit.current.left > 2000) {
           lastEdgeHit.current.left = now;
@@ -841,7 +829,7 @@ const PDFReader = ({
         }}
         onLoadError={(err) => console.error('PDF load error:', err)}
         loading={<BookSkeleton message="Rendering document..." />}
-        className="flex flex-col items-center justify-center min-h-full w-full mx-auto"
+        className="flex flex-col items-center min-h-full w-full mx-auto"
       >
         {isVertical ? (
           <div
