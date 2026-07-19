@@ -885,7 +885,7 @@ const PDFReader = ({
             return (
               <div
                 key={bufferPageNum}
-                className="pdf-page-wrapper rounded-sm bg-bg-elevated mx-auto mb-8 lg:mb-0 relative"
+                className={`pdf-page-wrapper rounded-sm bg-bg-elevated mx-auto relative ${isActive ? 'my-auto' : ''}`}
                 data-page-index={bufferPageNum}
                 style={{
                   position: isActive ? 'relative' : 'absolute',
