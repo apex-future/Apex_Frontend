@@ -68,8 +68,8 @@ if (!document.getElementById(SHIMMER_STYLE_ID)) {
 }
 
 // ─── Chest SVGs ──────────────────────────────────────────────────────────────
-const ChestClosed = ({ size = 20, color }) => (
-  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
+const ChestClosed = ({ className, color }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     {/* Body */}
     <rect x="2" y="11" width="20" height="10" rx="2" fill={color} />
     {/* Lid */}
@@ -81,8 +81,8 @@ const ChestClosed = ({ size = 20, color }) => (
   </svg>
 );
 
-const ChestOpen = ({ size = 20, color }) => (
-  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
+const ChestOpen = ({ className, color }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     {/* Body */}
     <rect x="2" y="11" width="20" height="10" rx="2" fill={color} />
     {/* Lid raised — rotated up */}
@@ -179,45 +179,26 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
             {copy}
           </span>
         }
-        right={
-          <div className="flex items-center" ref={checkmarkRef}>
-            {completed && (
-              <AnimatePresence>
-                <motion.div
-                  key="checkmark"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: [0, 1.2, 1] }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.15 }}
-                >
-                  <CheckCircle size={20} weight="fill" className="text-[#c084fc]" />
-                </motion.div>
-              </AnimatePresence>
-            )}
-          </div>
-        }
         subComponent={
-          <div className="flex flex-row items-center gap-2 w-full">
-            <div className="flex-1 h-3.5 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden shadow-inner">
-              {!completed ? (
-                <>
-                  <div
-                    className={`h-full rounded-full bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] transition-all duration-[400ms] ease-out ${
-                      inProgress ? 'quest-shimmer' : ''
-                    }`}
-                    style={{ width: `${fillPercent}%` }}
-                  />
-                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-text-primary mix-blend-overlay dark:text-white dark:mix-blend-normal">
-                    {progress} / {target}{unit ? ` ${unit}` : ''}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <div className="h-full rounded-full bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] w-full" />
-                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
-                    Complete
-                  </span>
-                </>
-              )}
+          <div className="flex flex-row items-center gap-3 w-full mt-1.5">
+            <div className="flex-1 h-4 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden shadow-inner">
+              {/* Base grey text */}
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-text-tertiary">
+                {progress} / {target}{unit ? ` ${unit}` : ''}
+              </div>
+
+              {/* Clipped Fill Layer */}
+              <div 
+                className="absolute inset-0 transition-all duration-[400ms] ease-out"
+                style={{ clipPath: `inset(0 ${100 - fillPercent}% 0 0 round 9999px)` }}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] ${inProgress ? 'quest-shimmer' : ''}`} />
+                
+                {/* White text */}
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow-sm">
+                  {progress} / {target}{unit ? ` ${unit}` : ''}
+                </div>
+              </div>
             </div>
             
             <div className="shrink-0 flex items-center justify-center">
@@ -228,17 +209,17 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
                   animate={{ rotate: [0, -8, 8, -8, 8, -4, 4, 0] }}
                   transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 1.5 }}
                 >
-                  <ChestClosed size={20} color="#7C3AED" />
+                  <ChestClosed className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" color="#7C3AED" />
                 </motion.div>
               )}
               {completed && chestClaimed && (
                 <div className="opacity-50 pointer-events-none">
-                  <ChestOpen size={20} color="rgb(var(--text-placeholder))" />
+                  <ChestOpen className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" color="rgb(var(--text-placeholder))" />
                 </div>
               )}
               {!completed && (
                 <div className="opacity-40 pointer-events-none">
-                  <ChestClosed size={20} color="rgb(var(--text-placeholder))" />
+                  <ChestClosed className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" color="rgb(var(--text-placeholder))" />
                 </div>
               )}
             </div>

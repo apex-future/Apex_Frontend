@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Scroll, Trophy, Target, ArrowLeft } from '@phosphor-icons/react';
+import { Scroll, Trophy, Target, ArrowLeft, Clock } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../services/apiClient';
 import useXpStore from '../store/useXpStore';
@@ -240,13 +240,19 @@ export default function QuestPage() {
         ) : null}
 
         {/* SECTION 3 — Today's quests heading */}
-        <div className="pt-2">
+        <div className="pt-2 flex items-center justify-between">
           <p
             className="text-text-tertiary uppercase tracking-widest"
             style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11 }}
           >
             Today's Quests
           </p>
+          <div className="flex items-center gap-1.5 text-text-tertiary text-xs font-medium bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
+            <Clock size={14} weight="fill" />
+            <span>
+              {Math.max(1, Math.ceil((new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 0, 0, 0) - new Date()) / (1000 * 60 * 60)))} hours left
+            </span>
+          </div>
         </div>
 
         {/* SECTION 4 — Quest cards */}
