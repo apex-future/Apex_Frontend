@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useContext, useCallback } from 'react';
 import useStudyStore from '../../store/studyStore';
 import useAuthStore from '../../store/authStore';
+import useQuestStore from '../../store/useQuestStore';
 import StreakCelebration from './StreakCelebration';
 import { AnimatePresence } from 'framer-motion';
 import useSpaceStore from '../../store/spaceStore';
@@ -12,6 +13,7 @@ import DOMPurify from 'dompurify';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import SessionSummaryModal from './SessionSummaryModal';
+import QuestSummaryModal from '../quests/QuestSummaryModal';
 import useXpStore from '../../store/useXpStore';
 import AIModal from './reading_navigations/reading_layout/AIModal';
 import QuizPanel from './reading_navigations/reading_layout/QuizPanel';
@@ -107,6 +109,8 @@ function ReaderView() {
     const showSessionSummaryRef = useRef(false);
     useEffect(() => { showSessionSummaryRef.current = showSessionSummary; }, [showSessionSummary]);
     const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [] });
+    const [showQuestSummary, setShowQuestSummary] = useState(false);
+    const quizFromSessionRef = useRef(false);
     const sessionActiveSeconds = useRef(0);
     const sessionStartTime = useRef(Date.now()); // null when tab is hidden
     const visitedPages = useRef(new Set());
@@ -328,7 +332,7 @@ function ReaderView() {
             console.warn('[Apex Streak] Threshold below minimum — clamping to 5 minutes');
         }
 
-        console.log('[Apex Streak] Starting 3-minute reading timer...');
+        console.log(`[Apex Streak] Starting ${Math.max(5, streakThresholdMinutes)}-minute reading timer...`);
         streakStartTimeRef.current = Date.now();
 
         const runInterval = () => {
@@ -346,7 +350,7 @@ function ReaderView() {
                     }
                 }
 
-                // Streak triggers only when it hits 3 minutes
+                // Streak triggers only when it hits the threshold
                 if (streakElapsedRef.current >= STREAK_DURATION) {
                     streakElapsedRef.current = 0; // reset
                     
@@ -461,6 +465,9 @@ function ReaderView() {
             } catch (xpErr) {
                 console.error('[XP Wire] simplify XP failed silently:', xpErr);
             }
+
+            useQuestStore.getState().reportAction('simplify', 1);
+            console.log('[Quest Wire] simplify reported');
         } catch (err) {
             console.error('[Apex Simplify] Failed:', err);
             setActiveSimplification(prev => ({ ...prev, loading: false, error: err.message || 'Failed to simplify' }));
@@ -1633,7 +1640,24 @@ function ReaderView() {
                 {/* Quiz panel */}
                 {quizModal && (
                     <QuizPanel
-                        onClose={() => setQuizModal(false)}
+                        onClose={() => {
+                            setQuizModal(false);
+                            // If user came from SessionSummary and dismissed quiz panel without starting,
+                            // return them to SessionSummaryModal
+                            if (quizFromSessionRef.current) {
+                                quizFromSessionRef.current = false;
+                                // Recompute stats with updated sessionXpActions (quiz may have been saved)
+                                const updatedActions = useXpStore.getState().sessionXpActions || [];
+                                const readingXp = sessionStats.xpGained;
+                                const activityXp = updatedActions.reduce((sum, act) => sum + act.estimatedXp, 0);
+                                setSessionStats(prev => ({
+                                    ...prev,
+                                    totalXp: Math.max(0, readingXp + activityXp),
+                                    breakdown: getSessionXpBreakdown(updatedActions, readingXp),
+                                }));
+                                setShowSessionSummary(true);
+                            }
+                        }}
                         bookId={book?.id}
                         supabaseBookId={book?.supabaseId || book?.recordId}
                         bookTitle={book?.title || book?.file?.name}
@@ -1659,6 +1683,19 @@ function ReaderView() {
                         onClose={() => {
                             console.log('[ReaderView] QuizView closed');
                             setActiveQuizSession(null);
+                            // If user came from SessionSummary, return there with updated stats
+                            if (quizFromSessionRef.current) {
+                                quizFromSessionRef.current = false;
+                                const updatedActions = useXpStore.getState().sessionXpActions || [];
+                                const readingXp = sessionStats.xpGained;
+                                const activityXp = updatedActions.reduce((sum, act) => sum + act.estimatedXp, 0);
+                                setSessionStats(prev => ({
+                                    ...prev,
+                                    totalXp: Math.max(0, readingXp + activityXp),
+                                    breakdown: getSessionXpBreakdown(updatedActions, readingXp),
+                                }));
+                                setShowSessionSummary(true);
+                            }
                         }}
                     />
                 )}
@@ -1693,18 +1730,36 @@ function ReaderView() {
                         pagesRead={sessionStats.pagesRead}
                         timeSpentSeconds={sessionStats.timeSpentSeconds}
                         breakdown={sessionStats.breakdown}
-                        onClose={async () => {
-                            // User confirmed exit — flush reading time + award XP now
-                            await flushSessionToQueue();
+                        onClose={() => {
+                            // User confirmed exit — flush reading time + award XP now (fire and forget)
+                            flushSessionToQueue();
+
+                            const minutesRead = Math.floor(sessionStats.timeSpentSeconds / 60);
+                            if (minutesRead > 0) {
+                                useQuestStore.getState().reportAction('reading', minutesRead);
+                            }
+
                             if (sessionStats.xpGained > 0) {
                                 const xpStore = useXpStore.getState();
                                 const minutes = Math.round(sessionStats.xpGained / 2);
                                 xpStore.awardXpOptimistic('reading', { minutes }, sessionStats.xpGained);
                                 xpStore.flushPendingXp();
                             }
-                            // Reset session tracking
-                            useXpStore.getState().startSessionTracker();
-                            navigate('/', { replace: true });
+                            // Check if any quest is still incomplete — show Quest Modal if so
+                            const questState = useQuestStore.getState();
+                            const hasIncomplete = [questState.quest_1, questState.quest_2, questState.quest_3]
+                                .filter(Boolean)
+                                .some(q => !q.completed);
+
+                            setShowSessionSummary(false);
+
+                            if (hasIncomplete) {
+                                setShowQuestSummary(true);
+                            } else {
+                                // All quests done (or none loaded) — skip quest modal, go to dashboard
+                                useXpStore.getState().startSessionTracker();
+                                navigate('/', { replace: true });
+                            }
                         }}
                         onCancel={() => {
                             // User clicked X — cancel exit, resume timer
@@ -1714,6 +1769,7 @@ function ReaderView() {
                         }}
                         onStartQuiz={() => {
                             setShowSessionSummary(false);
+                            quizFromSessionRef.current = true;
                             setNavState('first');
                             setTimeout(() => {
                                 setQuizModal(true);
@@ -1722,6 +1778,14 @@ function ReaderView() {
                     />
                 )}
             </AnimatePresence>
+            {showQuestSummary && (
+                <QuestSummaryModal
+                    onDone={() => {
+                        useXpStore.getState().startSessionTracker();
+                        navigate('/', { replace: true });
+                    }}
+                />
+            )}
         </div>
     );
 }

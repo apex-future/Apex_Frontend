@@ -67,13 +67,43 @@ if (!document.getElementById(SHIMMER_STYLE_ID)) {
   document.head.appendChild(style);
 }
 
+// ─── Chest SVGs ──────────────────────────────────────────────────────────────
+const ChestClosed = ({ size = 20, color }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Body */}
+    <rect x="2" y="11" width="20" height="10" rx="2" fill={color} />
+    {/* Lid */}
+    <path d="M2 11 Q2 5 12 5 Q22 5 22 11Z" fill={color} opacity="0.85" />
+    {/* Latch */}
+    <rect x="10" y="13" width="4" height="3" rx="1" fill="white" opacity="0.6" />
+    {/* Hinge line */}
+    <line x1="2" y1="11" x2="22" y2="11" stroke="white" strokeWidth="0.8" opacity="0.4" />
+  </svg>
+);
+
+const ChestOpen = ({ size = 20, color }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Body */}
+    <rect x="2" y="11" width="20" height="10" rx="2" fill={color} />
+    {/* Lid raised — rotated up */}
+    <path d="M2 11 Q2 4 12 2 Q22 4 22 11Z" fill={color} opacity="0.6" />
+    {/* Latch */}
+    <rect x="10" y="13" width="4" height="3" rx="1" fill="white" opacity="0.4" />
+    {/* Opening glow line */}
+    <line x1="2" y1="11" x2="22" y2="11" stroke="white" strokeWidth="0.8" opacity="0.25" />
+  </svg>
+);
+
+
 /**
  * QuestCard
  * Props:
  *   quest            — { id, copy, action, target, unit, type, progress, completed, subcategory }
+ *   chestClaimed     — boolean
+ *   onChestClick     — function
  *   onProgressUpdate — (questId, action, increment) => Promise<responseData>
  */
-export default function QuestCard({ quest, onProgressUpdate }) {
+export default function QuestCard({ quest, chestClaimed, onChestClick, onProgressUpdate }) {
   const checkmarkRef = useRef(null);
   const particleContainerRef = useRef(null);
   const [justCompleted, setJustCompleted] = useState(false);
@@ -166,29 +196,53 @@ export default function QuestCard({ quest, onProgressUpdate }) {
           </div>
         }
         subComponent={
-          <>
-            {!completed && (
-              <div className="w-full h-3.5 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden shadow-inner">
-                <div
-                  className={`h-full bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] transition-all duration-[400ms] ease-out ${
-                    inProgress ? 'quest-shimmer' : ''
-                  }`}
-                  style={{ width: `${fillPercent}%` }}
-                />
-                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-text-primary mix-blend-overlay dark:text-white dark:mix-blend-normal">
-                  {progress} / {target}{unit ? ` ${unit}` : ''}
-                </span>
-              </div>
-            )}
-            {completed && (
-              <div className="w-full h-3.5 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] w-full" />
-                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
-                  Complete
-                </span>
-              </div>
-            )}
-          </>
+          <div className="flex flex-row items-center gap-2 w-full">
+            <div className="flex-1 h-3.5 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden shadow-inner">
+              {!completed ? (
+                <>
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] transition-all duration-[400ms] ease-out ${
+                      inProgress ? 'quest-shimmer' : ''
+                    }`}
+                    style={{ width: `${fillPercent}%` }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-text-primary mix-blend-overlay dark:text-white dark:mix-blend-normal">
+                    {progress} / {target}{unit ? ` ${unit}` : ''}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="h-full rounded-full bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] w-full" />
+                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
+                    Complete
+                  </span>
+                </>
+              )}
+            </div>
+            
+            <div className="shrink-0 flex items-center justify-center">
+              {completed && !chestClaimed && (
+                <motion.div
+                  className="cursor-pointer"
+                  onClick={onChestClick}
+                  animate={{ rotate: [0, -8, 8, -8, 8, -4, 4, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 1.5 }}
+                >
+                  <ChestClosed size={20} color="#7C3AED" />
+                </motion.div>
+              )}
+              {completed && chestClaimed && (
+                <div className="opacity-50 pointer-events-none">
+                  <ChestOpen size={20} color="rgb(var(--text-placeholder))" />
+                </div>
+              )}
+              {!completed && (
+                <div className="opacity-40 pointer-events-none">
+                  <ChestClosed size={20} color="rgb(var(--text-placeholder))" />
+                </div>
+              )}
+            </div>
+          </div>
         }
       />
     </div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import db from '../db/apex.db';
+import useQuestStore from '../store/useQuestStore';
 
 /**
  * usePageVisitTracker
@@ -81,6 +82,10 @@ export default function usePageVisitTracker({
       });
 
       console.log('[PageVisitTracker] Recorded page', pageNumber, 'for book', bookId);
+
+      // Wire quest action
+      useQuestStore.getState().reportAction('pages_read', 1);
+      console.log('[Quest Wire] pages_read reported');
     } catch (err) {
       console.error('[PageVisitTracker] Failed to record visit:', err);
     }

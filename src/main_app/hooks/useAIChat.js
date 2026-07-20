@@ -4,6 +4,7 @@ import { saveChat, getAllChats, deleteChat as dbDeleteChat } from '../utils/db';
 import db from '../db/apex.db';
 import useSettingsStore from '../store/settingsStore';
 import { cleanUserMessage } from '../utils/aiUtils';
+import useQuestStore from '../store/useQuestStore';
 
 /**
  * useAIChat — Custom hook for streaming AI chat interactions with persistence.
@@ -151,6 +152,9 @@ export default function useAIChat(options = {}) {
               // Only award XP if it was a successful AI response and not aborted midway
               const { awardXpOptimistic } = useXpStore.getState();
               awardXpOptimistic('ai_explanation', {}, 5); // 5 is XP_VALUES.ai_explanation
+              
+              useQuestStore.getState().reportAction('ai_explanation', 1);
+              console.log('[Quest Wire] ai_explanation reported');
               
               return;
             }

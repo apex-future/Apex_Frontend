@@ -20,6 +20,7 @@ import ApexLoadingScreen from './main_app/components/layout/ApexLoadingScreen'
 import LandingLoadingScreen from './landing_page/components/LandingLoadingScreen'
 import OnboardingPage from './landing_page/OnboardingPage';
 import AccessibilityPage from './landing_page/AccessibilityPage';
+import useQuestStore from './main_app/store/useQuestStore';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
@@ -126,6 +127,16 @@ function App() {
             useXpStore.getState().flushPendingXp();
           })
           .catch((err) => console.error('[Apex XP] Failed to seed XP profile:', err.message));
+
+        useQuestStore.getState().resetIfNewDay();
+        apiClient.get('/api/quests/today')
+          .then((res) => {
+            useQuestStore.getState().seedQuests(res.data);
+            console.log('[App] Quest store seeded on load');
+          })
+          .catch((err) => {
+            console.error('[App] Quest seed failed:', err);
+          });
 
         if (user.settings) {
           useSettingsStore.getState().seedFromSupabase(user.settings);

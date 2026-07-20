@@ -3,6 +3,7 @@ import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, 
 import dictionaryService from '../../services/dictionaryService';
 import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
+import useQuestStore from '../../store/useQuestStore';
 import Card from '../ui/Card';
 
 function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards, cachedDefinition, cachedTab }) {
@@ -186,6 +187,10 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                 onSaveWord(bookId, wordObj);
                 setWordSaved(true);
             }
+            
+            // Wire quest action
+            useQuestStore.getState().reportAction('dictionary_lookup', 1);
+            console.log('[Quest Wire] dictionary_lookup reported');
 
         } catch (err) {
             setError(err.message);
@@ -225,6 +230,9 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         } catch (xpErr) {
             console.error('[XP Wire] tab_added XP failed silently:', xpErr);
         }
+
+        useQuestStore.getState().reportAction('tab_added', 1);
+        console.log('[Quest Wire] tab_added reported');
 
         if (draftKey) localStorage.removeItem(draftKey);
 

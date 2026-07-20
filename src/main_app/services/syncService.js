@@ -6,6 +6,7 @@ import useAuthStore from '../store/authStore';
 import useSettingsStore from '../store/settingsStore';
 import useSpaceStore from '../store/spaceStore';
 import useXpStore from '../store/useXpStore';
+import useQuestStore from '../store/useQuestStore';
 import { XP_VALUES } from '../../config/xpConfig';
 import { cleanUserMessage } from '../utils/aiUtils';
 
@@ -707,6 +708,10 @@ const syncService = {
 
     // Award XP for creating a highlight
     useXpStore.getState().awardXpOptimistic('highlight_created', {}, XP_VALUES.highlight_created);
+    
+    // Wire quest action
+    useQuestStore.getState().reportAction('highlight_created', 1);
+    console.log('[Quest Wire] highlight_created reported');
 
     // Step 2: If online, resolve the Supabase book UUID and save directly
     if (navigator.onLine) {
@@ -942,7 +947,11 @@ const syncService = {
       const supabaseBookId = await this._resolveBookId(bookId).catch(() => null);
       if (supabaseBookId) {
         apiClient.post(`/api/books/${supabaseBookId}/progress/time`)
-          .then(() => console.log('[ReadingTime] Backend increment confirmed'))
+          .then(() => {
+            console.log('[ReadingTime] Backend increment confirmed');
+            useQuestStore.getState().reportAction('reading', 1);
+            console.log('[Quest Wire] reading +1 min reported');
+          })
           .catch(err => console.warn('[ReadingTime] Backend increment failed (non-blocking):', err));
       } else {
         console.warn('[ReadingTime] Cannot increment — book not yet synced to Supabase');

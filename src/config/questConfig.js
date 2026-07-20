@@ -18,7 +18,7 @@ export const QUEST_SUBCATEGORIES = {
       tier: 'free',
       subcategory: 'reading',
     },
-    {
+    /* {
       id: 'open_before_9am',
       copy: 'Open a book before 9am',
       action: 'open_before_hour',
@@ -26,7 +26,7 @@ export const QUEST_SUBCATEGORIES = {
       unit: '',
       tier: 'free',
       subcategory: 'reading',
-    },
+    }, */
     {
       id: 'read_2_books',
       copy: 'Read across 2 different books today',
@@ -36,7 +36,7 @@ export const QUEST_SUBCATEGORIES = {
       tier: 'free',
       subcategory: 'reading',
     },
-    {
+    /* {
       id: 'read_before_noon',
       copy: 'Complete a reading session before noon',
       action: 'session_before_noon',
@@ -44,8 +44,8 @@ export const QUEST_SUBCATEGORIES = {
       unit: '',
       tier: 'free',
       subcategory: 'reading',
-    },
-    {
+    }, */
+    /* {
       id: 'unbroken_30',
       copy: 'Read for 30 minutes without switching apps',
       action: 'unbroken_session',
@@ -53,7 +53,7 @@ export const QUEST_SUBCATEGORIES = {
       unit: 'min',
       tier: 'free',
       subcategory: 'reading',
-    },
+    }, */
   ],
 
   annotation: [
@@ -114,15 +114,7 @@ export const QUEST_SUBCATEGORIES = {
       tier: 'free',
       subcategory: 'dictionary',
     },
-    {
-      id: 'lookup_before_ai',
-      copy: 'Look up a word before asking Cleo about it',
-      action: 'dictionary_then_ai',
-      target: 1,
-      unit: '',
-      tier: 'free',
-      subcategory: 'dictionary',
-    },
+
   ],
 
   ai_engagement: [
@@ -144,18 +136,10 @@ export const QUEST_SUBCATEGORIES = {
       tier: 'free',
       subcategory: 'ai_engagement',
     },
-    {
-      id: 'ask_followup',
-      copy: 'Ask Cleo a follow-up question in the same session',
-      action: 'ai_followup',
-      target: 1,
-      unit: '',
-      tier: 'free',
-      subcategory: 'ai_engagement',
-    },
+
   ],
 
-  consistency: [
+  /* consistency: [
     {
       id: 'open_before_8am',
       copy: 'Open Apex before 8am',
@@ -183,7 +167,7 @@ export const QUEST_SUBCATEGORIES = {
       tier: 'free',
       subcategory: 'consistency',
     },
-  ],
+  ], */
 
   flashcard: [
     {
@@ -243,15 +227,7 @@ export const QUEST_SUBCATEGORIES = {
       tier: 'scholar',
       subcategory: 'recall',
     },
-    {
-      id: 'beat_last_score',
-      copy: 'Beat your last quiz score on any book',
-      action: 'quiz_beat_score',
-      target: 1,
-      unit: '',
-      tier: 'scholar',
-      subcategory: 'recall',
-    },
+
   ],
 
   book_space: [
@@ -264,7 +240,7 @@ export const QUEST_SUBCATEGORIES = {
       tier: 'scholar',
       subcategory: 'book_space',
     },
-    {
+    /* {
       id: 'check_space_stats',
       copy: 'Check your Book Space stats today',
       action: 'book_space_viewed',
@@ -272,8 +248,8 @@ export const QUEST_SUBCATEGORIES = {
       unit: '',
       tier: 'scholar',
       subcategory: 'book_space',
-    },
-    {
+    }, */
+    /* {
       id: 'set_space_goal',
       copy: 'Set or review a study goal in your Book Space',
       action: 'book_space_goal',
@@ -281,7 +257,7 @@ export const QUEST_SUBCATEGORIES = {
       unit: '',
       tier: 'scholar',
       subcategory: 'book_space',
-    },
+    }, */
   ],
 
   simplify: [
@@ -303,18 +279,9 @@ export const QUEST_SUBCATEGORIES = {
       tier: 'scholar',
       subcategory: 'simplify',
     },
-    {
-      id: 'simplify_then_ask',
-      copy: 'Simplify a passage then ask Cleo about it',
-      action: 'simplify_then_ai',
-      target: 1,
-      unit: '',
-      tier: 'scholar',
-      subcategory: 'simplify',
-    },
   ],
 
-  reflection: [
+  /* reflection: [
     {
       id: 'check_analytics',
       copy: 'Check your reading analytics for any book',
@@ -342,13 +309,16 @@ export const QUEST_SUBCATEGORIES = {
       tier: 'achiever',
       subcategory: 'reflection',
     },
-  ],
+  ], */
+
+  // TODO: wire when share features ship
+  /* share: [], */
 };
 
 // ─── Tier Pools ───────────────────────────────────────────────────────────────
-const FREE_SUBCATEGORIES = ['reading', 'annotation', 'dictionary', 'ai_engagement', 'consistency', 'flashcard'];
+const FREE_SUBCATEGORIES = ['reading', 'annotation', 'dictionary', 'ai_engagement', 'flashcard'];
 const SCHOLAR_SUBCATEGORIES = [...FREE_SUBCATEGORIES, 'recall', 'book_space', 'simplify'];
-const ACHIEVER_SUBCATEGORIES = [...SCHOLAR_SUBCATEGORIES, 'reflection'];
+const ACHIEVER_SUBCATEGORIES = [...SCHOLAR_SUBCATEGORIES]; // no new subcategory until reflection is properly designed
 const APEX_SUBCATEGORIES = [...ACHIEVER_SUBCATEGORIES];
 
 export const TIER_POOLS = {

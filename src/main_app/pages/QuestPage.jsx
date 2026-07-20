@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Scroll, Trophy, Target, ArrowLeft } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,7 @@ import QuestCard from '../components/quests/QuestCard';
 import QuestCompleteModal from '../components/quests/QuestCompleteModal';
 import EmptyState from '../components/ui/EmptyState';
 import Card from '../components/ui/Card';
+import useQuestStore from '../store/useQuestStore';
 
 // ─── Skeleton loader ──────────────────────────────────────────────────────────
 function QuestListSkeleton() {
@@ -57,14 +58,19 @@ export default function QuestPage() {
     reward: null,
     allCompleted: false,
   });
+  
+  const lastCompletedData = useRef({});
+  const questStore = useQuestStore();
 
   const awardXpOptimistic = useXpStore((s) => s.awardXpOptimistic);
 
   // ─── Data fetching ──────────────────────────────────────────────────────────
   const fetchQuests = useCallback(async () => {
     try {
+      useQuestStore.getState().resetIfNewDay();
       const res = await apiClient.get('/api/quests/today');
       setQuests(res.data);
+      useQuestStore.getState().seedQuests(res.data);
       console.log('[Quest Page] Fetched today quests:', res.data);
     } catch (err) {
       console.error('[Quest Page] Failed to fetch quests:', err);
@@ -127,13 +133,8 @@ export default function QuestPage() {
 
       // Trigger modal and XP update on completion
       if (just_completed) {
-        const questCopy = (['quest_1', 'quest_2', 'quest_3']
-          .map((k) => quests?.[k])
-          .find((q) => q?.id === questId)?.copy) || '';
-
-        setModalData({ questCopy, xpAwarded: xp_awarded, reward, allCompleted: all_completed });
-        setShowModal(true);
-
+        lastCompletedData.current[questId] = res.data;
+        
         // Optimistic XP update in header
         if (xp_awarded > 0 && typeof awardXpOptimistic === 'function') {
           awardXpOptimistic('quest_completion', { quest_id: questId }, xp_awarded);
@@ -145,7 +146,35 @@ export default function QuestPage() {
     } catch (err) {
       console.error('[Quest Page] Progress update failed:', err);
     }
-  }, [quests, fetchStats, awardXpOptimistic]);
+  }, [fetchStats, awardXpOptimistic]);
+
+  const handleChestClick = useCallback((questKey) => {
+    const questId = quests?.[questKey]?.id;
+    if (!questId) return;
+
+    const data = lastCompletedData.current[questId];
+    const questCopy = quests[questKey]?.copy || '';
+    
+    // Fallback if somehow missing
+    const xpAwarded = data?.xp_awarded ?? 20;
+    const reward = data?.reward ?? null;
+    const allCompleted = data?.all_completed ?? quests.all_completed ?? false;
+
+    setModalData({ questCopy, xpAwarded, reward, allCompleted });
+    setShowModal(true);
+    
+    // Keep track of which quest modal we're showing so we can mark it claimed on close
+    lastCompletedData.current.activeChestQuestKey = questKey;
+  }, [quests]);
+
+  const handleModalClose = useCallback(() => {
+    setShowModal(false);
+    const activeKey = lastCompletedData.current.activeChestQuestKey;
+    if (activeKey) {
+      useQuestStore.getState().claimChest(activeKey);
+      lastCompletedData.current.activeChestQuestKey = null;
+    }
+  }, []);
 
   // ─── Date display ───────────────────────────────────────────────────────────
   const todayLabel = new Date().toLocaleDateString('en-GB', {
@@ -234,6 +263,8 @@ export default function QuestPage() {
                 >
                   <QuestCard
                     quest={quests.quest_1}
+                    chestClaimed={questStore.chest_1_claimed}
+                    onChestClick={() => handleChestClick('quest_1')}
                     onProgressUpdate={handleProgressUpdate}
                   />
                 </motion.div>
@@ -246,6 +277,8 @@ export default function QuestPage() {
                 >
                   <QuestCard
                     quest={quests.quest_2}
+                    chestClaimed={questStore.chest_2_claimed}
+                    onChestClick={() => handleChestClick('quest_2')}
                     onProgressUpdate={handleProgressUpdate}
                   />
                 </motion.div>
@@ -258,6 +291,8 @@ export default function QuestPage() {
                 >
                   <QuestCard
                     quest={quests.quest_3}
+                    chestClaimed={questStore.chest_3_claimed}
+                    onChestClick={() => handleChestClick('quest_3')}
                     onProgressUpdate={handleProgressUpdate}
                   />
                 </motion.div>
@@ -272,7 +307,7 @@ export default function QuestPage() {
       {/* SECTION 6 — Quest complete modal */}
       <QuestCompleteModal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={handleModalClose}
         questCopy={modalData.questCopy}
         xpAwarded={modalData.xpAwarded}
         reward={modalData.reward}
