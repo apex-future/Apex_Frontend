@@ -720,26 +720,43 @@ const PDFReader = ({
     if (isVertical) return;
     if (swipeLocked || window.getSelection()?.toString().trim()) return;
 
+    // If the user is primarily scrolling vertically (up/down), do NOT intercept it.
+    // This allows the browser to natively scroll the PDF page if it's taller than the screen.
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        return;
+    }
+
     const now = Date.now();
 
-    // Reset accumulator if it's been a while since last event
+    // Reset accumulator if the user pauses scrolling
     if (now - (window.lastWheelEventTime || 0) > 150) {
-      window.wheelDeltaY = 0;
+      window.wheelDelta = 0;
     }
     window.lastWheelEventTime = now;
 
-    window.wheelDeltaY = (window.wheelDeltaY || 0) + e.deltaY;
+    const delta = e.deltaX;
 
-    // Cooldown between page flips
-    if (now - (window.lastWheelFlipTime || 0) < 300) return;
+    // If direction changes (scrolling left then right), reset accumulator to prevent accidental wiggling
+    if ((window.wheelDelta > 0 && delta < 0) || (window.wheelDelta < 0 && delta > 0)) {
+        window.wheelDelta = 0;
+    }
 
-    if (window.wheelDeltaY > 30) {
+    window.wheelDelta = (window.wheelDelta || 0) + delta;
+
+    // Cooldown between page flips to prevent blinking/flapping
+    if (now - (window.lastWheelFlipTime || 0) < 800) {
+        window.wheelDelta = 0; // Prevent momentum from building up during cooldown
+        return;
+    }
+
+    // Require a more deliberate horizontal scroll
+    if (window.wheelDelta > 200) {
       window.lastWheelFlipTime = now;
-      window.wheelDeltaY = 0;
+      window.wheelDelta = 0;
       onNextPage?.();
-    } else if (window.wheelDeltaY < -30) {
+    } else if (window.wheelDelta < -200) {
       window.lastWheelFlipTime = now;
-      window.wheelDeltaY = 0;
+      window.wheelDelta = 0;
       onPrevPage?.();
     }
   }, [isVertical, swipeLocked, onNextPage, onPrevPage]);
@@ -749,33 +766,16 @@ const PDFReader = ({
     if (swipeLocked || isVertical) return;
     // Don't navigate during text selection
     if (window.getSelection()?.toString().trim()) return;
-    if (scale > 1) {
-      const el = containerRef.current;
-      if (el) {
-        const isAtRightEdge = el.scrollLeft + el.clientWidth >= el.scrollWidth - 50;
-        if (!isAtRightEdge) return;
-
-        const now = Date.now();
-        if (now - lastEdgeHit.current.right > 2000) {
-          lastEdgeHit.current.right = now;
-          return;
-        }
-        lastEdgeHit.current.right = 0;
-      }
-    }
     onNextPage?.();
   };
 
-  const handleSwipedRight = () => {
+  const handleSwipedRight = (e) => {
     if (swipeLocked || isVertical) return;
-    // Don't navigate during text selection
     if (window.getSelection()?.toString().trim()) return;
-    if (scale > 1) {
-      const el = containerRef.current;
-      if (el) {
-        const isAtLeftEdge = el.scrollLeft <= 50;
-        if (!isAtLeftEdge) return;
-
+    // Special logic for mobile zoomed panning
+    if (!isDesktop && e && e.event) {
+      const touch = e.event.changedTouches?.[0];
+      if (touch) {
         const now = Date.now();
         if (now - lastEdgeHit.current.left > 2000) {
           lastEdgeHit.current.left = now;
@@ -829,7 +829,7 @@ const PDFReader = ({
         }}
         onLoadError={(err) => console.error('PDF load error:', err)}
         loading={<BookSkeleton message="Rendering document..." />}
-        className="flex flex-col items-center justify-center min-h-full w-full mx-auto"
+        className="flex flex-col items-center min-h-full w-full mx-auto"
       >
         {isVertical ? (
           <div
@@ -885,7 +885,7 @@ const PDFReader = ({
             return (
               <div
                 key={bufferPageNum}
-                className="pdf-page-wrapper rounded-sm bg-bg-elevated mx-auto mb-8 lg:mb-0 relative"
+                className={`pdf-page-wrapper rounded-sm bg-bg-elevated mx-auto relative ${isActive ? 'my-auto' : ''}`}
                 data-page-index={bufferPageNum}
                 style={{
                   position: isActive ? 'relative' : 'absolute',

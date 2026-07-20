@@ -495,7 +495,7 @@ function NoteEditorPage() {
               active={false}
               title="Generate Flashcards"
             >
-              <Stack size={15} weight="bold" className="text-rose-500" />
+              <Stack size={15} weight="bold" className="text-accent-primary" />
             </ToolbarBtn>
 
             <ToolbarDivider />

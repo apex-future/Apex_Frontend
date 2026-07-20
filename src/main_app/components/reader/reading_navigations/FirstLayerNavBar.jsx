@@ -153,7 +153,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
               }}
               title="Generate Flashcards from Book"
             >
-              <Stack size={18} weight="bold" className="text-rose-500" />
+              <Stack size={18} weight="bold" className="text-accent-primary" />
             </button>
           </div>
 
@@ -209,7 +209,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-rose-500 uppercase tracking-widest flex items-center gap-2">
+              <h3 className="text-xs font-bold text-accent-primary uppercase tracking-widest flex items-center gap-2">
                 <Stack size={14} weight="fill" /> 
                 Deck from Book
               </h3>
@@ -245,7 +245,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
                       setFlashError('');
                     }
                   }}
-                  className="bg-bg-subtle border border-border-default rounded-lg px-3 py-1.5 text-sm font-bold text-text-primary focus:outline-none focus:border-rose-500"
+                  className="bg-bg-subtle border border-border-default rounded-lg px-3 py-1.5 text-sm font-bold text-text-primary focus:outline-none focus:border-accent-primary"
                 />
               </div>
               
@@ -267,7 +267,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
                       setFlashError('');
                     }
                   }}
-                  className={`bg-bg-subtle border ${flashError ? 'border-red-500' : 'border-border-default'} rounded-lg px-3 py-1.5 text-sm font-bold text-text-primary focus:outline-none ${!flashError && 'focus:border-rose-500'}`}
+                  className={`bg-bg-subtle border ${flashError ? 'border-red-500' : 'border-border-default'} rounded-lg px-3 py-1.5 text-sm font-bold text-text-primary focus:outline-none ${!flashError && 'focus:border-accent-primary'}`}
                 />
               </div>
             </div>
@@ -286,7 +286,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
                   setShowFlashcardUI(false);
                 }
               }}
-              className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-sm font-bold transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+              className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-xl text-sm font-bold transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:shadow-[0_10px_40px_rgba(139,92,246,0.3)]"
             >
               <MagicWand size={16} weight="fill" />
               Craft Flashcards
