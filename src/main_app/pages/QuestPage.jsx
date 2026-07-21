@@ -4,6 +4,8 @@ import { Scroll, Trophy, Target, ArrowLeft, Clock } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../services/apiClient';
 import useXpStore from '../store/useXpStore';
+import useAuthStore from '../store/authStore';
+import db from '../db/apex.db';
 import WeeklyGoldenBar from '../components/quests/WeeklyGoldenBar';
 import QuestCard from '../components/quests/QuestCard';
 import QuestCompleteModal from '../components/quests/QuestCompleteModal';
@@ -18,10 +20,10 @@ function QuestListSkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <div key={i} className="w-full flex flex-col gap-2">
           <div className="w-full flex items-center gap-3">
-            <div className="w-5 h-5 rounded-full bg-bg-subtle shrink-0" />
-            <div className="h-4 bg-bg-subtle rounded w-2/3" />
+            <div className="w-5 h-5 rounded-full bg-black/10 dark:bg-white/10 shrink-0" />
+            <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-2/3" />
           </div>
-          <div className="w-full h-5 rounded-full bg-bg-subtle/50 mt-1" />
+          <div className="w-full h-5 rounded-full bg-black/5 dark:bg-white/5 mt-1" />
         </div>
       ))}
     </Card>
@@ -34,8 +36,8 @@ function WeeklyBarSkeleton() {
       <div className="flex justify-between w-full max-w-xs md:max-w-md gap-1 md:gap-2">
         {Array.from({ length: 7 }).map((_, i) => (
           <div key={i} className="flex flex-col items-center gap-1.5 md:gap-2">
-            <div className="h-3 w-4 bg-bg-subtle rounded" />
-            <div className="size-7 md:size-9 lg:size-8 rounded-full bg-bg-subtle opacity-40" />
+            <div className="h-3 w-4 bg-black/10 dark:bg-white/10 rounded" />
+            <div className="size-7 md:size-9 lg:size-8 rounded-full bg-black/10 dark:bg-white/10 opacity-40" />
           </div>
         ))}
       </div>
@@ -66,12 +68,82 @@ export default function QuestPage() {
 
   // ─── Data fetching ──────────────────────────────────────────────────────────
   const fetchQuests = useCallback(async () => {
+    const userId = useAuthStore.getState().user?.id;
+    const store = useQuestStore.getState();
+
+    // Step 1: Check Dexie cache
+    const cached = await store.loadQuestsFromCache(userId);
+
+    if (cached) {
+      console.log('[Quest Page] Cache hit — rendering from Dexie immediately');
+
+      // Zustand persist may have offline completions ahead of the Dexie snapshot.
+      // If Zustand already holds today's data, prefer its state for progress/completed.
+      // Otherwise seed from the Dexie cache (e.g. new device or first open today).
+      const zustandHasToday = store.todayDate === cached.quest_date;
+
+      const questsToRender = {
+        date: cached.quest_date,
+        quest_1: zustandHasToday && store.quest_1 ? store.quest_1 : cached.quest_1,
+        quest_2: zustandHasToday && store.quest_2 ? store.quest_2 : cached.quest_2,
+        quest_3: zustandHasToday && store.quest_3 ? store.quest_3 : cached.quest_3,
+        all_completed: zustandHasToday ? store.all_completed : cached.all_completed,
+      };
+
+      setQuests(questsToRender);
+
+      if (!zustandHasToday) {
+        store.seedQuests(questsToRender);
+      }
+
+      // Step 2: Background sync — silent, no loading state change
+      if (navigator.onLine) {
+        console.log('[Quest Page] Background sync running');
+        apiClient.get('/api/quests/today')
+          .then(async (res) => {
+            store.resetIfNewDay();
+            
+            // Background sync returned server data — CASA merge before setting state
+            const serverData = res.data;
+            const currentState = useQuestStore.getState();
+
+            // seedQuests already does Math.max progress and OR for reward_claimed
+            store.seedQuests(serverData);
+
+            // Read back merged state to render (Zustand is now source of truth)
+            const merged = {
+              date: serverData.date,
+              quest_1: useQuestStore.getState().quest_1,
+              quest_2: useQuestStore.getState().quest_2,
+              quest_3: useQuestStore.getState().quest_3,
+              all_completed: useQuestStore.getState().all_completed,
+            };
+            setQuests(merged);
+            await store.saveQuestsToCache(userId, merged);
+            console.log('[Quest Page] Background sync complete — CASA merge applied:', merged.date);
+          })
+          .catch((err) => {
+            console.warn('[Quest Page] Background sync failed — keeping cached data:', err);
+          });
+      }
+      return;
+    }
+
+    // Step 3: No valid cache
+    if (!navigator.onLine) {
+      console.log('[Quest Page] Offline with no cache');
+      setError('You are offline. Open this page once while connected to cache your quests.');
+      return;
+    }
+
+    // Step 4: Online, no cache — fetch (spinner is already showing from useEffect)
     try {
-      useQuestStore.getState().resetIfNewDay();
+      store.resetIfNewDay();
       const res = await apiClient.get('/api/quests/today');
       setQuests(res.data);
-      useQuestStore.getState().seedQuests(res.data);
-      console.log('[Quest Page] Fetched today quests:', res.data);
+      store.seedQuests(res.data);
+      await store.saveQuestsToCache(userId, res.data);
+      console.log('[Quest Page] Fetched and cached:', res.data.date);
     } catch (err) {
       console.error('[Quest Page] Failed to fetch quests:', err);
       setError('Could not load your quests. Please try again.');
@@ -79,10 +151,38 @@ export default function QuestPage() {
   }, []);
 
   const fetchStats = useCallback(async () => {
+    const userId = useAuthStore.getState().user?.id;
+    const store = useQuestStore.getState();
+
+    // Check cache first
+    const cachedStats = await store.loadStatsFromCache(userId);
+    if (cachedStats) {
+      console.log('[Quest Page] Stats cache hit');
+      setStats(cachedStats);
+      // Background refresh
+      if (navigator.onLine) {
+        apiClient.get('/api/quests/stats')
+          .then(async (res) => {
+            setStats(res.data);
+            await store.saveStatsToCache(userId, res.data);
+          })
+          .catch((err) => {
+            console.warn('[Quest Page] Stats background sync failed:', err);
+          });
+      }
+      return;
+    }
+
+    if (!navigator.onLine) {
+      console.log('[Quest Page] Offline — no stats cache, skipping');
+      return;
+    }
+
     try {
       const res = await apiClient.get('/api/quests/stats');
       setStats(res.data);
-      console.log('[Quest Page] Fetched stats:', res.data);
+      await store.saveStatsToCache(userId, res.data);
+      console.log('[Quest Page] Stats fetched and cached');
     } catch (err) {
       console.error('[Quest Page] Failed to fetch stats:', err);
     }
@@ -167,12 +267,48 @@ export default function QuestPage() {
     lastCompletedData.current.activeChestQuestKey = questKey;
   }, [quests]);
 
-  const handleModalClose = useCallback(() => {
+  const handleModalClose = useCallback(async () => {
     setShowModal(false);
     const activeKey = lastCompletedData.current.activeChestQuestKey;
-    if (activeKey) {
-      useQuestStore.getState().claimChest(activeKey);
-      lastCompletedData.current.activeChestQuestKey = null;
+    if (!activeKey) return;
+
+    useQuestStore.getState().claimChest(activeKey);
+    lastCompletedData.current.activeChestQuestKey = null;
+
+    if (navigator.onLine) {
+      try {
+        await apiClient.post('/api/quests/claim', { quest_key: activeKey });
+
+        // Update Dexie cache to reflect claim so other devices see it on next cache read
+        const userId = useAuthStore.getState().user?.id;
+        const store = useQuestStore.getState();
+        const cached = await store.loadQuestsFromCache(userId);
+        if (cached && cached[activeKey]) {
+          cached[activeKey] = { ...cached[activeKey], reward_claimed: true };
+          await store.saveQuestsToCache(userId, cached);
+        }
+        console.log('[Quest] Claim synced to server:', activeKey);
+      } catch (err) {
+        console.warn('[Quest] Claim sync failed — chest_X_claimed stays true in Zustand:', err);
+        // Zustand persist already holds chest_X_claimed: true.
+        // On next background sync, seedQuests CASA resolveChestClaimed will keep it true.
+      }
+    } else {
+      // Offline — queue the claim for flush when online
+      try {
+        await db.sync_queue.add({
+          action: 'quest_claim',
+          tableName: 'daily_quest_state',
+          local_id: `claim_${activeKey}_${Date.now()}`,
+          payload: { quest_key: activeKey },
+          status: 'pending',
+          attempts: 0,
+          createdAt: new Date().toISOString(),
+        });
+        console.log('[Quest] Offline claim queued:', activeKey);
+      } catch (err) {
+        console.warn('[Quest] Failed to queue offline claim:', err);
+      }
     }
   }, []);
 

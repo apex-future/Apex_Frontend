@@ -1676,6 +1676,76 @@ const syncService = {
       // Filter out ALL book items from the queue before Path 2 runs
       if (import.meta.env.DEV) console.log('[Apex Sync] Book uploads processed via Path 1 — filtering from generic queue');
 
+      // ── QUEST PROGRESS — CASA-compliant offline sync ──────────────────────────
+      const offlineQuestProgressItems = await db.sync_queue
+        .where('status').equals('pending')
+        .filter(item => item.tableName === 'daily_quest_state' && item.action === 'quest_progress')
+        .toArray();
+
+      if (offlineQuestProgressItems.length > 0) {
+        console.log('[Apex Sync] Flushing', offlineQuestProgressItems.length, 'offline quest progress items (CASA)');
+        for (const item of offlineQuestProgressItems) {
+          try {
+            // Use the CASA sync endpoint — never the live progress endpoint.
+            // Server will compare updated_at timestamps and apply Math.max on progress.
+            const res = await apiClient.post('/api/quests/progress/offline-sync', {
+              quest_id: item.payload.quest_id,
+              absolute_progress: item.payload.absolute_progress,
+              local_updated_at: item.payload.local_updated_at,
+            });
+
+            await db.sync_queue.update(item.id, { status: 'synced' });
+
+            if (res.data.synced) {
+              // Server accepted and applied — reconcile Zustand with authoritative response
+              const { default: useQuestStoreMod } = await import('../store/useQuestStore');
+              const s = useQuestStoreMod.getState();
+              for (const key of ['quest_1', 'quest_2', 'quest_3']) {
+                if (s[key]?.id === item.payload.quest_id) {
+                  s.updateQuestProgress(key, res.data.new_progress, res.data.completed);
+                  break;
+                }
+              }
+              console.log('[Apex Sync] Offline quest progress CASA synced:', item.payload.quest_id, '→', res.data.new_progress);
+            } else {
+              // Server was ahead — discard local, it's stale. Zustand will be corrected
+              // on the next background sync when the quest page re-fetches.
+              console.log('[Apex Sync] Offline quest progress discarded (server ahead):', item.payload.quest_id, '—', res.data.reason);
+            }
+          } catch (err) {
+            await db.sync_queue.update(item.id, {
+              attempts: (item.attempts || 0) + 1,
+              status: (item.attempts || 0) >= 2 ? 'failed' : 'pending',
+            });
+            console.warn('[Apex Sync] Offline quest progress sync failed:', err);
+          }
+        }
+      }
+
+      // ── QUEST CLAIMS — flush offline chest claims ─────────────────────────────
+      const offlineQuestClaimItems = await db.sync_queue
+        .where('status').equals('pending')
+        .filter(item => item.tableName === 'daily_quest_state' && item.action === 'quest_claim')
+        .toArray();
+
+      if (offlineQuestClaimItems.length > 0) {
+        console.log('[Apex Sync] Flushing', offlineQuestClaimItems.length, 'offline quest claim items');
+        for (const item of offlineQuestClaimItems) {
+          try {
+            // Claim endpoint is idempotent — safe to call even if already claimed on another device
+            await apiClient.post('/api/quests/claim', { quest_key: item.payload.quest_key });
+            await db.sync_queue.update(item.id, { status: 'synced' });
+            console.log('[Apex Sync] Offline quest claim synced:', item.payload.quest_key);
+          } catch (err) {
+            await db.sync_queue.update(item.id, {
+              attempts: (item.attempts || 0) + 1,
+              status: (item.attempts || 0) >= 2 ? 'failed' : 'pending',
+            });
+            console.warn('[Apex Sync] Offline quest claim sync failed:', err);
+          }
+        }
+      }
+
       // Path 2: generic sync queue — explicitly excludes books
       // Books are handled exclusively in Path 1 via uploadBook() with actual file upload
       // Sending books through this path would result in file_path = null in Supabase

@@ -234,4 +234,14 @@ db.version(20).stores({
   console.log('[Apex DB] v20: study_decks and flashcards tables added');
 });
 
+// Version 21: Add quest_state and quest_stats_cache for offline quest caching
+// quest_state holds today's quest structure and progress per user (1 row per user)
+// quest_stats_cache holds today's weekly bar stats per user (1 row per user)
+db.version(21).stores({
+  quest_state: 'user_id, quest_date',
+  quest_stats_cache: 'user_id, stats_date',
+}).upgrade(async () => {
+  console.log('[Apex DB] v21: quest_state and quest_stats_cache tables added');
+});
+
 export default db;
