@@ -1,19 +1,20 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookContext } from '../../context/BookContextInstance';
-import { ArrowLeft, Heart, ShareNetwork, FolderSimplePlus, CheckCircle, Trash, X, PencilSimple } from '@phosphor-icons/react';
+import { ArrowLeft, Heart, ShareNetwork, FolderSimplePlus, CheckCircle, Trash, X, PencilSimple, Info } from '@phosphor-icons/react';
 import useSpaceStore from '../../store/spaceStore';
 import useThemeStore from '../../store/themeStore';
+import db from '../../db/apex.db';
 
 import BookCover from './BookCover';
+import Label from '../ui/Label';
+import Modal from '../ui/Modal';
 import DocumentChatHistory from './book_details_related/DocumentChatHistory';
 import DocumentBookmarks from './book_details_related/DocumentBookmarks';
 import DocumentNotes from './book_details_related/DocumentNotes';
 import DocumentsWords from './book_details_related/DocumentsWords';
 import DocumentsReviews from './book_details_related/DocumentsReviews';
-import DocumentsAdvanced from './book_details_related/DocumentsAdvanced';
-import DocumentQuizzes from './book_details_related/DocumentQuizzes';
 import DocumentAnalytics from './book_details_related/DocumentAnalytics';
 
 function BookDetails() {
@@ -25,11 +26,73 @@ function BookDetails() {
 
     const [activeTab, setActiveTab] = useState('chat');
     const [showSpaceModal, setShowSpaceModal] = useState(false);
+    const [showSyncPopover, setShowSyncPopover] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
 
     // Find the book first
     const book = books.find(b => String(b.id) === bookId);
     const isInAnySpace = spaces.filter(s => !s.isSystem).some(s => s.bookIds.includes(book?.id));
+
+    // Helper to evaluate sync status according to apex retry & sync algorithm
+    const getSyncInfo = (b) => {
+        if (!b) return { status: 'pending', label: 'Pending', variant: 'warning', dotColor: 'bg-amber-500' };
+
+        const isSynced = b.sync_status === 'synced' || Boolean(b.supabaseId) || Boolean(b.synced) || Boolean(b.recordId);
+        const isFailed = !isSynced && (b.sync_status === 'failed' || (b.sync_retry_count >= 5));
+
+        if (isSynced) {
+            return {
+                status: 'synced',
+                label: 'Synced',
+                variant: 'success',
+                dotColor: 'bg-emerald-500 dark:bg-emerald-400',
+                description: 'This book has been successfully uploaded and backed up to Supabase cloud storage.',
+            };
+        }
+
+        if (isFailed) {
+            return {
+                status: 'failed',
+                label: 'Failed',
+                variant: 'danger',
+                dotColor: 'bg-red-500 dark:bg-red-400',
+                description: 'Sync failed after multiple retry attempts (in-session & app re-entry limits reached). Check your network or retry uploading.',
+            };
+        }
+
+        return {
+            status: 'pending',
+            label: 'Pending',
+            variant: 'warning',
+            dotColor: 'bg-amber-500 dark:bg-amber-400',
+            description: 'Sync pending. The book is saved locally and will automatically upload when network connection is established or backoff retries execute.',
+        };
+    };
+
+    const [syncInfo, setSyncInfo] = useState(() => getSyncInfo(book));
+
+    useEffect(() => {
+        if (!book) return;
+        setSyncInfo(getSyncInfo(book));
+
+        // Poll IndexedDB to catch background retry state updates in real-time
+        const interval = setInterval(async () => {
+            try {
+                const dbBook = await db.books.get(Number(book.id) || book.id);
+                if (dbBook) {
+                    const freshInfo = getSyncInfo(dbBook);
+                    setSyncInfo(prev => {
+                        if (prev.status !== freshInfo.status) return freshInfo;
+                        return prev;
+                    });
+                }
+            } catch (e) {
+                // ignore
+            }
+        }, 1500);
+
+        return () => clearInterval(interval);
+    }, [book?.id, book?.sync_status, book?.supabaseId, book?.synced, book?.sync_retry_count]);
 
     const handleBookmarkClick = (e) => {
         e.stopPropagation();
@@ -72,8 +135,6 @@ function BookDetails() {
         { id: 'notes', label: 'Notes', component: DocumentNotes },
         { id: 'words', label: 'Words', component: DocumentsWords },
         { id: 'review', label: 'Review', component: DocumentsReviews },
-        { id: 'advanced', label: 'Advanced', component: DocumentsAdvanced },
-        { id: 'quiz', label: 'Quizzes', component: DocumentQuizzes },
         { id: 'analytics', label: 'Analytics', component: DocumentAnalytics }
     ];
 
@@ -133,13 +194,16 @@ function BookDetails() {
                             )}
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-center gap-3">
-                            <span className="bg-accent-subtle text-accent-pressed dark:text-accent-pressed text-xs font-semibold px-4 py-1.5 border border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 rounded-full tracking-widest transition-all">
-                                {book.status || 'Library'}
-                            </span>
-                            <span className="bg-bg-subtle dark:bg-bg-dark-elevated text-text-tertiary dark:text-text-tertiary-dark text-xs font-semibold px-4 py-1.5 border border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 rounded-full tracking-widest transition-all">
-                                {Math.round(book.progress || 0)}% Completed
-                            </span>
+                        <div className="flex flex-col items-center justify-center gap-2.5">
+                            <Label variant="neutral" content={`${Math.round(book.progress || 0)}% Completed`} />
+                            <Label
+                                variant={syncInfo.variant}
+                                dot={true}
+                                dotColor={syncInfo.dotColor}
+                                content={`Sync: ${syncInfo.label}`}
+                                onClick={() => setShowSyncPopover(prev => !prev)}
+                                title="Click to view sync details"
+                            />
                         </div>
                     </div>
 
@@ -326,6 +390,38 @@ function BookDetails() {
                 </div>
                 </div>
             , document.body)}
+            {/* Sync Status Details Modal — uses predefined Modal UI component */}
+            <Modal
+                isOpen={showSyncPopover}
+                onClose={() => setShowSyncPopover(false)}
+                title={`Sync State: ${syncInfo.label}`}
+                message={syncInfo.description}
+                actions={[
+                    {
+                        label: 'Got it',
+                        onClick: () => setShowSyncPopover(false),
+                        variant: 'ghost',
+                    }
+                ]}
+            >
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        syncInfo.status === 'synced' ? 'bg-emerald-500/15 text-emerald-500' :
+                        syncInfo.status === 'pending' ? 'bg-amber-400/15 text-amber-500' :
+                        'bg-red-500/15 text-red-500'
+                    }`}>
+                        <Info size={20} weight="bold" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-text-primary">
+                            {syncInfo.status === 'synced' ? 'Cloud Backed Up' : syncInfo.status === 'pending' ? 'In Queue / Retrying' : 'Retries Exhausted'}
+                        </span>
+                        <span className="text-[11px] text-text-tertiary">
+                            {syncInfo.status === 'synced' ? 'Available across all connected devices.' : syncInfo.status === 'pending' ? 'Will sync automatically when online.' : 'In-session & app re-entry retries complete.'}
+                        </span>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

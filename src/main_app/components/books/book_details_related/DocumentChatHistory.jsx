@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import EmptyState from '../../ui/EmptyState';
+import ListItem from '../../ui/ListItem';
 import { getAllChats } from '../../../utils/db';
 import { ChatCircle, Spinner } from '@phosphor-icons/react';
-import { cleanUserMessage, stripMarkdown, getChatTitle } from '../../../utils/aiUtils';
+import { getChatTitle } from '../../../utils/aiUtils';
 
 function DocumentChatHistory({ book }) {
     const [chatHistory, setChatHistory] = useState([]);
@@ -13,12 +14,10 @@ function DocumentChatHistory({ book }) {
             try {
                 setLoading(true);
                 const allChats = await getAllChats();
-                // Funnel chats scoped to this book's title (matching AIModal's scope logic)
                 const bookTitle = book?.title || '';
                 const bookChats = allChats.filter(
                     (chat) => chat.scope === bookTitle
                 );
-                // Sort by most recently updated
                 bookChats.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
                 setChatHistory(bookChats);
             } catch (err) {
@@ -32,7 +31,7 @@ function DocumentChatHistory({ book }) {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[300px]">
+            <div className="flex items-center justify-center min-h-[200px]">
                 <Spinner size={24} weight="bold" className="animate-spin text-accent-primary opacity-50" />
             </div>
         );
@@ -43,59 +42,22 @@ function DocumentChatHistory({ book }) {
             <EmptyState 
                 icon={ChatCircle}
                 title="No chat history"
-                description="Your conversations with the AI assistant will appear here."
+                description="Your conversations with the AI assistant for this book will appear here."
             />
         );
     }
 
-    const formatDate = (timestamp) => {
-        if (!timestamp) return '';
-        const date = new Date(timestamp);
-        return date.toLocaleDateString(undefined, {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
-
-    const getLastMessage = (chat) => {
-        if (!chat.messages || chat.messages.length === 0) return 'No messages';
-        const lastMsg = chat.messages[chat.messages.length - 1];
-        const content = lastMsg.content || '';
-        const cleaned = lastMsg.role === 'user' ? cleanUserMessage(content) : stripMarkdown(content);
-        return cleaned.length > 100 ? cleaned.slice(0, 100) + '...' : cleaned;
-    };
-
-    const getMessageCount = (chat) => {
-        return chat.messages?.length || 0;
-    };
-
     return (
-        <div className='grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500'>
+        <div className='flex flex-col gap-2.5 animate-in fade-in slide-in-from-bottom-4 duration-500'>
             {chatHistory.map((chat) => (
-                <div key={chat.id} className='flex items-start gap-4 p-4 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-xl hover:shadow-sm transition-all cursor-pointer group'>
-                    <div className="p-2 bg-accent-subtle dark:bg-accent-subtle-dark rounded-lg text-accent-primary dark:text-accent-primary-dark group-hover:bg-accent-primary group-hover:text-white transition-colors flex-shrink-0">
-                        <ChatCircle size={20} weight="fill" />
-                    </div>
-                    <div className="flex flex-col gap-1 min-w-0 flex-1">
-                        <h2 className='text-text-primary dark:text-text-primary-dark font-semibold group-hover:text-accent-primary transition-colors truncate'>
-                            {getChatTitle(chat)}
-                        </h2>
-                        <p className='text-text-tertiary dark:text-text-tertiary-dark text-sm line-clamp-2'>{getLastMessage(chat)}</p>
-                        <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs text-text-placeholder dark:text-text-placeholder-dark">
-                                {formatDate(chat.updatedAt)}
-                            </span>
-                            <span className="text-xs text-text-placeholder dark:text-text-placeholder-dark">
-                                {getMessageCount(chat)} messages
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                <ListItem
+                    key={chat.id}
+                    icon={ChatCircle}
+                    label={getChatTitle(chat)}
+                />
             ))}
         </div>
-    )
+    );
 }
 
-export default DocumentChatHistory
+export default DocumentChatHistory;
