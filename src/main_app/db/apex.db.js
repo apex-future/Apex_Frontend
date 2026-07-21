@@ -244,4 +244,11 @@ db.version(21).stores({
   console.log('[Apex DB] v21: quest_state and quest_stats_cache tables added');
 });
 
+// Version 22: Add user_daily_streak_progress table for continual cross-device streak tracking
+db.version(22).stores({
+  user_daily_streak_progress: '++id, date, [date+synced], seconds_read, streak_fired, synced',
+}).upgrade(async () => {
+  console.log('[Apex DB] v22: user_daily_streak_progress table added');
+});
+
 export default db;

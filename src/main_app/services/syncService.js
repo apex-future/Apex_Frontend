@@ -288,6 +288,7 @@ const syncService = {
           book_spaces: new Date().toISOString(),
           exam_reminders: new Date().toISOString(),
           book_reading_time: new Date().toISOString(),
+          user_daily_streak_progress: new Date().toISOString(),
           server_time: new Date().toISOString(),
         };
         serverTime = new Date().toISOString();
@@ -298,7 +299,7 @@ const syncService = {
       if (import.meta.env.DEV) console.log('[Apex Sync] Last synced at:', lastSyncedAt || 'never (first sync on this device)');
 
       // Step 3: Decide action per table — no client clock involved
-      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'tabs', 'book_notes', 'book_spaces', 'exam_reminders', 'book_reading_time'];
+      const tables = ['books', 'reading_progress', 'highlights', 'bookmarks', 'tabs', 'book_notes', 'book_spaces', 'exam_reminders', 'book_reading_time', 'user_daily_streak_progress'];
       const decisions = {};
 
       for (const table of tables) {
@@ -633,6 +634,37 @@ const syncService = {
           }
           
           console.log('[SyncPull] book_reading_time merge complete');
+        }
+
+        // ── USER DAILY STREAK PROGRESS ──
+        if (tablesToPull.includes('user_daily_streak_progress') && pulledData.user_daily_streak_progress?.length > 0) {
+          console.log('[SyncPull] Merging user_daily_streak_progress:', pulledData.user_daily_streak_progress.length, 'rows from Supabase');
+
+          for (const row of pulledData.user_daily_streak_progress) {
+            const existing = await db.user_daily_streak_progress
+              .where('date').equals(row.date)
+              .first();
+
+            if (!existing) {
+              await db.user_daily_streak_progress.add({
+                date: row.date,
+                seconds_read: row.seconds_read || 0,
+                streak_fired: row.streak_fired ? 1 : 0,
+                synced: 1,
+              });
+              console.log('[SyncPull] user_daily_streak_progress: added row for date', row.date, 'seconds:', row.seconds_read);
+            } else {
+              const resolvedSeconds = Math.max(existing.seconds_read || 0, row.seconds_read || 0);
+              const resolvedFired = (existing.streak_fired || row.streak_fired) ? 1 : 0;
+              await db.user_daily_streak_progress.update(existing.id, {
+                seconds_read: resolvedSeconds,
+                streak_fired: resolvedFired,
+                synced: 1,
+              });
+              console.log('[SyncPull] user_daily_streak_progress: merged row for date', row.date, 'seconds:', resolvedSeconds);
+            }
+          }
+          console.log('[SyncPull] user_daily_streak_progress merge complete');
         }
 
         // ── AI CONVERSATIONS (Category B — always pull, no conflict resolution) ──
@@ -1898,6 +1930,68 @@ const syncService = {
       }
     } catch (error) {
       if (import.meta.env.DEV) console.error('Push sync failed:', error);
+    }
+  },
+
+  // ============================================
+  // SAVE DAILY STREAK PROGRESS (Continual & CASA)
+  // ============================================
+  async saveDailyStreakProgress(date, secondsRead, streakFired) {
+    try {
+      const existing = await db.user_daily_streak_progress
+        .where('date').equals(date)
+        .first();
+
+      const newSeconds = Math.max(existing?.seconds_read || 0, secondsRead || 0);
+      const newFired = !!(existing?.streak_fired || streakFired);
+
+      if (existing) {
+        await db.user_daily_streak_progress.update(existing.id, {
+          seconds_read: newSeconds,
+          streak_fired: newFired ? 1 : 0,
+          synced: 0,
+        });
+      } else {
+        await db.user_daily_streak_progress.add({
+          date,
+          seconds_read: newSeconds,
+          streak_fired: newFired ? 1 : 0,
+          synced: 0,
+        });
+      }
+
+      // Remove any existing pending queue item for today's streak progress to avoid duplication
+      const existingQueue = await db.sync_queue
+        .where('tableName').equals('user_daily_streak_progress')
+        .filter(q => q.local_id === date && q.status === 'pending')
+        .toArray();
+
+      for (const item of existingQueue) {
+        await db.sync_queue.delete(item.id);
+      }
+
+      await db.sync_queue.add({
+        action: 'upload',
+        tableName: 'user_daily_streak_progress',
+        local_id: date,
+        recordId: null,
+        payload: {
+          date,
+          seconds_read: newSeconds,
+          streak_fired: newFired,
+        },
+        createdAt: new Date().toISOString(),
+        attempts: 0,
+        status: 'pending',
+      });
+
+      if (import.meta.env.DEV) {
+        console.log(`[SyncService] Saved daily streak progress for ${date}: ${newSeconds}s, fired=${newFired}`);
+      }
+      
+      this._triggerDebouncedFlush();
+    } catch (err) {
+      console.error('[SyncService] Failed to save daily streak progress:', err);
     }
   },
 
