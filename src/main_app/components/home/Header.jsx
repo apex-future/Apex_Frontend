@@ -4,6 +4,7 @@ import { BookContext } from '../../context/BookContextInstance';
 import useStudyStore from '../../store/studyStore';
 import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
+import useQuestStore from '../../store/useQuestStore';
 import { computeLevel } from '../../../config/xpConfig';
 import { Lightning, Fire, Sparkle, Hexagon, Scroll } from '@phosphor-icons/react';
 import useGreeting from '../../hooks/useGreeting';
@@ -36,9 +37,13 @@ export default function Header() {
         }
     }, [skipAnimation]);
 
-    const { estimatedXp, isMultiplierActive } = useXpStore();
+    const { estimatedXp, xpToday, isMultiplierActive } = useXpStore();
+    const { quest_1, quest_2, quest_3 } = useQuestStore();
+    
     const levelData = computeLevel(estimatedXp);
     const multiplierActive = isMultiplierActive();
+    
+    const questsCompletedCount = [quest_1, quest_2, quest_3].filter(q => q?.completed).length;
 
     console.log('[Header] rendered');
 
@@ -71,7 +76,7 @@ export default function Header() {
 
                     <StatCard
                         label="XP Today"
-                        value={estimatedXp}
+                        value={xpToday}
                         icon={Sparkle}
                         colorScheme="amber"
                         unit="gained"
@@ -84,7 +89,7 @@ export default function Header() {
 
                     <StatCard
                         label="Study Quest"
-                        value="1"
+                        value={questsCompletedCount}
                         icon={Scroll}
                         colorScheme="emerald"
                         unit="/ 3 completed"

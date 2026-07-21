@@ -19,6 +19,7 @@ const useXpStore = create(
       // ─── Local running total (UI always reads this) ─────────────────────────
       // Includes unconfirmed offline actions layered on top of confirmedXp
       estimatedXp: 0,
+      xpToday: 0,
 
       // ─── Offline queue ──────────────────────────────────────────────────────
       // Actions earned while offline, not yet confirmed by server
@@ -78,6 +79,7 @@ const useXpStore = create(
         set((state) => ({
           pendingXpActions: [...state.pendingXpActions, newAction],
           estimatedXp: state.estimatedXp + estimatedAmount,
+          xpToday: state.xpToday + estimatedAmount,
           sessionXpActions: [...(state.sessionXpActions || []), newAction],
         }));
 
@@ -217,6 +219,7 @@ const useXpStore = create(
         set({
           confirmedXp:              resolvedXp,
           estimatedXp:              resolvedXp + pendingXp,
+          xpToday:                  (profileData.xp_today || 0) + pendingXp,
           xpLog:                    dedupedLog,
           lastUpdatedAt:            resolvedUpdatedAt,
           multiplierExpiresAt:      resolvedExpiry,
@@ -249,6 +252,7 @@ const useXpStore = create(
         set({
           confirmedXp: 0,
           estimatedXp: 0,
+          xpToday: 0,
           pendingXpActions: [],
           sessionXpActions: [],
           isFlushingXp: false,
