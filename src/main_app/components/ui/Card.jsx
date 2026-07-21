@@ -6,7 +6,7 @@ export default function Card({ children, className = '', onClick, variant = 'def
  border-t border-black/10 dark:border-white/10
  shadow-sm shadow-black/10 dark:shadow-black/40
  rounded-xl sm:rounded-2xl
- hover:scale-[1.02] transition-transform duration-400
+ hover:scale-[1.02] transition-all duration-300 ease-out
  `;
 
  const variants = {

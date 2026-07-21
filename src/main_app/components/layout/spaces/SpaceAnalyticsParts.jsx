@@ -180,7 +180,7 @@ export const CoverageCard = React.memo(({ enrichedBooks }) => {
   const sorts = [['most', 'Most read'], ['least', 'Least read'], ['recent', 'Recent'], ['az', 'A–Z']];
 
   return (
-    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-6 shadow-sm hover:shadow-md transition-all duration-300 w-full min-w-0">
+    <Card className="p-6 w-full min-w-0">
       {PARTS_STYLES}
       <div className="cc-header">
         <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))', letterSpacing: '-0.01em' }}>Course coverage</span>
@@ -219,7 +219,7 @@ export const CoverageCard = React.memo(({ enrichedBooks }) => {
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 });
 
@@ -399,7 +399,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
   const toggleSeg = (name) => setCollapsed(p => ({ ...p, [name]: !p[name] }));
 
   return (
-    <Card className="p-6 w-full min-w-0 hover:scale-100">
+    <Card className="p-6 w-full min-w-0">
       {PARTS_STYLES}
 
       {/* Header */}
@@ -598,7 +598,7 @@ export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends,
   };
 
   return (
-    <Card className="p-6 w-full min-w-0 hover:scale-100">
+    <Card className="p-6 w-full min-w-0">
       {PARTS_STYLES}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Quiz performance</span>
@@ -833,7 +833,7 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
   };
 
   return (
-    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card shadow-sm hover:shadow-md transition-all duration-300 flex flex-col w-full min-w-0">
+    <Card className="flex flex-col w-full min-w-0">
       {/* Calendar */}
       <div style={{ padding: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -912,7 +912,7 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 });
 
@@ -934,7 +934,7 @@ export const KnowledgeMasteryCard = React.memo(({ spaceBooks, masteryData }) => 
   };
 
   return (
-    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+    <Card className="overflow-hidden">
       {PARTS_STYLES}
       <div style={{ padding: 24, borderBottom: '1px solid rgb(var(--border-default) / 0.4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1004,6 +1004,6 @@ export const KnowledgeMasteryCard = React.memo(({ spaceBooks, masteryData }) => 
           </button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 });
