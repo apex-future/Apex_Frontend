@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { CaretLeft, CaretRight, CaretDown, Check, Lightning, Brain, Target, TrendUp, Warning, ArrowRight, Sparkle } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Card from '../../ui/Card';
 
 // ── CUSTOM SELECT COMPONENT ──
 const CustomSelect = ({ value, onChange, options }) => {
@@ -256,10 +257,39 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
     setCollapsed({ Morning: false, Afternoon: false, Evening: true });
   };
 
-  // For non-current weeks, weeklyTime doesn't apply — show zeros
-  const displayWeeklyTime = isCurrentWeek
-    ? weeklyTime
-    : dayOrder.map(d => ({ day: d, minutes: 0 }));
+  // Compute weekly time for current or past weeks dynamically from rawActivity or weeklyTime
+  const displayWeeklyTime = useMemo(() => {
+    return dayOrder.map((dName, idx) => {
+      const dayDate = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + idx);
+      const dayStr = toDateStr(dayDate);
+
+      const currentWeekData = (isCurrentWeek && weeklyTime && weeklyTime[idx]) ? weeklyTime[idx] : null;
+
+      const dayEvents = (rawActivity || []).filter(
+        ev => (ev.type === 'reading' || ev.type === 'study' || ev.type === 'quiz') && ev.timestamp?.slice(0, 10) === dayStr
+      );
+
+      let calcMins = 0;
+      const byBook = { ...(currentWeekData?.by_book || {}) };
+
+      dayEvents.forEach(ev => {
+        const pages = parseInt(ev.detail) || 0;
+        const mins = ev.minutes || (pages > 0 ? Math.round(pages * 0.5) : 15);
+        calcMins += mins;
+        const bId = ev.book_id || 'unknown';
+        byBook[bId] = (byBook[bId] || 0) + mins;
+      });
+
+      const finalMins = currentWeekData?.minutes ? Math.max(currentWeekData.minutes, calcMins) : calcMins;
+
+      return {
+        day: dName,
+        dateStr: dayStr,
+        minutes: finalMins,
+        by_book: byBook,
+      };
+    });
+  }, [dayOrder, monday, isCurrentWeek, weeklyTime, rawActivity]);
 
   // Actual date string for selected day
   const selectedDate = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + selectedDayIdx);
@@ -369,7 +399,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
   const toggleSeg = (name) => setCollapsed(p => ({ ...p, [name]: !p[name] }));
 
   return (
-    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-6 shadow-sm hover:shadow-md transition-all duration-300 w-full min-w-0">
+    <Card className="p-6 w-full min-w-0 hover:scale-100">
       {PARTS_STYLES}
 
       {/* Header */}
@@ -511,7 +541,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 });
 
@@ -519,7 +549,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
 // ═══════════════════════════════════════
 // Card 2 — Quiz Performance
 // ═══════════════════════════════════════
-export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends, spaceBooks }) => {
+export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends, spaceBooks, showSelect = true }) => {
   const [selectedBook, setSelectedBook] = useState('overall');
 
   // Derive per-book quiz stats from analyticsData enrichedBooks
@@ -568,15 +598,17 @@ export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends,
   };
 
   return (
-    <div className="bg-bg-subtle dark:bg-bg-elevated rounded-card p-6 shadow-sm hover:shadow-md transition-all duration-300 w-full min-w-0">
+    <Card className="p-6 w-full min-w-0 hover:scale-100">
       {PARTS_STYLES}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Quiz performance</span>
-        <CustomSelect
-          value={selectedBook}
-          onChange={setSelectedBook}
-          options={[{ id: 'overall', title: 'Overall' }, ...enrichedBooks]}
-        />
+        {showSelect && (
+          <CustomSelect
+            value={selectedBook}
+            onChange={setSelectedBook}
+            options={[{ id: 'overall', title: 'Overall' }, ...enrichedBooks]}
+          />
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
@@ -658,7 +690,7 @@ export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends,
       ) : (
         <p style={{ fontSize: 11, color: 'rgb(var(--text-tertiary))', textAlign: 'center', padding: 20 }}>No quiz attempts yet</p>
       )}
-    </div>
+    </Card>
   );
 });
 

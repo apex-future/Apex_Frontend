@@ -1,99 +1,177 @@
-import React from 'react';
-import { ChartBar, Clock, Target, TrendUp, Trophy } from '@phosphor-icons/react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { CalendarActivityCard, StudyTimeCard, QuizCard, PARTS_STYLES } from '../../layout/spaces/SpaceAnalyticsParts';
+import apiClient from '../../../services/apiClient';
 import useQuizStore from '../../../store/quizStore';
+import useStudyStore from '../../../store/studyStore';
+import { Spinner } from '@phosphor-icons/react';
 
 function DocumentAnalytics({ book }) {
-    const { getAggregatedStatsForBook } = useQuizStore();
-    
-    const stats = getAggregatedStatsForBook(book.id);
+    const [analyticsData, setAnalyticsData] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    if (!stats) {
+    const quizHistory = useQuizStore((state) => state.quizHistory) || [];
+    const streakCount = useStudyStore((state) => state.streakCount) || 0;
+    const streakHistory = useStudyStore((state) => state.streakHistory) || [];
+
+    // Local quiz history for this specific book
+    const bookQuizHistory = useMemo(() => {
+        if (!book?.id) return [];
+        return quizHistory.filter(q => String(q.bookId) === String(book.id));
+    }, [quizHistory, book?.id]);
+
+    const localQuizStats = useMemo(() => {
+        if (bookQuizHistory.length === 0) return null;
+        const totalScore = bookQuizHistory.reduce((acc, curr) => acc + (curr.score || 0), 0);
+        return {
+            attemptsCount: bookQuizHistory.length,
+            averageScore: Math.round(totalScore / bookQuizHistory.length),
+        };
+    }, [bookQuizHistory]);
+
+    const localBestScore = useMemo(() => {
+        if (bookQuizHistory.length === 0) return 0;
+        return Math.max(...bookQuizHistory.map(q => q.score || 0));
+    }, [bookQuizHistory]);
+
+    const localBookTrend = useMemo(() => {
+        return bookQuizHistory.map(q => ({
+            score: q.score || 0,
+            date: q.createdAt || new Date().toISOString(),
+        }));
+    }, [bookQuizHistory]);
+
+    const localActivity = useMemo(() => {
+        const bookId = book?.supabaseId || book?.recordId || String(book?.id);
+        const activity = [];
+        if (book?.lastReadAt) {
+            activity.push({
+                book_id: bookId,
+                timestamp: book.lastReadAt,
+                type: 'reading',
+                detail: `Completed ${Math.round(book.progress || 0)}% of book`
+            });
+        }
+        bookQuizHistory.forEach(q => {
+            activity.push({
+                book_id: bookId,
+                timestamp: q.createdAt,
+                type: 'quiz',
+                detail: `Scored ${q.score}% on quiz attempt`
+            });
+        });
+        return activity;
+    }, [book, bookQuizHistory]);
+
+    // Fetch individual book analytics from backend
+    useEffect(() => {
+        let isMounted = true;
+        const bookUuid = book?.supabaseId || book?.recordId;
+
+        const fetchAnalytics = async () => {
+            if (!bookUuid) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const response = await apiClient.post('/api/spaces/analytics', { book_ids: [bookUuid] });
+                if (isMounted && response?.data) {
+                    setAnalyticsData(response.data);
+                }
+            } catch (err) {
+                console.warn('[DocumentAnalytics] Fallback to local store stats for book:', book?.title, err);
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+
+        fetchAnalytics();
+        return () => { isMounted = false; };
+    }, [book?.id, book?.supabaseId, book?.recordId]);
+
+    // Normalize enriched book data for QuizCard
+    const enrichedBook = useMemo(() => {
+        const bookAnalytics = analyticsData?.books_analytics?.find(
+            a => a.book_id === (book?.supabaseId || book?.recordId)
+        );
+
+        return {
+            ...book,
+            progress: bookAnalytics?.progress_percentage ?? book?.progress ?? 0,
+            timeSpent: bookAnalytics?.time_read_minutes ?? book?.timeSpent ?? 0,
+            averageScore: bookAnalytics?.average_score ?? localQuizStats?.averageScore ?? 0,
+            bestScore: bookAnalytics?.best_score ?? localBestScore ?? 0,
+            quizAttempts: bookAnalytics?.quiz_attempts ?? localQuizStats?.attemptsCount ?? 0,
+            lastReadAt: bookAnalytics?.last_read_at ?? book?.lastReadAt ?? null,
+        };
+    }, [book, analyticsData, localQuizStats, localBestScore]);
+
+    // Normalize quiz stats
+    const normalizedQuizStats = useMemo(() => {
+        if (analyticsData?.quiz_stats) {
+            return analyticsData.quiz_stats;
+        }
+        return {
+            attempts_count: localQuizStats?.attemptsCount || 0,
+            average_score: localQuizStats?.averageScore || 0,
+            best_score: localBestScore || 0,
+            book_trends: {
+                overall: localBookTrend,
+                [book?.id]: localBookTrend,
+            }
+        };
+    }, [analyticsData, localQuizStats, localBestScore, localBookTrend, book?.id]);
+
+    // Normalize local book trends mapping
+    const localBookTrends = useMemo(() => {
+        const trends = {
+            overall: normalizedQuizStats.book_trends?.overall ?? localBookTrend,
+            [book?.id]: normalizedQuizStats.book_trends?.[book?.supabaseId || book?.id] ?? localBookTrend,
+        };
+        return trends;
+    }, [normalizedQuizStats, localBookTrend, book]);
+
+    if (loading) {
         return (
-            <div className="text-center py-20 px-4 border border-dashed border-border-default rounded-3xl">
-                <ChartBar size={48} weight="bold" className="mx-auto text-text-placeholder mb-4" />
-                <h3 className="text-lg font-bold text-text-primary mb-2">No Analytics Yet</h3>
-                <p className="text-text-secondary font-medium">Complete some quizzes for this book to see your performance breakdown.</p>
+            <div className="flex items-center justify-center min-h-[220px]">
+                <Spinner size={24} weight="bold" className="animate-spin text-accent-primary opacity-50" />
             </div>
         );
     }
 
-    const formatTime = (seconds) => {
-        const m = Math.floor(seconds / 60);
-        return `${m} mins`;
-    };
-
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-3 px-2 mb-4">
-                <div className="w-10 h-10 bg-accent-primary/10 text-accent-primary rounded-xl flex items-center justify-center">
-                    <TrendUp size={24} weight="bold" />
-                </div>
-                <div>
-                    <h3 className="text-lg font-bold text-text-primary leading-tight">Performance Summary</h3>
-                    <p className="text-xs text-text-tertiary font-semibold uppercase tracking-wider">Aggregated AI Quiz Data</p>
-                </div>
-            </div>
+        <div className="flex flex-col gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {PARTS_STYLES}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Average Score */}
-                <div className="p-6 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-3xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Trophy size={64} weight="bold" />
-                    </div>
-                    <span className="text-xs font-bold text-text-tertiary uppercase tracking-widest block mb-4">Avg Score</span>
-                    <div className="flex items-baseline gap-1">
-                        <span className={`text-4xl font-black ${stats.averageScore >= 50 ? 'text-green-500' : 'text-red-500'}`}>
-                            {stats.averageScore}%
-                        </span>
-                    </div>
-                    <p className="text-xs text-text-tertiary mt-2 font-medium">Across all attempts</p>
-                </div>
+            {/* 1. Study Consistency Card (Calendar Activity Card) on top */}
+            <CalendarActivityCard
+                streakHistory={analyticsData?.streak_history ?? streakHistory}
+                currentStreak={analyticsData?.current_streak ?? streakCount}
+                rawActivity={analyticsData?.recent_activity ?? localActivity}
+                spaceBooks={[book]}
+            />
 
-                {/* Total Quizzes */}
-                <div className="p-6 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-3xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Target size={64} weight="bold" />
-                    </div>
-                    <span className="text-xs font-bold text-text-tertiary uppercase tracking-widest block mb-4">Quizzes Taken</span>
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-black text-text-primary">
-                            {stats.attemptsCount}
-                        </span>
-                    </div>
-                    <p className="text-xs text-text-tertiary mt-2 font-medium">Completed sessions</p>
-                </div>
+            {/* 2. Side-by-side on Desktop (lg:grid-cols-2), stacked on Mobile (grid-cols-1) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                {/* Study Time This Week */}
+                <StudyTimeCard
+                    weeklyTime={analyticsData?.weekly_time ?? []}
+                    rawActivity={analyticsData?.recent_activity ?? localActivity}
+                    spaceBooks={[book]}
+                />
 
-                {/* Total Questions */}
-                <div className="p-6 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-3xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <ChartBar size={64} weight="bold" />
-                    </div>
-                    <span className="text-xs font-bold text-text-tertiary uppercase tracking-widest block mb-4">Total Questions</span>
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-black text-text-primary">
-                            {stats.totalQuestions}
-                        </span>
-                    </div>
-                    <p className="text-xs text-text-tertiary mt-2 font-medium">Answered in total</p>
-                </div>
-
-                {/* Time Spent in Quizzes */}
-                <div className="p-6 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-3xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Clock size={64} weight="bold" />
-                    </div>
-                    <span className="text-xs font-bold text-text-tertiary uppercase tracking-widest block mb-4">Time Spent</span>
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-black text-text-primary">
-                            {formatTime(stats.totalTime)}
-                        </span>
-                    </div>
-                    <p className="text-xs text-text-tertiary mt-2 font-medium">Testing knowledge</p>
-                </div>
+                {/* Quiz Performance (no dropdown needed for single book view) */}
+                <QuizCard
+                    enrichedBooks={[enrichedBook]}
+                    quizStats={normalizedQuizStats}
+                    localBookTrends={localBookTrends}
+                    spaceBooks={[book]}
+                    showSelect={false}
+                />
             </div>
         </div>
     );
 }
 
 export default DocumentAnalytics;
-
