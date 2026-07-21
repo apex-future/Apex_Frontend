@@ -31,6 +31,7 @@ import NoteEditorPage from './pages/NoteEditorPage';
 import NotificationDrawer from './components/notifications/NotificationDrawer';
 import QuestPage from './pages/QuestPage';
 import FlashcardsPage from './pages/FlashcardsPage';
+import NotFoundPage from './pages/NotFoundPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
@@ -97,12 +98,35 @@ function MainApp({ onLogout }) {
     }
   }, [location.pathname])
 
+  const isKnownRoute = (pathname) => {
+    if (pathname === '/' || pathname === '') return true;
+    const validPrefixes = [
+      '/profile',
+      '/settings',
+      '/reader',
+      '/spaces',
+      '/space',
+      '/book',
+      '/dictionary',
+      '/ai',
+      '/tabs',
+      '/import',
+      '/streak',
+      '/exams',
+      '/analytics',
+      '/notes',
+      '/quest',
+      '/flashcards',
+    ];
+    return validPrefixes.some(prefix => pathname === prefix || pathname.startsWith(prefix + '/'));
+  };
+
   return (
     <div className={`flex relative min-h-screen bg-bg-primary ${resolvedTheme}`}>
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>
-          {asideIsOpen && !location.pathname.startsWith('/reader') && !location.pathname.match(/^\/notes\/[^/]+\/(new|[^/]+)$/) && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} onLogout={onLogout} />}
+          {isKnownRoute(location.pathname) && asideIsOpen && !location.pathname.startsWith('/reader') && !location.pathname.match(/^\/notes\/[^/]+\/(new|[^/]+)$/) && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} onLogout={onLogout} />}
 
           <div className='flex-1 min-w-0 relative z-[10]'>
             <main className="">
@@ -131,11 +155,12 @@ function MainApp({ onLogout }) {
                 <Route path="/notes/:bookId/:noteId" element={<NoteEditorPage />} />
                 <Route path="/quest" element={<QuestPage />} />
                 <Route path="/flashcards" element={<FlashcardsPage />} />
+                <Route path="*" element={<NotFoundPage isLoggedIn={true} />} />
               </Routes>
             </main>
 
-            {/* Hide bottom navbar on specialized screens */}
-            {!location.pathname.startsWith('/reader') && location.pathname !== '/ai' && !location.pathname.match(/^\/notes\/[^/]+\/(new|[^/]+)$/) && <BottomNavBar />}
+            {/* Hide bottom navbar on specialized screens or 404 routes */}
+            {isKnownRoute(location.pathname) && !location.pathname.startsWith('/reader') && location.pathname !== '/ai' && !location.pathname.match(/^\/notes\/[^/]+\/(new|[^/]+)$/) && <BottomNavBar />}
           </div>
 
           <DuplicateBookModal

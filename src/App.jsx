@@ -21,6 +21,7 @@ import LandingLoadingScreen from './landing_page/components/LandingLoadingScreen
 import OnboardingPage from './landing_page/OnboardingPage';
 import AccessibilityPage from './landing_page/AccessibilityPage';
 import useQuestStore from './main_app/store/useQuestStore';
+import NotFoundPage from './main_app/pages/NotFoundPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
@@ -268,8 +269,8 @@ function App() {
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            {/* Redirect any other logged-out route to landing */}
-            <Route path="*" element={<Navigate to="/" />} />
+            {/* Show 404 page for any unauthenticated non-existent route */}
+            <Route path="*" element={<NotFoundPage isLoggedIn={false} />} />
           </>
         ) : (
           <>
