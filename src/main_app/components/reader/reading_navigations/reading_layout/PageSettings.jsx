@@ -1,14 +1,19 @@
 import React, { useState } from 'react'
 import { X, CaretLeft, ArrowsVertical, ArrowsHorizontal, Gear, SlidersHorizontal } from '@phosphor-icons/react';
+import { AnimatePresence } from 'framer-motion';
 import useSettingsStore from '../../../../store/settingsStore';
+import StreakCelebration from '../../StreakCelebration';
 
 function PageSettings({ setPageSettings, readerControls }) {
   const [activeSection, setActiveSection] = useState(null);
+  const [previewStyle, setPreviewStyle] = useState(null);
   const { scrollOrientation = 'vertical', setScrollOrientation } = readerControls || {};
 
   const {
     pageAnimations,
     scrollAnimation,
+    streakCelebrationEnabled = true,
+    streakCelebrationStyle = 'full',
     updateSetting,
   } = useSettingsStore();
 
@@ -111,7 +116,7 @@ function PageSettings({ setPageSettings, readerControls }) {
             </div>
 
             {/* Scroll Orientation Section */}
-            <div className="space-y-4">
+            <div className="space-y-4 pt-4 border-t border-black/10 dark:border-white/10">
               <h3 className="text-[11px] font-black text-text-tertiary uppercase tracking-widest px-1">Scroll Orientation</h3>
               
               <div className="grid grid-cols-2 gap-3">
@@ -149,9 +154,74 @@ function PageSettings({ setPageSettings, readerControls }) {
               </div>
             </div>
 
-            {/* Placeholder for more settings can be added here */}
+            {/* Streak Celebration Section */}
+            <div className="space-y-4 pt-4 border-t border-black/10 dark:border-white/10">
+              <div className="flex items-center justify-between px-1">
+                <div>
+                  <h3 className="text-[11px] font-black text-text-tertiary uppercase tracking-widest">
+                    Streak Celebration
+                  </h3>
+                  <p className="text-[10px] text-text-tertiary mt-0.5">Show alert when daily streak is kept</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={streakCelebrationEnabled}
+                    onChange={(e) => updateSetting('streakCelebrationEnabled', e.target.checked)}
+                  />
+                  <div className="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent-primary" />
+                </label>
+              </div>
+
+              {/* Celebration Style choices — visible when celebration is enabled */}
+              {streakCelebrationEnabled && (
+                <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <button
+                    onClick={() => {
+                      updateSetting('streakCelebrationStyle', 'full');
+                      setPreviewStyle('full');
+                    }}
+                    className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all ${
+                      streakCelebrationStyle === 'full'
+                        ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                        : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
+                    }`}
+                  >
+                    <span className="text-xs font-bold tracking-tight">Full Celebration</span>
+                    <span className="text-[9px] text-text-tertiary text-center">Confetti & modal</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      updateSetting('streakCelebrationStyle', 'subtle');
+                      setPreviewStyle('subtle');
+                    }}
+                    className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all ${
+                      streakCelebrationStyle === 'subtle'
+                        ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                        : 'border-border-default bg-bg-subtle/50 text-text-tertiary hover:border-text-tertiary/20'
+                    }`}
+                  >
+                    <span className="text-xs font-bold tracking-tight">Subtle Banner</span>
+                    <span className="text-[9px] text-text-tertiary text-center">Minimal top pill</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
       </div>
+
+      <AnimatePresence>
+        {previewStyle && (
+          <StreakCelebration
+            streakCount={7}
+            streakHistory={[]}
+            previewStyle={previewStyle}
+            onClose={() => setPreviewStyle(null)}
+          />
+        )}
+      </AnimatePresence>
     </aside>
   )
 }

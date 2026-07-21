@@ -362,8 +362,11 @@ function ReaderView() {
                         updateStreakRef.current();
                         // Read AFTER the synchronous store mutation — this is the authoritative snapshot
                         const store = useStudyStore.getState();
+                        const { streakCelebrationEnabled = true } = useSettingsStore.getState();
                         setCelebrationData({ streakCount: store.streakCount, streakHistory: store.streakHistory });
-                        setShowStreakCelebration(true);
+                        if (streakCelebrationEnabled) {
+                            setShowStreakCelebration(true);
+                        }
                         streakFiredTodayRef.current = true; // Still keep ref updated for other possible checks
                         localStorage.setItem('apex_streak_fired_today', today);
                     }

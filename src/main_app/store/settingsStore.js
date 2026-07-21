@@ -34,6 +34,8 @@ const useSettingsStore = create(
       scrollOrientation: 'vertical',    // 'vertical' | 'horizontal'
       scrollAnimation: 'none',          // 'none' | 'slide' | 'fade'
       streakThresholdMinutes: 5,        // 3 | 5 | 10 | 15 | 20 | 30
+      streakCelebrationEnabled: true,   // Toggle streak celebration modal on/off
+      streakCelebrationStyle: 'subtle', // 'subtle' (default less distracting) | 'full' (distracting)
 
       // ── Setters ──
 
@@ -74,7 +76,8 @@ const useSettingsStore = create(
             theme, autoSaveProgress, pageAnimations,
             saveChatHistory, autoExplain, notifications,
             scrollOrientation, scrollAnimation, reminderTime,
-            streakThresholdMinutes,
+            streakThresholdMinutes, streakCelebrationEnabled,
+            streakCelebrationStyle,
           } = get();
 
           const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -91,6 +94,8 @@ const useSettingsStore = create(
             scroll_animation: scrollAnimation,
             reminder_time: reminderTime,
             streak_threshold_minutes: streakThresholdMinutes,
+            streak_celebration_enabled: streakCelebrationEnabled,
+            streak_celebration_style: streakCelebrationStyle,
           });
           if (response.data?.updated_at) {
             set({ settingsLastSyncedAt: response.data.updated_at });
@@ -112,10 +117,6 @@ const useSettingsStore = create(
         const cloudUpdatedAt = data.updated_at || null;
         const lastSyncedAt = get().settingsLastSyncedAt || null;
 
-        // Cloud wins only if its updated_at is strictly newer than our last sync anchor
-        // This means another device saved settings more recently than we did
-        // If no anchor exists (fresh device) — cloud always wins
-        // If no cloud timestamp — skip seed, local is safer
         if (!cloudUpdatedAt) {
           if (import.meta.env.DEV) console.log('[Apex Gear] No cloud timestamp — keeping local settings');
           return;
@@ -144,6 +145,8 @@ const useSettingsStore = create(
           scrollAnimation: data.scroll_animation || 'none',
           reminderTime: data.reminder_time ? data.reminder_time.slice(0, 5) : '18:00',
           streakThresholdMinutes: data.streak_threshold_minutes ?? 5,
+          streakCelebrationEnabled: data.streak_celebration_enabled ?? true,
+          streakCelebrationStyle: data.streak_celebration_style || 'subtle',
           settingsLastSyncedAt: cloudUpdatedAt,
         });
       },

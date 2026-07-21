@@ -6,6 +6,7 @@ import {
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 
+import { AnimatePresence } from 'framer-motion';
 import useThemeStore from '../../../store/themeStore';
 import useSettingsStore from '../../../store/settingsStore';
 import { APP_VERSION } from '../../../constants/version';
@@ -15,6 +16,7 @@ import syncService from '../../../services/syncService';
 import apiClient from '../../../services/apiClient';
 import notificationService from '../../../services/notificationService';
 import BugReportModal from '../../modals/BugReportModal';
+import StreakCelebration from '../../reader/StreakCelebration';
 
 function Settings({ onLogout }) {
     const navigate = useNavigate();
@@ -32,6 +34,8 @@ function Settings({ onLogout }) {
       scrollAnimation,
       reminderTime,
       streakThresholdMinutes,
+      streakCelebrationEnabled = true,
+      streakCelebrationStyle = 'full',
       updateSetting,
       updateNotification,
     } = useSettingsStore();
@@ -46,6 +50,7 @@ function Settings({ onLogout }) {
     const [showClearModal, setShowClearModal] = useState(false);
     const [clearing, setClearing] = useState(false);
     const [showBugReport, setShowBugReport] = useState(false);
+    const [previewStyle, setPreviewStyle] = useState(null);
 
     /**
      * clearDeviceOnly — Wipes all local Dexie data and localStorage
@@ -207,7 +212,7 @@ function Settings({ onLogout }) {
                         checked={pageAnimations}
                         onChange={(e) => updateSetting('pageAnimations', e.target.checked)}
                     />
-                    <div className="p-4">
+                    <div className="p-4 border-b border-black/10 dark:border-white/10">
                       <p className="text-sm font-medium text-text-primary mb-1">Streak Threshold</p>
                       <p className="text-xs text-text-tertiary mb-3">Minutes of reading needed to count a study day</p>
                       <div className="flex gap-2 flex-wrap">
@@ -226,6 +231,50 @@ function Settings({ onLogout }) {
                         ))}
                       </div>
                     </div>
+
+                    {/* Streak Celebration Toggle & Style Choice */}
+                    <ToggleRow
+                        label="Streak Celebration Alert"
+                        desc="Show a pop-up celebration when achieving your daily reading streak"
+                        checked={streakCelebrationEnabled}
+                        onChange={(e) => updateSetting('streakCelebrationEnabled', e.target.checked)}
+                    />
+                    {streakCelebrationEnabled && (
+                      <div className="p-4 border-b border-black/10 dark:border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <p className="text-sm font-medium text-text-primary mb-1">Celebration Style</p>
+                        <p className="text-xs text-text-tertiary mb-3">Choose how streak achievements are celebrated</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => {
+                              updateSetting('streakCelebrationStyle', 'full');
+                              setPreviewStyle('full');
+                            }}
+                            className={`flex flex-col items-center gap-1.5 p-3 rounded-card border-2 text-xs font-bold transition-all ${
+                              streakCelebrationStyle === 'full'
+                                ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                                : 'border-black/10 dark:border-white/10 text-text-tertiary hover:border-text-tertiary/30'
+                            }`}
+                          >
+                            <span>Full Celebration</span>
+                            <span className="text-[10px] text-text-tertiary font-normal">Full modal with confetti</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              updateSetting('streakCelebrationStyle', 'subtle');
+                              setPreviewStyle('subtle');
+                            }}
+                            className={`flex flex-col items-center gap-1.5 p-3 rounded-card border-2 text-xs font-bold transition-all ${
+                              streakCelebrationStyle === 'subtle'
+                                ? 'border-accent-primary bg-accent-primary/5 text-accent-primary'
+                                : 'border-black/10 dark:border-white/10 text-text-tertiary hover:border-text-tertiary/30'
+                            }`}
+                          >
+                            <span>Subtle Banner</span>
+                            <span className="text-[10px] text-text-tertiary font-normal">Minimal top drop-down</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                 </SettingSection>
 
                 {/* Reading Experience */}
@@ -493,6 +542,18 @@ function Settings({ onLogout }) {
               isOpen={showBugReport}
               onClose={() => setShowBugReport(false)}
             />
+
+            {/* Streak Celebration Live Preview */}
+            <AnimatePresence>
+              {previewStyle && (
+                <StreakCelebration
+                  streakCount={7}
+                  streakHistory={[]}
+                  previewStyle={previewStyle}
+                  onClose={() => setPreviewStyle(null)}
+                />
+              )}
+            </AnimatePresence>
         </div>
     );
 }
