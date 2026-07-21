@@ -259,8 +259,7 @@ export const BookProvider = ({ children }) => {
       isLocal: true,
       isFavorite: false,
       isBookmarked: false,
-      // Flag to show uploading state on the book card
-      isUploading: navigator.onLine,
+      isUploading: false,
       metadata: {
         bookmarks: [],
         highlights: [],
@@ -282,8 +281,7 @@ export const BookProvider = ({ children }) => {
       return;
     }
 
-    // Step 2: Add to UI immediately — BEFORE upload
-    // isUploading: true shows a loading indicator on the card
+    // Step 2: Add to UI immediately — BEFORE background upload
     const newBook = {
       ...newBookData,
       id,
@@ -298,42 +296,33 @@ export const BookProvider = ({ children }) => {
 
     console.log('[Apex] Book added to UI optimistically:', title);
 
-    // Step 3: Reconstruct fresh File from ArrayBuffer
-    // Original fileObject stream is consumed after arrayBuffer() — cannot reuse
+    // Concise toast informing user they can read immediately
+    showToastGlobal('Uploading your book, but you can start reading.', 'info', 4000);
+
+    // Step 3: Reconstruct fresh File from ArrayBuffer and upload in background
     const freshBlob = new Blob([arrayBuffer], { type: fileType });
     const freshFile = new File([freshBlob], fileObject.name, { type: fileType });
 
     if (navigator.onLine) {
-      // Show persistent uploading toast — dismissed only when upload resolves
-      showToastGlobal('Uploading your book, hang tight...', 'info', 0); // 0 = persistent, no auto-dismiss
-
       try {
-        console.log('[Apex] Starting Supabase upload for:', title);
+        console.log('[Apex] Starting background upload for:', title);
         const result = await syncService.uploadBook(freshFile, title, 'Unknown', id);
 
         if (result) {
           console.log('[Apex] Upload successful for:', title, '| supabaseId:', result.id);
 
-          // Update the book in UI to remove uploading state
+          // Update book in UI with supabaseId and sync_status
           setShelves(prev => prev.map(shelf => ({
             ...shelf,
             books: shelf.books.map(b =>
-              b.id === id ? { ...b, isUploading: false, supabaseId: result.id } : b
+              b.id === id ? { ...b, supabaseId: result.id, sync_status: 'synced' } : b
             ),
           })));
 
-          // Dismiss uploading toast and show success
-          showToastGlobal('Book uploaded successfully!', 'success');
+          // Minimal success toast when background sync completes
+          showToastGlobal('Book synced to cloud successfully.', 'success', 3000);
         } else {
           console.error('[Apex] Upload returned null for:', title);
-
-          // Update UI to remove uploading state even on failure
-          setShelves(prev => prev.map(shelf => ({
-            ...shelf,
-            books: shelf.books.map(b =>
-              b.id === id ? { ...b, isUploading: false } : b
-            ),
-          })));
 
           // Queue for retry
           await db.sync_queue.add({
@@ -352,23 +341,14 @@ export const BookProvider = ({ children }) => {
             status: 'pending',
           });
 
-          showToastGlobal('Book saved offline. It will sync when your connection is stable.', 'warning');
+          showToastGlobal('Book saved offline. It will sync when your connection is stable.', 'warning', 4000);
         }
       } catch (uploadErr) {
         console.error('[Apex] Upload exception for:', title, uploadErr);
-
-        // Update UI to remove uploading state
-        setShelves(prev => prev.map(shelf => ({
-          ...shelf,
-          books: shelf.books.map(b =>
-            b.id === id ? { ...b, isUploading: false } : b
-          ),
-        })));
-
-        showToastGlobal('Book saved offline. It will sync when your connection is stable.', 'warning');
+        showToastGlobal('Book saved offline. It will sync when your connection is stable.', 'warning', 4000);
       }
     } else {
-      // Offline — queue for later, no upload toast
+      // Offline — queue for later
       console.log('[Apex] Offline — book saved locally, queued for sync');
       await db.sync_queue.add({
         action: 'upload',
