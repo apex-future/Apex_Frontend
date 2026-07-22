@@ -235,13 +235,19 @@ const useXpStore = create(
       },
 
       /**
-       * isMultiplierActive — returns true if a timed multiplier is currently active.
-       * Used by UI to show multiplier badge. Not used by backend.
+       * isMultiplierActive — returns true if ANY multiplier is currently active:
+       *   1. A timed multiplier from overflow rewards (multiplierExpiresAt)
+       *   2. A day-based multiplier — Wednesday (weekday 3) or Saturday (weekday 6)
+       * Used by UI to show ElectricBorder. Not used by backend.
        */
       isMultiplierActive: () => {
+        // 1. Check timed multiplier
         const { multiplierExpiresAt } = get();
-        if (!multiplierExpiresAt) return false;
-        return new Date(multiplierExpiresAt) > new Date();
+        if (multiplierExpiresAt && new Date(multiplierExpiresAt) > new Date()) return true;
+
+        // 2. Check day-based multiplier (Wed = 3, Sat = 6 in JS getDay())
+        const day = new Date().getDay();
+        return day === 3 || day === 6;
       },
 
       /**

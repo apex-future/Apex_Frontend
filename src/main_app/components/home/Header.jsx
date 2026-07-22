@@ -6,12 +6,13 @@ import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
 import useQuestStore from '../../store/useQuestStore';
 import { computeLevel } from '../../../config/xpConfig';
-import { Lightning, Fire, Sparkle, Hexagon, Scroll } from '@phosphor-icons/react';
+import { Fire, Sparkle, Hexagon, Scroll } from '@phosphor-icons/react';
 import useGreeting from '../../hooks/useGreeting';
 import Typewriter from '../ui/Typewriter';
 import { useNavigate } from 'react-router-dom';
 import Card from '../ui/Card';
 import StatCard from '../ui/StatCard';
+import ElectricBorder from '../ui/ElectricBorder';
 
 export default function Header() {
     const { user } = useAuthStore();
@@ -37,11 +38,31 @@ export default function Header() {
         }
     }, [skipAnimation]);
 
-    const { estimatedXp, xpToday, isMultiplierActive } = useXpStore();
+    const { estimatedXp, xpToday, isMultiplierActive, multiplierExpiresAt, lastMultiplierApplied } = useXpStore();
     const { quest_1, quest_2, quest_3 } = useQuestStore();
     
     const levelData = computeLevel(estimatedXp);
     const multiplierActive = isMultiplierActive();
+
+    // Compute the current day-based multiplier to display (mirrors backend logic)
+    const getDayMultiplier = () => {
+        const now = new Date();
+        const day = now.getDay(); // 3 = Wed, 6 = Sat
+        const weekOfMonth = Math.min(Math.ceil(now.getDate() / 7), 4);
+        const idx = weekOfMonth - 1;
+        const WED  = [1.25, 1.35, 1.50, 1.60];
+        const SAT  = [1.50, 1.60, 1.75, 2.00];
+        if (day === 3) return WED[idx];
+        if (day === 6) return SAT[idx];
+        return null;
+    };
+
+    // Determine displayed multiplier: timed reward takes priority, then day-based
+    const timedActive = multiplierExpiresAt && new Date(multiplierExpiresAt) > new Date();
+    const activeMultiplier = multiplierActive
+        ? (timedActive ? lastMultiplierApplied : getDayMultiplier())
+        : null;
+    const multiplierLabel = activeMultiplier ? `${activeMultiplier}x boost` : null;
     
     const questsCompletedCount = [quest_1, quest_2, quest_3].filter(q => q?.completed).length;
 
@@ -74,18 +95,32 @@ export default function Header() {
                         onClick={() => navigate('/streak')}
                     />
 
-                    <StatCard
-                        label="XP Today"
-                        value={xpToday}
-                        icon={Sparkle}
-                        colorScheme="amber"
-                        unit="gained"
-                        badge={
-                            multiplierActive
-                                ? <Lightning className="w-3 h-3 text-amber-400" weight="fill" />
-                                : null
-                        }
-                    />
+                    {multiplierActive ? (
+                        <ElectricBorder
+                            color="#7C3AED"
+                            speed={0.8}
+                            chaos={0.10}
+                            borderRadius={14}
+                            style={{ borderRadius: 14 }}
+                        >
+                            <StatCard
+                                label="XP Today"
+                                value={xpToday}
+                                icon={Sparkle}
+                                colorScheme="purple"
+                                unit="gained"
+                                sub={multiplierLabel}
+                            />
+                        </ElectricBorder>
+                    ) : (
+                        <StatCard
+                            label="XP Today"
+                            value={xpToday}
+                            icon={Sparkle}
+                            colorScheme="amber"
+                            unit="gained"
+                        />
+                    )}
 
                     <StatCard
                         label="Study Quest"

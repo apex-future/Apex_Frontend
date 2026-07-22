@@ -4,6 +4,7 @@ import { Lightning, Target, Clock, PlayCircle, X } from '@phosphor-icons/react';
 import confetti from 'canvas-confetti';
 import useXpStore from '../../store/useXpStore';
 import useThemeStore from '../../store/themeStore';
+import ElectricBorder from '../ui/ElectricBorder';
 
 const HAILING_TEXTS = [
   "Knowledge unlocked!",
@@ -200,7 +201,7 @@ export default function SessionSummaryModal({
                 ? 'border-t border-white/10 shadow-sm shadow-black/40 bg-bg-elevated'
                 : 'border-t border-black/10 shadow-sm shadow-black/10 bg-bg-subtle');
 
-              return (
+              const cardContent = (
                 <div
                   key={key}
                   className={`${baseCard} rounded-xl p-4 flex flex-col items-center gap-2`}
@@ -233,6 +234,24 @@ export default function SessionSummaryModal({
                   )}
                 </div>
               );
+
+              // Wrap XP card with ElectricBorder when multiplier is active
+              if (key === 'xp' && showMultiplier) {
+                return (
+                  <ElectricBorder
+                    key={key}
+                    color="#7C3AED"
+                    speed={0.8}
+                    chaos={0.10}
+                    borderRadius={12}
+                    style={{ borderRadius: 12 }}
+                  >
+                    {cardContent}
+                  </ElectricBorder>
+                );
+              }
+
+              return React.cloneElement(cardContent, { key });
             })}
           </motion.div>
 

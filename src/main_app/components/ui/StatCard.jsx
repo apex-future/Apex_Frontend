@@ -28,6 +28,7 @@ export default function StatCard({
  unit,
  onClick,
  badge, // slot for inline icons next to label (e.g. Lightning on XP card)
+ sub, // small label rendered below unit (e.g. "1.25x boost")
 }) {
  const colors = colorMap[colorScheme] || colorMap.purple;
 
@@ -59,6 +60,13 @@ export default function StatCard({
  {unit && (
  <span className="text-text-tertiary text-[10px] sm:text-xs md:text-sm font-medium text-center whitespace-nowrap">
  {unit}
+ </span>
+ )}
+
+ {/* Sub label — small muted text below unit (e.g. multiplier info) */}
+ {sub && (
+ <span className="text-[9px] sm:text-[10px] font-semibold tracking-wide text-center whitespace-nowrap text-purple-500 dark:text-purple-400 opacity-90">
+ {sub}
  </span>
  )}
 
