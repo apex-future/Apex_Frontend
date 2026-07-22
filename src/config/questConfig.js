@@ -231,15 +231,15 @@ export const QUEST_SUBCATEGORIES = {
   ],
 
   book_space: [
-    {
-      id: 'log_in_space',
-      copy: 'Log a reading session in your Book Space',
-      action: 'book_space_session',
-      target: 1,
-      unit: '',
-      tier: 'scholar',
-      subcategory: 'book_space',
-    },
+    // {
+    //   id: 'log_in_space',
+    //   copy: 'Log a reading session in your Book Space',
+    //   action: 'book_space_session',
+    //   target: 1,
+    //   unit: '',
+    //   tier: 'scholar',
+    //   subcategory: 'book_space',
+    // },
     /* {
       id: 'check_space_stats',
       copy: 'Check your Book Space stats today',

@@ -114,9 +114,18 @@ const useXpStore = create(
           
           if (import.meta.env.DEV) console.log(`[XP Sync] Flushed to server. Awarded: ${xp_awarded}, Multiplier: ${multiplier_applied}x, Total: ${total_xp}`);
 
+          // Compute how much was estimated optimistically (base XP, no multiplier)
+          const estimatedTotal = actionsToFlush.reduce((sum, a) => sum + (a.estimatedXp ?? 0), 0);
+
+          // If multiplier boosted the XP, the server awarded more than we estimated.
+          // Add the delta to xpToday so the dashboard card reflects the real multiplied amount.
+          const xpDelta = xp_awarded - estimatedTotal;
+
           set((state) => ({
             confirmedXp: total_xp,
             estimatedXp: total_xp,
+            // Correct xpToday: replace the optimistic base amount with the real multiplied amount
+            xpToday: Math.max(0, state.xpToday + xpDelta),
             pendingXpActions: state.pendingXpActions.filter(a => !actionsToFlush.includes(a)),
             isFlushingXp: false,
             multiplierExpiresAt: multiplier_expires_at ?? state.multiplierExpiresAt,
