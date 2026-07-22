@@ -1091,12 +1091,6 @@ const syncService = {
     const dexieId = await db.tabs.add(dexieRecord);
     if (import.meta.env.DEV) console.log('[Apex] Tab saved to Dexie:', dexieId);
 
-    // Award XP if word count > 5
-    const wordCount = dexieRecord.text.trim().split(/\s+/).filter(Boolean).length;
-    if (wordCount > 5) {
-      useXpStore.getState().awardXpOptimistic('note_added', {}, XP_VALUES.note_added);
-    }
-
     // Step 2: If online, resolve Supabase book UUID and save
     if (navigator.onLine) {
       const supabaseBookId = await this._resolveBookId(bookId, tabData._supabase_book_id);

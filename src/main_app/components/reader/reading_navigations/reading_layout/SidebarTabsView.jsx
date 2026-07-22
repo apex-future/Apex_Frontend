@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { FileText, Plus, Trash, PencilSimple, FloppyDisk, X, CalendarBlank, MagnifyingGlass, Note, Quotes } from '@phosphor-icons/react';
+import { useXpStore } from '../../../../store/useXpStore';
+import { useQuestStore } from '../../../../store/useQuestStore';
 
 /**
  * SidebarTabsView
@@ -24,6 +26,10 @@ function SidebarTabsView({ tabs = [], addTab, updateTab, deleteTab }) {
     const handleAdd = () => {
         if (!newTab.trim()) return;
         addTab(newTab.trim());
+        try {
+            useXpStore.getState().awardXpOptimistic('tab_added', {}, 5);
+        } catch (e) {}
+        useQuestStore.getState().reportAction('tab_added', 1);
         setNewTab('');
         setIsAdding(false);
     };
