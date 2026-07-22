@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import MainApp from './main_app/MainApp'
 import LandingPage from './landing_page/LandingPage'
 import SignupPage from './landing_page/SignupPage'
@@ -24,6 +24,7 @@ import useQuestStore from './main_app/store/useQuestStore';
 import NotFoundPage from './main_app/pages/NotFoundPage';
 
 function App() {
+  const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -176,6 +177,7 @@ function App() {
           // Token is dead — log out silently
           authService.logout();
           useAuthStore.getState().clearUser();
+          navigate('/', { replace: true });
           setIsLoggedIn(false);
         } else {
           // Network error — stay logged in, local data is already rendering
@@ -227,6 +229,7 @@ function App() {
         setNeedsOnboarding(true);
       }
     }
+    navigate('/', { replace: true });
     setIsLoggedIn(true);
 
     // Pull all data from Supabase for this user (non-blocking — app already rendered)
@@ -240,6 +243,7 @@ function App() {
   const handleLogout = () => {
     authService.logout();
     useAuthStore.getState().clearUser();
+    navigate('/', { replace: true });
     setIsLoggedIn(false);
   };
 
@@ -269,6 +273,25 @@ function App() {
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+            {/* Redirect protected app routes to landing page when unauthenticated */}
+            <Route path="/profile" element={<Navigate to="/" replace />} />
+            <Route path="/settings" element={<Navigate to="/" replace />} />
+            <Route path="/reader/*" element={<Navigate to="/" replace />} />
+            <Route path="/spaces" element={<Navigate to="/" replace />} />
+            <Route path="/space/*" element={<Navigate to="/" replace />} />
+            <Route path="/book/*" element={<Navigate to="/" replace />} />
+            <Route path="/dictionary" element={<Navigate to="/" replace />} />
+            <Route path="/ai" element={<Navigate to="/" replace />} />
+            <Route path="/tabs" element={<Navigate to="/" replace />} />
+            <Route path="/import" element={<Navigate to="/" replace />} />
+            <Route path="/streak" element={<Navigate to="/" replace />} />
+            <Route path="/exams" element={<Navigate to="/" replace />} />
+            <Route path="/analytics" element={<Navigate to="/" replace />} />
+            <Route path="/notes/*" element={<Navigate to="/" replace />} />
+            <Route path="/quest" element={<Navigate to="/" replace />} />
+            <Route path="/flashcards" element={<Navigate to="/" replace />} />
+
             {/* Show 404 page for any unauthenticated non-existent route */}
             <Route path="*" element={<NotFoundPage isLoggedIn={false} />} />
           </>

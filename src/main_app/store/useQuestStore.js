@@ -14,6 +14,8 @@ const useQuestStore = create(
       chest_1_claimed: false,
       chest_2_claimed: false,
       chest_3_claimed: false,
+      refreshTokens: 2,
+      refreshedToday: false,
       lastFetchedAt: null,
 
       seedQuests: (questData) => {
@@ -54,6 +56,8 @@ const useQuestStore = create(
             all_completed: isNewDay
               ? (questData.all_completed ?? false)
               : (state.all_completed || questData.all_completed),
+            refreshTokens: questData.refresh_tokens ?? state.refreshTokens ?? 2,
+            refreshedToday: isNewDay ? false : (questData.refreshed_today ?? state.refreshedToday ?? false),
             lastFetchedAt: new Date().toISOString(),
             chest_1_claimed: isNewDay ? false : resolveChestClaimed('quest_1', 'chest_1_claimed'),
             chest_2_claimed: isNewDay ? false : resolveChestClaimed('quest_2', 'chest_2_claimed'),
@@ -160,6 +164,9 @@ const useQuestStore = create(
         });
       },
 
+      setRefreshTokens: (tokens) => set({ refreshTokens: tokens }),
+      setRefreshedToday: (val) => set({ refreshedToday: val }),
+
       resetIfNewDay: () => {
         // Simple WAT time zone check since WAT is UTC+1. Alternatively, we can just use local string.
         // The original code was fine, but let's make sure it handles generic date strings properly.
@@ -177,6 +184,7 @@ const useQuestStore = create(
             chest_1_claimed: false,
             chest_2_claimed: false,
             chest_3_claimed: false,
+            refreshedToday: false,
             lastFetchedAt: null,
           });
         }

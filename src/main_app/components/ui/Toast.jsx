@@ -1,26 +1,11 @@
 import React from 'react';
+import { CheckCircle, WarningDiamond, Warning, Info, X } from '@phosphor-icons/react';
 
 const ICONS = {
-  success: (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
-  ),
-  error: (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  ),
-  warning: (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-8.6 14.86A1 1 0 002.56 20h18.88a1 1 0 00.87-1.28l-8.6-14.86a1 1 0 00-1.72 0z" />
-    </svg>
-  ),
-  info: (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
-    </svg>
-  ),
+  success: <CheckCircle size={20} weight="fill" className="shrink-0" />,
+  error:   <WarningDiamond size={20} weight="fill" className="shrink-0" />,
+  warning: <Warning size={20} weight="fill" className="shrink-0 text-yellow-200" />,
+  info:    <Info size={20} weight="fill" className="shrink-0" />,
 };
 
 const TYPE_STYLES = {
@@ -51,9 +36,7 @@ function ToastItem({ toast, onDismiss }) {
         className="shrink-0 p-1 rounded-lg hover:bg-white/20 transition-colors"
         aria-label="Dismiss"
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <X size={16} weight="bold" />
       </button>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Scroll, Trophy, Target, ArrowLeft, Clock } from '@phosphor-icons/react';
+import { Scroll, Trophy, Target, ArrowLeft, Clock, ArrowsClockwise } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../services/apiClient';
 import useXpStore from '../store/useXpStore';
@@ -12,6 +12,7 @@ import QuestCompleteModal from '../components/quests/QuestCompleteModal';
 import EmptyState from '../components/ui/EmptyState';
 import Card from '../components/ui/Card';
 import useQuestStore from '../store/useQuestStore';
+import { showToastGlobal } from '../hooks/useToast';
 
 // ─── Skeleton loader ──────────────────────────────────────────────────────────
 function QuestListSkeleton() {
@@ -52,6 +53,7 @@ export default function QuestPage() {
   const [stats, setStats] = useState(null);      // { weekly_days, golden_days_this_week, ... }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshingKey, setRefreshingKey] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState({
@@ -248,6 +250,58 @@ export default function QuestPage() {
     }
   }, [fetchStats, awardXpOptimistic]);
 
+  // ─── Refresh quest handler ──────────────────────────────────────────────────
+  const handleRefreshQuest = useCallback(async (questKey) => {
+    if (!navigator.onLine) {
+      showToastGlobal("You're offline, cant refresh quest", 'warning');
+      return;
+    }
+
+    const store = useQuestStore.getState();
+    if (store.refreshedToday) {
+      showToastGlobal("You've refreshed a quest today, wait till tomorrow", 'info');
+      return;
+    }
+
+    if ((store.refreshTokens ?? 2) <= 0) {
+      showToastGlobal("You're out of refresh tokens, gain rewards to get more", 'error');
+      return;
+    }
+
+    const targetQuest = quests?.[questKey];
+    if (targetQuest?.completed) {
+      showToastGlobal("Completed quests cannot be refreshed", 'info');
+      return;
+    }
+
+    setRefreshingKey(questKey);
+    try {
+      const res = await apiClient.post('/api/quests/refresh', { quest_key: questKey });
+      if (res.data?.success) {
+        const { new_quest, refresh_tokens, refreshed_today } = res.data;
+        setQuests((prev) => prev ? { ...prev, [questKey]: new_quest } : prev);
+        store.updateQuestProgress(questKey, 0, false);
+        store.setRefreshTokens(refresh_tokens);
+        store.setRefreshedToday(refreshed_today);
+        showToastGlobal('Quest refreshed!', 'success');
+      }
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      if (detail === 'no_tokens') {
+        showToastGlobal("You're out of refresh tokens, gain rewards to get more", 'error');
+      } else if (detail === 'already_refreshed_today') {
+        store.setRefreshedToday(true);
+        showToastGlobal("You've refreshed a quest today, wait till tomorrow", 'info');
+      } else if (detail === 'already_completed') {
+        showToastGlobal("Completed quests cannot be refreshed", 'info');
+      } else {
+        showToastGlobal('Failed to refresh quest. Please try again.', 'error');
+      }
+    } finally {
+      setRefreshingKey(null);
+    }
+  }, [quests]);
+
   const handleChestClick = useCallback((questKey) => {
     const questId = quests?.[questKey]?.id;
     if (!questId) return;
@@ -376,18 +430,24 @@ export default function QuestPage() {
         ) : null}
 
         {/* SECTION 3 — Today's quests heading */}
-        <div className="pt-2 flex items-center justify-between">
+        <div className="pt-2 flex items-center justify-between gap-2 flex-wrap">
           <p
             className="text-text-tertiary uppercase tracking-widest"
             style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11 }}
           >
             Today's Quests
           </p>
-          <div className="flex items-center gap-1.5 text-text-tertiary text-xs font-medium bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
-            <Clock size={14} weight="fill" />
-            <span>
-              {Math.max(1, Math.ceil((new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 0, 0, 0) - new Date()) / (1000 * 60 * 60)))} hours left
-            </span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-text-tertiary text-xs font-medium bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full border border-black/5 dark:border-white/5">
+              <ArrowsClockwise size={13} weight="bold" className="text-purple-600 dark:text-purple-400" />
+              <span>Refresh Tokens: <strong className="text-text-primary font-bold">{questStore.refreshTokens ?? 2}</strong></span>
+            </div>
+            <div className="flex items-center gap-1.5 text-text-tertiary text-xs font-medium bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
+              <Clock size={14} weight="fill" />
+              <span>
+                {Math.max(1, Math.ceil((new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 0, 0, 0) - new Date()) / (1000 * 60 * 60)))} hours left
+              </span>
+            </div>
           </div>
         </div>
 
@@ -408,6 +468,8 @@ export default function QuestPage() {
                     chestClaimed={questStore.chest_1_claimed}
                     onChestClick={() => handleChestClick('quest_1')}
                     onProgressUpdate={handleProgressUpdate}
+                    onRefreshQuest={() => handleRefreshQuest('quest_1')}
+                    isRefreshing={refreshingKey === 'quest_1'}
                   />
                 </motion.div>
               )}
@@ -422,6 +484,8 @@ export default function QuestPage() {
                     chestClaimed={questStore.chest_2_claimed}
                     onChestClick={() => handleChestClick('quest_2')}
                     onProgressUpdate={handleProgressUpdate}
+                    onRefreshQuest={() => handleRefreshQuest('quest_2')}
+                    isRefreshing={refreshingKey === 'quest_2'}
                   />
                 </motion.div>
               )}
@@ -436,6 +500,8 @@ export default function QuestPage() {
                     chestClaimed={questStore.chest_3_claimed}
                     onChestClick={() => handleChestClick('quest_3')}
                     onProgressUpdate={handleProgressUpdate}
+                    onRefreshQuest={() => handleRefreshQuest('quest_3')}
+                    isRefreshing={refreshingKey === 'quest_3'}
                   />
                 </motion.div>
               )}

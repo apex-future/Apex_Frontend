@@ -13,6 +13,7 @@ import {
   MagicWand,
   ChartBar,
   CheckCircle,
+  ArrowsClockwise,
 } from '@phosphor-icons/react';
 import ListItem from '../ui/ListItem';
 
@@ -103,7 +104,7 @@ const ChestOpen = ({ className, color }) => (
  *   onChestClick     — function
  *   onProgressUpdate — (questId, action, increment) => Promise<responseData>
  */
-export default function QuestCard({ quest, chestClaimed, onChestClick, onProgressUpdate }) {
+export default function QuestCard({ quest, chestClaimed, onChestClick, onProgressUpdate, onRefreshQuest, isRefreshing }) {
   const checkmarkRef = useRef(null);
   const particleContainerRef = useRef(null);
   const [justCompleted, setJustCompleted] = useState(false);
@@ -180,7 +181,20 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
           </span>
         }
         subComponent={
-          <div className="flex flex-row items-center gap-3 w-full mt-1.5">
+          <div className="flex flex-row items-center gap-2 w-full mt-1.5">
+            {/* Refresh button — left end of progress row, only shown when incomplete */}
+            {!completed && onRefreshQuest && (
+              <button
+                onClick={onRefreshQuest}
+                disabled={isRefreshing}
+                title="Refresh Quest (1 Token)"
+                className={`p-1.5 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-text-tertiary hover:text-accent-primary transition-all flex items-center justify-center shrink-0 ${isRefreshing ? 'opacity-60 cursor-not-allowed pointer-events-none' : ''}`}
+              >
+                <ArrowsClockwise size={14} weight="bold" className={isRefreshing ? 'animate-spin text-purple-600 dark:text-purple-400' : ''} />
+              </button>
+            )}
+
+            {/* Progress bar */}
             <div className="flex-1 h-4 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden shadow-inner">
               {/* Base grey text */}
               <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-text-tertiary">
@@ -201,6 +215,7 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
               </div>
             </div>
             
+            {/* Chest — right end */}
             <div className="shrink-0 flex items-center justify-center">
               {completed && !chestClaimed && (
                 <motion.div
@@ -218,7 +233,7 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
                 </div>
               )}
               {!completed && (
-                <div className="opacity-40 pointer-events-none">
+                <div className="opacity-40 pointer-events-none shrink-0">
                   <ChestClosed className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" color="rgb(var(--text-placeholder))" />
                 </div>
               )}

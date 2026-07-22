@@ -4,7 +4,7 @@ import ToastContainer from './components/ui/Toast';
 import AsideNavBar from './components/layout/navigation/AsideNavBar';
 import NavBarProvider from './components/layout/navigation/NavBarContext';
 import { BookProvider } from './context/BookContext';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import notificationService from './services/notificationService';
 // Page level components
 import HomePage from './components/home/HomePage';
@@ -155,6 +155,10 @@ function MainApp({ onLogout }) {
                 <Route path="/notes/:bookId/:noteId" element={<NoteEditorPage />} />
                 <Route path="/quest" element={<QuestPage />} />
                 <Route path="/flashcards" element={<FlashcardsPage />} />
+                <Route path="/login" element={<Navigate to="/" replace />} />
+                <Route path="/signup" element={<Navigate to="/" replace />} />
+                <Route path="/forgot-password" element={<Navigate to="/" replace />} />
+                <Route path="/reset-password" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<NotFoundPage isLoggedIn={true} />} />
               </Routes>
             </main>
