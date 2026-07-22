@@ -190,8 +190,17 @@ const useXpStore = create(
 
         // ── streak_freeze_held, refresh_tokens: cloud wins when newer ─────────
         const resolvedStreakFreezeHeld = cloudIsNewer
-          ? (profileData.streak_freeze_held ?? state.streakFreezeHeld)
+          ? (profileData.streak_freezes_held ?? profileData.streak_freeze_held ?? state.streakFreezeHeld)
           : state.streakFreezeHeld;
+
+        if (profileData.streak_freezes_held !== undefined && profileData.streak_freezes_held !== null) {
+          try {
+            const useStudyStore = (await import('./studyStore')).default;
+            useStudyStore.getState().seedFromSupabase({ streak_freezes_held: profileData.streak_freezes_held });
+          } catch (e) {
+            // ignore async import failure
+          }
+        }
 
         const resolvedRefreshTokens = cloudIsNewer
           ? (profileData.refresh_tokens ?? state.refreshTokens)

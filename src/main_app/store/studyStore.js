@@ -10,6 +10,8 @@ const useStudyStore = create(
       lastActiveDate: null,      // 'YYYY-MM-DD' string
       lastStreakUpdatedAt: null, // ISO datetime — server-generated, used for same-day tiebreaker
       streakHistory: [],         // Array of 'YYYY-MM-DD' strings — days user kept streak
+      streakFreezesHeld: 0,      // Integer count of streak freezes held (max 2)
+      frozenDays: [],            // Array of 'YYYY-MM-DD' strings — days saved by streak freeze
 
       // Exam state (reserved for version 2)
       examDate: null,
@@ -69,7 +71,7 @@ const useStudyStore = create(
 
       /**
        * updateStreak — called after user reads for 1 minute
-       * Increments streak if consecutive day, resets if broken
+       * Increments streak if consecutive day, resets if broken (unless protected by streak freeze)
        * Adds today to streakHistory if not already present
        */
       updateStreak: () => {
@@ -78,6 +80,8 @@ const useStudyStore = create(
         const currentStreak = get().streakCount;
         const currentLongest = get().longestStreak;
         const history = get().streakHistory || [];
+        let freezes = get().streakFreezesHeld || 0;
+        let frozen = get().frozenDays || [];
 
         // Already counted today — do nothing
         if (lastActive === today) {
@@ -85,14 +89,18 @@ const useStudyStore = create(
           return;
         }
 
-        let newStreak;
+        let newStreak = currentStreak;
+        let updatedLastActive = lastActive;
+        let newHistory = [...history];
+        let newFrozen = [...frozen];
 
         if (!lastActive) {
           // First ever streak
           newStreak = 1;
+          updatedLastActive = today;
           if (import.meta.env.DEV) console.log('[Apex Streak] First streak day!');
         } else {
-          // Check if yesterday — append T00:00:00 to force local-time parsing
+          // Check difference between lastActive and today
           const last = new Date(lastActive + 'T00:00:00');
           const todayDate = new Date(today + 'T00:00:00');
           const diffMs = todayDate.getTime() - last.getTime();
@@ -101,26 +109,53 @@ const useStudyStore = create(
           if (diffDays === 1) {
             // Consecutive day — increment
             newStreak = currentStreak + 1;
+            updatedLastActive = today;
             if (import.meta.env.DEV) console.log('[Apex Streak] Consecutive day — streak:', newStreak);
-          } else {
-            // Streak broken — but user IS reading right now, so today is day 1 of a new streak
-            newStreak = 1;
-            if (import.meta.env.DEV) console.log('[Apex Streak] Streak broken after', diffDays, 'days — starting fresh at 1');
+          } else if (diffDays > 1) {
+            // Missed day(s) — check if streak freeze can protect
+            const missedCount = diffDays - 1;
+            if (freezes >= missedCount && missedCount > 0) {
+              // Apply streak freeze for each missed day
+              let currTime = last.getTime() + 86400000;
+              for (let i = 0; i < missedCount; i++) {
+                const currDate = new Date(currTime);
+                const y = currDate.getFullYear();
+                const m = String(currDate.getMonth() + 1).padStart(2, '0');
+                const d = String(currDate.getDate()).padStart(2, '0');
+                const missedStr = `${y}-${m}-${d}`;
+                if (!newHistory.includes(missedStr)) newHistory.push(missedStr);
+                if (!newFrozen.includes(missedStr)) newFrozen.push(missedStr);
+                newStreak += 1;
+                currTime += 86400000;
+              }
+              freezes -= missedCount;
+              // Now increment for today's reading session
+              newStreak += 1;
+              updatedLastActive = today;
+              if (import.meta.env.DEV) console.log('[Apex Streak] Protected by Streak Freeze! New streak:', newStreak, 'Freezes left:', freezes);
+            } else {
+              // Not enough freezes — streak broken, start fresh at 1 for today's read
+              newStreak = 1;
+              updatedLastActive = today;
+              if (import.meta.env.DEV) console.log('[Apex Streak] Streak broken after', diffDays, 'days — starting fresh at 1');
+            }
           }
         }
 
         const newLongest = Math.max(newStreak, currentLongest);
 
         // Add today to history if not already there
-        const newHistory = history.includes(today)
-          ? history
-          : [...history, today];
+        if (!newHistory.includes(today)) {
+          newHistory.push(today);
+        }
 
         set({
           streakCount: newStreak,
           longestStreak: newLongest,
-          lastActiveDate: today,
+          lastActiveDate: updatedLastActive,
           streakHistory: newHistory,
+          streakFreezesHeld: freezes,
+          frozenDays: newFrozen,
         });
 
         if (import.meta.env.DEV) console.log('[Apex Streak] Updated:', { newStreak, newLongest, today });
@@ -128,9 +163,6 @@ const useStudyStore = create(
         if (navigator.onLine) {
           get().syncStreakToSupabase();
         } else {
-          // Queue the streak fire for when we reconnect
-          // Store as a flag — we just need to know a sync is needed, not the full payload
-          // The store already persists the updated state via zustand/persist
           localStorage.setItem('apex_streak_sync_pending', 'true');
           console.log('[Apex Streak] Offline — streak queued for sync on reconnect');
         }
@@ -139,13 +171,16 @@ const useStudyStore = create(
       /**
        * checkStreakIntegrity — called on app open AFTER seedFromSupabase
        * Detects if the streak is broken (lastActiveDate is not today or yesterday)
-       * Resets streakCount to 0 immediately so the UI reflects the break
-       * Does NOT touch longestStreak or streakHistory — those are historical records
+       * If user has streak freeze(s), applies streak freeze to protect & increment streak!
+       * If no streak freeze, resets streakCount to 0 immediately.
        */
       checkStreakIntegrity: () => {
         const today = get()._getTodayString();
         const lastActive = get().lastActiveDate;
         const currentStreak = get().streakCount;
+        let freezes = get().streakFreezesHeld || 0;
+        let history = get().streakHistory || [];
+        let frozen = get().frozenDays || [];
 
         // No streak to check
         if (!lastActive || currentStreak === 0) {
@@ -153,13 +188,13 @@ const useStudyStore = create(
           return;
         }
 
-        // Already read today — streak is valid
+        // Already active today — streak is valid
         if (lastActive === today) {
           if (import.meta.env.DEV) console.log('[Apex Streak] Integrity check: active today — streak valid');
           return;
         }
 
-        // Check if lastActive was yesterday
+        // Check difference from lastActive
         const last = new Date(lastActive + 'T00:00:00');
         const todayDate = new Date(today + 'T00:00:00');
         const diffMs = todayDate.getTime() - last.getTime();
@@ -171,13 +206,54 @@ const useStudyStore = create(
           return;
         }
 
-        // Streak is broken — reset to 0 (not 1, because user hasn't read today)
-        // Also clear lastActiveDate so the next reading session starts fresh
-        // instead of computing a diff from the stale date
-        if (import.meta.env.DEV) console.log('[Apex Streak] Integrity check: streak BROKEN (last active', diffDays, 'days ago) — resetting to 0');
+        // diffDays > 1 — Missed day(s)!
+        const missedCount = diffDays - 1;
+
+        if (freezes >= missedCount && missedCount > 0) {
+          // Apply streak freeze to save the streak!
+          let newStreak = currentStreak;
+          let newHistory = [...history];
+          let newFrozen = [...frozen];
+          let lastSavedDate = lastActive;
+
+          let currTime = last.getTime() + 86400000;
+          for (let i = 0; i < missedCount; i++) {
+            const currDate = new Date(currTime);
+            const y = currDate.getFullYear();
+            const m = String(currDate.getMonth() + 1).padStart(2, '0');
+            const d = String(currDate.getDate()).padStart(2, '0');
+            lastSavedDate = `${y}-${m}-${d}`;
+
+            if (!newHistory.includes(lastSavedDate)) newHistory.push(lastSavedDate);
+            if (!newFrozen.includes(lastSavedDate)) newFrozen.push(lastSavedDate);
+            newStreak += 1;
+            currTime += 86400000;
+          }
+
+          const newFreezes = freezes - missedCount;
+          const newLongest = Math.max(newStreak, get().longestStreak || 0);
+
+          set({
+            streakCount: newStreak,
+            longestStreak: newLongest,
+            lastActiveDate: lastSavedDate,
+            streakHistory: newHistory,
+            streakFreezesHeld: newFreezes,
+            frozenDays: newFrozen,
+          });
+
+          if (import.meta.env.DEV) console.log(`[Apex Streak] Integrity check: Applied ${missedCount} Streak Freeze(s)! Streak preserved & incremented to ${newStreak}. Freezes left: ${newFreezes}`);
+
+          if (navigator.onLine) {
+            get().syncStreakToSupabase();
+          }
+          return;
+        }
+
+        // No streak freeze available (or not enough) — streak is BROKEN
+        if (import.meta.env.DEV) console.log('[Apex Streak] Integrity check: streak BROKEN (last active', diffDays, 'days ago, no freezes) — resetting to 0');
         set({ streakCount: 0, lastActiveDate: null });
 
-        // Sync the reset to Supabase
         if (navigator.onLine) {
           get().syncStreakToSupabase();
         }
@@ -185,18 +261,18 @@ const useStudyStore = create(
 
       /**
        * syncStreakToSupabase — patches streak data to backend
-       * Called after updateStreak if online
-       * Also called by online event listener in App.jsx
        */
       syncStreakToSupabase: async () => {
         try {
-          const { streakCount, longestStreak, lastActiveDate, streakHistory, lastStreakUpdatedAt } = get();
+          const { streakCount, longestStreak, lastActiveDate, streakHistory, lastStreakUpdatedAt, streakFreezesHeld, frozenDays } = get();
           const response = await apiClient.patch('/api/auth/streak', {
             current_streak: streakCount,
             longest_streak: longestStreak,
             last_active_date: lastActiveDate,
             streak_history: streakHistory,
-            last_streak_updated_at: lastStreakUpdatedAt,  // ← send for tiebreaker
+            last_streak_updated_at: lastStreakUpdatedAt,
+            streak_freezes_held: streakFreezesHeld,
+            frozen_days: frozenDays,
           });
 
           if (response.data) {
@@ -204,8 +280,10 @@ const useStudyStore = create(
               streakCount: response.data.current_streak,
               longestStreak: response.data.longest_streak,
               lastActiveDate: response.data.last_active_date,
-              streakHistory: response.data.streak_history,
-              lastStreakUpdatedAt: response.data.last_streak_updated_at,  // ← add
+              streakHistory: response.data.streak_history ?? streakHistory,
+              frozenDays: response.data.frozen_days ?? frozenDays,
+              streakFreezesHeld: response.data.streak_freezes_held ?? streakFreezesHeld,
+              lastStreakUpdatedAt: response.data.last_streak_updated_at,
             });
             localStorage.removeItem('apex_streak_sync_pending');
             if (import.meta.env.DEV) console.log('[Apex Streak] Server merge applied to local store');
@@ -219,7 +297,6 @@ const useStudyStore = create(
 
       /**
        * seedFromSupabase — called on login/app load
-       * Seeds local store from Supabase data if Supabase has more recent data
        */
       seedFromSupabase: (supabaseData) => {
         if (!supabaseData) return;
@@ -228,6 +305,8 @@ const useStudyStore = create(
           longest_streak,
           last_active_date,
           streak_history,
+          streak_freezes_held,
+          frozen_days,
         } = supabaseData;
 
         const localDate = get().lastActiveDate || '';
@@ -241,22 +320,25 @@ const useStudyStore = create(
         } else if (cloudDate < localDate) {
             cloudWins = false;
         } else {
-            // Same date — datetime tiebreaker for same-day device switching
             cloudWins = cloudUpdatedAt > localUpdatedAt;
         }
 
-        // Streak count comes from whichever side has the more recent date —
-        // it is live state, not a lifetime record. Only longest_streak uses max().
         const mergedStreakCount = cloudWins ? (current_streak || 0) : (get().streakCount || 0);
         const mergedLongestStreak = Math.max(get().longestStreak || 0, longest_streak || 0);
         const mergedLastActiveDate = (cloudWins ? cloudDate : localDate) || null;
-        const mergedStreakHistory = Array.from(new Set([...get().streakHistory || [], ...(streak_history || [])])).sort();
+        const mergedStreakHistory = Array.from(new Set([...(get().streakHistory || []), ...(streak_history || [])])).sort();
+        const mergedFrozenDays = Array.from(new Set([...(get().frozenDays || []), ...(frozen_days || [])])).sort();
+        const mergedFreezesHeld = streak_freezes_held !== undefined && streak_freezes_held !== null
+          ? streak_freezes_held
+          : (get().streakFreezesHeld || 0);
 
         set({
           streakCount: mergedStreakCount,
           longestStreak: mergedLongestStreak,
           lastActiveDate: mergedLastActiveDate,
           streakHistory: mergedStreakHistory,
+          frozenDays: mergedFrozenDays,
+          streakFreezesHeld: Math.min(Math.max(0, mergedFreezesHeld), 2),
           lastStreakUpdatedAt: cloudWins
               ? (supabaseData.last_streak_updated_at || null)
               : (get().lastStreakUpdatedAt || null),
@@ -264,9 +346,8 @@ const useStudyStore = create(
 
         if (import.meta.env.DEV) console.log(
           '[Apex Streak] seedFromSupabase merged — streak:',
-          cloudWins ? current_streak : get().streakCount,
-          'history:', mergedStreakHistory.length, 'days',
-          'authority:', cloudWins ? 'cloud' : 'local'
+          mergedStreakCount, 'freezes:', mergedFreezesHeld,
+          'history:', mergedStreakHistory.length, 'days'
         );
       },
 
@@ -284,8 +365,10 @@ const useStudyStore = create(
         streakCount: 0,
         longestStreak: 0,
         lastActiveDate: null,
-        lastStreakUpdatedAt: null,  // ISO datetime — server-generated, used for same-day tiebreaker
+        lastStreakUpdatedAt: null,
         streakHistory: [],
+        streakFreezesHeld: 0,
+        frozenDays: [],
         examDate: null,
         examName: '',
       }),
