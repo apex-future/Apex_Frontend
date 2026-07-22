@@ -12,7 +12,7 @@ const Flashcard3D = ({ question, answer, isFlipped, setIsFlipped }) => {
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <div 
-        className={`w-full h-full relative transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] preserve-3d shadow-xl rounded-2xl sm:rounded-3xl ${isFlipped ? 'rotate-y-180' : ''}`}
+        className={`w-full h-full relative transition-all duration-700 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] preserve-3d shadow-xl rounded-2xl sm:rounded-3xl ${isFlipped ? 'rotate-y-180' : ''}`}
       >
         
         {/* Front of Card (Question) */}

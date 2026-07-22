@@ -189,7 +189,7 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
 
               {/* Clipped Fill Layer */}
               <div 
-                className="absolute inset-0 transition-all duration-[400ms] ease-out"
+                className="absolute inset-0 transition-all [transition-duration:400ms] ease-out"
                 style={{ clipPath: `inset(0 ${100 - fillPercent}% 0 0 round 9999px)` }}
               >
                 <div className={`absolute inset-0 bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] ${inProgress ? 'quest-shimmer' : ''}`} />
