@@ -667,9 +667,9 @@ const syncService = {
           console.log('[SyncPull] user_daily_streak_progress merge complete');
         }
 
-        // ── AI CONVERSATIONS (Category B — always pull, no conflict resolution) ──
+        // ── AI CONVERSATIONS (Category B — raw rows only) ──
         if (pulledData.ai_conversations?.length > 0) {
-          await clearAllChats();
+          console.log('[Sync] ai_conversations: no time-based grouping, raw rows only');
           const bookTitles = {};
           const localBooks = await db.books.toArray();
           for (const b of localBooks) {
@@ -686,7 +686,7 @@ const syncService = {
               : 'Sync Chat';
             const scope = groupId === 'general' ? 'general' : (bookTitles[groupId] || 'Unknown Book');
             await saveChat({
-              id: timeMs,
+              id: row.session_id ? (isNaN(row.session_id) ? timeMs : Number(row.session_id)) : timeMs,
               title,
               scope,
               updatedAt: new Date(timeMs).toISOString(),

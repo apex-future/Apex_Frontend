@@ -1452,6 +1452,12 @@ function ReaderView() {
                         cachedDefinition={selectionRef.current.cachedDefinition}
                         cachedTab={selectionRef.current.cachedTab}
                         onAskAI={() => {
+                            setSelectionData({
+                                text: selectionRef.current.text,
+                                x: selectionRef.current.x,
+                                y: selectionRef.current.y,
+                                startOffset: selectionRef.current.startOffset || null
+                            });
                             window.getSelection()?.removeAllRanges();
                             setAiModal(true);
                             setShowHighlightMenu(false);
@@ -1656,7 +1662,7 @@ function ReaderView() {
                         setAiModal={setAiModal}
                         bookTitle={book?.title || book?.file?.name}
                         selectedText={selectionData.text}
-                        bookId={book?.id?.toString()}
+                        bookId={book?.supabaseId || book?.id?.toString()}
                         currentPage={pageNumber}
                         numPages={numPages}
                         examName={book?.examName || ''}

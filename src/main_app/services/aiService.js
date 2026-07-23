@@ -1,6 +1,7 @@
 import authService from './authService';
 import useXpStore from '../store/useXpStore';
 import { XP_VALUES } from '../../config/xpConfig';
+import db from '../db/apex.db';
 
 /**
  * AI Service — Fetch wrappers for Cleo backend endpoints.
@@ -51,7 +52,7 @@ const getHeaders = (contentType = 'application/json') => {
  * Stream an explanation of highlighted text.
  * Returns a Response object whose body is an SSE stream.
  */
-export async function streamExplain({ selectedText, context, bookTitle, bookId, chatType, conversationHistory = [] }, signal) {
+export async function streamExplain({ selectedText, context, bookTitle, bookId, chatType, conversationHistory = [], sessionId = null }, signal) {
   let response;
   const { signal: fetchSignal, clearTimeout: clearFetchTimeout } = buildSignalWithTTFB(signal);
 
@@ -66,6 +67,7 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
         book_title: bookTitle || null,
         book_id: bookId || null,
         chat_type: chatType || 'in_reader',
+        session_id: sessionId || null,
         conversation_history: conversationHistory.map(msg => ({
           role: msg.role === 'ai' ? 'model' : msg.role,
           content: msg.content,
@@ -95,7 +97,7 @@ export async function streamExplain({ selectedText, context, bookTitle, bookId, 
  * Stream an AI response to an open-ended question.
  * Returns a Response object whose body is an SSE stream.
  */
-export async function streamAsk({ message, bookTitle, bookId, chatType, conversationHistory = [], pageImageBase64 = null }, signal) {
+export async function streamAsk({ message, bookTitle, bookId, chatType, conversationHistory = [], pageImageBase64 = null, sessionId = null }, signal) {
   if (import.meta.env.DEV) console.log('[Apex Cleo Debug] streamAsk — pageImageBase64 length:', pageImageBase64?.length);
   let response;
   const { signal: fetchSignal, clearTimeout: clearFetchTimeout } = buildSignalWithTTFB(signal);
@@ -110,6 +112,7 @@ export async function streamAsk({ message, bookTitle, bookId, chatType, conversa
         book_title: bookTitle || null,
         book_id: bookId || null,
         chat_type: chatType || 'general',
+        session_id: sessionId || null,
         conversation_history: conversationHistory.map(msg => ({
           role: msg.role === 'ai' ? 'model' : msg.role,
           content: msg.content,
@@ -196,5 +199,74 @@ export async function gradeEssay({ bookId, questions }) {
     }),
   });
   if (!response.ok) throw new Error(`Grade essay failed: ${response.status}`);
+  return response.json();
+}
+
+/**
+ * Fetch all AI chat sessions for current user (optional bookId filter).
+ * Returns remote sessions and caches them in Dexie. Falls back to Dexie cache if network fails.
+ */
+export async function getSessions(bookId = null) {
+  let cached = [];
+  try {
+    if (bookId) {
+      cached = await db.ai_chat_sessions.where('book_id').equals(bookId).reverse().sortBy('updated_at');
+    } else {
+      cached = await db.ai_chat_sessions.orderBy('updated_at').reverse().toArray();
+    }
+  } catch (err) {
+    console.warn('[aiService] Dexie cache read error:', err);
+  }
+
+  const url = bookId ? `${API_BASE}/sessions?book_id=${encodeURIComponent(bookId)}` : `${API_BASE}/sessions`;
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+    if (response.ok) {
+      const data = await response.json();
+      try {
+        if (data && data.length > 0) {
+          await db.ai_chat_sessions.bulkPut(data);
+        }
+      } catch (cacheErr) {
+        console.warn('[aiService] Dexie bulkPut error:', cacheErr);
+      }
+      return data;
+    }
+  } catch (netErr) {
+    console.warn('[aiService] Failed to fetch remote sessions, returning Dexie cache:', netErr);
+  }
+
+  return cached;
+}
+
+/**
+ * Fetch all messages for a specific chat session ordered by sequence_order ASC.
+ */
+export async function getSessionMessages(sessionId) {
+  const response = await fetch(`${API_BASE}/sessions/${encodeURIComponent(sessionId)}/messages`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  if (!response.ok) throw new Error(`Fetch session messages failed: ${response.status}`);
+  return response.json();
+}
+
+/**
+ * Rename a chat session header.
+ */
+export async function renameSession(sessionId, chatHeader) {
+  try {
+    await db.ai_chat_sessions.update(sessionId, { chat_header: chatHeader, updated_at: new Date().toISOString() });
+  } catch (e) {}
+
+  const response = await fetch(`${API_BASE}/sessions/${encodeURIComponent(sessionId)}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ chat_header: chatHeader }),
+  });
+  if (!response.ok) throw new Error(`Rename session failed: ${response.status}`);
   return response.json();
 }

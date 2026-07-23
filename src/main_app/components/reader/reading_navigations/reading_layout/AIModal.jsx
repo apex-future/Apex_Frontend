@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { X, PaperPlaneTilt, Sparkle, Info, ArrowCounterClockwise, Trash, WarningCircle, HighlighterCircle, User, NotePencil, ChatCircle, ClockCounterClockwise, ArrowLeft, BookOpen, Square, Plus, Copy, Check } from '@phosphor-icons/react'
+import { X, PaperPlaneTilt, Sparkle, Info, ArrowCounterClockwise, Trash, WarningCircle, HighlighterCircle, User, NotePencil, ChatCircle, ClockCounterClockwise, ArrowLeft, BookOpen, Square, Plus, Copy, Check, PencilSimple } from '@phosphor-icons/react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import useAIChat from '../../../../hooks/useAIChat'
@@ -8,6 +8,12 @@ import apiClient from '../../../../services/apiClient'
 import TypingIndicator from '../../../ai/TypingIndicator'
 import Orb from '../../../ui/Orb'
 import { cleanUserMessage, getChatTitle, extractContextAndQuestion } from '../../../../utils/aiUtils'
+import { getSessions, getSessionMessages, renameSession } from '../../../../services/aiService'
+import useAiStore from '../../../../store/useAiStore'
+import ListItem from '../../../ui/ListItem'
+import Card from '../../../ui/Card'
+import { Highlighter } from '@phosphor-icons/react'
+import db from '../../../../db/apex.db'
 
 function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, numPages, examName }) {
   const {
@@ -23,6 +29,11 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
     deleteSession,
     retry,
   } = useAIChat({ autoLoad: true, persist: true, scope: bookTitle, bookId });
+
+  const { currentSessionId, lastSessionUpdate, setCurrentSessionId, setCurrentSessionMessages } = useAiStore();
+  const [modalSessions, setModalSessions] = useState([]);
+  const [modalEditingId, setModalEditingId] = useState(null);
+  const [modalEditValue, setModalEditValue] = useState('');
 
   // Cleo context state
   const examNameFromStore = useStudyStore(state => state.examName);
@@ -44,6 +55,83 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
   const chatContainerRef = useRef(null);
   const inputRef = useRef(null);
 
+  useEffect(() => {
+      if (showHistory) {
+          (async () => {
+              try {
+                  let cached = [];
+                  if (bookId) {
+                      cached = await db.ai_chat_sessions.where('book_id').equals(bookId).reverse().sortBy('updated_at');
+                  } else {
+                      cached = await db.ai_chat_sessions.orderBy('updated_at').reverse().toArray();
+                  }
+                  if (cached && cached.length > 0) {
+                      setModalSessions(cached);
+                  }
+              } catch (e) {}
+
+              try {
+                  const data = await getSessions(bookId);
+                  setModalSessions(data);
+              } catch (err) {
+                  console.error(err);
+              }
+          })();
+      }
+  }, [showHistory, bookId, sessionId, currentSessionId, lastSessionUpdate]);
+
+  const handleSelectModalSession = async (session) => {
+      try {
+          setCurrentSessionId(session.id);
+          const rawMsgs = await getSessionMessages(session.id);
+          const formatted = [];
+          for (const r of rawMsgs) {
+              formatted.push({
+                  id: r.id,
+                  role: 'user',
+                  content: r.query_text,
+                  query_text: r.query_text,
+                  highlightContext: r.highlight_context,
+                  highlight_context: r.highlight_context
+              });
+              formatted.push({
+                  id: r.id + '-ai',
+                  role: 'ai',
+                  content: r.ai_response
+              });
+          }
+          setCurrentSessionMessages(formatted);
+          setShowHistory(false);
+      } catch (err) {
+          console.error('Failed to load session messages:', err);
+      }
+  };
+
+  const handleModalRenameSubmit = async (session) => {
+      const value = modalEditValue.trim();
+      setModalEditingId(null);
+      if (!value || value === session.chat_header) return;
+
+      console.log('[History] Rename submitted for session:', session.id, value);
+      const oldHeader = session.chat_header;
+      setModalSessions(prev => prev.map(s => s.id === session.id ? { ...s, chat_header: value } : s));
+      try { await db.ai_chat_sessions.update(session.id, { chat_header: value, updated_at: new Date().toISOString() }); } catch (_) {}
+
+      try {
+          await renameSession(session.id, value);
+      } catch (err) {
+          console.error('Failed to rename session:', err);
+          setModalSessions(prev => prev.map(s => s.id === session.id ? { ...s, chat_header: oldHeader } : s));
+          try { await db.ai_chat_sessions.update(session.id, { chat_header: oldHeader }); } catch (_) {}
+      }
+  };
+
+  const formatDate = (dateStr) => {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
   const handleCopy = (id, content) => {
       navigator.clipboard.writeText(content);
       setCopiedId(id);
@@ -54,6 +142,13 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
 
   // State for active context
   const [activeContext, setActiveContext] = useState(selectedText);
+
+  // Watch selectedText prop changes when AIModal is already open
+  useEffect(() => {
+    if (selectedText) {
+      setActiveContext(selectedText);
+    }
+  }, [selectedText]);
 
   // Extract current page text from PDF text layer and generate chips after 3s
   useEffect(() => {
@@ -313,46 +408,60 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
       >
         {showHistory ? (
           /* ── History View ── */
-          <div className='flex flex-col gap-6 animate-in fade-in duration-300'>
-             {Object.entries(groupedHistory).map(([key, items]) => (
-                items.length > 0 && (
-                    <div key={key} className='flex flex-col gap-1'>
-                        <h3 className='px-3 text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-2'>
-                            {key === 'today' ? 'Today' : 'Previous'}
-                        </h3>
-                        {items.map(item => (
-                            <div 
-                                key={item.id}
-                                onClick={() => handleSwitchChat(item)}
-                                className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary font-medium' : 'hover:bg-bg-elevated border border-transparent hover:border-black/10 dark:hover:border-white/10 text-text-secondary shadow-sm'}`}
-                            >
-                                <div className={`p-1.5 rounded-lg ${sessionId === item.id ? 'bg-accent-subtle text-accent-primary' : 'bg-bg-subtle text-text-tertiary group-hover:bg-bg-subtle/80 group-hover:text-text-secondary'}`}>
-                                    <BookOpen size={14} weight="bold" />
-                                </div>
-                                <div className="flex-1 min-w-0 flex flex-col">
-                                    <span className='truncate text-xs font-medium leading-tight'>{getChatTitle(item)}</span>
-                                    {item.scope && item.scope !== 'general' && (
-                                        <span className='text-[9px] text-text-tertiary truncate mt-0.5 flex items-center gap-1'>
-                                            {item.scope}
-                                        </span>
-                                    )}
-                                </div>
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        deleteSession(item.id);
-                                    }}
-                                    className='p-1.5 hover:bg-red-50 rounded-lg transition-all text-text-placeholder hover:text-red-500 md:opacity-0 group-hover:opacity-100'
-                                    title="Delete chat"
-                                >
-                                    <Trash size={12} weight="bold" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )
-            ))}
+          <div className='flex flex-col gap-2 animate-in fade-in duration-300'>
+             {modalSessions.map(session => {
+                const isUnnamed = session.chat_header === 'No chat title, try renaming';
+                const isEditing = modalEditingId === session.id;
+                const isSelected = (currentSessionId || sessionId) === session.id;
 
+                const editButton = (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setModalEditingId(session.id);
+                            setModalEditValue(isUnnamed ? '' : session.chat_header);
+                        }}
+                        className="p-1 hover:bg-bg-subtle rounded-md text-text-tertiary hover:text-accent-primary transition-colors"
+                        title="Rename chat"
+                    >
+                        <PencilSimple size={16} weight="bold" />
+                    </button>
+                );
+
+                const labelContent = isEditing ? (
+                    <input
+                        type="text"
+                        maxLength={60}
+                        autoFocus
+                        value={modalEditValue}
+                        onChange={(e) => setModalEditValue(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleModalRenameSubmit(session);
+                            if (e.key === 'Escape') setModalEditingId(null);
+                        }}
+                        onBlur={() => handleModalRenameSubmit(session)}
+                        placeholder="Name this chat..."
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs font-semibold px-2 py-1 bg-white dark:bg-bg-dark border border-accent-primary rounded-md outline-none text-text-primary w-full max-w-[200px]"
+                    />
+                ) : (
+                    <span className={isUnnamed ? 'italic opacity-75' : ''}>
+                        {session.chat_header}
+                    </span>
+                );
+
+                return (
+                    <ListItem
+                        key={session.id}
+                        icon={BookOpen}
+                        label={labelContent}
+                        isActive={isSelected}
+                        right={!isEditing ? editButton : null}
+                        onClick={() => !isEditing && handleSelectModalSession(session)}
+                    />
+                );
+             })}
           </div>
         ) : (
           /* ── Messages View ── */
@@ -396,66 +505,70 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                 </div>
               </div>
             ) : (
-              messages.map((msg, index) => (
-                <div
-                  key={msg.id || index}
-                  className={`flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-500 w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}
-                >
-                  {msg.role === 'ai' ? (
-                    /* ── AI message: borderless centered prose ── */
-                    <div className="w-full flex flex-col items-center">
-                      <div className="w-full max-w-[95%] px-1 py-1 text-[14px] leading-relaxed text-text-primary">
-                        <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-sm max-w-none prose-p:my-4 prose-headings:mt-6 prose-headings:mb-3 prose-li:my-2 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-6 prose-table:w-full prose-table:border-collapse prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-3 prose-th:border prose-th:border-border-default prose-td:p-3 prose-td:border prose-td:border-border-default'>
-                          {msg.content ? (
-                            <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
-                          ) : (
-                            isStreaming && <TypingIndicator />
+              (() => {
+                console.log('[Chat] Rendering session messages:', messages.length);
+                return messages.map((msg, index) => (
+                  <div
+                    key={msg.id || index}
+                    className={`flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-500 w-full ${msg.role === 'user' ? 'items-end' : 'items-center'}`}
+                  >
+                    {msg.role === 'ai' ? (
+                      /* ── AI message: borderless centered prose ── */
+                      <div className="w-full flex flex-col items-center">
+                        <div className="w-full max-w-[95%] px-1 py-1 text-[14px] leading-relaxed text-text-primary">
+                          <div className='prose dark:prose-invert prose-p:text-text-primary prose-headings:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary text-text-primary prose-sm max-w-none prose-p:my-4 prose-headings:mt-6 prose-headings:mb-3 prose-li:my-2 prose-strong:text-inherit prose-code:text-accent-primary prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-border-default prose-table:my-6 prose-table:w-full prose-table:border-collapse prose-table:border prose-table:border-border-default prose-th:bg-bg-subtle prose-th:p-3 prose-th:border prose-th:border-border-default prose-td:p-3 prose-td:border prose-td:border-border-default'>
+                            {msg.content ? (
+                              <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
+                            ) : (
+                              isStreaming && <TypingIndicator />
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-center gap-4 mt-2 w-full max-w-[95%]">
+                          <span className="text-[9px] text-text-tertiary font-medium tracking-wide opacity-60">
+                            {msg.id ? formatTime(msg.id) : '--:--'}
+                          </span>
+                          {msg.content && !isStreaming && index === messages.length - 1 && (
+                              <button onClick={retry} className="text-[9px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Regenerate response">
+                                  <ArrowCounterClockwise size={12} weight="bold" /> Retry
+                              </button>
+                          )}
+                          {msg.content && !isStreaming && (
+                              <button onClick={() => handleCopy(msg.id, msg.content)} className="text-[9px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Copy response">
+                                  {copiedId === msg.id ? <Check size={12} weight="bold" className="text-green-500" /> : <Copy size={12} weight="bold" />} 
+                                  <span className={copiedId === msg.id ? "text-green-500" : ""}>{copiedId === msg.id ? 'Copied' : 'Copy'}</span>
+                              </button>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center justify-center gap-4 mt-2 w-full max-w-[95%]">
-                        <span className="text-[9px] text-text-tertiary font-medium tracking-wide opacity-60">
-                          {msg.id ? formatTime(msg.id) : '--:--'}
-                        </span>
-                        {msg.content && !isStreaming && index === messages.length - 1 && (
-                            <button onClick={retry} className="text-[9px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Regenerate response">
-                                <ArrowCounterClockwise size={12} weight="bold" /> Retry
-                            </button>
-                        )}
-                        {msg.content && !isStreaming && (
-                            <button onClick={() => handleCopy(msg.id, msg.content)} className="text-[9px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Copy response">
-                                {copiedId === msg.id ? <Check size={12} weight="bold" className="text-green-500" /> : <Copy size={12} weight="bold" />} 
-                                <span className={copiedId === msg.id ? "text-green-500" : ""}>{copiedId === msg.id ? 'Copied' : 'Copy'}</span>
-                            </button>
-                        )}
-                      </div>
-                    </div>
-                  ) : (() => {
-                    /* ── User message: border-t card bubble ── */
-                    const { context: parsedContext, question } = extractContextAndQuestion(msg.content);
-                    const context = msg.highlightContext || parsedContext;
-                    return (
-                      <div className="flex flex-col gap-2 w-full max-w-[95%] items-end">
-                        {context && (
-                          <div className="max-w-[95%] p-3.5 bg-bg-subtle dark:bg-bg-elevated border border-black/10 dark:border-white/10 border-l-4 border-l-accent-primary text-text-secondary rounded-2xl rounded-tr-sm text-xs leading-relaxed italic font-sans shadow-sm w-full">
-                            <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] mb-1.5 opacity-90 text-accent-primary">
-                              <HighlighterCircle size={12} weight="bold" className="text-accent-primary" />
-                              Highlight Context
-                            </div>
-                            <p className="line-clamp-4 leading-relaxed">"{context}"</p>
+                    ) : (() => {
+                      /* ── User message: 1. Highlight Context card ON TOP 2. User bubble (clean) ── */
+                      const { context: parsedContext, question } = extractContextAndQuestion(msg.content || msg.query_text);
+                      const context = msg.highlightContext || msg.highlight_context || parsedContext;
+                      const userText = msg.query_text || question;
+                      return (
+                        <div className="flex flex-col gap-2 w-full max-w-[95%] items-end">
+                          {context && (
+                            <Card className="p-3.5 border-l-4 border-l-purple-600 dark:border-l-purple-500 text-text-secondary text-xs leading-relaxed w-full italic font-sans hover:scale-100">
+                              <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] mb-1.5 opacity-90 text-purple-600 dark:text-purple-400 not-italic">
+                                <Highlighter size={12} weight="bold" className="text-purple-600 dark:text-purple-400" />
+                                Highlight Context
+                              </div>
+                              <p className="line-clamp-4 leading-relaxed">"{context}"</p>
+                            </Card>
+                          )}
+                          <div className="max-w-[95%] px-4 py-3 text-[14px] leading-relaxed bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm rounded-2xl text-text-primary text-left inline-block">
+                            <p className='whitespace-pre-wrap'>{userText}</p>
                           </div>
-                        )}
-                        <div className="max-w-[95%] px-4 py-3 text-[14px] leading-relaxed bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm rounded-2xl text-text-primary text-left inline-block">
-                          <p className='whitespace-pre-wrap'>{question}</p>
+                          <span className="text-[9px] text-text-tertiary mt-1 font-medium tracking-wide opacity-60">
+                            {msg.id ? formatTime(msg.id) : '--:--'}
+                          </span>
                         </div>
-                        <span className="text-[9px] text-text-tertiary mt-1 font-medium tracking-wide opacity-60">
-                          {msg.id ? formatTime(msg.id) : '--:--'}
-                        </span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              ))
+                      );
+                    })()}
+                  </div>
+                ));
+              })()
             )}
 
             {error && (
@@ -480,23 +593,23 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
       {/* ── Selection Context Pin ── */}
       {!showHistory && activeContext && (
         <div className='px-4 pb-3 flex-shrink-0'>
-          <div className='bg-bg-subtle dark:bg-bg-elevated border border-black/10 dark:border-white/10 rounded-card p-4 relative group shadow-xl shadow-accent-subtle/20 animate-in slide-in-from-bottom-2 duration-300'>
-            <div className='flex items-center justify-between mb-3'>
-              <span className='text-[10px] font-bold text-accent-primary uppercase tracking-[0.15em] flex items-center gap-2'>
-                <span className='w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse'></span>
+          <Card className='p-3.5 relative group animate-in slide-in-from-bottom-2 duration-300 border-l-4 border-l-purple-600 dark:border-l-purple-500 hover:scale-100'>
+            <div className='flex items-center justify-between mb-2'>
+              <span className='text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-[0.15em] flex items-center gap-2'>
+                <Highlighter size={12} weight="bold" />
                 Live Context
               </span>
               <button
                 onClick={() => setActiveContext(null)}
-                className='p-1.5 hover:bg-bg-subtle rounded-lg text-text-placeholder hover:text-red-500 transition-all'
+                className='p-1 hover:bg-bg-subtle rounded-lg text-text-tertiary hover:text-red-500 transition-all'
               >
                 <X size={14} weight="bold" />
               </button>
             </div>
-            <p className='text-[12px] text-text-secondary leading-relaxed italic line-clamp-3 pl-3 border-l-2 border-accent-primary/50'>
+            <p className='text-[12px] text-text-secondary leading-relaxed italic line-clamp-3'>
               "{activeContext}"
             </p>
-          </div>
+          </Card>
         </div>
       )}
 

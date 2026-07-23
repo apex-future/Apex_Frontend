@@ -32,7 +32,7 @@ export default function ListItem({
   `;
 
   const states = isActive
-    ? 'bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] text-white'
+    ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-bold border border-purple-200 dark:border-purple-800/50'
     : 'text-text-secondary hover:bg-accent-primary/5 hover:text-accent-primary';
 
   return (

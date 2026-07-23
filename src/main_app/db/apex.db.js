@@ -251,4 +251,11 @@ db.version(22).stores({
   console.log('[Apex DB] v22: user_daily_streak_progress table added');
 });
 
+// Version 23: Add ai_chat_sessions table for local session caching
+db.version(23).stores({
+  ai_chat_sessions: 'id, book_id, user_id, chat_header, updated_at, created_at',
+}).upgrade(async () => {
+  console.log('[Apex DB] v23: ai_chat_sessions table added');
+});
+
 export default db;

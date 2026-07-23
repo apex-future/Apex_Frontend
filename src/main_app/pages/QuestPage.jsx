@@ -15,9 +15,44 @@ import useQuestStore from '../store/useQuestStore';
 import { showToastGlobal } from '../hooks/useToast';
 
 // ─── Skeleton loader ──────────────────────────────────────────────────────────
+const SKELETON_SHIMMER_STYLE_ID = 'quest-page-skeleton-shimmer';
+if (typeof document !== 'undefined' && !document.getElementById(SKELETON_SHIMMER_STYLE_ID)) {
+  const style = document.createElement('style');
+  style.id = SKELETON_SHIMMER_STYLE_ID;
+  style.innerHTML = `
+    @keyframes quest-slow-shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    @keyframes quest-pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+    .quest-skeleton-shimmer {
+      position: relative;
+      overflow: hidden;
+      animation: quest-pulse-slow 2.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    .quest-skeleton-shimmer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        transparent 100%
+      );
+      animation: quest-slow-shimmer 2.5s infinite ease-in-out;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function QuestListSkeleton() {
   return (
-    <Card className="w-full flex flex-col p-4 gap-5 sm:p-5 sm:gap-6 animate-pulse">
+    <Card className="w-full flex flex-col p-4 gap-5 sm:p-5 sm:gap-6 quest-skeleton-shimmer">
       {Array.from({ length: 3 }).map((_, i) => (
         <div key={i} className="w-full flex flex-col gap-2">
           <div className="w-full flex items-center gap-3">
@@ -33,7 +68,7 @@ function QuestListSkeleton() {
 
 function WeeklyBarSkeleton() {
   return (
-    <Card className="p-4 px-6 relative w-full flex flex-col justify-center items-center overflow-hidden animate-pulse">
+    <Card className="p-4 px-6 relative w-full flex flex-col justify-center items-center overflow-hidden quest-skeleton-shimmer">
       <div className="flex justify-between w-full max-w-xs md:max-w-md gap-1 md:gap-2">
         {Array.from({ length: 7 }).map((_, i) => (
           <div key={i} className="flex flex-col items-center gap-1.5 md:gap-2">

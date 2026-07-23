@@ -6,29 +6,42 @@ import useSettingsStore from '../store/settingsStore';
 import { cleanUserMessage } from '../utils/aiUtils';
 import useQuestStore from '../store/useQuestStore';
 
+import useAiStore from '../store/useAiStore';
+
 /**
  * useAIChat — Custom hook for streaming AI chat interactions with persistence.
  */
 export default function useAIChat(options = {}) {
   const { autoLoad = true, persist = true, scope = 'general', bookId = null } = options;
 
+  const { currentSessionId, currentSessionMessages, setCurrentSessionId, clearSession, markSessionUpdated } = useAiStore();
   const [messages, setMessages] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
   const [sessionId, setSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const abortControllerRef = useRef(null);
+  const hasAutoLoadedRef = useRef(false);
 
   const createNewChat = useCallback(() => {
+    console.log('[AI] New chat started, session cleared');
+    clearSession();
     setMessages([]);
-    setSessionId(Date.now());
+    setSessionId(null);
     setError(null);
     setIsStreaming(false);
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-  }, []);
+  }, [clearSession]);
+
+  // Sync messages with store when session messages are loaded from history
+  useEffect(() => {
+    if (currentSessionMessages) {
+      setMessages(currentSessionMessages);
+    }
+  }, [currentSessionMessages]);
 
   // Load history on mount
   const loadHistory = useCallback(async () => {
@@ -47,20 +60,21 @@ export default function useAIChat(options = {}) {
   }, [scope]);
 
   useEffect(() => {
-    if (!autoLoad) return;
+    if (!autoLoad || hasAutoLoadedRef.current) return;
+    hasAutoLoadedRef.current = true;
 
     Promise.resolve().then(() => loadHistory()).then(history => {
-      if (history.length > 0 && !sessionId) {
+      if (history.length > 0 && !sessionId && !currentSessionId) {
         // Load the most recent session
         const mostRecent = history[0];
         setSessionId(mostRecent.id);
         setMessages(mostRecent.messages || []);
-      } else if (history.length === 0 && !sessionId) {
+      } else if (history.length === 0 && !sessionId && !currentSessionId) {
         // Start a fresh session if none exists
         createNewChat();
       }
     });
-  }, [loadHistory, sessionId, autoLoad, createNewChat]);
+  }, [loadHistory, autoLoad, createNewChat]);
 
   /**
    * Helper to persist current state to DB
@@ -130,6 +144,20 @@ export default function useAIChat(options = {}) {
               return;
             }
 
+            if (data.session_id) {
+              setCurrentSessionId(data.session_id);
+              setSessionId(data.session_id);
+              if (data.chat_header) {
+                db.ai_chat_sessions.put({
+                  id: data.session_id,
+                  chat_header: data.chat_header,
+                  updated_at: new Date().toISOString(),
+                  book_id: bookId || null,
+                }).catch(() => {});
+                markSessionUpdated();
+              }
+            }
+
             if (data.chunk) {
               setMessages(prev => {
                 const updated = [...prev];
@@ -147,7 +175,12 @@ export default function useAIChat(options = {}) {
 
             if (data.done) {
               setIsStreaming(false);
+              if (data.session_id) {
+                setCurrentSessionId(data.session_id);
+                setSessionId(data.session_id);
+              }
               persistChat(activeSessionId, finalMessages);
+              markSessionUpdated();
               
               // Only award XP if it was a successful AI response and not aborted midway
               const { awardXpOptimistic } = useXpStore.getState();
@@ -171,11 +204,15 @@ export default function useAIChat(options = {}) {
       }
       setIsStreaming(false);
     }
-  }, [persistChat]);
+  }, [persistChat, setCurrentSessionId]);
 
   const sendMessage = useCallback(async (text, bookTitle, displayContent, highlightContext, pageImageBase64 = null) => {
     if (!text.trim() || isStreaming) return;
     setError(null);
+
+    if (!currentSessionId && !sessionId) {
+      console.log('[AI] First message sent, awaiting session_id from backend');
+    }
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -183,7 +220,7 @@ export default function useAIChat(options = {}) {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    const activeSessionId = sessionId || Date.now();
+    const activeSessionId = currentSessionId || sessionId || Date.now();
     if (!sessionId) setSessionId(activeSessionId);
 
     const userMsg = { 
@@ -219,6 +256,8 @@ export default function useAIChat(options = {}) {
         bookId: resolvedBookId,
         chatType: scope === 'general' ? 'general' : 'in_reader',
         conversationHistory: history,
+        pageImageBase64,
+        sessionId: currentSessionId || (typeof sessionId === 'string' && sessionId.includes('-') ? sessionId : null),
       });
 
       await consumeStream(response, activeSessionId);
@@ -226,7 +265,7 @@ export default function useAIChat(options = {}) {
       setError(err.message || 'Something went wrong. Please try again.');
       setIsStreaming(false);
     }
-  }, [isStreaming, messages, consumeStream, sessionId, bookId, scope]);
+  }, [isStreaming, messages, consumeStream, sessionId, currentSessionId, bookId, scope]);
 
   const sendExplain = useCallback(async (selectedText, context, bookTitle, displayContent) => {
     if (!selectedText.trim() || isStreaming) return;
