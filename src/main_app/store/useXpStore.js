@@ -156,7 +156,7 @@ const useXpStore = create(
        *                          strictly newer than local lastUpdatedAt.
        *   - multiplier_expires_at: Take whichever is further in the future.
        */
-      seedFromServer: (profileData) => {
+      seedFromServer: async (profileData) => {
         if (!profileData) return;
         const state = get();
 

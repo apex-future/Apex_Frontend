@@ -64,7 +64,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
           
           /* Desktop layout: floating card with top, bottom, and left margins */
           md:translate-x-0
-          md:sticky md:top-4 md:my-4 md:ml-4 md:h-[calc(100vh-2rem)]
+          md:sticky md:inset-auto md:top-4 md:my-4 md:ml-4 md:self-start md:h-[calc(100vh-2rem)]
           rounded-r-xl md:rounded-[2rem]
           border-r md:border border-border-default/8 dark:border-neutral-800/60
           

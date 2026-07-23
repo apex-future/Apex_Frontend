@@ -98,35 +98,19 @@ function MainApp({ onLogout }) {
     }
   }, [location.pathname])
 
-  const isKnownRoute = (pathname) => {
-    if (pathname === '/' || pathname === '') return true;
-    const validPrefixes = [
-      '/profile',
-      '/settings',
-      '/reader',
-      '/spaces',
-      '/space',
-      '/book',
-      '/dictionary',
-      '/ai',
-      '/tabs',
-      '/import',
-      '/streak',
-      '/exams',
-      '/analytics',
-      '/notes',
-      '/quest',
-      '/flashcards',
-    ];
-    return validPrefixes.some(prefix => pathname === prefix || pathname.startsWith(prefix + '/'));
-  };
+  const isReaderMode = location.pathname.startsWith('/reader');
+  const isNoteEditorMode = !!location.pathname.match(/^\/notes\/[^/]+\/(new|[^/]+)$/);
+  const isAiMode = location.pathname === '/ai';
+
+  const showAsideNav = asideIsOpen && !isReaderMode && !isNoteEditorMode;
+  const showBottomNav = !isReaderMode && !isAiMode && !isNoteEditorMode;
 
   return (
-    <div className={`flex relative min-h-screen bg-bg-primary ${resolvedTheme}`}>
+    <div className={`flex items-start relative min-h-screen bg-bg-primary ${resolvedTheme}`}>
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>
-          {isKnownRoute(location.pathname) && asideIsOpen && !location.pathname.startsWith('/reader') && !location.pathname.match(/^\/notes\/[^/]+\/(new|[^/]+)$/) && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} onLogout={onLogout} />}
+          {showAsideNav && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} onLogout={onLogout} />}
 
           <div className='flex-1 min-w-0 relative z-[10]'>
             <main className="">
@@ -163,8 +147,8 @@ function MainApp({ onLogout }) {
               </Routes>
             </main>
 
-            {/* Hide bottom navbar on specialized screens or 404 routes */}
-            {isKnownRoute(location.pathname) && !location.pathname.startsWith('/reader') && location.pathname !== '/ai' && !location.pathname.match(/^\/notes\/[^/]+\/(new|[^/]+)$/) && <BottomNavBar />}
+            {/* Bottom navbar for mobile screens */}
+            {showBottomNav && <BottomNavBar />}
           </div>
 
           <DuplicateBookModal
