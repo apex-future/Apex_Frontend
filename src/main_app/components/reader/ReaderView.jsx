@@ -34,6 +34,7 @@ import ReaderDictionary from './reading_navigations/reading_layout/ReaderDiction
 import { CaretLeft, CaretRight, Plus, List, ArrowLeft, ArrowRight, WarningCircle, ArrowUp, ArrowDown } from '@phosphor-icons/react';
 import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
 import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
+import FlashcardPanel from './reading_navigations/reading_layout/FlashcardPanel';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
@@ -250,6 +251,7 @@ function ReaderView() {
     
     // Flashcard feature state
     const [activeFlashcardSession, setActiveFlashcardSession] = useState(null); // { selection, count }
+    const [flashcardPanel, setFlashcardPanel] = useState(false);
 
     const openPageStrip = useCallback(() => {
         setNavState('none');
@@ -803,36 +805,19 @@ function ReaderView() {
         isBookmarkedBook: book?.isBookmarked,
         onToggleBookmarkedBook: () => toggleBookmarkedBook(book.id),
         onProgressBarClick: openPageStrip,
-        onGenerateFlashcards: async (startPage, endPage) => {
-            if (!pdfDocumentRef.current) return;
-            const pdf = pdfDocumentRef.current;
-            const pageTexts = [];
-            
-            showToast('Extracting text from pages...', 'info');
-            
-            for (let i = startPage; i <= endPage; i++) {
-                try {
-                    const page = await pdf.getPage(i);
-                    const tc = await page.getTextContent();
-                    const text = tc.items.map(item => item.str).join(' ');
-                    pageTexts.push({ page: i, text });
-                } catch (err) {
-                    console.error('[Flashcards] Failed to extract text for page', i, err);
-                }
+        onGenerateFlashcards: () => {
+          setNavState('none');
+          setFlashcardPanel(prev => {
+            const next = !prev;
+            if (next) {
+              setLeftPanel(false);
+              setPageSettings(false);
+              setNotebookPanel(false);
+              setNoteEditor(null);
+              setAiModal(false);
             }
-            
-            if (pageTexts.length === 0) {
-                showToast('Could not extract any text from those pages.', 'error');
-                return;
-            }
-            
-            // Open modal ONCE with the real data
-            useFlashcardStore.getState().openFlashcardModal({
-                sourceType: 'book_pages',
-                textContent: pageTexts.map(pt => `[Page ${pt.page}]\n${pt.text}`).join('\n\n'),
-                pageTexts,
-                numCards: 10
-            });
+            return next;
+          });
         },
         pageSettings,
         setPageSettings: (val) => {
@@ -1410,6 +1395,14 @@ function ReaderView() {
                     pdfControls={pdfControls}
                     tocOutline={tocOutline}
                 />}
+
+                {/* Flashcard panel */}
+                {flashcardPanel && <FlashcardPanel
+                    setFlashcardPanel={setFlashcardPanel}
+                    book={book}
+                    pageNumber={pageNumber}
+                    totalPages={numPages || localPages.total || 1}
+                />}
                 
                 {/* Gear panel */}
                 {pageSettings && <PageSettings 
@@ -1545,6 +1538,7 @@ function ReaderView() {
                                 setPageSettings(false);
                                 setNotebookPanel(false);
                                 setNoteEditor(null);
+                                setFlashcardPanel(false);
                             }
                             setLeftPanel(val);
                         }}
@@ -1563,6 +1557,7 @@ function ReaderView() {
                                     setLeftPanel(false);
                                     setPageSettings(false);
                                     setAiModal(false);
+                                    setFlashcardPanel(false);
                                 }
                                 return next;
                             });

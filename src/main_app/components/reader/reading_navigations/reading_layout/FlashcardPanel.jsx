@@ -1,0 +1,1057 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  X,
+  ClockCounterClockwise,
+  CaretLeft,
+  CaretRight,
+  Highlighter,
+  Note,
+  BookOpen,
+  Sparkle,
+  Lightning,
+  Shuffle,
+  CheckCircle,
+  WarningCircle,
+  Check,
+  Cards,
+  CaretDown,
+  CaretUp,
+  Trash,
+  ShareNetwork,
+  Square,
+  CheckSquare
+} from '@phosphor-icons/react';
+import ListItem from '../../../ui/ListItem';
+import Button from '../../../ui/Button';
+import EmptyState from '../../../ui/EmptyState';
+import Modal from '../../../ui/Modal';
+import Card from '../../../ui/Card';
+import Flashcard3D from '../../../ai/Flashcard3D';
+import {
+  fetchBookDeck,
+  fetchBookCards,
+  fetchBookSessions,
+  generateIncrementalCards,
+  recordSessionResult,
+  deleteCards
+} from '../../../../services/flashcardService';
+import { showToastGlobal } from '../../../../hooks/useToast';
+
+export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1, totalPages = 1 }) {
+  const [view, setView] = useState('categories'); // 'categories' | 'category_cards' | 'practice_setup' | 'practice_session' | 'history'
+  const [selectedCategory, setSelectedCategory] = useState(null); // 'highlight' | 'tab' | 'word'
+  const [cards, setCards] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Screen size detection to prevent Portal Modal on Mobile
+  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Category Cards Delete / Selection State
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedCardIds, setSelectedCardIds] = useState(new Set());
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+
+  // Practice Setup State: Default only 'highlight' selected with its page picker drawer open
+  const [selectedSources, setSelectedSources] = useState(['highlight']);
+  const [expandedSource, setExpandedSource] = useState('highlight');
+
+  // Page Seeds selection per category
+  const [selectedHighlightPages, setSelectedHighlightPages] = useState([]);
+  const [selectedTabPages, setSelectedTabPages] = useState([]);
+
+  // Question limit matching QuizPanel options: 5, 10, 15, 20
+  const [cardsPerSession, setCardsPerSession] = useState(10);
+  const [setupError, setSetupError] = useState('');
+
+  // Active Session State
+  const [sessionQueue, setSessionQueue] = useState([]);
+  const [sessionIndex, setSessionIndex] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [sessionResults, setSessionResults] = useState([]); // [{ cardId, rating }]
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+  const [sessionCompleted, setSessionCompleted] = useState(false);
+
+  // Modal Quit Session confirmation state
+  const [showQuitModal, setShowQuitModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // 'categories' | 'history' | 'close_panel'
+
+  const bookId = book?.id || book?.recordId || book?.supabaseId;
+
+  // Load cards & sessions on mount and after generation
+  const loadData = async () => {
+    if (!bookId) return;
+    const loadedCards = await fetchBookCards(bookId);
+    const loadedSessions = await fetchBookSessions(bookId);
+    setCards(loadedCards);
+    setSessions(loadedSessions);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [bookId]);
+
+  // Derived Card Counts
+  const highlightCount = useMemo(() => cards.filter(c => c.source_type === 'highlight').length, [cards]);
+  const tabCount = useMemo(() => cards.filter(c => c.source_type === 'tab').length, [cards]);
+  const wordCount = useMemo(() => cards.filter(c => c.source_type === 'word').length, [cards]);
+
+  // Category Cards for selected view
+  const categoryCards = useMemo(() => {
+    if (!selectedCategory) return [];
+    return cards.filter(c => c.source_type === selectedCategory);
+  }, [cards, selectedCategory]);
+
+  // Unique pages with generated flashcards per source
+  const highlightPages = useMemo(() => {
+    const set = new Set();
+    cards.filter(c => c.source_type === 'highlight' && c.page_number).forEach(c => set.add(c.page_number));
+    return Array.from(set).sort((a, b) => a - b);
+  }, [cards]);
+
+  const tabPages = useMemo(() => {
+    const set = new Set();
+    cards.filter(c => c.source_type === 'tab' && c.page_number).forEach(c => set.add(c.page_number));
+    return Array.from(set).sort((a, b) => a - b);
+  }, [cards]);
+
+  // Reset Delete mode state when changing view or category
+  useEffect(() => {
+    setIsDeleteMode(false);
+    setSelectedCardIds(new Set());
+  }, [view, selectedCategory]);
+
+  // Handle Incremental Generation Trigger with Toasts
+  const handleGenerateClick = async () => {
+    if (isGenerating) return;
+
+    // Check if there are ungenerated highlights, tabs, or words
+    const highlights = book?.metadata?.highlights || [];
+    const tabs = book?.metadata?.tabs || [];
+    const words = book?.metadata?.words || [];
+
+    const ungeneratedCount = highlights.filter(h => !h.has_flashcard).length
+      + tabs.filter(t => !t.has_flashcard).length
+      + words.filter(w => !w.has_flashcard).length;
+
+    if (ungeneratedCount === 0) {
+      showToastGlobal('No new highlights, tabs, or words to generate flashcards from.', 'info');
+      return;
+    }
+
+    setIsGenerating(true);
+    showToastGlobal('Generating flashcards... It might take a minute.', 'info');
+
+    try {
+      const res = await generateIncrementalCards(book, (msg) => {
+        showToastGlobal(msg, 'info');
+      });
+
+      if (res.count > 0) {
+        showToastGlobal(res.message, 'success');
+        await loadData();
+      } else {
+        showToastGlobal(res.message, 'info');
+      }
+    } catch (err) {
+      console.error('[FlashcardPanel] Generation failed:', err);
+      showToastGlobal('Failed to generate flashcards. Please try again.', 'error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Toggle Source in Practice Setup Multi-select & Expand Page Picker
+  const toggleSourceSelection = (source) => {
+    setSelectedSources(prev => {
+      if (prev.includes(source)) {
+        if (prev.length === 1) return prev; // keep at least one
+        if (expandedSource === source) setExpandedSource(null);
+        return prev.filter(s => s !== source);
+      }
+      // Select & expand if highlight or tab
+      if (source === 'highlight' || source === 'tab') {
+        setExpandedSource(source);
+      }
+      return [...prev, source];
+    });
+  };
+
+  // Toggle Page Seed selection
+  const togglePageSeed = (source, pageNum) => {
+    if (source === 'highlight') {
+      setSelectedHighlightPages(prev =>
+        prev.includes(pageNum) ? prev.filter(p => p !== pageNum) : [...prev, pageNum]
+      );
+    } else if (source === 'tab') {
+      setSelectedTabPages(prev =>
+        prev.includes(pageNum) ? prev.filter(p => p !== pageNum) : [...prev, pageNum]
+      );
+    }
+  };
+
+  // Randomize 5 pages from available page seeds
+  const randomizePageSeeds = (source) => {
+    const availablePages = source === 'highlight' ? highlightPages : tabPages;
+    if (availablePages.length === 0) return;
+
+    const shuffled = [...availablePages].sort(() => 0.5 - Math.random());
+    const picked = shuffled.slice(0, Math.min(5, shuffled.length)).sort((a, b) => a - b);
+
+    if (source === 'highlight') {
+      setSelectedHighlightPages(picked);
+    } else if (source === 'tab') {
+      setSelectedTabPages(picked);
+    }
+  };
+
+  // Toggle Card selection in Delete mode
+  const toggleCardSelection = (cardId) => {
+    setSelectedCardIds(prev => {
+      const next = new Set(prev);
+      if (next.has(cardId)) {
+        next.delete(cardId);
+      } else {
+        next.add(cardId);
+      }
+      return next;
+    });
+  };
+
+  // Toggle Select All cards in current category
+  const toggleSelectAllCategoryCards = () => {
+    if (selectedCardIds.size === categoryCards.length) {
+      setSelectedCardIds(new Set());
+    } else {
+      setSelectedCardIds(new Set(categoryCards.map(c => c.id)));
+    }
+  };
+
+  // Share Category Flashcards to Clipboard / Web Share
+  const handleShareCategoryCards = async () => {
+    if (categoryCards.length === 0) return;
+    const text = categoryCards.map((c, i) => `${i + 1}. Q: ${c.front}\n   A: ${c.back}`).join('\n\n');
+    const title = `${selectedCategory.toUpperCase()} Flashcards`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text });
+        return;
+      } catch (e) {
+        // fallback to clipboard
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      showToastGlobal(`${categoryCards.length} flashcards copied to clipboard!`, 'success');
+    } catch (err) {
+      showToastGlobal('Failed to copy flashcards to clipboard', 'error');
+    }
+  };
+
+  // Delete Action Click
+  const handleDeleteButtonClick = () => {
+    if (!isDeleteMode) {
+      setIsDeleteMode(true);
+    } else {
+      if (selectedCardIds.size > 0) {
+        setShowDeleteConfirmModal(true);
+      } else {
+        setIsDeleteMode(false);
+      }
+    }
+  };
+
+  // Confirm Deletion
+  const handleConfirmDeleteCards = async () => {
+    setShowDeleteConfirmModal(false);
+    const idsToDelete = Array.from(selectedCardIds);
+    if (idsToDelete.length === 0) return;
+
+    try {
+      await deleteCards(idsToDelete, bookId);
+      showToastGlobal(`Deleted ${idsToDelete.length} flashcard${idsToDelete.length !== 1 ? 's' : ''}.`, 'success');
+      setSelectedCardIds(new Set());
+      setIsDeleteMode(false);
+      await loadData();
+    } catch (err) {
+      console.error('[FlashcardPanel] Delete failed:', err);
+      showToastGlobal('Failed to delete selected flashcards.', 'error');
+    }
+  };
+
+  // Start Practice Session
+  const handleStartPractice = () => {
+    setSetupError('');
+
+    // Page selection requirement check for Highlights
+    if (selectedSources.includes('highlight') && highlightPages.length > 0 && selectedHighlightPages.length === 0) {
+      showToastGlobal('Please select at least one page for Highlights (or click Random 5 pages).', 'warning');
+      setSetupError('Please select at least one page for Highlights.');
+      setExpandedSource('highlight');
+      return;
+    }
+
+    // Page selection requirement check for Tabs
+    if (selectedSources.includes('tab') && tabPages.length > 0 && selectedTabPages.length === 0) {
+      showToastGlobal('Please select at least one page for Tabs (or click Random 5 pages).', 'warning');
+      setSetupError('Please select at least one page for Tabs.');
+      setExpandedSource('tab');
+      return;
+    }
+
+    // Filter cards matching practice configuration
+    let filtered = cards.filter(c => {
+      const isSourceMatch = selectedSources.includes(c.source_type);
+      if (!isSourceMatch) return false;
+
+      if (c.source_type === 'highlight') {
+        if (selectedHighlightPages.length > 0) {
+          return selectedHighlightPages.includes(c.page_number);
+        }
+      }
+      if (c.source_type === 'tab') {
+        if (selectedTabPages.length > 0) {
+          return selectedTabPages.includes(c.page_number);
+        }
+      }
+      return true; // words don't filter by page
+    });
+
+    if (filtered.length === 0) {
+      showToastGlobal('No flashcards found matching your filters. Try generating cards first!', 'warning');
+      setSetupError('No flashcards found matching your filters.');
+      return;
+    }
+
+    if (filtered.length < cardsPerSession) {
+      showToastGlobal(`Not enough cards to practice ${cardsPerSession} cards. You only have ${filtered.length} matching card${filtered.length !== 1 ? 's' : ''}.`, 'warning');
+      setSetupError(`Not enough cards to practice ${cardsPerSession} cards (only ${filtered.length} available).`);
+      return;
+    }
+
+    // Spaced Repetition Priority Sort: Hard & Missed cards surface FIRST!
+    const confidencePriority = { missed: 1, hard: 2, new: 3, easy: 4 };
+    filtered.sort((a, b) => {
+      const prioA = confidencePriority[a.confidence] || 3;
+      const prioB = confidencePriority[b.confidence] || 3;
+      if (prioA !== prioB) return prioA - prioB;
+      return new Date(a.last_practiced_at || 0) - new Date(b.last_practiced_at || 0); // oldest practiced first
+    });
+
+    const sessionCards = filtered.slice(0, cardsPerSession);
+
+    setSessionQueue(sessionCards);
+    setSessionIndex(0);
+    setIsFlipped(false);
+    setSessionResults([]);
+    setSessionStartTime(new Date().toISOString());
+    setSessionCompleted(false);
+    setSetupError('');
+    setView('practice_session');
+  };
+
+  // Handle Card Rating (Easy / Hard / Missed)
+  const handleRateCard = async (rating) => {
+    const currentCard = sessionQueue[sessionIndex];
+    if (!currentCard) return;
+
+    const updatedResults = [...sessionResults, { cardId: currentCard.id, rating }];
+    setSessionResults(updatedResults);
+
+    if (sessionIndex < sessionQueue.length - 1) {
+      setIsFlipped(false);
+      setTimeout(() => setSessionIndex(prev => prev + 1), 150);
+    } else {
+      // Session finished — record in database
+      setSessionCompleted(true);
+      await recordSessionResult(bookId, {
+        sources: selectedSources,
+        startedAt: sessionStartTime,
+      }, updatedResults);
+      await loadData();
+    }
+  };
+
+  // Handle Back Navigation with Modal Confirmation during active practice
+  const handleNavigationRequest = (target) => {
+    if (view === 'practice_session' && !sessionCompleted) {
+      setPendingAction(target);
+      setShowQuitModal(true);
+    } else {
+      if (target === 'categories') setView('categories');
+      else if (target === 'history') setView(prev => prev === 'history' ? 'categories' : 'history');
+      else if (target === 'close_panel') setFlashcardPanel(false);
+    }
+  };
+
+  const handleConfirmQuitSession = () => {
+    setShowQuitModal(false);
+    if (pendingAction === 'close_panel') {
+      setFlashcardPanel(false);
+    } else if (pendingAction === 'history') {
+      setView('history');
+    } else {
+      setView('categories');
+    }
+    setPendingAction(null);
+  };
+
+  const isAllCategoryCardsSelected = categoryCards.length > 0 && selectedCardIds.size === categoryCards.length;
+
+  return (
+    <>
+      {/* PRACTICE SESSION: MOBILE NATIVE FULL PAGE VIEW (NO PORTAL MODAL / NO BACKDROP OVERLAY) */}
+      {view === 'practice_session' && !isDesktop && (
+        <div
+          className="fixed inset-0 z-[999] bg-bg-primary dark:bg-bg-primary flex flex-col justify-between p-6 font-sans animate-in fade-in duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-border-default/30">
+            <button
+              onClick={() => handleNavigationRequest('categories')}
+              className="flex items-center gap-1.5 text-sm font-bold text-text-primary hover:text-accent-primary transition-colors"
+            >
+              <CaretLeft size={16} weight="bold" /> Back
+            </button>
+            {!sessionCompleted && (
+              <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider bg-bg-subtle px-3.5 py-1 rounded-full border border-border-default">
+                Card {sessionIndex + 1} of {sessionQueue.length}
+              </span>
+            )}
+          </div>
+
+          {/* Practice Body */}
+          {!sessionCompleted ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-6 my-auto py-6">
+              <Flashcard3D
+                question={sessionQueue[sessionIndex]?.front}
+                answer={sessionQueue[sessionIndex]?.back}
+                isFlipped={isFlipped}
+                setIsFlipped={setIsFlipped}
+                compact={true}
+              />
+
+              <div className="flex items-center gap-3 w-full max-w-sm mt-4">
+                <button
+                  onClick={() => handleRateCard('missed')}
+                  className="flex-1 py-3.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-600 dark:text-red-400 font-bold text-xs transition-all border border-red-500/30 active:scale-95 shadow-sm"
+                >
+                  Missed
+                </button>
+                <button
+                  onClick={() => handleRateCard('hard')}
+                  className="flex-1 py-3.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 font-bold text-xs transition-all border border-amber-500/30 active:scale-95 shadow-sm"
+                >
+                  Hard
+                </button>
+                <button
+                  onClick={() => handleRateCard('easy')}
+                  className="flex-1 py-3.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 font-bold text-xs transition-all border border-emerald-500/30 active:scale-95 shadow-sm"
+                >
+                  Easy
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 my-auto py-6">
+              <CheckCircle size={52} weight="fill" className="text-emerald-500 animate-bounce" />
+              <h3 className="text-xl font-bold text-text-primary font-display">Session Completed!</h3>
+              <p className="text-xs text-text-secondary max-w-xs leading-relaxed">
+                You practiced {sessionQueue.length} flashcard{sessionQueue.length !== 1 ? 's' : ''}. Ratings updated!
+              </p>
+
+              <div className="flex items-center justify-center gap-6 py-3 w-full border-y border-border-default/30 my-2">
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-black text-emerald-500">{sessionResults.filter(r => r.rating === 'easy').length}</span>
+                  <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Easy</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-black text-amber-500">{sessionResults.filter(r => r.rating === 'hard').length}</span>
+                  <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Hard</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-black text-red-500">{sessionResults.filter(r => r.rating === 'missed').length}</span>
+                  <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Missed</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 w-full mt-4 max-w-xs">
+                <Button variant="primary" onClick={handleStartPractice} className="w-full py-3.5 text-xs font-bold">Practice Again</Button>
+                <Button variant="ghost" onClick={() => setView('practice_setup')} className="w-full py-3.5 text-xs font-bold">Change Filters</Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* PRACTICE SESSION: DESKTOP MODAL VIEW USING PREDEFINED MODAL COMPONENT */}
+      {view === 'practice_session' && isDesktop && (
+        <Modal
+          isOpen={true}
+          onClose={() => handleNavigationRequest('categories')}
+          className="!bg-bg-primary dark:!bg-bg-primary !max-w-lg min-h-[580px] justify-between shadow-2xl border border-border-default dark:border-white/10"
+          title={
+            <div className="flex items-center justify-between w-full pr-4">
+              <button
+                onClick={() => handleNavigationRequest('categories')}
+                className="flex items-center gap-1.5 text-sm font-bold text-text-primary hover:text-accent-primary transition-colors"
+              >
+                <CaretLeft size={16} weight="bold" /> Back
+              </button>
+              {!sessionCompleted && (
+                <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider bg-bg-subtle px-3 py-1 rounded-full border border-border-default">
+                  Card {sessionIndex + 1} of {sessionQueue.length}
+                </span>
+              )}
+            </div>
+          }
+        >
+          {!sessionCompleted ? (
+            <div className="flex flex-col items-center gap-5 py-2">
+              <Flashcard3D
+                question={sessionQueue[sessionIndex]?.front}
+                answer={sessionQueue[sessionIndex]?.back}
+                isFlipped={isFlipped}
+                setIsFlipped={setIsFlipped}
+                compact={true}
+              />
+
+              <div className="flex items-center gap-3 w-full max-w-sm mt-3">
+                <button
+                  onClick={() => handleRateCard('missed')}
+                  className="flex-1 py-3 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-600 dark:text-red-400 font-bold text-xs transition-all border border-red-500/30 active:scale-95 shadow-sm"
+                >
+                  Missed
+                </button>
+                <button
+                  onClick={() => handleRateCard('hard')}
+                  className="flex-1 py-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 font-bold text-xs transition-all border border-amber-500/30 active:scale-95 shadow-sm"
+                >
+                  Hard
+                </button>
+                <button
+                  onClick={() => handleRateCard('easy')}
+                  className="flex-1 py-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 font-bold text-xs transition-all border border-emerald-500/30 active:scale-95 shadow-sm"
+                >
+                  Easy
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center gap-4 py-4">
+              <CheckCircle size={52} weight="fill" className="text-emerald-500 animate-bounce" />
+              <h3 className="text-xl font-bold text-text-primary font-display">Session Completed!</h3>
+              <p className="text-xs text-text-secondary max-w-xs leading-relaxed">
+                You practiced {sessionQueue.length} flashcard{sessionQueue.length !== 1 ? 's' : ''}. Ratings updated!
+              </p>
+
+              <div className="flex items-center justify-center gap-6 py-3 w-full border-y border-border-default/30 my-2">
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-black text-emerald-500">{sessionResults.filter(r => r.rating === 'easy').length}</span>
+                  <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Easy</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-black text-amber-500">{sessionResults.filter(r => r.rating === 'hard').length}</span>
+                  <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Hard</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-black text-red-500">{sessionResults.filter(r => r.rating === 'missed').length}</span>
+                  <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Missed</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-3 w-full mt-3">
+                <Button variant="primary" onClick={handleStartPractice} className="flex-1 py-3 text-xs font-bold">Practice Again</Button>
+                <Button variant="ghost" onClick={() => setView('practice_setup')} className="flex-1 py-3 text-xs font-bold">Change Filters</Button>
+              </div>
+            </div>
+          )}
+        </Modal>
+      )}
+
+      {/* STANDARD LEFT-SLIDING PANEL FOR ALL PANEL VIEWS */}
+      <aside
+        className={`flex flex-col absolute inset-0 z-[200] bg-bg-subtle dark:bg-bg-elevated shadow-sm hover:shadow-md transition-shadow md:relative md:inset-auto md:w-80 md:h-full md:border-0 md:shrink-0 font-sans ${
+          view === 'practice_session' && !isDesktop ? 'hidden' : ''
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 shrink-0 border-b border-border-default/30">
+          {view !== 'categories' ? (
+            <button
+              onClick={() => handleNavigationRequest('categories')}
+              className="flex items-center gap-1.5 text-sm font-bold text-text-primary hover:text-accent-primary transition-colors"
+            >
+              <CaretLeft size={16} weight="bold" /> Back
+            </button>
+          ) : (
+            <h2 className="text-xs font-black text-text-tertiary tracking-[0.2em] uppercase flex items-center gap-2">
+              <Cards size={16} weight="fill" className="text-accent-primary" />
+              Flashcards
+            </h2>
+          )}
+
+          <div className="flex items-center gap-2">
+            {/* History Icon */}
+            <button
+              onClick={() => handleNavigationRequest('history')}
+              className={`p-2 rounded-full transition-all ${
+                view === 'history'
+                  ? 'bg-accent-primary/20 text-accent-primary'
+                  : 'bg-bg-subtle hover:bg-bg-subtle text-text-tertiary hover:text-text-secondary'
+              }`}
+              title="Session History"
+            >
+              <ClockCounterClockwise size={18} weight="bold" />
+            </button>
+
+            {/* Close Panel Icon */}
+            <button
+              onClick={() => handleNavigationRequest('close_panel')}
+              className="p-2 rounded-full bg-bg-subtle hover:bg-bg-subtle transition-all text-text-tertiary hover:text-text-secondary"
+              title="Close Panel"
+            >
+              <X size={18} weight="bold" />
+            </button>
+          </div>
+        </div>
+
+        {/* Panel Body (No scrollbar displayed) */}
+        <div className="flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-4 flex flex-col">
+          {/* VIEW 1: CATEGORIES MAIN VIEW */}
+          {view === 'categories' && (
+            <div className="flex flex-col h-full justify-between gap-4">
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-text-tertiary font-semibold uppercase tracking-wider mb-1">Select Category</p>
+
+                {/* Highlights */}
+                <ListItem
+                  icon={Highlighter}
+                  label="Highlights"
+                  right={
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-text-secondary">{highlightCount} cards</span>
+                      <CaretRight size={14} weight="bold" className="text-text-tertiary" />
+                    </div>
+                  }
+                  onClick={() => {
+                    setSelectedCategory('highlight');
+                    setView('category_cards');
+                  }}
+                />
+
+                {/* Tabs */}
+                <ListItem
+                  icon={Note}
+                  label="Tabs"
+                  right={
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-text-secondary">{tabCount} cards</span>
+                      <CaretRight size={14} weight="bold" className="text-text-tertiary" />
+                    </div>
+                  }
+                  onClick={() => {
+                    setSelectedCategory('tab');
+                    setView('category_cards');
+                  }}
+                />
+
+                {/* Words */}
+                <ListItem
+                  icon={BookOpen}
+                  label="Words"
+                  right={
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-text-secondary">{wordCount} cards</span>
+                      <CaretRight size={14} weight="bold" className="text-text-tertiary" />
+                    </div>
+                  }
+                  onClick={() => {
+                    setSelectedCategory('word');
+                    setView('category_cards');
+                  }}
+                />
+              </div>
+
+              {/* Bottom Row: Centered Practice Button & Matching Height Generate Button */}
+              <div className="flex items-center justify-center gap-3 pt-4 border-t border-border-default/30">
+                <Button
+                  variant="primary"
+                  onClick={() => setView('practice_setup')}
+                  disabled={cards.length === 0}
+                  className="flex-1 h-11 text-sm font-bold flex items-center justify-center"
+                >
+                  Practice
+                </Button>
+
+                {/* Generate Button with Lightning Icon & Shimmer/Pulse */}
+                <button
+                  onClick={handleGenerateClick}
+                  disabled={isGenerating}
+                  className={`h-11 w-11 rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center shadow-md transition-all active:scale-95 disabled:opacity-50 flex-shrink-0 relative overflow-hidden ${
+                    isGenerating ? 'animate-pulse' : ''
+                  }`}
+                  title="Generate Flashcards from Book"
+                >
+                  <Lightning
+                    size={20}
+                    weight="fill"
+                    className={isGenerating ? 'animate-bounce text-amber-300' : 'text-white'}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 2: CATEGORY CARDS LIST WITH PREDEFINED CARD COMPONENT & MULTI-SELECT DELETE */}
+          {view === 'category_cards' && (
+            <div className="flex flex-col gap-3">
+              {/* Header row with Category Title and Share/Delete Action Buttons */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-text-primary capitalize flex items-center gap-2">
+                  {selectedCategory === 'highlight' && <Highlighter size={16} weight="fill" className="text-accent-primary" />}
+                  {selectedCategory === 'tab' && <Note size={16} weight="fill" className="text-accent-primary" />}
+                  {selectedCategory === 'word' && <BookOpen size={16} weight="fill" className="text-accent-primary" />}
+                  {selectedCategory} ({categoryCards.length})
+                </h3>
+
+                {categoryCards.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    {/* "All" Select Checkbox Pill (Visible when Delete Mode is Active) */}
+                    {isDeleteMode && (
+                      <button
+                        onClick={toggleSelectAllCategoryCards}
+                        className={`px-2 py-1 rounded-lg text-xs font-bold transition-all border flex items-center gap-1 ${
+                          isAllCategoryCardsSelected
+                            ? 'bg-accent-primary text-white border-accent-primary'
+                            : 'bg-bg-subtle text-text-secondary border-border-default hover:bg-accent-primary/10'
+                        }`}
+                        title={isAllCategoryCardsSelected ? 'Unselect All' : 'Select All'}
+                      >
+                        {isAllCategoryCardsSelected ? <CheckSquare size={13} weight="bold" /> : <Square size={13} weight="bold" />}
+                        All
+                      </button>
+                    )}
+
+                    {/* Share Button */}
+                    <button
+                      onClick={handleShareCategoryCards}
+                      className="p-1.5 rounded-lg bg-bg-subtle hover:bg-bg-subtle transition-all text-text-tertiary hover:text-accent-primary"
+                      title="Share / Copy Flashcards"
+                    >
+                      <ShareNetwork size={16} weight="bold" />
+                    </button>
+
+                    {/* Delete Button (Trash Icon) */}
+                    <button
+                      onClick={handleDeleteButtonClick}
+                      className={`p-1.5 rounded-lg transition-all ${
+                        isDeleteMode
+                          ? selectedCardIds.size > 0
+                            ? 'bg-red-500 text-white shadow-sm'
+                            : 'bg-red-500/20 text-red-500 border border-red-500/40'
+                          : 'bg-bg-subtle hover:bg-bg-subtle text-text-tertiary hover:text-red-500'
+                      }`}
+                      title={isDeleteMode ? (selectedCardIds.size > 0 ? `Delete (${selectedCardIds.size})` : 'Exit Delete Mode') : 'Delete Flashcards'}
+                    >
+                      <Trash size={16} weight="bold" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {categoryCards.length === 0 ? (
+                <EmptyState
+                  icon={Cards}
+                  title="No flashcards generated"
+                  description="There are no cards in this category yet. Use the generate button on the main view to create them."
+                  className="my-6"
+                />
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {categoryCards.map(c => {
+                    const isCardSelected = selectedCardIds.has(c.id);
+
+                    return (
+                      <Card
+                        key={c.id}
+                        variant={isDeleteMode ? 'interactive' : 'default'}
+                        onClick={() => {
+                          if (isDeleteMode) toggleCardSelection(c.id);
+                        }}
+                        className={`p-3.5 flex flex-col gap-1.5 transition-all ${
+                          isCardSelected
+                            ? '!border-accent-primary !bg-accent-primary/10 shadow-sm'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {isDeleteMode && (
+                              <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 shadow-sm ${
+                                isCardSelected ? 'bg-accent-primary border-accent-primary text-white' : 'border-border-default bg-surface'
+                              }`}>
+                                {isCardSelected && <Check size={12} weight="bold" />}
+                              </div>
+                            )}
+                            <span className="text-[10px] font-bold text-text-tertiary uppercase">Page {c.page_number || 1}</span>
+                          </div>
+
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${
+                            c.confidence === 'easy' ? 'bg-emerald-500/20 text-emerald-600' :
+                            c.confidence === 'hard' ? 'bg-amber-500/20 text-amber-600' :
+                            c.confidence === 'missed' ? 'bg-red-500/20 text-red-600' : 'bg-purple-500/20 text-purple-600'
+                          }`}>
+                            {c.confidence || 'new'}
+                          </span>
+                        </div>
+                        <p className="text-xs font-bold text-text-primary line-clamp-2">Front: {c.front}</p>
+                        <p className="text-xs text-text-secondary line-clamp-2">Back: {c.back}</p>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* VIEW 3: PRACTICE SETUP */}
+          {view === 'practice_setup' && (
+            <div className="flex flex-col gap-4">
+              <h3 className="text-sm font-bold text-text-primary">Practice Setup</h3>
+
+              {/* Categories list with collapsible horizontal page seed lists for Highlights and Tabs */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Categories</label>
+                <div className="flex flex-col gap-2.5">
+                  {[
+                    { id: 'highlight', label: 'Highlights', count: highlightCount, icon: Highlighter, hasPagePicker: true, pages: highlightPages, selectedPages: selectedHighlightPages },
+                    { id: 'tab', label: 'Tabs', count: tabCount, icon: Note, hasPagePicker: true, pages: tabPages, selectedPages: selectedTabPages },
+                    { id: 'word', label: 'Words', count: wordCount, icon: BookOpen, hasPagePicker: false, pages: [], selectedPages: [] },
+                  ].map(src => {
+                    const isChecked = selectedSources.includes(src.id);
+                    const isExpanded = expandedSource === src.id;
+
+                    return (
+                      <div key={src.id} className="flex flex-col rounded-xl border border-border-default bg-bg-subtle overflow-hidden transition-all">
+                        {/* Main Category Selection Row */}
+                        <div
+                          onClick={() => toggleSourceSelection(src.id)}
+                          className={`flex items-center justify-between p-3 cursor-pointer select-none transition-colors ${
+                            isChecked ? 'bg-accent-primary/10 text-accent-primary font-bold' : 'text-text-secondary font-semibold'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-accent-primary border-accent-primary text-white' : 'border-border-default'}`}>
+                              {isChecked && <Check size={12} weight="bold" />}
+                            </div>
+                            <src.icon size={16} weight="bold" />
+                            <span className="text-xs">{src.label}</span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-text-tertiary">{src.count} cards</span>
+                            {src.hasPagePicker && isChecked && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedSource(isExpanded ? null : src.id);
+                                }}
+                                className="p-1 text-text-tertiary hover:text-text-primary rounded"
+                              >
+                                {isExpanded ? <CaretUp size={14} weight="bold" /> : <CaretDown size={14} weight="bold" />}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Unfolded Horizontal Page Seeds Dropdown (Apex light-grey styling) */}
+                        {src.hasPagePicker && isChecked && isExpanded && (
+                          <div className="p-3 bg-bg-subtle/80 dark:bg-bg-subtle/40 border-t border-border-default/40 flex flex-col gap-2 animate-in slide-in-from-top-1 duration-200">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
+                                Pages with Cards ({src.selectedPages.length > 0 ? `${src.selectedPages.length} selected` : 'All'})
+                              </label>
+                              {/* Random 5 Pages Button */}
+                              <button
+                                onClick={() => randomizePageSeeds(src.id)}
+                                disabled={src.pages.length === 0}
+                                className="flex items-center gap-1 text-[11px] font-bold text-accent-primary hover:text-accent-primary/80 transition-colors disabled:opacity-40"
+                                title="Pick random 5 pages"
+                              >
+                                <Shuffle size={13} weight="bold" />
+                                Random 5 pages
+                              </button>
+                            </div>
+
+                            {/* Horizontal Seed List */}
+                            {src.pages.length === 0 ? (
+                              <p className="text-[11px] text-text-tertiary italic">No pages generated for this category yet.</p>
+                            ) : (
+                              <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-1 pt-1">
+                                {src.pages.map(p => {
+                                  const isPageSelected = src.selectedPages.includes(p);
+                                  return (
+                                    <button
+                                      key={p}
+                                      onClick={() => togglePageSeed(src.id, p)}
+                                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
+                                        isPageSelected
+                                          ? 'bg-accent-primary text-white shadow-sm'
+                                          : 'bg-bg-subtle text-text-secondary border border-border-default hover:bg-accent-primary/10'
+                                      }`}
+                                    >
+                                      Page {p}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Cards Per Session (Aligned with QuizPanel: 5, 10, 15, 20 — NO 'All' option) */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Questions Limit</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[5, 10, 15, 20].map(count => (
+                    <button
+                      key={count}
+                      onClick={() => setCardsPerSession(count)}
+                      className={`py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                        cardsPerSession === count
+                          ? 'bg-accent-primary text-white border-accent-primary shadow-sm'
+                          : 'bg-bg-subtle border-border-default text-text-secondary hover:bg-accent-primary/5'
+                      }`}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {setupError && (
+                <p className="text-xs text-red-500 font-bold">{setupError}</p>
+              )}
+
+              {/* Centered Wide Start Practice Session Button */}
+              <div className="flex justify-center mt-2 w-full">
+                <Button
+                  variant="primary"
+                  onClick={handleStartPractice}
+                  className="w-full py-3.5 text-sm font-bold flex items-center justify-center"
+                >
+                  Start Practice Session
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 5: HISTORY */}
+          {view === 'history' && (
+            <div className="flex flex-col gap-3">
+              <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                <ClockCounterClockwise size={16} weight="bold" className="text-accent-primary" />
+                Session History ({sessions.length})
+              </h3>
+
+              {sessions.length === 0 ? (
+                <EmptyState
+                  icon={ClockCounterClockwise}
+                  title="No practice history"
+                  description="You haven't completed any practice sessions for this book yet."
+                  className="my-6"
+                />
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {sessions.map(s => (
+                    <div key={s.id} className="p-3 bg-bg-subtle border border-border-default rounded-xl flex flex-col gap-1 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-text-primary">{new Date(s.completed_at || s.started_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="font-bold text-accent-primary">{s.cards_completed || s.cards_requested} cards</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px] text-text-tertiary">
+                        <span className="text-emerald-600 font-semibold">{s.easy_count || 0} Easy</span>
+                        <span className="text-amber-600 font-semibold">{s.hard_count || 0} Hard</span>
+                        <span className="text-red-600 font-semibold">{s.missed_count || 0} Missed</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Predefined Modal Component for Card Deletion Confirmation */}
+      <Modal
+        isOpen={showDeleteConfirmModal}
+        onClose={() => {
+          setShowDeleteConfirmModal(false);
+          setSelectedCardIds(new Set());
+          setIsDeleteMode(false);
+        }}
+        title={`Delete ${selectedCardIds.size} Flashcard${selectedCardIds.size !== 1 ? 's' : ''}?`}
+        message="Are you sure you want to delete the selected flashcard(s)? This action cannot be undone."
+        actions={[
+          {
+            label: `Delete (${selectedCardIds.size})`,
+            onClick: handleConfirmDeleteCards,
+            variant: 'danger',
+          },
+          {
+            label: 'Cancel',
+            onClick: () => {
+              setShowDeleteConfirmModal(false);
+              setSelectedCardIds(new Set());
+              setIsDeleteMode(false);
+            },
+            variant: 'ghost',
+          },
+        ]}
+      />
+
+      {/* Predefined Modal Component for Quit Session Confirmation */}
+      <Modal
+        isOpen={showQuitModal}
+        onClose={() => {
+          setShowQuitModal(false);
+          setPendingAction(null);
+        }}
+        title="Quit Practice Session?"
+        message="Are you sure you want to quit this practice session? Your progress in this session will be lost."
+        actions={[
+          {
+            label: 'Quit Session',
+            onClick: handleConfirmQuitSession,
+            variant: 'danger',
+          },
+          {
+            label: 'Cancel',
+            onClick: () => {
+              setShowQuitModal(false);
+              setPendingAction(null);
+            },
+            variant: 'ghost',
+          },
+        ]}
+      />
+    </>
+  );
+}

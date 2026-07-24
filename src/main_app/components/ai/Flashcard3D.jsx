@@ -2,30 +2,30 @@ import React from 'react';
 import { ArrowUUpLeft } from '@phosphor-icons/react';
 import useThemeStore from '../../store/themeStore';
 
-const Flashcard3D = ({ question, answer, isFlipped, setIsFlipped }) => {
+const Flashcard3D = ({ question, answer, isFlipped, setIsFlipped, compact = false }) => {
   const { resolvedTheme } = useThemeStore();
   const isDark = resolvedTheme === 'dark';
 
   return (
     <div 
-      className="relative w-full max-w-[280px] sm:max-w-[340px] md:max-w-sm aspect-[3/4] cursor-pointer group perspective-[1500px]"
+      className={`relative w-full ${compact ? 'max-w-[300px] sm:max-w-[340px] h-[330px] sm:h-[380px]' : 'max-w-[280px] sm:max-w-[340px] md:max-w-sm aspect-[3/4]'} cursor-pointer group perspective-[1500px]`}
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <div 
-        className={`w-full h-full relative transition-all duration-700 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] preserve-3d shadow-xl rounded-2xl sm:rounded-3xl ${isFlipped ? 'rotate-y-180' : ''}`}
+        className={`w-full h-full relative transition-all duration-700 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] preserve-3d shadow-lg rounded-2xl sm:rounded-3xl ${isFlipped ? 'rotate-y-180' : ''}`}
       >
         
         {/* Front of Card (Question) */}
-        <div className={`absolute inset-0 w-full h-full backface-hidden rounded-2xl sm:rounded-3xl border border-border-default p-5 sm:p-6 md:p-8 flex flex-col justify-center items-center text-center ${isDark ? 'bg-zinc-800' : 'bg-white'}`}>
-          <div className="absolute top-4 sm:top-6 left-1/2 -translate-x-1/2 flex gap-1">
+        <div className={`absolute inset-0 w-full h-full backface-hidden rounded-2xl sm:rounded-3xl border border-border-default ${compact ? 'p-4 sm:p-5' : 'p-5 sm:p-6 md:p-8'} flex flex-col justify-center items-center text-center ${isDark ? 'bg-zinc-800' : 'bg-white'}`}>
+          <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 flex gap-1">
             <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent-primary opacity-20"></span>
             <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent-primary opacity-50"></span>
             <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent-primary"></span>
           </div>
-          <h3 className="text-base sm:text-lg md:text-xl font-bold text-text-primary leading-tight font-sans">
+          <h3 className={`${compact ? 'text-sm sm:text-base font-bold' : 'text-base sm:text-lg md:text-xl font-bold'} text-text-primary leading-tight font-sans line-clamp-5`}>
             {question}
           </h3>
-          <div className="absolute bottom-4 sm:bottom-6 flex items-center gap-2 text-text-secondary opacity-50 font-medium text-xs sm:text-sm">
+          <div className="absolute bottom-3 sm:bottom-4 flex items-center gap-2 text-text-secondary opacity-50 font-medium text-xs">
             <p>Tap to flip</p>
           </div>
         </div>

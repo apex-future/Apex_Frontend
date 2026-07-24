@@ -1850,12 +1850,18 @@ const syncService = {
               const tableName = item.tableName || 'books';
               try {
                 let localRecord = null;
-                // book_reading_time has no local_id index and doesn't map to a specific Supabase row ID
-                if (tableName !== 'book_reading_time') {
+                // book_reading_time and user_daily_streak_progress do not map via generic local_id
+                if (tableName !== 'book_reading_time' && tableName !== 'user_daily_streak_progress') {
                   localRecord = await db[tableName]
                     .where('local_id').equals(item.local_id)
                     .first()
                     .catch(() => null);
+                } else if (tableName === 'user_daily_streak_progress' && item.local_id) {
+                  localRecord = await db.user_daily_streak_progress
+                    .where('date').equals(item.local_id)
+                    .first()
+                    .catch(() => null);
+                }
 
                   // Fallback: try by supabaseId if local_id lookup fails
                   if (!localRecord && item.record_id) {
@@ -1867,7 +1873,6 @@ const syncService = {
                       localRecord = bySupabaseId;
                     }
                   }
-                }
 
                 if (localRecord) {
                   await db[tableName].update(localRecord.id, {

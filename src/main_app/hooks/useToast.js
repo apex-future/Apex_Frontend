@@ -1,20 +1,18 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-let _globalShowToast = null;
+// Global toast listeners set to handle app-wide toast broadcasts
+const toastListeners = new Set();
+let _idCounter = 0;
 
 /**
- * Module-level function to show toasts from anywhere (non-React code like syncService).
- * Only works after a ToastContainer has mounted.
+ * Module-level function to show toasts from anywhere (e.g., flashcardService, syncService).
+ * Works reliably across all components and background tasks.
  */
 export function showToastGlobal(message, type = 'info', duration) {
-  if (_globalShowToast) {
-    _globalShowToast(message, type, duration);
-  } else {
-    console.warn('[Toast] ToastContainer not mounted yet, cannot show toast:', message);
-  }
+  const id = ++_idCounter;
+  const toastEvent = { id, message, type, duration };
+  toastListeners.forEach(listener => listener(toastEvent));
 }
-
-let _idCounter = 0;
 
 export default function useToast() {
   const [toasts, setToasts] = useState([]);
@@ -29,40 +27,35 @@ export default function useToast() {
   }, []);
 
   const showToast = useCallback((message, type = 'info', duration) => {
-    const id = ++_idCounter;
-    // Default duration if not specified (and not 0)
-    const effectiveDuration = duration !== undefined ? duration : (type === 'error' ? 6000 : 4000);
-
-    setToasts(prev => {
-      // Small hack: if this is a success/warning toast following an upload,
-      // it should replace the persistent "Uploading..." toast
-      const filtered = prev.filter(t => !(t.message.includes('Uploading') && t.type === 'info'));
-      return [...filtered, { id, message, type, exiting: false }];
-    });
-
-    // Only auto-dismiss if duration is not 0 (persistent)
-    if (duration !== 0) {
-      timersRef.current[id] = setTimeout(() => {
-        // Start exit animation
-        setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
-        // Remove after animation
-        setTimeout(() => {
-          setToasts(prev => prev.filter(t => t.id !== id));
-          delete timersRef.current[id];
-        }, 300);
-      }, effectiveDuration);
-    }
-
-    return id;
+    showToastGlobal(message, type, duration);
   }, []);
 
-  // Register global handler on mount
-  // NOTE: No cleanup — _globalShowToast must persist across re-renders.
-  // MainApp never unmounts, so nullifying on cleanup creates a race
-  // window where showToastGlobal finds null between React flushes.
+  // Listen for global toast broadcasts
   useEffect(() => {
-    _globalShowToast = showToast;
-  }, [showToast]);
+    const handleToastBroadcast = ({ id, message, type = 'info', duration }) => {
+      const effectiveDuration = duration !== undefined ? duration : (type === 'error' ? 6000 : 4000);
+
+      setToasts(prev => {
+        const filtered = prev.filter(t => !(t.message.includes('Uploading') && t.type === 'info'));
+        return [...filtered, { id, message, type, exiting: false }];
+      });
+
+      if (duration !== 0) {
+        timersRef.current[id] = setTimeout(() => {
+          setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+          setTimeout(() => {
+            setToasts(prev => prev.filter(t => t.id !== id));
+            delete timersRef.current[id];
+          }, 300);
+        }, effectiveDuration);
+      }
+    };
+
+    toastListeners.add(handleToastBroadcast);
+    return () => {
+      toastListeners.delete(handleToastBroadcast);
+    };
+  }, []);
 
   // Cleanup all timers on unmount
   useEffect(() => {

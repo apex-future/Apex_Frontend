@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { ArrowLeft, BookmarkSimple, DotsThreeVertical, CornersOut, LockKey, LockKeyOpen, ArrowsOut, ArrowsIn, Notebook, Gear, TextAa, Stack, X, MagicWand } from '@phosphor-icons/react';
+import { ArrowLeft, BookmarkSimple, DotsThreeVertical, CornersOut, LockKey, LockKeyOpen, ArrowsOut, ArrowsIn, Notebook, Gear, TextAa, Stack, Cards } from '@phosphor-icons/react';
 import { gsap } from 'gsap'
 
 function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookClick }) {
@@ -22,11 +22,6 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
   } = readerControls || {};
 
   const [isFullScreen, setIsFullScreen] = useState(!!document.fullscreenElement);
-  
-  const [showFlashcardUI, setShowFlashcardUI] = useState(false);
-  const [flashStart, setFlashStart] = useState(pages.current);
-  const [flashEnd, setFlashEnd] = useState(Math.min(pages.current + 4, pages.total));
-  const [flashError, setFlashError] = useState('');
 
   useEffect(() => {
     if (topBarRef.current) {
@@ -144,16 +139,14 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
             </button>
 
             <button
-              className="w-10 h-10 flex shrink-0 items-center justify-center bg-surface-overlay border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+              className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
               onClick={(e) => { 
                 e.stopPropagation(); 
-                setFlashStart(pages.current);
-                setFlashEnd(Math.min(pages.current + 4, pages.total));
-                setShowFlashcardUI(!showFlashcardUI);
+                onGenerateFlashcards?.();
               }}
-              title="Generate Flashcards from Book"
+              title="Flashcards"
             >
-              <Stack size={18} weight="bold" className="text-accent-primary" />
+              <Stack size={18} weight="bold" />
             </button>
           </div>
 
@@ -201,98 +194,6 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
             </div>
           </div>
         </div>
-
-        {/* Flashcard Page Selector UI */}
-        {showFlashcardUI && (
-          <div 
-            className="w-full max-w-md bg-surface-overlay border border-border-default shadow-aura-lg rounded-2xl p-4 animate-in slide-in-from-bottom-2 mb-2 flex flex-col gap-3"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-accent-primary uppercase tracking-widest flex items-center gap-2">
-                <Stack size={14} weight="fill" /> 
-                Deck from Book
-              </h3>
-              <button 
-                onClick={() => setShowFlashcardUI(false)}
-                className="text-text-tertiary hover:text-text-primary transition-colors"
-              >
-                <X size={16} weight="bold" />
-              </button>
-            </div>
-            
-            <p className="text-xs text-text-secondary">
-              Select the page range to extract flashcards from. (Max 15 pages)
-            </p>
-
-            <div className="flex items-center gap-4">
-              <div className="flex-1 flex flex-col">
-                <label className="text-[10px] font-bold text-text-tertiary uppercase mb-1">Start Page</label>
-                <input 
-                  type="number" 
-                  min={1}
-                  max={pages.total}
-                  value={flashStart}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 1;
-                    setFlashStart(val);
-                    if (flashEnd - val > 14) {
-                      setFlashError('Selection exceeds limit! Please choose a maximum of 15 pages to fit within memory.');
-                    } else if (val > flashEnd) {
-                      setFlashEnd(val);
-                      setFlashError('');
-                    } else {
-                      setFlashError('');
-                    }
-                  }}
-                  className="bg-bg-subtle border border-border-default rounded-lg px-3 py-1.5 text-sm font-bold text-text-primary focus:outline-none focus:border-accent-primary"
-                />
-              </div>
-              
-              <div className="text-text-tertiary mt-4">-</div>
-
-              <div className="flex-1 flex flex-col">
-                <label className="text-[10px] font-bold text-text-tertiary uppercase mb-1">End Page</label>
-                <input 
-                  type="number" 
-                  min={flashStart}
-                  max={pages.total}
-                  value={flashEnd}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || flashStart;
-                    setFlashEnd(val);
-                    if (val - flashStart > 14) {
-                      setFlashError('Selection exceeds limit! Please choose a maximum of 15 pages to fit within memory.');
-                    } else {
-                      setFlashError('');
-                    }
-                  }}
-                  className={`bg-bg-subtle border ${flashError ? 'border-red-500' : 'border-border-default'} rounded-lg px-3 py-1.5 text-sm font-bold text-text-primary focus:outline-none ${!flashError && 'focus:border-accent-primary'}`}
-                />
-              </div>
-            </div>
-
-            {flashError && (
-              <p className="text-xs text-red-500 font-bold bg-red-500/10 p-2 rounded-lg text-center animate-in fade-in">
-                {flashError}
-              </p>
-            )}
-
-            <button
-              disabled={!!flashError || flashEnd < flashStart}
-              onClick={() => {
-                if (onGenerateFlashcards) {
-                  onGenerateFlashcards(flashStart, flashEnd);
-                  setShowFlashcardUI(false);
-                }
-              }}
-              className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-xl text-sm font-bold transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:shadow-[0_10px_40px_rgba(139,92,246,0.3)]"
-            >
-              <MagicWand size={16} weight="fill" />
-              Craft Flashcards
-            </button>
-          </div>
-        )}
 
         {/* Real progress bar */}
         

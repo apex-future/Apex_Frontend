@@ -630,14 +630,13 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
 
                                 <button
                                     onClick={() => {
-                                        if (onGenerateFlashcards) {
-                                            onGenerateFlashcards(selection, flashcardCount);
-                                        }
+                                      console.log('[HighlightMenu] Cards from selection — feature moved to navbar Stack button');
+                                      handleCloseModal();
                                     }}
                                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent-primary text-white hover:bg-accent-primary/90 hover:shadow-[0_10px_40px_rgba(139,92,246,0.3)] rounded-xl text-sm font-bold transition-all shadow-md active:scale-95"
                                 >
-                                    <Sparkle size={18} weight="fill" />
-                                    Generate Cards
+                                    <Stack size={18} weight="fill" />
+                                    Use the deck button in the reader toolbar
                                 </button>
                             </div>
                         )}

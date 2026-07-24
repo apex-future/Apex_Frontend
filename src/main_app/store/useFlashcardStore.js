@@ -9,10 +9,22 @@ const useFlashcardStore = create((set) => ({
   pageTexts: null, // array of { page, text }
   numCards: 10,
   
-  openFlashcardModal: (payload) => set({
-    isOpen: true,
-    ...payload
-  }),
+  // New source-picker fields
+  sourceCategory: null,   // 'highlights' | 'tabs' | 'words'
+  pageFrom: null,         // int or null
+  pageTo: null,           // int or null
+  wordCount: 10,          // int, for words source only
+  highlights: [],         // raw array passed from ReaderView
+  tabs: [],               // raw array passed from ReaderView
+  words: [],              // raw array passed from ReaderView
+  
+  openFlashcardModal: (payload) => {
+    console.log('[FlashcardStore] openFlashcardModal called with:', payload);
+    set({
+      isOpen: true,
+      ...payload
+    });
+  },
   
   closeFlashcardModal: () => set({
     isOpen: false,
@@ -22,6 +34,13 @@ const useFlashcardStore = create((set) => ({
     bookId: null,
     pageTexts: null,
     numCards: 10,
+    sourceCategory: null,
+    pageFrom: null,
+    pageTo: null,
+    wordCount: 10,
+    highlights: [],
+    tabs: [],
+    words: [],
   })
 }));
 

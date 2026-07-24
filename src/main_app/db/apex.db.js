@@ -258,4 +258,25 @@ db.version(23).stores({
   console.log('[Apex DB] v23: ai_chat_sessions table added');
 });
 
+// Version 24: Add flashcard_decks, flashcard_cards, flashcard_sessions, flashcard_session_cards + has_flashcard indexing
+db.version(24).stores({
+  highlights: '++id, local_id, recordId, bookId, userId, highlightedText, color, pageNumber, textPosition, note, createdAt, updatedAt, synced, supabaseId, last_modified, has_flashcard',
+  tabs: '++id, local_id, bookId, supabaseId, noteType, synced, createdAt, updatedAt, last_modified, has_flashcard',
+  user_dictionary_history: '++id, userId, word, local_id, synced, lookedUpAt, has_flashcard',
+  flashcard_decks: '++id, id, user_id, book_id, created_at, last_updated_at, total_cards, highlight_cards, tab_cards, word_cards',
+  flashcard_cards: '++id, id, deck_id, user_id, book_id, source_type, source_id, page_number, front, back, confidence, times_practiced, last_practiced_at, created_at',
+  flashcard_sessions: '++id, id, deck_id, user_id, book_id, source_filter, page_from, page_to, cards_requested, cards_completed, easy_count, hard_count, missed_count, started_at, completed_at',
+  flashcard_session_cards: '++id, id, session_id, card_id, user_id, result, practiced_at',
+}).upgrade(async () => {
+  console.log('[Apex DB] v24: flashcard tables and has_flashcard flags added');
+});
+
+// Version 25: Add local_id indexing to user_daily_streak_progress
+db.version(25).stores({
+  user_daily_streak_progress: '++id, local_id, date, [date+synced], seconds_read, streak_fired, synced',
+}).upgrade(async () => {
+  console.log('[Apex DB] v25: user_daily_streak_progress local_id indexing added');
+});
+
 export default db;
+

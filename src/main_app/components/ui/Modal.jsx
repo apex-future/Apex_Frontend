@@ -12,7 +12,7 @@ import Button from './Button';
  *     variant: 'primary' | 'danger' | 'ghost'
  *   onClose: fn
  */
-export default function Modal({ isOpen, title, message, children, actions = [], onClose, hideOverlay = false }) {
+export default function Modal({ isOpen, title, message, children, actions = [], onClose, hideOverlay = false, className = '' }) {
   if (!isOpen) return null;
 
   console.log('[Modal] open | actions:', actions.length);
@@ -24,16 +24,20 @@ export default function Modal({ isOpen, title, message, children, actions = [], 
     >
       {/* Modal card */}
       <div
-        className="relative z-10 bg-bg-subtle dark:bg-bg-elevated border-t border-white/10 rounded-[20px] p-6 w-full max-w-sm mx-4 animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]"
+        className={`relative z-10 bg-bg-subtle dark:bg-bg-elevated border-t border-white/10 rounded-[20px] p-6 w-full max-w-sm mx-4 animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[90vh] ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-text-primary font-bold text-lg font-display break-words shrink-0">{title}</h2>
+        {typeof title === 'string' ? (
+          <h2 className="text-text-primary font-bold text-lg font-display break-words shrink-0">{title}</h2>
+        ) : (
+          <div className="shrink-0 w-full">{title}</div>
+        )}
         {message && (
           <p className="text-text-tertiary text-sm mt-2 leading-relaxed break-words whitespace-pre-wrap shrink-0">{message}</p>
         )}
 
         {children && (
-          <div className="mt-4 overflow-y-auto custom-scrollbar min-h-0 -mx-2 px-2">
+          <div className="mt-4 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden min-h-0 -mx-2 px-2">
             {children}
           </div>
         )}
