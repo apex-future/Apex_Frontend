@@ -71,6 +71,9 @@ function ApexAI() {
     const [sessionLoading, setSessionLoading] = useState(false);
 
     const handleSelectSession = async (session) => {
+        if (window.innerWidth < 768) {
+            setSidebarOpen(false);
+        }
         try {
             setSessionLoading(true);
             setCurrentSessionId(session.id);
@@ -93,9 +96,6 @@ function ApexAI() {
                 });
             }
             setCurrentSessionMessages(formatted);
-            if (window.innerWidth < 768) {
-                setSidebarOpen(false);
-            }
             // Keep sessionLoading true until messages are flushed into React state
             requestAnimationFrame(() => {
                 setSessionLoading(false);
@@ -212,7 +212,7 @@ function ApexAI() {
                     </div>
                 )}
                 {/* Header */}
-                <header className='flex items-center justify-between px-6 py-3 relative z-10 flex-shrink-0 gap-3'>
+                <header className='sticky top-0 z-30 flex items-center justify-between px-6 py-3 bg-bg-base/90 dark:bg-bg-dark/95 backdrop-blur-md flex-shrink-0 gap-3'>
                     <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex-shrink-0">
                         <button
                             onClick={() => navigate(-1)}
@@ -317,22 +317,27 @@ function ApexAI() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-center gap-4 mt-2 w-full max-w-[88%] md:max-w-[78%]">
-                                                    <span className="text-[10px] text-text-tertiary font-medium tracking-wide opacity-60">
-                                                        {msg.id ? formatTime(msg.id) : '--:--'}
-                                                    </span>
-                                                    {msg.content && !isStreaming && index === messages.length - 1 && (
-                                                        <button onClick={retry} className="text-[10px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Regenerate response">
-                                                            <ArrowCounterClockwise size={12} weight="bold" /> Retry
+                                                {/* Action Icons Row (Under the AI bubble, horizontally to the left) */}
+                                                {msg.content && !isStreaming && (
+                                                    <div className="flex items-center justify-start gap-4 mt-2 w-full max-w-[88%] md:max-w-[78%]">
+                                                        {index === messages.length - 1 && (
+                                                            <button 
+                                                                onClick={retry} 
+                                                                className="text-text-tertiary hover:text-accent-primary transition-colors flex items-center justify-center p-1 hover:bg-bg-subtle dark:hover:bg-bg-elevated rounded" 
+                                                                title="Regenerate response"
+                                                            >
+                                                                <ArrowCounterClockwise size={18} weight="bold" />
+                                                            </button>
+                                                        )}
+                                                        <button 
+                                                            onClick={() => handleCopy(msg.id, msg.content)} 
+                                                            className="text-text-tertiary hover:text-accent-primary transition-colors flex items-center justify-center p-1 hover:bg-bg-subtle dark:hover:bg-bg-elevated rounded" 
+                                                            title="Copy response"
+                                                        >
+                                                            {copiedId === msg.id ? <Check size={18} weight="bold" className="text-green-500" /> : <Copy size={18} weight="bold" />}
                                                         </button>
-                                                    )}
-                                                    {msg.content && !isStreaming && (
-                                                        <button onClick={() => handleCopy(msg.id, msg.content)} className="text-[10px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Copy response">
-                                                            {copiedId === msg.id ? <Check size={12} weight="bold" className="text-green-500" /> : <Copy size={12} weight="bold" />} 
-                                                            <span className={copiedId === msg.id ? "text-green-500" : ""}>{copiedId === msg.id ? 'Copied' : 'Copy'}</span>
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (() => {
                                             /* ── User message: 1. Highlight Context card ON TOP 2. User bubble (clean) ── */
@@ -353,9 +358,6 @@ function ApexAI() {
                                                     <div className="px-5 py-3.5 text-[15px] leading-relaxed bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm rounded-2xl text-text-primary text-left inline-block">
                                                         <p className='whitespace-pre-wrap'>{userText}</p>
                                                     </div>
-                                                    <span className="text-[10px] text-text-tertiary mt-1 font-medium tracking-wide opacity-60">
-                                                        {msg.id ? formatTime(msg.id) : '--:--'}
-                                                    </span>
                                                 </div>
                                             );
                                         })()}
@@ -393,41 +395,60 @@ function ApexAI() {
                         onSubmit={handleSubmit}
                         className={`max-w-4xl mx-auto flex flex-col gap-2 transition-all duration-300 ${isStreaming ? 'opacity-60' : 'opacity-100'}`}
                     >
-                        <div className={`relative flex items-end gap-3 bg-bg-subtle dark:bg-bg-dark-elevated border border-black/10 dark:border-white/10 p-2 pr-3 shadow-sm focus-within:border-accent-primary focus-within:ring-2 focus-within:ring-accent-primary/10 transition-all duration-300 ${inputValue.split('\n').length > 1 || (inputRef.current && inputRef.current.scrollHeight > 60) ? 'rounded-[28px]' : 'rounded-full'}`}>
+                        <div className="flex flex-col bg-bg-subtle dark:bg-bg-dark-elevated border border-black/10 dark:border-white/10 rounded-2xl p-2 focus-within:border-accent-primary focus-within:ring-2 focus-within:ring-accent-primary/10 focus-within:shadow-md focus-within:shadow-accent-primary/10 transition-all duration-300">
                             <textarea
                                 ref={inputRef}
                                 value={inputValue}
                                 onChange={(e) => {
                                     setInputValue(e.target.value);
                                     e.target.style.height = 'auto';
-                                    e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+                                    e.target.style.height = `${e.target.scrollHeight}px`;
                                 }}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSend();
+                                        if (window.innerWidth > 768) {
+                                            e.preventDefault();
+                                            handleSend();
+                                        }
                                     }
                                 }}
                                 placeholder={isStreaming ? 'AI is processing...' : 'Ask Cleo?'}
                                 disabled={isStreaming}
                                 rows={1}
-                                className='flex-1 bg-transparent px-4 py-3 focus:outline-none text-[16px] text-text-primary resize-none max-h-52 custom-scrollbar placeholder:text-sm disabled:cursor-not-allowed leading-relaxed'
-                                style={{ height: '48px' }}
+                                className='w-full bg-transparent px-4 py-3 focus:outline-none text-[16px] text-text-primary resize-none overflow-hidden placeholder:text-sm disabled:cursor-not-allowed leading-relaxed'
+                                style={{ height: '48px', overflow: 'hidden' }}
                             />
-                            <button
-                                type={isStreaming ? 'button' : 'submit'}
-                                disabled={!inputValue.trim() && !isStreaming}
-                                onClick={isStreaming ? stopGeneration : undefined}
-                                className={`p-3 rounded-full transition-all flex items-center justify-center flex-shrink-0 self-end mb-0.5 ${isStreaming
-                                    ? 'bg-red-50 text-red-500 shadow-lg shadow-red-500/10 hover:bg-red-100 border border-red-200 hover:-translate-y-0.5 active:translate-y-0'
-                                    : inputValue.trim()
-                                    ? 'bg-accent-primary text-bg-elevated shadow-lg shadow-accent-primary/20 hover:bg-accent-hover hover:-translate-y-0.5 active:translate-y-0'
-                                    : 'bg-bg-subtle text-text-placeholder cursor-not-allowed'
-                                    }`}
-                                title={isStreaming ? "Stop generation" : "PaperPlaneTilt message"}
-                            >
-                                {isStreaming ? <Square size={16} weight="fill" /> : <PaperPlaneRight size={22} weight="fill" />}
-                            </button>
+                            <div className="flex items-center justify-between mt-2 px-1 pb-1">
+                                <button
+                                    type="button"
+                                    className="p-2 rounded-full hover:bg-bg-subtle/80 text-text-tertiary hover:text-text-secondary transition-colors"
+                                    title="Options"
+                                >
+                                    <Plus size={18} weight="bold" />
+                                </button>
+                                {isStreaming ? (
+                                    <button
+                                        type='button'
+                                        onClick={stopGeneration}
+                                        className="p-2.5 rounded-xl transition-all duration-300 flex items-center justify-center flex-shrink-0 bg-red-50 text-red-500 shadow-md hover:scale-105 active:scale-95"
+                                        title="Stop generation"
+                                    >
+                                        <Square size={16} weight="fill" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        type='submit'
+                                        disabled={!inputValue.trim()}
+                                        className={`p-2.5 rounded-xl transition-all duration-300 flex items-center justify-center flex-shrink-0 ${inputValue.trim()
+                                            ? 'bg-accent-primary text-bg-elevated shadow-md shadow-accent-primary/20 hover:scale-105 active:scale-95'
+                                            : 'bg-slate-200 dark:bg-slate-800 text-text-tertiary cursor-not-allowed'
+                                            }`}
+                                        title="Send message"
+                                    >
+                                        <PaperPlaneRight size={18} weight="fill" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -516,14 +537,7 @@ function ApexAI() {
                     })}
                 </div>
 
-                <div className='p-4 border-t border-black/10 dark:border-white/10'>
-                    <div className='flex items-center gap-3 p-2 rounded-xl bg-bg-elevated/50 text-text-secondary border border-black/10 dark:border-white/10'>
-                        <div className='w-8 h-8 rounded-lg bg-accent-subtle flex items-center justify-center text-accent-primary'>
-                            <User size={16} weight="fill" />
-                        </div>
-                        <span className='text-xs font-medium'>Study Account</span>
-                    </div>
-                </div>
+
             </aside>
 
             {/* Backdrop for mobile */}

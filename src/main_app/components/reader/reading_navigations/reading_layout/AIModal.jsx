@@ -525,9 +525,6 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                           </div>
                         </div>
                         <div className="flex items-center justify-center gap-4 mt-2 w-full max-w-[95%]">
-                          <span className="text-[9px] text-text-tertiary font-medium tracking-wide opacity-60">
-                            {msg.id ? formatTime(msg.id) : '--:--'}
-                          </span>
                           {msg.content && !isStreaming && index === messages.length - 1 && (
                               <button onClick={retry} className="text-[9px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Regenerate response">
                                   <ArrowCounterClockwise size={12} weight="bold" /> Retry
@@ -560,9 +557,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                           <div className="max-w-[95%] px-4 py-3 text-[14px] leading-relaxed bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm rounded-2xl text-text-primary text-left inline-block">
                             <p className='whitespace-pre-wrap'>{userText}</p>
                           </div>
-                          <span className="text-[9px] text-text-tertiary mt-1 font-medium tracking-wide opacity-60">
-                            {msg.id ? formatTime(msg.id) : '--:--'}
-                          </span>
+
                         </div>
                       );
                     })()}
@@ -632,7 +627,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                 onChange={(e) => {
                   setInputValue(e.target.value);
                   e.target.style.height = 'auto';
-                  e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+                  e.target.style.height = `${e.target.scrollHeight}px`;
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -646,8 +641,8 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                 placeholder={isStreaming ? 'Cleo is thinking...' : currentPage ? `Ask about page ${currentPage}...` : 'Ask Cleo anything...'}
                 disabled={isStreaming}
                 rows={1}
-                className='w-full bg-transparent px-2 py-2 focus:outline-none text-[15px] text-text-primary placeholder-slate-400 resize-none max-h-40 custom-scrollbar leading-relaxed'
-                style={{ height: '44px' }}
+                className='w-full bg-transparent px-2 py-2 focus:outline-none text-[15px] text-text-primary placeholder-slate-400 resize-none overflow-hidden leading-relaxed'
+                style={{ height: '44px', overflow: 'hidden' }}
               />
               <div className="flex items-center justify-between mt-2 px-1 pb-1">
                 <button

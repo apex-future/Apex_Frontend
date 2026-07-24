@@ -5,6 +5,7 @@ import db from '../db/apex.db';
 import useSettingsStore from '../store/settingsStore';
 import { cleanUserMessage } from '../utils/aiUtils';
 import useQuestStore from '../store/useQuestStore';
+import useXpStore from '../store/useXpStore';
 
 import useAiStore from '../store/useAiStore';
 
