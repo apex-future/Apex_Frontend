@@ -60,27 +60,36 @@ const StreakCelebration = ({ streakCount, streakHistory = [], onClose, previewSt
     // ── Subtle Mode Pill Pop-Up ──
     if (isSubtle) {
         return (
-            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[250] pointer-events-none">
+            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[250] pointer-events-none w-full px-4 sm:w-auto flex justify-center">
                 <motion.div
                     initial={{ y: -60, opacity: 0, scale: 0.9 }}
                     animate={{ y: 0, opacity: 1, scale: 1 }}
                     exit={{ y: -60, opacity: 0, scale: 0.9 }}
                     transition={{ type: "spring", damping: 20, stiffness: 200 }}
-                    className="pointer-events-auto"
+                    className="pointer-events-auto w-[88vw] max-w-sm sm:w-[320px]"
                 >
-                    <Card className="!rounded-full px-5 py-2.5 flex items-center gap-3 shadow-lg border border-black/10 dark:border-white/10">
-                        <div className="p-1.5 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center">
-                            <Fire size={20} weight="fill" className="text-orange-500 fill-orange-500 animate-pulse" />
+                    <Card className="!rounded-full px-6 py-3 flex items-center justify-between gap-4 shadow-xl border border-black/10 dark:border-white/10 w-full">
+                        {/* Fire Icon on Far Left */}
+                        <div className="p-2 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center shrink-0">
+                            <Fire size={22} weight="fill" className="text-orange-500 fill-orange-500 animate-pulse" />
                         </div>
-                        <div className="flex items-center gap-1.5 text-sm font-bold text-text-primary font-sans">
-                            <span className="text-base text-orange-500 font-extrabold tabular-nums">{displayStreakCount}</span>
-                            <span>{displayStreakCount === 1 ? 'Day Streak' : 'Days Streak'}</span>
+
+                        {/* Centered Text in between Fire and Dismiss Icon */}
+                        <div className="flex-1 flex flex-col items-center justify-center text-center font-sans">
+                            <div className="flex items-center justify-center gap-1.5 text-sm font-bold text-text-primary leading-tight">
+                                <span className="text-orange-500 font-extrabold tabular-nums">{displayStreakCount}</span>
+                                <span>{displayStreakCount === 1 ? 'Day Streak!' : 'Days Streak!'}</span>
+                            </div>
+                            <span className="text-[11px] text-text-tertiary font-normal leading-tight mt-0.5">Keep the Streak Burning</span>
                         </div>
+
+                        {/* Cancel / Dismiss Icon on Far Right */}
                         <button
                             onClick={onClose}
-                            className="ml-1 p-1 rounded-full text-text-tertiary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                            className="p-1.5 rounded-full text-text-tertiary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/10 transition-colors shrink-0"
+                            title="Dismiss"
                         >
-                            <X size={14} weight="bold" />
+                            <X size={16} weight="bold" />
                         </button>
                     </Card>
                 </motion.div>
