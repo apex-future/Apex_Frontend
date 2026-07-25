@@ -15,11 +15,13 @@ export default function ImportPage() {
           const file = await fileHandle.getFile();
           const arrayBuffer = await file.arrayBuffer();
 
-          const title = file.name.replace(/\.(pdf|epub|docx|doc)$/i, '');
+          const title = file.name.replace(/\.(pdf|epub|docx|doc|txt|rtf)$/i, '');
           const fileType = file.type || 
             (file.name.endsWith('.epub') ? 'application/epub+zip' : 
              file.name.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 
              file.name.endsWith('.doc') ? 'application/msword' : 
+             file.name.endsWith('.txt') ? 'text/plain' :
+             file.name.endsWith('.rtf') ? 'application/rtf' :
              'application/pdf');
 
           const bookId = await db.books.add({
@@ -67,7 +69,36 @@ export default function ImportPage() {
       }
     };
 
-    if ('launchQueue' in window) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isShared = urlParams.get('shared') === 'true';
+
+    if (isShared) {
+      // Handle Web Share Target (Android)
+      fetch('/shared-file').then(async (res) => {
+        if (res.ok) {
+          const blob = await res.blob();
+          const name = decodeURIComponent(res.headers.get('X-File-Name') || 'Shared File');
+          const file = new File([blob], name, { type: res.headers.get('Content-Type') });
+          
+          // Clean up the cache
+          const cache = await caches.open('share-target-cache');
+          await cache.delete('/shared-file');
+          
+          // Simulate fileHandle for processFiles (which calls getFile())
+          const mockFileHandle = {
+            getFile: async () => file
+          };
+          
+          await processFiles([mockFileHandle]);
+        } else {
+          navigate('/');
+        }
+      }).catch((err) => {
+        console.error('Failed to fetch shared file:', err);
+        navigate('/');
+      });
+    } else if ('launchQueue' in window) {
+      // Handle File Handling API (Desktop)
       window.launchQueue.setConsumer(async (launchParams) => {
         if (launchParams.files && launchParams.files.length > 0) {
           await processFiles(launchParams.files);
