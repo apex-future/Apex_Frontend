@@ -31,14 +31,17 @@ import {
   fetchBookDeck,
   fetchBookCards,
   fetchBookSessions,
+  fetchSessionCards,
   generateIncrementalCards,
   recordSessionResult,
   deleteCards
 } from '../../../../services/flashcardService';
 import { showToastGlobal } from '../../../../hooks/useToast';
+import apiClient from '../../../../services/apiClient';
+import { extractPageTexts } from '../../../../services/quizService';
 
 export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1, totalPages = 1 }) {
-  const [view, setView] = useState('categories'); // 'categories' | 'category_cards' | 'practice_setup' | 'practice_session' | 'history'
+  const [view, setView] = useState('categories'); // 'categories' | 'category_cards' | 'practice_setup' | 'practice_session' | 'history' | 'history_detail' | 'quick_setup'
   const [selectedCategory, setSelectedCategory] = useState(null); // 'highlight' | 'tab' | 'word'
   const [cards, setCards] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -81,6 +84,23 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
   // Modal Quit Session confirmation state
   const [showQuitModal, setShowQuitModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null); // 'categories' | 'history' | 'close_panel'
+
+  // History Session Detail view state
+  const [selectedHistorySession, setSelectedHistorySession] = useState(null);
+  const [sessionDetailCards, setSessionDetailCards] = useState([]);
+  const [sessionDetailIndex, setSessionDetailIndex] = useState(0);
+  const [sessionDetailFlipped, setSessionDetailFlipped] = useState(false);
+  const [sessionDetailViewMode, setSessionDetailViewMode] = useState('card'); // 'card' | 'list'
+  const [flippedListCards, setFlippedListCards] = useState(new Set());
+
+  // Quick Setup state
+  const [quickSetupRangeStart, setQuickSetupRangeStart] = useState('');
+  const [quickSetupRangeEnd, setQuickSetupRangeEnd] = useState('');
+  const [quickSetupCardsCount, setQuickSetupCardsCount] = useState(10);
+  const [quickSetupCards, setQuickSetupCards] = useState([]);
+  const [quickSetupGenerating, setQuickSetupGenerating] = useState(false);
+  const [quickSetupError, setQuickSetupError] = useState('');
+  const [sessionSource, setSessionSource] = useState('practice_setup'); // 'practice_setup' | 'quick_setup'
 
   const bookId = book?.id || book?.recordId || book?.supabaseId;
 
@@ -146,7 +166,7 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
     }
 
     setIsGenerating(true);
-    showToastGlobal('Generating flashcards... It might take a minute.', 'info');
+    showToastGlobal('Generating flashcards... Feel free to keep reading!', 'info');
 
     try {
       const res = await generateIncrementalCards(book, (msg) => {
@@ -355,6 +375,7 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
     setSessionStartTime(new Date().toISOString());
     setSessionCompleted(false);
     setSetupError('');
+    setSessionSource('practice_setup');
     setView('practice_session');
   };
 
@@ -370,12 +391,25 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
       setIsFlipped(false);
       setTimeout(() => setSessionIndex(prev => prev + 1), 150);
     } else {
-      // Session finished — record in database
+      // Session finished — record session result & cards snapshot in DB for ALL sessions
       setSessionCompleted(true);
+      
+      const cardsSnapshot = sessionQueue.map(c => {
+        const res = updatedResults.find(r => r.cardId === c.id);
+        return {
+          front: c.front,
+          back: c.back,
+          page_number: c.page_number || 1,
+          rating: res ? res.rating : 'easy'
+        };
+      });
+
       await recordSessionResult(bookId, {
-        sources: selectedSources,
+        sources: sessionSource === 'quick_setup' ? ['quick_setup'] : selectedSources,
         startedAt: sessionStartTime,
+        cardsSnapshot,
       }, updatedResults);
+
       await loadData();
     }
   };
@@ -387,7 +421,8 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
       setShowQuitModal(true);
     } else {
       if (target === 'categories') setView('categories');
-      else if (target === 'history') setView(prev => prev === 'history' ? 'categories' : 'history');
+      else if (target === 'quick_setup') setView('quick_setup');
+      else if (target === 'history') setView(prev => (prev === 'history' || prev === 'history_detail') ? 'categories' : 'history');
       else if (target === 'close_panel') setFlashcardPanel(false);
     }
   };
@@ -398,11 +433,115 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
       setFlashcardPanel(false);
     } else if (pendingAction === 'history') {
       setView('history');
+    } else if (sessionSource === 'quick_setup') {
+      // Return to Quick Setup view when quitting a quick-setup session
+      setView('quick_setup');
     } else {
       setView('categories');
     }
     setPendingAction(null);
   };
+
+  // ── Quick Setup handlers ──────────────────────────────────────────────────
+
+  const handleQuickGenerate = async () => {
+    if (quickSetupGenerating) return;
+
+    // Derive the pages array from the range inputs
+    const s = Math.max(1, Math.min(parseInt(quickSetupRangeStart, 10) || 0, totalPages));
+    const e = Math.max(s, Math.min(parseInt(quickSetupRangeEnd, 10) || 0, totalPages));
+
+    if (!s || !e || quickSetupRangeStart === '' || quickSetupRangeEnd === '') {
+      showToastGlobal('Please enter a valid page range.', 'warning');
+      return;
+    }
+
+    const pageCount = e - s + 1;
+    if (pageCount > 15) {
+      showToastGlobal('Range too large — maximum 15 pages for Quick Setup.', 'warning');
+      setQuickSetupError(`Range too large (${pageCount} pages). Please select 15 pages or fewer.`);
+      return;
+    }
+
+    const pages = Array.from({ length: pageCount }, (_, i) => s + i);
+
+    setQuickSetupGenerating(true);
+    setQuickSetupError('');
+    setQuickSetupCards([]);
+
+    try {
+      const pageTexts = extractPageTexts(pages);
+      const hasText = pageTexts.some(p => p.text.trim().length > 20);
+      if (!hasText) {
+        setQuickSetupError('No readable text found on selected pages. Make sure those pages are visible in the reader and the PDF has a text layer.');
+        showToastGlobal('No readable text found. Scroll to the selected pages first.', 'warning');
+        return;
+      }
+
+      const response = await apiClient.post('/api/ai/generate-flashcards', {
+        source_type: 'book_pages',
+        page_texts: pageTexts,
+        num_cards: quickSetupCardsCount,
+      });
+
+      const flashcards = response.data?.flashcards || [];
+      if (flashcards.length === 0) {
+        setQuickSetupError('No flashcards were generated. Try selecting pages with more content.');
+        showToastGlobal('No flashcards generated. Try different pages.', 'warning');
+        return;
+      }
+
+      // Assign temporary IDs — these cards are transient and NOT saved to Dexie
+      const cardsWithIds = flashcards.map((fc, i) => ({
+        id: `qs_${Date.now()}_${i}`,
+        front: fc.question || fc.front || '',
+        back: fc.answer || fc.back || '',
+        source_type: 'quick_setup',
+        page_number: s,
+        confidence: 'new',
+        times_practiced: 0,
+      }));
+
+      setQuickSetupCards(cardsWithIds);
+      showToastGlobal(`${cardsWithIds.length} flashcards generated!`, 'success');
+    } catch (err) {
+      console.error('[FlashcardPanel] Quick Setup generation failed:', err);
+      const detail = err?.response?.data?.detail || '';
+      if (detail.includes('exceeds') || detail.includes('limit')) {
+        setQuickSetupError('Too much text selected. Try fewer pages (max ~15).');
+      } else {
+        setQuickSetupError('Failed to generate flashcards. Please try again.');
+      }
+      showToastGlobal('Failed to generate flashcards. Please try again.', 'error');
+    } finally {
+      setQuickSetupGenerating(false);
+    }
+  };
+
+  const handleStartQuickSetupPractice = () => {
+    if (quickSetupCards.length === 0) return;
+    const sessionCards = quickSetupCards.slice(0, quickSetupCardsCount);
+    setSessionQueue(sessionCards);
+    setSessionIndex(0);
+    setIsFlipped(false);
+    setSessionResults([]);
+    setSessionStartTime(new Date().toISOString());
+    setSessionCompleted(false);
+    setSessionSource('quick_setup');
+    setView('practice_session');
+  };
+
+  const handleOpenHistorySession = async (session) => {
+    setSelectedHistorySession(session);
+    const loadedCards = await fetchSessionCards(session);
+    setSessionDetailCards(loadedCards);
+    setSessionDetailIndex(0);
+    setSessionDetailFlipped(false);
+    setFlippedListCards(new Set());
+    setView('history_detail');
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   const isAllCategoryCardsSelected = categoryCards.length > 0 && selectedCardIds.size === categoryCards.length;
 
@@ -484,9 +623,9 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 w-full mt-4 max-w-xs">
-                <Button variant="primary" onClick={handleStartPractice} className="w-full py-3.5 text-xs font-bold">Practice Again</Button>
-                <Button variant="ghost" onClick={() => setView('practice_setup')} className="w-full py-3.5 text-xs font-bold">Change Filters</Button>
+              <div className="w-[90%] mx-auto flex flex-col gap-3 mt-4">
+                <Button variant="primary" onClick={sessionSource === 'quick_setup' ? handleStartQuickSetupPractice : handleStartPractice} className="w-full py-3.5 text-xs font-bold">Practice Again</Button>
+                <Button variant="ghost" onClick={() => setView(sessionSource === 'quick_setup' ? 'quick_setup' : 'practice_setup')} className="w-full py-3.5 text-xs font-bold">{sessionSource === 'quick_setup' ? 'Change Pages' : 'Change Filters'}</Button>
               </div>
             </div>
           )}
@@ -569,9 +708,9 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
                 </div>
               </div>
 
-              <div className="flex items-center justify-center gap-3 w-full mt-3">
-                <Button variant="primary" onClick={handleStartPractice} className="flex-1 py-3 text-xs font-bold">Practice Again</Button>
-                <Button variant="ghost" onClick={() => setView('practice_setup')} className="flex-1 py-3 text-xs font-bold">Change Filters</Button>
+              <div className="w-[90%] mx-auto flex items-center justify-center gap-3 mt-3">
+                <Button variant="primary" onClick={sessionSource === 'quick_setup' ? handleStartQuickSetupPractice : handleStartPractice} className="flex-1 py-3.5 text-xs font-bold">Practice Again</Button>
+                <Button variant="ghost" onClick={() => setView(sessionSource === 'quick_setup' ? 'quick_setup' : 'practice_setup')} className="flex-1 py-3.5 text-xs font-bold">{sessionSource === 'quick_setup' ? 'Change Pages' : 'Change Filters'}</Button>
               </div>
             </div>
           )}
@@ -606,7 +745,7 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
             <button
               onClick={() => handleNavigationRequest('history')}
               className={`p-2 rounded-full transition-all ${
-                view === 'history'
+                (view === 'history' || view === 'history_detail')
                   ? 'bg-accent-primary/20 text-accent-primary'
                   : 'bg-bg-subtle hover:bg-bg-subtle text-text-tertiary hover:text-text-secondary'
               }`}
@@ -632,7 +771,23 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
           {view === 'categories' && (
             <div className="flex flex-col h-full justify-between gap-4">
               <div className="flex flex-col gap-3">
-                <p className="text-xs text-text-tertiary font-semibold uppercase tracking-wider mb-1">Select Category</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs text-text-tertiary font-semibold uppercase tracking-wider">Select Category</p>
+                  <button
+                    onClick={() => {
+                      setQuickSetupCards([]);
+                      setQuickSetupError('');
+                      setQuickSetupRangeStart(String(Math.max(1, pageNumber)));
+                      setQuickSetupRangeEnd(String(Math.min(totalPages, pageNumber + 9)));
+                      setView('quick_setup');
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 text-[10px] font-bold transition-all border border-amber-500/20 active:scale-95"
+                    title="Quick Setup — Generate flashcards from a page range"
+                  >
+                    <Lightning size={11} weight="fill" />
+                    Quick Setup
+                  </button>
+                </div>
 
                 {/* Highlights */}
                 <ListItem
@@ -683,8 +838,8 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
                 />
               </div>
 
-              {/* Bottom Row: Centered Practice Button & Matching Height Generate Button */}
-              <div className="flex items-center justify-center gap-3 pt-4 border-t border-border-default/30">
+              {/* Bottom Row: Centered Practice Button & Matching Height Generate Button (90% width container) */}
+              <div className="w-[90%] mx-auto flex items-center justify-center gap-3 pt-4 border-t border-border-default/30">
                 <Button
                   variant="primary"
                   onClick={() => setView('practice_setup')}
@@ -949,8 +1104,8 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
                 <p className="text-xs text-red-500 font-bold">{setupError}</p>
               )}
 
-              {/* Centered Wide Start Practice Session Button */}
-              <div className="flex justify-center mt-2 w-full">
+              {/* Centered 90% Width Start Practice Session Button */}
+              <div className="w-[90%] mx-auto mt-2">
                 <Button
                   variant="primary"
                   onClick={handleStartPractice}
@@ -980,10 +1135,26 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
               ) : (
                 <div className="flex flex-col gap-2.5">
                   {sessions.map(s => (
-                    <div key={s.id} className="p-3 bg-bg-subtle border border-border-default rounded-xl flex flex-col gap-1 text-xs">
+                    <div
+                      key={s.id}
+                      onClick={() => handleOpenHistorySession(s)}
+                      className="p-3 bg-bg-subtle border border-border-default hover:border-accent-primary/50 rounded-xl flex flex-col gap-1 text-xs cursor-pointer transition-all active:scale-[0.99] group"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-text-primary">{new Date(s.completed_at || s.started_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                        <span className="font-bold text-accent-primary">{s.cards_completed || s.cards_requested} cards</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-text-primary group-hover:text-accent-primary transition-colors">
+                            {new Date(s.completed_at || s.started_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {s.sources?.includes('quick_setup') && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                              Quick Setup
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="font-bold text-accent-primary">{s.cards_completed || s.cards_requested} cards</span>
+                          <CaretRight size={13} weight="bold" className="text-text-tertiary group-hover:text-accent-primary transition-colors" />
+                        </div>
                       </div>
                       <div className="flex items-center gap-3 text-[11px] text-text-tertiary">
                         <span className="text-emerald-600 font-semibold">{s.easy_count || 0} Easy</span>
@@ -992,6 +1163,331 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* VIEW 5.5: HISTORY SESSION DETAIL */}
+          {view === 'history_detail' && selectedHistorySession && (
+            <div className="flex flex-col gap-4">
+              {/* Header with Back button */}
+              <div className="flex items-center justify-between pb-2 border-b border-border-default/40">
+                <button
+                  onClick={() => setView('history')}
+                  className="flex items-center gap-1.5 text-xs font-bold text-text-primary hover:text-accent-primary transition-colors"
+                >
+                  <CaretLeft size={16} weight="bold" /> History
+                </button>
+                <span className="text-[11px] font-bold text-text-tertiary">
+                  {new Date(selectedHistorySession.completed_at || selectedHistorySession.started_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+
+              {/* Summary Badges */}
+              <div className="flex items-center justify-between bg-bg-subtle p-3 rounded-xl border border-border-default">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-text-primary">{sessionDetailCards.length} Cards</span>
+                  {selectedHistorySession.sources?.includes('quick_setup') && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                      Quick Setup
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-bold">
+                  <span className="text-emerald-600">{selectedHistorySession.easy_count || 0} Easy</span>
+                  <span className="text-amber-600">{selectedHistorySession.hard_count || 0} Hard</span>
+                  <span className="text-red-600">{selectedHistorySession.missed_count || 0} Missed</span>
+                </div>
+              </div>
+
+              {/* View Mode Switcher: Card View (1 by 1) | List View (All) */}
+              <div className="flex items-center justify-center p-1 bg-bg-subtle border border-border-default rounded-xl gap-1">
+                <button
+                  onClick={() => setSessionDetailViewMode('card')}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                    sessionDetailViewMode === 'card'
+                      ? 'bg-accent-primary text-white shadow-sm'
+                      : 'text-text-tertiary hover:text-text-primary'
+                  }`}
+                >
+                  Card View (1 by 1)
+                </button>
+                <button
+                  onClick={() => setSessionDetailViewMode('list')}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                    sessionDetailViewMode === 'list'
+                      ? 'bg-accent-primary text-white shadow-sm'
+                      : 'text-text-tertiary hover:text-text-primary'
+                  }`}
+                >
+                  List View (All)
+                </button>
+              </div>
+
+              {/* MODE A: 1 CARD AT A TIME WITH PREV / NEXT NAV & RATING BADGE */}
+              {sessionDetailViewMode === 'card' && (
+                <div className="flex flex-col items-center gap-4 py-2">
+                  {sessionDetailCards.length > 0 ? (
+                    <>
+                      {/* Rating badge header for current card */}
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+                          Page {sessionDetailCards[sessionDetailIndex]?.page_number || 1}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full capitalize ${
+                          sessionDetailCards[sessionDetailIndex]?.rating === 'easy' ? 'bg-emerald-500/20 text-emerald-600' :
+                          sessionDetailCards[sessionDetailIndex]?.rating === 'hard' ? 'bg-amber-500/20 text-amber-600' :
+                          'bg-red-500/20 text-red-600'
+                        }`}>
+                          {sessionDetailCards[sessionDetailIndex]?.rating || 'easy'}
+                        </span>
+                      </div>
+
+                      {/* 3D Flashcard flip component */}
+                      <Flashcard3D
+                        question={sessionDetailCards[sessionDetailIndex]?.front}
+                        answer={sessionDetailCards[sessionDetailIndex]?.back}
+                        isFlipped={sessionDetailFlipped}
+                        setIsFlipped={setSessionDetailFlipped}
+                        compact={true}
+                      />
+
+                      {/* Prev / Next Navigation Bar */}
+                      <div className="w-[90%] mx-auto flex items-center justify-between gap-3 pt-2">
+                        <button
+                          onClick={() => {
+                            if (sessionDetailIndex > 0) {
+                              setSessionDetailFlipped(false);
+                              setTimeout(() => setSessionDetailIndex(prev => prev - 1), 120);
+                            }
+                          }}
+                          disabled={sessionDetailIndex === 0}
+                          className="flex items-center gap-1 px-3 py-2 rounded-xl bg-bg-subtle border border-border-default text-xs font-bold text-text-primary hover:bg-accent-primary/10 disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95"
+                        >
+                          <CaretLeft size={14} weight="bold" /> Prev
+                        </button>
+
+                        <span className="text-xs font-bold text-text-tertiary">
+                          {sessionDetailIndex + 1} of {sessionDetailCards.length}
+                        </span>
+
+                        <button
+                          onClick={() => {
+                            if (sessionDetailIndex < sessionDetailCards.length - 1) {
+                              setSessionDetailFlipped(false);
+                              setTimeout(() => setSessionDetailIndex(prev => prev + 1), 120);
+                            }
+                          }}
+                          disabled={sessionDetailIndex >= sessionDetailCards.length - 1}
+                          className="flex items-center gap-1 px-3 py-2 rounded-xl bg-bg-subtle border border-border-default text-xs font-bold text-text-primary hover:bg-accent-primary/10 disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95"
+                        >
+                          Next <CaretRight size={14} weight="bold" />
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <EmptyState
+                      icon={Cards}
+                      title="No cards recorded"
+                      description="Card details were not recorded for this past session."
+                      className="my-4"
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* MODE B: LONG LIST OF ALL CARDS (CLICK TO FLIP) */}
+              {sessionDetailViewMode === 'list' && (
+                <div className="flex flex-col gap-2.5 max-h-[420px] overflow-y-auto pr-1">
+                  {sessionDetailCards.map((c, i) => {
+                    const isFlipped = flippedListCards.has(i);
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => {
+                          setFlippedListCards(prev => {
+                            const next = new Set(prev);
+                            if (next.has(i)) next.delete(i);
+                            else next.add(i);
+                            return next;
+                          });
+                        }}
+                        className={`p-3.5 rounded-xl border flex flex-col gap-2 cursor-pointer transition-colors duration-200 bg-bg-subtle select-none ${
+                          isFlipped
+                            ? 'border-purple-500 dark:border-purple-400 bg-purple-500/5 shadow-sm'
+                            : 'border-border-default hover:border-purple-500/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-text-tertiary uppercase">Page {c.page_number || 1}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${
+                            c.rating === 'easy' ? 'bg-emerald-500/20 text-emerald-600' :
+                            c.rating === 'hard' ? 'bg-amber-500/20 text-amber-600' :
+                            'bg-red-500/20 text-red-600'
+                          }`}>
+                            {c.rating || 'easy'}
+                          </span>
+                        </div>
+                        <p className="text-xs font-bold text-text-primary transition-colors">
+                          {isFlipped ? `Back: ${c.back}` : `Front: ${c.front}`}
+                        </p>
+                        <span className={`text-[10px] font-bold self-end transition-colors ${
+                          isFlipped ? 'text-purple-500 dark:text-purple-400' : 'text-text-tertiary'
+                        }`}>
+                          {isFlipped ? 'Showing Back (click to flip)' : 'Showing Front (click to flip)'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* VIEW 6: QUICK SETUP — generate flashcards from a page range */}
+          {view === 'quick_setup' && (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center gap-2">
+                <Lightning size={16} weight="fill" className="text-amber-500" />
+                <h3 className="text-sm font-bold text-text-primary">Quick Setup</h3>
+              </div>
+
+              {/* Page Range Picker */}
+              <div className="flex flex-col gap-3">
+                <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
+                  Page Range (max 15 pages)
+                </label>
+
+                {/* From — Randomize — To */}
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-1 flex-1">
+                    <span className="text-[10px] text-text-tertiary font-bold text-center">From</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={quickSetupRangeStart}
+                      onChange={e => {
+                        setQuickSetupRangeStart(e.target.value);
+                        setQuickSetupCards([]);
+                      }}
+                      className="w-full px-2 py-2 rounded-xl text-sm font-bold text-center bg-bg-subtle border border-border-default text-text-primary outline-none focus:border-accent-primary/60 transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                  </div>
+
+                  {/* Randomize button in the middle */}
+                  <div className="flex flex-col items-center gap-1 pt-4">
+                    <button
+                      onClick={() => {
+                        if (totalPages < 1) return;
+                        const maxStart = Math.max(1, totalPages - 9);
+                        const start = Math.floor(Math.random() * maxStart) + 1;
+                        const end = Math.min(totalPages, start + 9);
+                        setQuickSetupRangeStart(String(start));
+                        setQuickSetupRangeEnd(String(end));
+                        setQuickSetupCards([]);
+                      }}
+                      className="p-2.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-600 dark:text-purple-400 transition-all border border-purple-500/20 active:scale-95"
+                      title="Randomize — pick a random 10-page range"
+                    >
+                      <Shuffle size={18} weight="bold" />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-1 flex-1">
+                    <span className="text-[10px] text-text-tertiary font-bold text-center">To</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={quickSetupRangeEnd}
+                      onChange={e => {
+                        setQuickSetupRangeEnd(e.target.value);
+                        setQuickSetupCards([]);
+                      }}
+                      className="w-full px-2 py-2 rounded-xl text-sm font-bold text-center bg-bg-subtle border border-border-default text-text-primary outline-none focus:border-accent-primary/60 transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Range summary */}
+                {quickSetupRangeStart && quickSetupRangeEnd && (() => {
+                  const s = Math.max(1, Math.min(parseInt(quickSetupRangeStart, 10) || 1, totalPages));
+                  const e = Math.max(s, Math.min(parseInt(quickSetupRangeEnd, 10) || s, totalPages));
+                  const count = e - s + 1;
+                  const over = count > 15;
+                  return (
+                    <p className={`text-[11px] font-medium text-center ${
+                      over ? 'text-red-500' : 'text-text-tertiary'
+                    }`}>
+                      {over
+                        ? `Range too large (${count} pages) — max 15`
+                        : `Pages ${s}–${e} · ${count} page${count !== 1 ? 's' : ''}`
+                      }
+                    </p>
+                  );
+                })()}
+              </div>
+
+              {/* Cards count */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Cards to Generate</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[5, 10, 15, 20].map(count => (
+                    <button
+                      key={count}
+                      onClick={() => setQuickSetupCardsCount(count)}
+                      className={`py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                        quickSetupCardsCount === count
+                          ? 'bg-accent-primary text-white border-accent-primary shadow-sm'
+                          : 'bg-bg-subtle border-border-default text-text-secondary hover:bg-accent-primary/5'
+                      }`}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Error */}
+              {quickSetupError && (
+                <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/25 rounded-xl">
+                  <WarningCircle size={15} weight="fill" className="text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-600 dark:text-red-400 font-medium leading-relaxed">{quickSetupError}</p>
+                </div>
+              )}
+
+              {/* Action Button: Morphs from "Generate" to primary predefined UI Button once cards are ready */}
+              {quickSetupCards.length > 0 && !quickSetupGenerating ? (
+                <div className="w-[90%] mx-auto">
+                  <Button
+                    variant="primary"
+                    onClick={handleStartQuickSetupPractice}
+                    className="w-full h-11 text-sm font-bold flex items-center justify-center gap-2 shadow-md animate-in fade-in duration-200"
+                  >
+                    <CaretRight size={18} weight="bold" />
+                    Start Practice ({quickSetupCards.length} Cards)
+                  </Button>
+                </div>
+              ) : (
+                <div className="w-[90%] mx-auto">
+                  <button
+                    onClick={handleQuickGenerate}
+                    disabled={quickSetupGenerating}
+                    className={`w-full h-11 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      quickSetupGenerating
+                        ? 'bg-purple-500/70 text-white animate-pulse'
+                        : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md'
+                    }`}
+                  >
+                    <Lightning
+                      size={18}
+                      weight="fill"
+                      className={quickSetupGenerating ? 'animate-bounce text-amber-300' : ''}
+                    />
+                    {quickSetupGenerating ? 'Generating...' : 'Generate'}
+                  </button>
                 </div>
               )}
             </div>

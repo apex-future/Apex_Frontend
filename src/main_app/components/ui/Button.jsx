@@ -13,7 +13,7 @@ const styles = {
   base: `
     inline-flex items-center justify-center gap-2
     px-5 py-2
-    w-full max-w-[200px]
+    w-full
     rounded-xl
     text-xs font-bold
     transition-all duration-150

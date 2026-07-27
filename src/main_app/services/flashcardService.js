@@ -292,6 +292,7 @@ export const recordSessionResult = async (bookId, sessionInfo, cardResults) => {
   const missedCount = cardResults.filter(r => r.rating === 'missed').length;
 
   const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const cardsSnapshot = sessionInfo.cardsSnapshot || null;
 
   await db.flashcard_sessions.add({
     id: sessionId,
@@ -302,28 +303,61 @@ export const recordSessionResult = async (bookId, sessionInfo, cardResults) => {
     easy_count: easyCount,
     hard_count: hardCount,
     missed_count: missedCount,
+    cards_snapshot: cardsSnapshot,
     started_at: sessionInfo.startedAt || new Date().toISOString(),
     completed_at: new Date().toISOString(),
   });
 
   const nowStr = new Date().toISOString();
   for (const res of cardResults) {
-    const card = await db.flashcard_cards.get(res.cardId);
-    if (card) {
-      await db.flashcard_cards.update(res.cardId, {
-        confidence: res.rating,
-        times_practiced: (card.times_practiced || 0) + 1,
-        last_practiced_at: nowStr,
-      });
-    }
+    if (res.cardId) {
+      const card = await db.flashcard_cards.get(res.cardId);
+      if (card) {
+        await db.flashcard_cards.update(res.cardId, {
+          confidence: res.rating,
+          times_practiced: (card.times_practiced || 0) + 1,
+          last_practiced_at: nowStr,
+        });
 
-    await db.flashcard_session_cards.add({
-      id: `sc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      session_id: sessionId,
-      card_id: res.cardId,
-      rating: res.rating,
-      practiced_at: nowStr,
-    });
+        await db.flashcard_session_cards.add({
+          id: `sc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          session_id: sessionId,
+          card_id: res.cardId,
+          rating: res.rating,
+          practiced_at: nowStr,
+        });
+      }
+    }
+  }
+};
+
+/**
+ * Fetch cards for a specific session (from cards_snapshot or DB lookup)
+ */
+export const fetchSessionCards = async (session) => {
+  if (!session) return [];
+  if (session.cards_snapshot && session.cards_snapshot.length > 0) {
+    return session.cards_snapshot;
+  }
+  try {
+    const sessionCards = await db.flashcard_session_cards.where('session_id').equals(session.id).toArray();
+    const result = [];
+    for (const sc of sessionCards) {
+      const card = await db.flashcard_cards.get(sc.card_id);
+      if (card) {
+        result.push({
+          id: card.id,
+          front: card.front,
+          back: card.back,
+          page_number: card.page_number,
+          rating: sc.rating || card.confidence || 'easy',
+        });
+      }
+    }
+    return result;
+  } catch (err) {
+    console.error('[FlashcardService] Error fetching session cards:', err);
+    return [];
   }
 };
 
