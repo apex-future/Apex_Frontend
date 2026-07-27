@@ -1396,14 +1396,6 @@ function ReaderView() {
                     tocOutline={tocOutline}
                 />}
 
-                {/* Flashcard panel */}
-                {flashcardPanel && <FlashcardPanel
-                    setFlashcardPanel={setFlashcardPanel}
-                    book={book}
-                    pageNumber={pageNumber}
-                    totalPages={numPages || localPages.total || 1}
-                />}
-                
                 {/* Gear panel */}
                 {pageSettings && <PageSettings 
                     setPageSettings={setPageSettings}
@@ -1661,6 +1653,16 @@ function ReaderView() {
                         currentPage={pageNumber}
                         numPages={numPages}
                         examName={book?.examName || ''}
+                    />
+                )}
+
+                {/* Flashcard panel */}
+                {flashcardPanel && (
+                    <FlashcardPanel
+                        setFlashcardPanel={setFlashcardPanel}
+                        book={book}
+                        pageNumber={pageNumber}
+                        totalPages={numPages || localPages.total || 1}
                     />
                 )}
 

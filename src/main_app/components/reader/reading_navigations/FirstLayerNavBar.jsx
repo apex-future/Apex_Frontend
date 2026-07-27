@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { ArrowLeft, BookmarkSimple, DotsThreeVertical, CornersOut, LockKey, LockKeyOpen, ArrowsOut, ArrowsIn, Notebook, Gear, TextAa, Stack, Cards } from '@phosphor-icons/react';
+import { ArrowLeft, BookmarkSimple, DotsThreeVertical, CornersOut, LockKey, LockKeyOpen, ArrowsOut, ArrowsIn, Notebook, Gear, TextAa, Sparkle } from '@phosphor-icons/react';
 import { gsap } from 'gsap'
 
-function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookClick }) {
+function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookClick, setAiModal }) {
   const topBarRef = useRef(null);
   const bottomBarRef = useRef(null);
 
@@ -18,7 +18,6 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
     onToggleDictionary,
     setPageSettings,
     setLeftPanel: internalSetLeftPanel, // renamed to avoid conflict if any
-    onGenerateFlashcards,
   } = readerControls || {};
 
   const [isFullScreen, setIsFullScreen] = useState(!!document.fullscreenElement);
@@ -120,34 +119,33 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
         onClick={(e) => e.stopPropagation()}
       >
         <div className='flex items-end sm:items-center justify-between w-full'>
-          {/* Bottom Left Controls — Dictionary and Notebook */}
-          <div className='flex items-center gap-2 sm:gap-3'>
+          {/* Bottom Left Controls — L-shaped helper buttons with AI icon at top */}
+          <div className='flex flex-col items-start gap-2 sm:gap-3'>
             <button
               className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
-              onClick={(e) => { e.stopPropagation(); onToggleDictionary?.(); }}
-              title="Dictionary Search"
+              onClick={(e) => { e.stopPropagation(); setAiModal?.(prev => !prev); }}
+              title="AI Tools"
             >
-              <TextAa size={18} weight="bold" />
+              <Sparkle size={18} weight="fill" />
             </button>
 
-            <button
-              className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
-              onClick={(e) => { e.stopPropagation(); onNotebookClick?.(); }}
-              title="Notebook"
-            >
-              <Notebook size={18} weight="bold" />
-            </button>
+            <div className='flex items-center gap-2 sm:gap-3'>
+              <button
+                className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+                onClick={(e) => { e.stopPropagation(); onToggleDictionary?.(); }}
+                title="Dictionary Search"
+              >
+                <TextAa size={18} weight="bold" />
+              </button>
 
-            <button
-              className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                onGenerateFlashcards?.();
-              }}
-              title="Flashcards"
-            >
-              <Stack size={18} weight="bold" />
-            </button>
+              <button
+                className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
+                onClick={(e) => { e.stopPropagation(); onNotebookClick?.(); }}
+                title="Notebook"
+              >
+                <Notebook size={18} weight="bold" />
+              </button>
+            </div>
           </div>
 
           {/* Bottom Right Controls — Lock, Fit-to-screen and Browser Fullscreen */}

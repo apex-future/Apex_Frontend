@@ -17,6 +17,7 @@ function ReaderNavBar({ navigate, navState, setNavState, aiModal, setAiModal, qu
           readerControls={readerControls}
           scrollOrientation={scrollOrientation}
           onNotebookClick={onNotebookClick}
+          setAiModal={setAiModal}
         />
       )}
       <SecondLayerNavBar
@@ -27,6 +28,7 @@ function ReaderNavBar({ navigate, navState, setNavState, aiModal, setAiModal, qu
         leftPanel={leftPanel}
         setLeftPanel={setLeftPanel}
         pdfControls={pdfControls}
+        onGenerateFlashcards={readerControls?.onGenerateFlashcards}
       />
     </div>
   );

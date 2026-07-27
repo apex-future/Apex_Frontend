@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, Note, MagicWand, Stack, WarningCircle, Trash, Quotes, Copy } from '@phosphor-icons/react';
+import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, Note, MagicWand, Trash, Quotes, Copy } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
 import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
@@ -25,9 +25,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     const [tabText, setTabText] = useState(cachedTab ? cachedTab.text : '');
     const [tabSaved, setTabSaved] = useState(!!cachedTab);
     const [wordSaved, setWordSaved] = useState(!!cachedDefinition);
-    const [showFlashcards, setShowFlashcards] = useState(false);
-    const [flashcardCount, setFlashcardCount] = useState(5);
-    const [flashcardError, setFlashcardError] = useState('');
 
     const [savedTabId, setSavedTabId] = useState(cachedTab ? (cachedTab.id || cachedTab.dexieId || cachedTab.supabaseId) : null);
     const savedTabIdRef = useRef(cachedTab ? (cachedTab.id || cachedTab.dexieId || cachedTab.supabaseId) : null);
@@ -125,32 +122,13 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     const toggleDict = (val) => {
         setShowDict(val);
         setShowTab(false);
-        setShowFlashcards(false);
         onDictToggle?.(val);
     };
 
     const toggleTab = (val) => {
         setShowTab(val);
         setShowDict(false);
-        setShowFlashcards(false);
         onDictToggle?.(val);
-    };
-
-    const toggleFlashcards = (val) => {
-        setShowFlashcards(val);
-        setShowDict(false);
-        setShowTab(false);
-        onDictToggle?.(val);
-        
-        if (val) {
-            const safeSelection = selection || '';
-            const wordCount = safeSelection.trim().split(/\s+/).length;
-            if (wordCount < 15) {
-                setFlashcardError(`You only highlighted ${wordCount} word${wordCount === 1 ? '' : 's'}. Please highlight at least a full sentence or paragraph (15+ words) to generate meaningful flashcards.`);
-            } else {
-                setFlashcardError('');
-            }
-        }
     };
 
     const handleCloseModal = () => {
@@ -281,7 +259,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     let menuStyle = {};
     let showBelow = false;
 
-    if (showDict || showTab || showFlashcards) {
+    if (showDict || showTab) {
         menuStyle = {
             top: '50%',
             left: '50%',
@@ -360,7 +338,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         borderRight: '1.5px dashed rgba(0,0,0,0.15)',
                     }} />
                 )}
-                {!showDict && !showTab && !showFlashcards ? (
+                {!showDict && !showTab ? (
                     <div className="flex flex-col">
                         <div className="flex items-center p-1.5 gap-1">
                             <button
@@ -383,15 +361,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
 
                             <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
 
-                            <button
-                                onClick={() => toggleFlashcards(true)}
-                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
-                            >
-                                <Stack size={20} weight="fill" className="text-text-secondary group-hover:text-accent-primary transition-colors" />
-                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Cards</span>
-                            </button>
-
-                            <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
                             <button
                                 onClick={() => toggleTab(true)}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
@@ -580,72 +549,11 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             </div>
                         </div>
                     </div>
-                ) : showFlashcards ? (
-                    <div className="p-5 animate-in slide-in-from-bottom-2 duration-300 font-sans">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[10px] font-black text-accent-primary uppercase tracking-[0.2em] font-sans flex items-center gap-2">
-                                <Stack size={14} weight="fill" /> Flashcards
-                            </h3>
-                            <button onClick={handleCloseModal} className="p-1.5 hover:bg-bg-subtle rounded-lg transition-colors">
-                                <X size={16} weight="bold" className="text-text-tertiary" />
-                            </button>
-                        </div>
-
-                        {flashcardError ? (
-                            <div className="bg-red-50/50 border border-red-100 p-4 rounded-xl flex flex-col items-center text-center gap-3">
-                                <WarningCircle size={24} weight="bold" className="text-red-500" />
-                                <p className="text-sm text-red-700 font-medium">{flashcardError}</p>
-                                <button
-                                    onClick={handleCloseModal}
-                                    className="mt-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-bold transition-colors"
-                                >
-                                    Dismiss
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="space-y-5">
-                                <Card variant="sunken" className="p-3">
-                                    <p className="text-[11px] text-text-tertiary font-bold uppercase tracking-wider mb-1 opacity-50">Source Material</p>
-                                    <p className="text-sm text-text-secondary line-clamp-3 italic">"{selection}"</p>
-                                </Card>
-
-                                <div>
-                                    <label className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 block">
-                                        Number of Cards: <span className="text-accent-primary text-base">{flashcardCount}</span>
-                                    </label>
-                                    <input
-                                        type="range"
-                                        min="3"
-                                        max="10"
-                                        value={flashcardCount}
-                                        onChange={(e) => setFlashcardCount(parseInt(e.target.value))}
-                                        className="w-full"
-                                        style={{ accentColor: 'rgb(var(--accent-primary))' }}
-                                    />
-                                    <div className="flex justify-between text-[10px] text-text-tertiary font-bold mt-1">
-                                        <span>3</span>
-                                        <span>10</span>
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={() => {
-                                      console.log('[HighlightMenu] Cards from selection — feature moved to navbar Stack button');
-                                      handleCloseModal();
-                                    }}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent-primary text-white hover:bg-accent-primary/90 hover:shadow-[0_10px_40px_rgba(139,92,246,0.3)] rounded-xl text-sm font-bold transition-all shadow-md active:scale-95"
-                                >
-                                    <Stack size={18} weight="fill" />
-                                    Use the deck button in the reader toolbar
-                                </button>
-                            </div>
-                        )}
-                    </div>
                 ) : null}
             </Card>
 
             {/* Arrow when menu is placed above the text (pointing down) */}
-            {!isMobile && !showDict && !showTab && !showFlashcards && !showBelow && (
+            {!isMobile && !showDict && !showTab && !showBelow && (
                 <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white mx-auto" />
             )}
 

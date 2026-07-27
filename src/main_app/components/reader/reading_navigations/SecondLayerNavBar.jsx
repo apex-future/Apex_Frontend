@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react'
-import { List, ArrowCounterClockwise, Sparkle, MagnifyingGlassPlus, MagnifyingGlassMinus, Brain } from '@phosphor-icons/react';
+import { List, ArrowCounterClockwise, Stack, MagnifyingGlassPlus, MagnifyingGlassMinus, Brain } from '@phosphor-icons/react';
 import { gsap } from 'gsap'
 
-function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pdfControls }) {
+function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pdfControls, onGenerateFlashcards }) {
   const navRef = useRef(null);
 
   useEffect(() => {
@@ -73,14 +73,17 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
           </button>
         </div>
 
-        {/* Right: Sparkle & Quiz — opens AI and Quiz panels */}
-        <div className='flex flex-col sm:flex-row gap-2 right-side items-center'>
+        {/* Right: Flashcards & Quiz buttons — stacked on mobile (Flashcard underneath Quiz), side-by-side on desktop */}
+        <div className='flex flex-col-reverse sm:flex-row gap-2 right-side items-center'>
           <button
             className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
-            onClick={(e) => { e.stopPropagation(); setAiModal(prev => !prev); }}
-            title="AI Tools"
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              onGenerateFlashcards?.();
+            }}
+            title="Flashcards"
           >
-            <Sparkle size={18} weight="fill" />
+            <Stack size={18} weight="bold" />
           </button>
           <button
             className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
