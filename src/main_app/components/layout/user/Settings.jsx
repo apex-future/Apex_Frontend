@@ -216,7 +216,7 @@ function Settings({ onLogout }) {
                       <p className="text-sm font-medium text-text-primary mb-1">Streak Threshold</p>
                       <p className="text-xs text-text-tertiary mb-3">Minutes of reading needed to count a study day</p>
                       <div className="flex gap-2 flex-wrap">
-                        {[5, 10, 15, 20, 30].map((mins) => (
+                        {[2, 5, 10, 15, 20, 30].map((mins) => (
                           <button
                             key={mins}
                             onClick={() => updateSetting('streakThresholdMinutes', mins)}

@@ -33,7 +33,7 @@ const useSettingsStore = create(
       // ── Reader ──
       scrollOrientation: 'vertical',    // 'vertical' | 'horizontal'
       scrollAnimation: 'none',          // 'none' | 'slide' | 'fade'
-      streakThresholdMinutes: 5,        // 3 | 5 | 10 | 15 | 20 | 30
+      streakThresholdMinutes: 2,        // 2 | 5 | 10 | 15 | 20 | 30
       streakCelebrationEnabled: true,   // Toggle streak celebration modal on/off
       streakCelebrationStyle: 'subtle', // 'subtle' (default less distracting) | 'full' (distracting)
 
@@ -144,7 +144,7 @@ const useSettingsStore = create(
           scrollOrientation: data.scroll_orientation || 'vertical',
           scrollAnimation: data.scroll_animation || 'none',
           reminderTime: data.reminder_time ? data.reminder_time.slice(0, 5) : '18:00',
-          streakThresholdMinutes: data.streak_threshold_minutes ?? 5,
+          streakThresholdMinutes: data.streak_threshold_minutes ?? 2,
           streakCelebrationEnabled: data.streak_celebration_enabled ?? true,
           streakCelebrationStyle: data.streak_celebration_style || 'subtle',
           settingsLastSyncedAt: cloudUpdatedAt,

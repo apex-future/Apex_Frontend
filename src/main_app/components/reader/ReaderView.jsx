@@ -321,8 +321,8 @@ function ReaderView() {
         const today = new Date().toLocaleDateString('en-CA');
         let isCancelled = false;
 
-        // Streak timer reads threshold from user settings — default 5 minutes
-        const STREAK_DURATION = Math.max(5, streakThresholdMinutes) * 60 * 1000;
+        // Streak timer reads threshold from user settings — default 2 minutes
+        const STREAK_DURATION = Math.max(2, streakThresholdMinutes) * 60 * 1000;
         const MINUTE_DURATION = 60 * 1000;
         console.log(`[Apex Streak] Threshold set to ${streakThresholdMinutes} minutes (${STREAK_DURATION / 1000}s)`);
 
