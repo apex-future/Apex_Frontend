@@ -503,7 +503,6 @@ export default function QuestPage() {
                     chestClaimed={questStore.chest_1_claimed}
                     onChestClick={() => handleChestClick('quest_1')}
                     onProgressUpdate={handleProgressUpdate}
-                    onRefreshQuest={() => handleRefreshQuest('quest_1')}
                     isRefreshing={refreshingKey === 'quest_1'}
                   />
                 </motion.div>
