@@ -65,3 +65,40 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// ── Web Share Target (Android "Open with") ────────────────────────────────
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  if (event.request.method === 'POST' && url.pathname === '/share-target') {
+    event.respondWith((async () => {
+      try {
+        const formData = await event.request.formData();
+        const file = formData.get('file');
+        
+        if (file) {
+          // Store the file in Cache API temporarily to pass it to the frontend
+          const cache = await caches.open('share-target-cache');
+          await cache.put(
+            new Request('/shared-file'),
+            new Response(file, {
+              headers: {
+                'Content-Type': file.type || 'application/octet-stream',
+                'Content-Length': file.size,
+                'X-File-Name': encodeURIComponent(file.name)
+              }
+            })
+          );
+          
+          // Redirect the user to the import page with a query parameter
+          return Response.redirect('/import?shared=true', 303);
+        }
+      } catch (err) {
+        console.error('[Apex SW] Error handling share target:', err);
+      }
+      
+      // Fallback redirect if something fails
+      return Response.redirect('/', 303);
+    })());
+  }
+});
