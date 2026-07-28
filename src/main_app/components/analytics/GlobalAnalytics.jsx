@@ -227,9 +227,7 @@ function GlobalAnalytics() {
                         <h3 className="text-base md:text-lg font-bold font-display text-text-primary">Global Analytics</h3>
                     </div>
 
-                    <div className="px-3 py-2 rounded-full bg-bg-subtle dark:bg-bg-elevated backdrop-blur-xl border border-black/5 dark:border-white/5 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-                        <p className="text-[10px] text-accent-primary font-bold uppercase tracking-wider">Live Dashboard</p>
-                    </div>
+                    <div className="w-[42px]" />
                 </div>
             </div>
 
