@@ -181,7 +181,7 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
             {/* Strip Panel */}
             <div
                 ref={stripRef}
-                className="absolute bottom-0 left-0 right-0 z-[56] pointer-events-auto bg-bg-subtle dark:bg-bg-elevated rounded-t-card safe-area-pb shadow-lg border-t border-border-default"
+                className="absolute bottom-0 left-0 right-0 z-[56] pointer-events-auto bg-bg-primary rounded-t-card safe-area-pb shadow-lg border-t border-border-default"
             >
                 <div className="pt-3 pb-6 px-4 max-w-7xl mx-auto relative">
                     {/* Drag handle */}

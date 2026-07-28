@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { X, Brain, WarningCircle, Sparkle, BookOpen, Clock, Target, Stack, CheckCircle, CaretLeft, CaretRight, CaretUp, CaretDown, ClockCounterClockwise, ArrowLeft, ChartBar, XCircle, Spinner } from '@phosphor-icons/react';
 import { Document, Page } from 'react-pdf';
 import { initiateMCQQuiz, initiateEssayQuiz, getQuizzesForBook, quizTimeToSeconds } from '../../../../services/quizService';
+import Button from '../../../ui/Button';
 
 /**
  * QuizPanel — config + history panel for AI quiz generation.
@@ -171,11 +172,11 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
       {/* Mobile overlay */}
       <div className="fixed inset-0 bg-black/40 z-[190] md:hidden animate-in fade-in" onClick={onClose} />
       <aside
-        className="flex flex-col fixed inset-0 z-[200] bg-bg-subtle dark:bg-bg-elevated h-[100dvh] md:relative md:inset-auto md:w-96 md:h-full md:border-0 md:shrink-0 shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden"
+        className="flex flex-col fixed inset-0 z-[200] bg-bg-primary h-[100dvh] md:relative md:inset-auto md:w-96 md:h-full md:border-0 md:shrink-0 shadow-sm hover:shadow-md transition-shadow animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-4 py-4 bg-white relative z-10 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-4 bg-bg-primary border-b border-border-default/30 relative z-10 flex-shrink-0">
           <div className="flex items-center gap-2">
             <button onClick={() => view === 'history' ? setView('config') : onClose()} className="p-2 hover:bg-gray-50 rounded-lg transition-colors text-text-tertiary">
               {view === 'history' ? <ArrowLeft size={18} weight="bold" /> : <X size={18} weight="bold" />}
@@ -246,7 +247,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
                   <button onClick={(e) => { e.preventDefault(); scrollByChunk('right'); }} className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-white shadow-md rounded-full text-text-secondary hover:text-accent-primary hover:scale-105 transition-all opacity-0 group-hover:opacity-100">
                     <CaretRight size={20} weight="bold" />
                   </button>
-                  <div ref={scrollContainerRef} className="flex flex-row gap-4 overflow-x-auto py-4 px-2 scroll-smooth hide-scrollbar rounded-card bg-white shadow-sm">
+                  <div ref={scrollContainerRef} className="flex flex-row gap-4 overflow-x-auto py-4 px-2 scroll-smooth hide-scrollbar">
                     {isPdf && fileUrl ? (
                       <Document file={fileUrl} loading={null}><div className="flex flex-row gap-4">{thumbnails}</div></Document>
                     ) : thumbnails}
@@ -260,7 +261,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
                   <div className="flex items-center gap-2 mb-1"><Target size={16} weight="bold" className="text-text-tertiary" /><label className="text-sm font-bold text-text-secondary">Questions Limit</label></div>
                   <div className="grid grid-cols-4 gap-2">
                     {[5, 10, 15, 20].map(n => (
-                      <button key={n} onClick={() => setNumQuestions(n)} className={`py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${numQuestions === n ? 'bg-accent-primary text-white shadow-lg shadow-accent-primary/25 scale-105 z-10' : 'bg-white text-text-secondary hover:bg-accent-primary/5'}`}>{n}</button>
+                      <button key={n} onClick={() => setNumQuestions(n)} className={`py-3 rounded-xl text-sm font-bold transition-all border ${numQuestions === n ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-400/40' : 'bg-transparent border-border-default text-text-secondary hover:bg-accent-primary/5'}`}>{n}</button>
                     ))}
                   </div>
                 </div>
@@ -269,7 +270,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
                   <div className="flex items-center gap-2 mb-1"><Clock size={16} weight="bold" className="text-text-tertiary" /><label className="text-sm font-bold text-text-secondary">Time Limit</label></div>
                   <div className="grid grid-cols-4 gap-2">
                     {['5m', '10m', '15m', 'None'].map(t => (
-                      <button key={t} onClick={() => setQuizTime(t)} className={`py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${quizTime === t ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25 scale-105 z-10' : 'bg-white text-text-secondary hover:bg-amber-500/5'}`}>{t}</button>
+                      <button key={t} onClick={() => setQuizTime(t)} className={`py-3 rounded-xl text-sm font-bold transition-all border ${quizTime === t ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-400/40' : 'bg-transparent border-border-default text-text-secondary hover:bg-accent-primary/5'}`}>{t}</button>
                     ))}
                   </div>
                 </div>
@@ -278,7 +279,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
                   <div className="flex items-center gap-2 mb-1"><Stack size={16} weight="bold" className="text-text-tertiary" /><label className="text-sm font-bold text-text-secondary">Question Type</label></div>
                   <div className="flex gap-2">
                     {['mcq', 'essay'].map((t) => (
-                      <button key={t} onClick={() => setQuizType(t)} className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${quizType === t ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25 scale-105 z-10' : 'bg-white text-text-secondary hover:bg-blue-500/5'}`}>{t === 'mcq' ? 'Multiple Choice' : 'Short Essay'}</button>
+                      <button key={t} onClick={() => setQuizType(t)} className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all border ${quizType === t ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-400/40' : 'bg-transparent border-border-default text-text-secondary hover:bg-accent-primary/5'}`}>{t === 'mcq' ? 'Multiple Choice' : 'Short Essay'}</button>
                     ))}
                   </div>
                 </div>
@@ -287,7 +288,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
                   <div className="flex items-center gap-2 mb-1"><Brain size={16} weight="bold" className="text-text-tertiary" /><label className="text-sm font-bold text-text-secondary">Difficulty</label></div>
                   <div className="flex gap-2">
                     {['beginner', 'intermediate', 'advanced'].map(d => (
-                      <button key={d} onClick={() => setDifficulty(d)} className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all capitalize shadow-sm ${difficulty === d ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/25 scale-105 z-10' : 'bg-white text-text-secondary hover:bg-purple-500/5'}`}>{d}</button>
+                      <button key={d} onClick={() => setDifficulty(d)} className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all capitalize border ${difficulty === d ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-400/40' : 'bg-transparent border-border-default text-text-secondary hover:bg-accent-primary/5'}`}>{d}</button>
                     ))}
                   </div>
                 </div>
@@ -324,7 +325,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
                 </div>
               ) : (
                 quizHistory.map((quiz) => (
-                  <div key={quiz.id} className="bg-white rounded-card p-4 shadow-sm hover:shadow-md transition-all">
+                  <div key={quiz.id} className="bg-bg-subtle dark:bg-bg-elevated border border-border-default rounded-card p-4 hover:shadow-md transition-all">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{formatDate(quiz.taken_at)}</span>
                       <div className="flex items-center gap-1.5">
@@ -364,12 +365,11 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
 
         {/* ── Footer — Generate button (config view only) ── */}
         {view === 'config' && !generating && (
-          <div className="sticky bottom-0 z-50 bg-white p-4 shadow-sm flex-shrink-0">
-            <button onClick={handleGenerate} disabled={generating}
-              className={`w-full py-4 rounded-2xl font-black text-lg transition-all shadow-xl flex items-center justify-center gap-2 ${generating ? 'bg-gray-100 text-text-tertiary cursor-not-allowed shadow-none' : 'bg-accent-primary text-white hover:bg-accent-primary/90 hover:shadow-[0_10px_40px_rgba(139,92,246,0.3)]'}`}>
+          <div className="sticky bottom-0 z-50 bg-bg-primary p-4 border-t border-border-default/30 flex-shrink-0">
+            <Button variant="primary" onClick={handleGenerate} disabled={generating} className="py-4 text-base font-black">
               <Sparkle size={20} weight="fill" />
-              <span>Generate Quiz</span>
-            </button>
+              Generate Quiz
+            </Button>
           </div>
         )}
       </aside>

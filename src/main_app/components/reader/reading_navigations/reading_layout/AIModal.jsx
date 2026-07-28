@@ -359,7 +359,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
     <>
       <div className="fixed inset-0 bg-black/40 z-[190] md:hidden animate-in fade-in" onClick={() => setAiModal(false)} />
       <aside
-        className='flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-white/15 dark:bg-white/5 backdrop-blur-xl rounded-t-3xl h-[85vh] md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-0 md:border-l md:border-white/20 dark:md:border-white/10 md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-sm animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden'
+        className='flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-bg-primary h-[85vh] rounded-t-2xl md:relative md:rounded-none md:inset-auto md:w-96 md:h-full md:border-0 md:border-l md:border-border-default/40 md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-sm animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden'
         onClick={(e) => e.stopPropagation()}
       >
         {messages.length === 0 && (
@@ -368,7 +368,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
           </div>
         )}
       {/* ── Header ── */}
-      <div className='flex items-center justify-between px-4 py-4 border-b border-white/20 dark:border-white/10 bg-white/10 dark:bg-white/5 backdrop-blur-xl relative z-10 flex-shrink-0'>
+      <div className='flex items-center justify-between px-4 py-4 border-b border-border-default/30 bg-bg-primary relative z-10 flex-shrink-0'>
         <div className='flex items-center gap-2'>
           <button
             onClick={() => showHistory ? setShowHistory(false) : setAiModal(false)}
@@ -524,19 +524,24 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center justify-center gap-4 mt-2 w-full max-w-[95%]">
-                          {msg.content && !isStreaming && index === messages.length - 1 && (
-                              <button onClick={retry} className="text-[9px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Regenerate response">
-                                  <ArrowCounterClockwise size={12} weight="bold" /> Retry
+                        {msg.content && !isStreaming && (
+                          <div className="flex items-center justify-start gap-1 mt-2 w-full max-w-[95%]">
+                            {index === messages.length - 1 && (
+                              <button
+                                onClick={retry}
+                                className="text-text-tertiary hover:text-accent-primary transition-colors flex items-center justify-center p-1 hover:bg-bg-subtle dark:hover:bg-bg-elevated rounded"
+                              >
+                                <ArrowCounterClockwise size={18} weight="bold" />
                               </button>
-                          )}
-                          {msg.content && !isStreaming && (
-                              <button onClick={() => handleCopy(msg.id, msg.content)} className="text-[9px] text-text-tertiary hover:text-accent-primary font-medium flex items-center gap-1 transition-colors" title="Copy response">
-                                  {copiedId === msg.id ? <Check size={12} weight="bold" className="text-green-500" /> : <Copy size={12} weight="bold" />} 
-                                  <span className={copiedId === msg.id ? "text-green-500" : ""}>{copiedId === msg.id ? 'Copied' : 'Copy'}</span>
-                              </button>
-                          )}
-                        </div>
+                            )}
+                            <button
+                              onClick={() => handleCopy(msg.id, msg.content)}
+                              className="text-text-tertiary hover:text-accent-primary transition-colors flex items-center justify-center p-1 hover:bg-bg-subtle dark:hover:bg-bg-elevated rounded"
+                            >
+                              {copiedId === msg.id ? <Check size={18} weight="bold" className="text-green-500" /> : <Copy size={18} weight="bold" />}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ) : (() => {
                       /* ── User message: 1. Highlight Context card ON TOP 2. User bubble (clean) ── */
@@ -554,9 +559,9 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                               <p className="line-clamp-4 leading-relaxed">"{context}"</p>
                             </Card>
                           )}
-                          <div className="max-w-[95%] px-4 py-3 text-[14px] leading-relaxed bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 shadow-sm rounded-2xl text-text-primary text-left inline-block">
+                          <Card className="max-w-[95%] px-4 py-3 text-[14px] leading-relaxed text-text-primary text-left hover:scale-100">
                             <p className='whitespace-pre-wrap'>{userText}</p>
-                          </div>
+                          </Card>
 
                         </div>
                       );
@@ -620,7 +625,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
             }}
             className={`flex flex-col transition-all duration-300`}
           >
-            <div className={`flex flex-col bg-bg-subtle dark:bg-bg-dark-elevated border border-black/10 dark:border-white/10 rounded-2xl p-2 focus-within:border-accent-primary focus-within:shadow-md focus-within:shadow-accent-primary/10 transition-all duration-300`}>
+            <Card className="flex flex-col p-2 hover:scale-100 focus-within:!border-accent-primary focus-within:shadow-md focus-within:shadow-accent-primary/10 transition-all duration-300">
               <textarea
                 ref={inputRef}
                 value={inputValue}
@@ -673,7 +678,7 @@ function AIModal({ setAiModal, selectedText, bookTitle, bookId, currentPage, num
                   </button>
                 )}
               </div>
-            </div>
+            </Card>
           </form>
         </div>
       )}

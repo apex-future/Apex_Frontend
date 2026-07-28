@@ -119,8 +119,8 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
         onClick={(e) => e.stopPropagation()}
       >
         <div className='flex items-end sm:items-center justify-between w-full'>
-          {/* Bottom Left Controls — L-shaped helper buttons with AI icon at top */}
-          <div className='flex flex-col items-start gap-2 sm:gap-3'>
+          {/* Bottom Left Controls — L-shaped helper buttons on mobile, horizontal row on desktop */}
+          <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3'>
             <button
               className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
               onClick={(e) => { e.stopPropagation(); setAiModal?.(prev => !prev); }}
@@ -129,7 +129,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
               <Sparkle size={18} weight="fill" />
             </button>
 
-            <div className='flex items-center gap-2 sm:gap-3'>
+            <div className='flex flex-row items-center gap-2 sm:gap-3'>
               <button
                 className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
                 onClick={(e) => { e.stopPropagation(); onToggleDictionary?.(); }}

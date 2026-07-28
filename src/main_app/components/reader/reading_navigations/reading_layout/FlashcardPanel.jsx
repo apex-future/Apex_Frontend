@@ -719,7 +719,7 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
 
       {/* STANDARD RIGHT-SLIDING PANEL FOR ALL PANEL VIEWS */}
       <aside
-        className={`flex flex-col fixed bottom-0 left-0 right-0 z-[200] bg-bg-subtle dark:bg-bg-elevated h-[85vh] md:relative md:rounded-none md:inset-auto md:w-80 md:h-full md:border-0 md:border-l md:border-border-default/40 md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-sm animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden ${
+        className={`flex flex-col fixed inset-0 z-[200] bg-bg-subtle dark:bg-bg-elevated h-full md:relative md:rounded-none md:inset-auto md:w-80 md:h-full md:border-0 md:border-l md:border-border-default/40 md:shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-sm animate-in slide-in-from-bottom md:slide-in-from-right duration-300 font-sans overflow-hidden ${
           view === 'practice_session' && !isDesktop ? 'hidden' : ''
         }`}
         onClick={(e) => e.stopPropagation()}
