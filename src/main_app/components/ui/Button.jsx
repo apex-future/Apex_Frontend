@@ -13,7 +13,6 @@ const styles = {
   base: `
     inline-flex items-center justify-center gap-2
     px-5 py-2
-    w-full
     rounded-xl
     text-xs font-bold
     transition-all duration-150
@@ -49,19 +48,20 @@ const styles = {
 export default function Button({
   children,
   variant = 'ghost',
+  fullWidth = true,
   onClick,
   disabled = false,
   className = '',
   type = 'button',
 }) {
-  console.log('[Button] variant:', variant, '| disabled:', disabled);
+  const widthClass = fullWidth ? 'w-full' : 'w-auto';
 
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`${styles.base} ${styles.variants[variant]} ${className}`}
+      className={`${styles.base} ${widthClass} ${styles.variants[variant]} ${className}`}
     >
       {children}
     </button>

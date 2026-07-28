@@ -97,11 +97,21 @@ const LastReadCard = ({ book, isLoading }) => {
                 </div>
 
                 {/* Bottom buttons row */}
-                <div className="flex gap-3 justify-center">
-                    <Button variant="primary" onClick={() => navigate(`/reader/${currentBook.id}`)}>
+                <div className="flex items-center justify-center gap-4 mt-2">
+                    <Button
+                        variant="primary"
+                        fullWidth={false}
+                        onClick={() => navigate(`/reader/${currentBook.id}`)}
+                        className="py-2.5 px-8 text-xs font-bold min-w-[200px] sm:min-w-[240px]"
+                    >
                         Continue
                     </Button>
-                    <Button variant="ghost" onClick={() => navigate(`/book/${currentBook.id}`)}>
+                    <Button
+                        variant="ghost"
+                        fullWidth={false}
+                        onClick={() => navigate(`/book/${currentBook.id}`)}
+                        className="py-2.5 px-8 text-xs font-bold min-w-[200px] sm:min-w-[240px]"
+                    >
                         Practice
                     </Button>
                 </div>
