@@ -223,10 +223,12 @@ export const CoverageCard = React.memo(({ enrichedBooks }) => {
   );
 });
 
+import db from '../../../db/apex.db';
+
 // ═══════════════════════════════════════
 // Card 1b — Study Time This Week
 // ═══════════════════════════════════════
-export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], spaceBooks = [] }) => {
+export const StudyTimeCard = React.memo(({ weeklyTime = [], readingTimeHistory = {}, rawActivity = [], spaceBooks = [] }) => {
   const dayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const todayJS = new Date();
   const todayLabel = todayJS.toLocaleDateString('en-US', { weekday: 'short' });
@@ -235,6 +237,35 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = last week, etc.
   const [selectedDayIdx, setSelectedDayIdx] = useState(todayIdx >= 0 ? todayIdx : 0);
   const [collapsed, setCollapsed] = useState({ Morning: false, Afternoon: false, Evening: true });
+  const [localReadingTime, setLocalReadingTime] = useState({});
+
+  // Fetch local Dexie reading time for offline & unsynced resilience
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        if (!db?.book_reading_time) return;
+        const records = await db.book_reading_time.toArray();
+        if (!active) return;
+        const map = {};
+        records.forEach(r => {
+          if (!r.date || !r.minutes) return;
+          if (!map[r.date]) map[r.date] = { minutes: 0, by_book: {} };
+          const key = r.supabaseBookId || (r.bookId ? String(r.bookId) : 'unknown');
+          // Deduplicate multiple entries for the same book and date in Dexie (take highest)
+          map[r.date].by_book[key] = Math.max(map[r.date].by_book[key] || 0, r.minutes);
+        });
+        // Calculate total per day from by_book values
+        Object.keys(map).forEach(d => {
+          map[d].minutes = Object.values(map[d].by_book).reduce((a, b) => a + b, 0);
+        });
+        setLocalReadingTime(map);
+      } catch (err) {
+        console.error('[StudyTimeCard] Error reading local book_reading_time:', err);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   // Compute Monday of the viewed week
   const dow = todayJS.getDay(); // 0=Sun
@@ -249,38 +280,119 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
   const weekRange = `${fmtWeekDate(monday)} – ${fmtWeekDate(sunday)}`;
 
   // Reset selected day when changing weeks
-  const prevWeek = () => { setWeekOffset(w => w - 1); setSelectedDayIdx(6); setCollapsed({ Morning: false, Afternoon: false, Evening: true }); };
+  const prevWeek = () => {
+    setWeekOffset(w => w - 1);
+    setSelectedDayIdx(6);
+    setCollapsed({ Morning: false, Afternoon: false, Evening: true });
+  };
   const nextWeek = () => {
     if (isFutureWeek) return;
-    setWeekOffset(w => w + 1);
-    setSelectedDayIdx(w => weekOffset + 1 === 0 ? (todayIdx >= 0 ? todayIdx : 0) : 0);
+    const nextOffset = weekOffset + 1;
+    setWeekOffset(nextOffset);
+    setSelectedDayIdx(nextOffset === 0 ? (todayIdx >= 0 ? todayIdx : 0) : 0);
     setCollapsed({ Morning: false, Afternoon: false, Evening: true });
   };
 
-  // Compute weekly time for current or past weeks dynamically from rawActivity or weeklyTime
+  // Set of allowed book IDs for scope filtering (book-level vs space-level vs global)
+  const allowedBookIdSet = useMemo(() => {
+    if (!spaceBooks || spaceBooks.length === 0) return null;
+    const set = new Set();
+    spaceBooks.forEach(b => {
+      if (b) {
+        if (b.supabaseId) set.add(String(b.supabaseId));
+        if (b.recordId) set.add(String(b.recordId));
+        if (b.id !== undefined && b.id !== null) set.add(String(b.id));
+      }
+    });
+    return set.size > 0 ? set : null;
+  }, [spaceBooks]);
+
+  const calcMinsForAllowedBooks = useMemo(() => {
+    return (byBookObj) => {
+      if (!byBookObj) return { totalMins: 0, filteredByBook: {} };
+      if (!allowedBookIdSet) {
+        const totalMins = Object.values(byBookObj).reduce((sum, m) => sum + (m || 0), 0);
+        return { totalMins, filteredByBook: { ...byBookObj } };
+      }
+      let totalMins = 0;
+      const filteredByBook = {};
+      Object.entries(byBookObj).forEach(([bId, mins]) => {
+        if (allowedBookIdSet.has(String(bId))) {
+          totalMins += (mins || 0);
+          filteredByBook[bId] = mins;
+        }
+      });
+      return { totalMins, filteredByBook };
+    };
+  }, [allowedBookIdSet]);
+
+  // Compute weekly time for current or past weeks dynamically from readingTimeHistory, localReadingTime, or weeklyTime
   const displayWeeklyTime = useMemo(() => {
+    const todayDateStr = toDateStr(todayJS);
+
     return dayOrder.map((dName, idx) => {
       const dayDate = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + idx);
       const dayStr = toDateStr(dayDate);
+      const isPastDay = dayStr < todayDateStr; // strictly past date
 
+      // Server readingTimeHistory entry
+      const serverDayData = readingTimeHistory ? readingTimeHistory[dayStr] : null;
+
+      // Local Dexie reading time entry
+      const localDayData = localReadingTime ? localReadingTime[dayStr] : null;
+
+      // Fallback currentWeekData from weeklyTime array
       const currentWeekData = (isCurrentWeek && weeklyTime && weeklyTime[idx]) ? weeklyTime[idx] : null;
 
+      let trueMins = 0;
+      let byBook = {};
+
+      if (serverDayData) {
+        const { totalMins, filteredByBook } = calcMinsForAllowedBooks(serverDayData.by_book);
+        trueMins = totalMins;
+        byBook = filteredByBook;
+      } else if (currentWeekData) {
+        const { totalMins, filteredByBook } = calcMinsForAllowedBooks(currentWeekData.by_book);
+        trueMins = totalMins;
+        byBook = filteredByBook;
+      }
+
+      // Dexie override only applies to TODAY (live unsynced session)
+      // For past days, server data is authoritative
+      if (localDayData && !isPastDay) {
+        const { totalMins: localMins, filteredByBook: localByBook } = calcMinsForAllowedBooks(localDayData.by_book);
+        trueMins = Math.max(trueMins, localMins);
+        Object.entries(localByBook).forEach(([bId, mins]) => {
+          byBook[bId] = Math.max(byBook[bId] || 0, mins);
+        });
+      }
+
+      // Fallback: if server data missing entirely for a past day, use Dexie as last resort
+      if (isPastDay && trueMins === 0 && localDayData) {
+        const { totalMins: localMins, filteredByBook: localByBook } = calcMinsForAllowedBooks(localDayData.by_book);
+        if (localMins > 0) {
+          trueMins = localMins;
+          byBook = localByBook;
+        }
+      }
+
+      // Fallback: check rawActivity for explicit logged minutes if no reading_time entry exists
       const dayEvents = (rawActivity || []).filter(
-        ev => (ev.type === 'reading' || ev.type === 'study' || ev.type === 'quiz') && ev.timestamp?.slice(0, 10) === dayStr
+        ev => (ev.type === 'reading' || ev.type === 'study' || ev.type === 'quiz') &&
+              ev.timestamp?.slice(0, 10) === dayStr &&
+              (!allowedBookIdSet || allowedBookIdSet.has(String(ev.book_id)))
       );
 
       let calcMins = 0;
-      const byBook = { ...(currentWeekData?.by_book || {}) };
-
       dayEvents.forEach(ev => {
-        const pages = parseInt(ev.detail) || 0;
-        const mins = ev.minutes || (pages > 0 ? Math.round(pages * 0.5) : 15);
-        calcMins += mins;
-        const bId = ev.book_id || 'unknown';
-        byBook[bId] = (byBook[bId] || 0) + mins;
+        if (ev.minutes) {
+          calcMins += ev.minutes;
+          const bId = ev.book_id || 'unknown';
+          byBook[bId] = Math.max(byBook[bId] || 0, ev.minutes);
+        }
       });
 
-      const finalMins = currentWeekData?.minutes ? Math.max(currentWeekData.minutes, calcMins) : calcMins;
+      const finalMins = Math.max(trueMins, calcMins);
 
       return {
         day: dName,
@@ -289,7 +401,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
         by_book: byBook,
       };
     });
-  }, [dayOrder, monday, isCurrentWeek, weeklyTime, rawActivity]);
+  }, [dayOrder, monday, isCurrentWeek, weeklyTime, rawActivity, readingTimeHistory, localReadingTime, todayJS, calcMinsForAllowedBooks, allowedBookIdSet]);
 
   // Actual date string for selected day
   const selectedDate = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + selectedDayIdx);
@@ -307,9 +419,9 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
   const dayReadingSessions = useMemo(() => {
     if (!rawActivity) return [];
     return rawActivity
-      .filter(ev => ev.type === 'reading' && ev.timestamp?.slice(0, 10) === selectedDateStr)
+      .filter(ev => ev.type === 'reading' && ev.timestamp?.slice(0, 10) === selectedDateStr && (!allowedBookIdSet || allowedBookIdSet.has(String(ev.book_id))))
       .map(ev => {
-        const book = spaceBooks?.find(b => (b.supabaseId || b.recordId) === ev.book_id);
+        const book = spaceBooks?.find(b => (b.supabaseId || b.recordId || String(b.id)) === ev.book_id || String(b.id) === String(ev.book_id));
         const pages = parseInt(ev.detail) || 0;
         return {
           ...ev,
@@ -318,7 +430,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
           hour: new Date(ev.timestamp).getHours(),
         };
       });
-  }, [rawActivity, selectedDateStr, spaceBooks]);
+  }, [rawActivity, selectedDateStr, spaceBooks, allowedBookIdSet]);
 
   const dayTotalMins = dayReadingSessions.reduce((s, ev) => s + ev.estimatedMins, 0);
   const actualDayTotalMins = displayWeeklyTime[selectedDayIdx]?.minutes || 0;
@@ -330,40 +442,50 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
     const actualDayData = displayWeeklyTime[selectedDayIdx] || {};
     const actualByBook = actualDayData.by_book || {};
 
-    // Calculate the total estimated minutes PER BOOK for the day
-    const estimatedTotalByBook = {};
-    dayReadingSessions.forEach(ev => {
-      estimatedTotalByBook[ev.book_id] = (estimatedTotalByBook[ev.book_id] || 0) + ev.estimatedMins;
-    });
+    if (dayReadingSessions.length === 0 && actualDayData.minutes > 0) {
+      // If no raw activity logs exist for a past day, synthesize session entries from actualByBook
+      Object.entries(actualByBook).forEach(([bId, mins]) => {
+        if (mins <= 0) return;
+        if (allowedBookIdSet && !allowedBookIdSet.has(String(bId))) return;
+        const book = spaceBooks?.find(b => (b.supabaseId || b.recordId || String(b.id)) === bId || String(b.id) === String(bId));
+        segs.Afternoon.push({
+          bookTitle: book?.title || 'Book reading session',
+          scaledMins: mins,
+          hour: 14,
+        });
+      });
+    } else {
+      // Calculate total estimated minutes PER BOOK for the day
+      const estimatedTotalByBook = {};
+      dayReadingSessions.forEach(ev => {
+        estimatedTotalByBook[ev.book_id] = (estimatedTotalByBook[ev.book_id] || 0) + ev.estimatedMins;
+      });
 
-    // Proportional distribution: scale the rough page-based estimates
-    // so they perfectly sum up to the true logged reading time for that specific book.
-    const scaledSessions = dayReadingSessions.map(ev => {
-      let scaledMins = ev.estimatedMins;
-      const actualBookMins = actualByBook[ev.book_id] || 0;
-      const estimatedBookMins = estimatedTotalByBook[ev.book_id] || 0;
+      const scaledSessions = dayReadingSessions.map(ev => {
+        let scaledMins = ev.estimatedMins;
+        const actualBookMins = actualByBook[ev.book_id] || 0;
+        const estimatedBookMins = estimatedTotalByBook[ev.book_id] || 0;
 
-      if (actualBookMins > 0) {
-        if (estimatedBookMins > 0) {
-          scaledMins = ev.estimatedMins * (actualBookMins / estimatedBookMins);
+        if (actualBookMins > 0) {
+          if (estimatedBookMins > 0) {
+            scaledMins = ev.estimatedMins * (actualBookMins / estimatedBookMins);
+          } else {
+            const bookSessionsCount = dayReadingSessions.filter(s => s.book_id === ev.book_id).length;
+            scaledMins = actualBookMins / (bookSessionsCount || 1);
+          }
         } else {
-          // If a book has 0 estimated mins but actual mins > 0, just divide evenly among its sessions
-          const bookSessionsCount = dayReadingSessions.filter(s => s.book_id === ev.book_id).length;
-          scaledMins = actualBookMins / (bookSessionsCount || 1);
+          scaledMins = ev.estimatedMins || 0;
         }
-      } else {
-        // If actualBookMins is 0 (or missing, e.g. deleted from Supabase), it should be 0!
-        scaledMins = 0;
-      }
-      
-      return { ...ev, scaledMins };
-    });
+        
+        return { ...ev, scaledMins };
+      });
 
-    scaledSessions.forEach(ev => {
-      if (ev.hour < 12) segs.Morning.push(ev);
-      else if (ev.hour < 18) segs.Afternoon.push(ev);
-      else segs.Evening.push(ev);
-    });
+      scaledSessions.forEach(ev => {
+        if (ev.hour < 12) segs.Morning.push(ev);
+        else if (ev.hour < 18) segs.Afternoon.push(ev);
+        else segs.Evening.push(ev);
+      });
+    }
 
     const bundleByBook = (events) => {
       const byBook = {};
@@ -371,7 +493,6 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
         if (!byBook[ev.bookTitle]) byBook[ev.bookTitle] = { bookTitle: ev.bookTitle, totalMins: 0 };
         byBook[ev.bookTitle].totalMins += ev.scaledMins;
       });
-      // Round the scaled values here for display
       return Object.values(byBook).map(b => ({ ...b, totalMins: Math.round(b.totalMins) }));
     };
 
@@ -380,7 +501,7 @@ export const StudyTimeCard = React.memo(({ weeklyTime = [], rawActivity = [], sp
       Afternoon: bundleByBook(segs.Afternoon),
       Evening: bundleByBook(segs.Evening),
     };
-  }, [dayReadingSessions, actualDayTotalMins, dayTotalMins]);
+  }, [dayReadingSessions, actualDayTotalMins, dayTotalMins, displayWeeklyTime, selectedDayIdx, spaceBooks]);
 
   // Histogram values
   const totalMins = displayWeeklyTime.reduce((s, d) => s + d.minutes, 0);

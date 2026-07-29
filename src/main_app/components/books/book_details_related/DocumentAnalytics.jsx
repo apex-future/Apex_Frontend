@@ -157,6 +157,7 @@ function DocumentAnalytics({ book }) {
                 {/* Study Time This Week */}
                 <StudyTimeCard
                     weeklyTime={analyticsData?.weekly_time ?? []}
+                    readingTimeHistory={analyticsData?.reading_time_history}
                     rawActivity={analyticsData?.recent_activity ?? localActivity}
                     spaceBooks={[book]}
                 />

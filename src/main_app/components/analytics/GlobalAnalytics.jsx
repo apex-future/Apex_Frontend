@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { KnowledgeMasteryCard, CoverageCard, CalendarActivityCard, QuizCard, PARTS_STYLES } from '../layout/spaces/SpaceAnalyticsParts';
+import { KnowledgeMasteryCard, CoverageCard, CalendarActivityCard, QuizCard, StudyTimeCard, PARTS_STYLES } from '../layout/spaces/SpaceAnalyticsParts';
 import { BookContext } from '../../context/BookContextInstance';
 import apiClient from '../../services/apiClient';
 import { useNavigate } from 'react-router-dom';
@@ -235,6 +235,12 @@ function GlobalAnalytics() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-7 flex flex-col gap-6">
                         <CoverageCard enrichedBooks={enrichedBooks} />
+                        <StudyTimeCard
+                            weeklyTime={analyticsData?.weekly_time ?? []}
+                            readingTimeHistory={analyticsData?.reading_time_history}
+                            rawActivity={analyticsData?.recent_activity ?? []}
+                            spaceBooks={books}
+                        />
                         {stats.quiz_stats && (
                             <QuizCard 
                                 enrichedBooks={enrichedBooks} 

@@ -602,10 +602,10 @@ const syncService = {
           console.log('[SyncPull] Merging book_reading_time:', pulledData.book_reading_time.length, 'rows from Supabase');
           
           for (const row of pulledData.book_reading_time) {
-            // Find matching local row by supabaseBookId + date
+            // Find matching local row by date AND (supabaseBookId OR bookId)
             const existing = await db.book_reading_time
               .where('date').equals(row.date)
-              .filter(r => r.supabaseBookId === row.book_id)
+              .filter(r => r.supabaseBookId === row.book_id || (r.bookId && String(r.bookId) === String(row.book_id)))
               .first();
 
             if (!existing) {
@@ -621,15 +621,17 @@ const syncService = {
             } else {
               // Row exists locally — take the higher value (Supabase wins if it has more)
               // This handles the case where another device flushed more minutes
+              const updates = { synced: 1 };
+              if (!existing.supabaseBookId && row.book_id) {
+                updates.supabaseBookId = row.book_id;
+              }
               if (row.minutes > existing.minutes) {
-                await db.book_reading_time.update(existing.id, {
-                  minutes: row.minutes,
-                  synced: 1,
-                });
+                updates.minutes = row.minutes;
                 console.log('[SyncPull] book_reading_time: updated local row —', existing.minutes, '→', row.minutes);
               } else {
                 console.log('[SyncPull] book_reading_time: local row ahead or equal — keeping local value');
               }
+              await db.book_reading_time.update(existing.id, updates);
             }
           }
           

@@ -189,6 +189,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                     <div className="sa-card-limit">
                         <StudyTimeCard
                             weeklyTime={analyticsData?.weekly_time ?? EMPTY_WEEKLY_TIME}
+                            readingTimeHistory={analyticsData?.reading_time_history}
                             rawActivity={analyticsData?.recent_activity ?? EMPTY_RECENT_ACTIVITY}
                             spaceBooks={space?.books}
                         />
