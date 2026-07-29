@@ -256,6 +256,7 @@ function GlobalAnalytics() {
                             currentStreak={stats.current_streak}
                             rawActivity={stats.recent_activity}
                             spaceBooks={books}
+                            readingTimeHistory={analyticsData?.reading_time_history}
                         />
                         <KnowledgeMasteryCard spaceBooks={books} masteryData={masteryData} />
                     </div>

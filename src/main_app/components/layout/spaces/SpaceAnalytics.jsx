@@ -212,6 +212,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                             currentStreak={currentStreak}
                             rawActivity={analyticsData?.recent_activity ?? EMPTY_RECENT_ACTIVITY}
                             spaceBooks={space?.books}
+                            readingTimeHistory={analyticsData?.reading_time_history}
                         />
                     </div>
                 </div>

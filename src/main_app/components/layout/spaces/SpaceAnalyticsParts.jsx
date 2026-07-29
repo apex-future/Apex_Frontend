@@ -818,13 +818,134 @@ export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends,
 // ═══════════════════════════════════════
 // Card 3 — Calendar + Activity Log
 // ═══════════════════════════════════════
-export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, rawActivity, spaceBooks }) => {
+// ═══════════════════════════════════════
+export const CalendarActivityCard = React.memo(({ streakHistory = [], currentStreak = 0, rawActivity = [], spaceBooks = [], readingTimeHistory = {} }) => {
   const todayStr = toDateStr(new Date());
   const [selectedDay, setSelectedDay] = useState(todayStr);
   const [calDate, setCalDate] = useState(new Date());
   const [collapsed, setCollapsed] = useState({ Morning: false, Afternoon: false, Evening: true });
+  const [localReadingTime, setLocalReadingTime] = useState({});
 
-  console.log(`[SpaceAnalytics] Rendering with selectedDay: ${selectedDay}`);
+  // Fetch local Dexie reading time for offline resilience
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        if (!db?.book_reading_time) return;
+        const records = await db.book_reading_time.toArray();
+        if (!active) return;
+        const map = {};
+        records.forEach(r => {
+          if (!r.date || !r.minutes) return;
+          if (!map[r.date]) map[r.date] = { minutes: 0, by_book: {} };
+          const key = r.supabaseBookId || (r.bookId ? String(r.bookId) : 'unknown');
+          map[r.date].by_book[key] = Math.max(map[r.date].by_book[key] || 0, r.minutes);
+        });
+        Object.keys(map).forEach(d => {
+          map[d].minutes = Object.values(map[d].by_book).reduce((a, b) => a + b, 0);
+        });
+        setLocalReadingTime(map);
+      } catch (err) {
+        console.error('[CalendarActivityCard] Error reading local book_reading_time:', err);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
+
+  // Allowed book IDs for scope filtering (Book-level vs Space-level vs Global-level)
+  const allowedBookIdSet = useMemo(() => {
+    if (!spaceBooks || spaceBooks.length === 0) return null;
+    const set = new Set();
+    spaceBooks.forEach(b => {
+      if (b) {
+        if (b.supabaseId) set.add(String(b.supabaseId));
+        if (b.recordId) set.add(String(b.recordId));
+        if (b.id !== undefined && b.id !== null) set.add(String(b.id));
+      }
+    });
+    return set.size > 0 ? set : null;
+  }, [spaceBooks]);
+
+  // Compute set of active study dates specifically for the current scope
+  const activeDatesSet = useMemo(() => {
+    const dates = new Set();
+
+    // 1. Check server readingTimeHistory
+    if (readingTimeHistory) {
+      Object.entries(readingTimeHistory).forEach(([dStr, dayData]) => {
+        if (!dayData?.by_book) return;
+        if (!allowedBookIdSet) {
+          if ((dayData.minutes || 0) > 0) dates.add(dStr);
+        } else {
+          const hasBookMins = Object.entries(dayData.by_book).some(([bId, mins]) => (mins || 0) > 0 && allowedBookIdSet.has(String(bId)));
+          if (hasBookMins) dates.add(dStr);
+        }
+      });
+    }
+
+    // 2. Check local Dexie reading time
+    if (localReadingTime) {
+      Object.entries(localReadingTime).forEach(([dStr, dayData]) => {
+        if (!dayData?.by_book) return;
+        if (!allowedBookIdSet) {
+          if ((dayData.minutes || 0) > 0) dates.add(dStr);
+        } else {
+          const hasBookMins = Object.entries(dayData.by_book).some(([bId, mins]) => (mins || 0) > 0 && allowedBookIdSet.has(String(bId)));
+          if (hasBookMins) dates.add(dStr);
+        }
+      });
+    }
+
+    // 3. Check rawActivity events (reading sessions, quizzes, notes, highlights)
+    if (rawActivity && Array.isArray(rawActivity)) {
+      rawActivity.forEach(ev => {
+        if (!ev || !ev.timestamp || typeof ev.timestamp !== 'string') return;
+        const dStr = ev.timestamp.slice(0, 10);
+        if (!allowedBookIdSet || (ev.book_id && allowedBookIdSet.has(String(ev.book_id)))) {
+          dates.add(dStr);
+        }
+      });
+    }
+
+    // 4. If global level (allowedBookIdSet is null), also include global streakHistory
+    if (!allowedBookIdSet && streakHistory && Array.isArray(streakHistory)) {
+      streakHistory.forEach(dStr => {
+        if (typeof dStr === 'string' && dStr.length >= 10) {
+          dates.add(dStr.slice(0, 10));
+        }
+      });
+    }
+
+    return dates;
+  }, [readingTimeHistory, localReadingTime, rawActivity, streakHistory, allowedBookIdSet]);
+
+  // Dynamic consecutive streak computation for current scope
+  const displayStreak = useMemo(() => {
+    if (activeDatesSet.size === 0) return 0;
+    const today = new Date();
+    const tStr = toDateStr(today);
+    const yDay = new Date(today);
+    yDay.setDate(today.getDate() - 1);
+    const yStr = toDateStr(yDay);
+
+    let startPoint = null;
+    if (activeDatesSet.has(tStr)) startPoint = today;
+    else if (activeDatesSet.has(yStr)) startPoint = yDay;
+    else return 0;
+
+    let streak = 0;
+    let curr = new Date(startPoint);
+    while (true) {
+      const ds = toDateStr(curr);
+      if (activeDatesSet.has(ds)) {
+        streak++;
+        curr.setDate(curr.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return Math.max(streak, currentStreak > 0 && !allowedBookIdSet ? currentStreak : 0);
+  }, [activeDatesSet, currentStreak, allowedBookIdSet]);
 
   const prevMonth = () => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth() - 1, 1));
   const nextMonth = () => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth() + 1, 1));
@@ -850,19 +971,19 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
     return fmtShortDate(selectedDay);
   }, [selectedDay, todayStr]);
 
-  // Filter activity for selected day
+  // Filter activity for selected day (scoped to spaceBooks)
   const dayEvents = useMemo(() => {
     if (!rawActivity) return [];
-    const filtered = rawActivity.filter(ev => {
+    return rawActivity.filter(ev => {
       if (!ev || !ev.timestamp || typeof ev.timestamp !== 'string') return false;
-      return ev.timestamp.slice(0, 10) === selectedDay;
+      if (ev.timestamp.slice(0, 10) !== selectedDay) return false;
+      if (allowedBookIdSet && ev.book_id && !allowedBookIdSet.has(String(ev.book_id))) return false;
+      return true;
     }).map(ev => {
-      const book = spaceBooks?.find(b => (b.supabaseId || b.recordId) === ev.book_id);
+      const book = spaceBooks?.find(b => (b.supabaseId || b.recordId || String(b.id)) === ev.book_id || String(b.id) === String(ev.book_id));
       return { ...ev, bookTitle: book?.title || 'Unknown Book' };
     });
-    console.log(`[SpaceAnalytics] Activity events for selected day: ${filtered.length}`);
-    return filtered;
-  }, [rawActivity, selectedDay, spaceBooks]);
+  }, [rawActivity, selectedDay, spaceBooks, allowedBookIdSet]);
 
   // Group into segments
   const segments = useMemo(() => {
@@ -927,7 +1048,6 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
 
   const renderEvents = (events) => {
     const bundles = bundleEvents(events);
-    console.log('[ActivityLog] Bundled', events.length, 'events into', bundles.length, 'entries');
 
     return (
       <div style={{ paddingLeft: 20, paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -977,17 +1097,37 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
             if (!cell) return <div key={`e-${i}`} className="cal-cell" />;
             const isToday = cell.dateStr === todayStr;
             const isSel = cell.dateStr === selectedDay;
-            const hasAct = streakHistory.includes(cell.dateStr);
-            let bg = 'transparent', color = 'rgb(var(--text-tertiary))', border = 'none';
-            if (isSel) { bg = '#7F77DD'; color = '#fff'; }
-            else if (hasAct) { bg = 'rgba(127,119,221,0.15)'; color = '#7F77DD'; }
-            else if (isToday) { border = '1.5px solid #7F77DD'; color = '#7F77DD'; }
+            const hasAct = activeDatesSet.has(cell.dateStr);
+
+            let bg = 'transparent';
+            let color = 'rgb(var(--text-tertiary))';
+            let border = 'none';
+            let boxShadow = 'none';
+
+            if (hasAct) {
+              bg = '#7F77DD';
+              color = '#ffffff';
+            } else if (isToday) {
+              color = '#7F77DD';
+              border = '1.5px solid #7F77DD';
+            }
+
+            if (isSel) {
+              if (hasAct) {
+                boxShadow = '0 0 0 2px rgb(var(--bg-elevated)), 0 0 0 4px #7F77DD';
+              } else {
+                bg = 'rgba(127, 119, 221, 0.12)';
+                color = '#7F77DD';
+                border = '1.5px solid #7F77DD';
+              }
+            }
+
             return (
               <div 
                 key={cell.dateStr} 
                 onClick={() => { setSelectedDay(cell.dateStr); setCollapsed({ Morning: false, Afternoon: false, Evening: true }); }}
                 className="cal-cell"
-                style={{ background: bg, color, border }}
+                style={{ background: bg, color, border, boxShadow, fontWeight: (isSel || hasAct || isToday) ? 700 : 500 }}
               >
                 {cell.day}
               </div>
@@ -995,8 +1135,8 @@ export const CalendarActivityCard = React.memo(({ streakHistory, currentStreak, 
           })}
         </div>
 
-        {currentStreak > 0 && (
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#7F77DD', marginTop: 12, textAlign: 'center' }}>{currentStreak}-day streak</p>
+        {displayStreak > 0 && (
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#7F77DD', marginTop: 12, textAlign: 'center' }}>{displayStreak}-day streak</p>
         )}
       </div>
 

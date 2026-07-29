@@ -150,6 +150,7 @@ function DocumentAnalytics({ book }) {
                 currentStreak={analyticsData?.current_streak ?? streakCount}
                 rawActivity={analyticsData?.recent_activity ?? localActivity}
                 spaceBooks={[book]}
+                readingTimeHistory={analyticsData?.reading_time_history}
             />
 
             {/* 2. Side-by-side on Desktop (lg:grid-cols-2), stacked on Mobile (grid-cols-1) */}
