@@ -790,6 +790,7 @@ function ReaderView() {
         highlights,
         removeHighlight: (highlightId) => removeHighlight(book.id, highlightId),
         onJumpToHighlight: goToPage,
+        onJumpToPage: goToPage,
         // Notes
         tabs: book?.metadata?.tabs || [],
         addTab: (text) => addTab(book.id, text),

@@ -17,10 +17,29 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
     onProgressBarClick,
     onToggleDictionary,
     setPageSettings,
+    onJumpToPage,
     setLeftPanel: internalSetLeftPanel, // renamed to avoid conflict if any
   } = readerControls || {};
 
   const [isFullScreen, setIsFullScreen] = useState(!!document.fullscreenElement);
+  const [isEditingPage, setIsEditingPage] = useState(false);
+  const [pageInput, setPageInput] = useState('');
+  const pageInputRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditingPage && pageInputRef.current) {
+      pageInputRef.current.focus();
+    }
+  }, [isEditingPage]);
+
+  const handlePageSubmit = (e) => {
+    if (e) e.preventDefault();
+    const targetPage = parseInt(pageInput, 10);
+    if (!isNaN(targetPage) && targetPage >= 1 && targetPage <= pages.total) {
+      onJumpToPage?.(targetPage);
+    }
+    setIsEditingPage(false);
+  };
 
   useEffect(() => {
     if (topBarRef.current) {
@@ -202,7 +221,40 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
           
           <div className="text-progress mb-2.5 flex items-center justify-between font-sans">
             <span className="percent text-[11px] font-black uppercase tracking-widest text-text-tertiary">{progress}% Read</span>
-            <span className="chapter text-[11px] font-bold text-text-tertiary bg-white/10 dark:bg-white/5 px-2 py-0.5 rounded-full">page {pages.current} of {pages.total}</span>
+            <div 
+              className="chapter text-[11px] font-bold text-text-tertiary bg-white/10 dark:bg-white/5 px-2 py-0.5 rounded-full cursor-pointer hover:bg-black/5 dark:hover:bg-white/20 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditingPage(true);
+                setPageInput(pages.current.toString());
+              }}
+            >
+              {isEditingPage ? (
+                <form 
+                  onSubmit={handlePageSubmit}
+                  className="inline-flex items-center m-0"
+                >
+                  <input
+                    ref={pageInputRef}
+                    type="number"
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onBlur={handlePageSubmit}
+                    className="w-10 bg-transparent text-center text-text-primary outline-none border-b border-accent-primary"
+                    min={1}
+                    max={pages.total}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setIsEditingPage(false);
+                      }
+                    }}
+                  />
+                  <span className="ml-1">of {pages.total}</span>
+                </form>
+              ) : (
+                <span>page {pages.current} of {pages.total}</span>
+              )}
+            </div>
           </div>
           <div className="progress-bar h-1 rounded-full w-full bg-black/10 dark:bg-white/10 overflow-hidden">
             <div
