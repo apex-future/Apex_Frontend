@@ -34,6 +34,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
     const [analyticsLoading, setAnalyticsLoading] = useState(true);
     const [analyticsError, setAnalyticsError] = useState(null);
     const [retryCount, setRetryCount] = useState(0);
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
     // Stable key — space.books is a new array whenever shelves recompute in BookContext
     const analyticsBookIdsKey = useMemo(() => {
@@ -67,6 +68,15 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                 const response = await apiClient.post('/api/spaces/analytics', { book_ids: bookIds });
                 console.log('[SpaceAnalytics] Analytics data received:', response.data);
                 setAnalyticsData(response.data);
+
+                // Trigger background fetch for full 30-day activity history
+                setLoadingHistory(true);
+                apiClient.post('/api/spaces/analytics', { book_ids: bookIds, full_history: true })
+                    .then(res => {
+                        setAnalyticsData(prev => prev ? { ...prev, recent_activity: res.data.recent_activity } : prev);
+                    })
+                    .catch(bgErr => console.warn('[SpaceAnalytics] Background history fetch failed:', bgErr))
+                    .finally(() => setLoadingHistory(false));
             } catch (err) {
                 console.error('[SpaceAnalytics] Failed to fetch analytics:', err);
                 setAnalyticsError('Failed to load analytics');
@@ -213,6 +223,7 @@ function SpaceAnalytics({ space, spaceQuizStats }) {
                             rawActivity={analyticsData?.recent_activity ?? EMPTY_RECENT_ACTIVITY}
                             spaceBooks={space?.books}
                             readingTimeHistory={analyticsData?.reading_time_history}
+                            loadingHistory={loadingHistory}
                         />
                     </div>
                 </div>

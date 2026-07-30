@@ -819,7 +819,7 @@ export const QuizCard = React.memo(({ enrichedBooks, quizStats, localBookTrends,
 // Card 3 — Calendar + Activity Log
 // ═══════════════════════════════════════
 // ═══════════════════════════════════════
-export const CalendarActivityCard = React.memo(({ streakHistory = [], currentStreak = 0, rawActivity = [], spaceBooks = [], readingTimeHistory = {} }) => {
+export const CalendarActivityCard = React.memo(({ streakHistory = [], currentStreak = 0, rawActivity = [], spaceBooks = [], readingTimeHistory = {}, loadingHistory = false }) => {
   const todayStr = toDateStr(new Date());
   const [selectedDay, setSelectedDay] = useState(todayStr);
   const [calDate, setCalDate] = useState(new Date());
@@ -1147,7 +1147,13 @@ export const CalendarActivityCard = React.memo(({ streakHistory = [], currentStr
           <span style={{ fontSize: 10, fontWeight: 600, color: 'rgb(var(--text-tertiary))', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{dayLabel}</span>
         </div>
 
-        {dayEvents.length === 0 ? (
+        {loadingHistory && dayEvents.length === 0 && selectedDay !== todayStr ? (
+          <div className="flex flex-col gap-3 animate-pulse py-4" style={{ paddingLeft: 12 }}>
+            <div style={{ height: 16, background: 'rgb(var(--border-default))', opacity: 0.4, borderRadius: 4, width: '30%' }}></div>
+            <div style={{ height: 12, background: 'rgb(var(--border-default))', opacity: 0.2, borderRadius: 4, width: '60%' }}></div>
+            <div style={{ height: 12, background: 'rgb(var(--border-default))', opacity: 0.2, borderRadius: 4, width: '45%' }}></div>
+          </div>
+        ) : dayEvents.length === 0 ? (
           <p style={{ fontSize: 11, color: 'rgb(var(--text-tertiary))', textAlign: 'center', padding: '24px 0' }}>No study activity recorded for this day.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

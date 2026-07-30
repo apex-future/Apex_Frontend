@@ -8,6 +8,7 @@ import { Spinner } from '@phosphor-icons/react';
 function DocumentAnalytics({ book }) {
     const [analyticsData, setAnalyticsData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
     const quizHistory = useQuizStore((state) => state.quizHistory) || [];
     const streakCount = useStudyStore((state) => state.streakCount) || 0;
@@ -78,6 +79,19 @@ function DocumentAnalytics({ book }) {
                 const response = await apiClient.post('/api/spaces/analytics', { book_ids: [bookUuid] });
                 if (isMounted && response?.data) {
                     setAnalyticsData(response.data);
+                    
+                    // Trigger background fetch for full 30-day activity history
+                    setLoadingHistory(true);
+                    apiClient.post('/api/spaces/analytics', { book_ids: [bookUuid], full_history: true })
+                        .then(res => {
+                            if (isMounted && res?.data) {
+                                setAnalyticsData(prev => prev ? { ...prev, recent_activity: res.data.recent_activity } : prev);
+                            }
+                        })
+                        .catch(bgErr => console.warn('[DocumentAnalytics] Background history fetch failed:', bgErr))
+                        .finally(() => {
+                            if (isMounted) setLoadingHistory(false);
+                        });
                 }
             } catch (err) {
                 console.warn('[DocumentAnalytics] Fallback to local store stats for book:', book?.title, err);
@@ -151,6 +165,7 @@ function DocumentAnalytics({ book }) {
                 rawActivity={analyticsData?.recent_activity ?? localActivity}
                 spaceBooks={[book]}
                 readingTimeHistory={analyticsData?.reading_time_history}
+                loadingHistory={loadingHistory}
             />
 
             {/* 2. Side-by-side on Desktop (lg:grid-cols-2), stacked on Mobile (grid-cols-1) */}
