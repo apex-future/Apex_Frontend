@@ -1,9 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Heart, Eye, FolderSimplePlus, Trash, X, Info, PencilSimple } from '@phosphor-icons/react';
+import { Heart, Eye, FolderSimplePlus, Trash, X, Info, PencilSimple, DotsThreeVertical, ShareNetwork } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
 import Modal from '../ui/Modal';
+import ShareModal from '../ui/ShareModal';
 import { BookContext } from '../../context/BookContextInstance';
 import useSpaceStore from '../../store/spaceStore';
 import useThemeStore from '../../store/themeStore';
@@ -26,8 +27,10 @@ export default function BookCard({ book, onClick }) {
  const isInAnySpace = spaces.filter(s => !s.isSystem).some(s => s.bookIds.includes(book.id));
 
  // State for modals
+ const [showMenu, setShowMenu] = useState(false);
  const [showDeleteModal, setShowDeleteModal] = useState(false);
  const [showSpaceModal, setShowSpaceModal] = useState(false);
+ const [showShareModal, setShowShareModal] = useState(false);
  const [selectedIds, setSelectedIds] = useState([]);
  const [syncPopover, setSyncPopover] = useState(null); // null | 'pending' | 'failed'
 
@@ -79,6 +82,12 @@ export default function BookCard({ book, onClick }) {
  e.stopPropagation();
  // Show confirmation modal — never delete directly without confirmation
  setShowDeleteModal(true);
+ };
+
+ const handleShareClick = (e) => {
+   e.stopPropagation();
+   setShowMenu(false);
+   setShowShareModal(true);
  };
 
  return (
@@ -202,34 +211,64 @@ export default function BookCard({ book, onClick }) {
  )}
  </div>
 
- <div className="flex justify-end gap-3 pt-2 mt-auto text-gray-400">
- <button
- onClick={handleFavoriteClick}
- className={`transition-colors ${book.isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
- >
- <Heart size={20} weight={book.isFavorite ? 'fill' : 'regular'} />
- </button>
- <button
- className="text-gray-400 hover:text-indigo-600 transition-colors"
- onClick={handleDetailsClick}
- >
- <Eye size={20} weight="bold" />
- </button>
- <button
- onClick={handleBookmarkClick}
- className={`transition-colors ${isInAnySpace ? 'text-accent-primary' : 'text-gray-400 hover:text-accent-primary'}`}
- title="Add to Bookspace"
- >
- <FolderSimplePlus size={20} weight={isInAnySpace ? 'fill' : 'regular'} />
- </button>
- <button
- onClick={handleDeleteClick}
- className="text-gray-400 hover:text-red-500 transition-colors ml-1"
- title="Delete book"
- >
- <Trash size={20} weight="bold" />
- </button>
- </div>
+        <div className="flex justify-end gap-3 pt-2 mt-auto text-gray-400 items-center">
+          <button
+            onClick={handleFavoriteClick}
+            className={`transition-colors ${book.isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+          >
+            <Heart size={20} weight={book.isFavorite ? 'fill' : 'regular'} />
+          </button>
+          <button
+            className="text-gray-400 hover:text-indigo-600 transition-colors"
+            onClick={handleDetailsClick}
+          >
+            <Eye size={20} weight="bold" />
+          </button>
+          
+          {/* 3-Dot Menu Container */}
+          <div className="relative">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+              className="text-gray-400 hover:text-text-primary transition-colors focus:outline-none"
+            >
+              <DotsThreeVertical size={20} weight="bold" />
+            </button>
+
+            {/* Menu Popup */}
+            {showMenu && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={(e) => { e.stopPropagation(); setShowMenu(false); }}
+                />
+                <div className="absolute bottom-full right-0 mb-2 w-48 bg-white dark:bg-neutral-800 rounded-xl shadow-lg border border-neutral-200 dark:border-neutral-700 z-50 overflow-hidden flex flex-col py-1">
+                  <button
+                    onClick={(e) => { setShowMenu(false); handleBookmarkClick(e); }}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors w-full text-left"
+                  >
+                    <FolderSimplePlus size={18} weight={isInAnySpace ? 'fill' : 'regular'} className={isInAnySpace ? 'text-accent-primary' : ''} />
+                    {isInAnySpace ? 'Update Space' : 'Add to Bookspace'}
+                  </button>
+                  <button
+                    onClick={handleShareClick}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors w-full text-left"
+                  >
+                    <ShareNetwork size={18} />
+                    Share Book
+                  </button>
+                  <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1 w-full" />
+                  <button
+                    onClick={(e) => { setShowMenu(false); handleDeleteClick(e); }}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors w-full text-left"
+                  >
+                    <Trash size={18} weight="bold" />
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
  </div>
  </div>
  </Card>
@@ -311,6 +350,15 @@ export default function BookCard({ book, onClick }) {
      )}
    </div>
  </Modal>
+
+  {/* Share Modal */}
+  <ShareModal
+    isOpen={showShareModal}
+    onClose={() => setShowShareModal(false)}
+    shareTitle="Check out this book on Apex"
+    shareText={`I'm reading "${book.title}" by ${book.author || "Unknown Author"} on Apex!`}
+    shareUrl={`${window.location.origin}/share?type=book&title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author || "")}`}
+  />
  </>
  );
 }
