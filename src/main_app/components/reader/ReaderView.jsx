@@ -1662,6 +1662,7 @@ function ReaderView() {
                     <FlashcardPanel
                         setFlashcardPanel={setFlashcardPanel}
                         book={book}
+                        fileUrl={fileUrl}
                         pageNumber={pageNumber}
                         totalPages={numPages || localPages.total || 1}
                     />

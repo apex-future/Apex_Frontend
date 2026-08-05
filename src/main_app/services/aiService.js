@@ -180,7 +180,22 @@ export async function generateQuiz({ bookId, bookTitle, pageTexts, selectedPages
       difficulty,
     }),
   });
-  if (!response.ok) throw new Error(`Generate quiz failed: ${response.status}`);
+  if (!response.ok) {
+    let errMsg = `Generate quiz failed: ${response.status}`;
+    try {
+      const errData = await response.json();
+      if (typeof errData.detail === 'string') {
+        errMsg = errData.detail;
+      } else if (errData.detail?.message) {
+        errMsg = errData.detail.message;
+      } else if (errData.message) {
+        errMsg = errData.message;
+      }
+    } catch (e) {
+      // JSON parse fallback
+    }
+    throw new Error(errMsg);
+  }
   return response.json();
 }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { X, Brain, WarningCircle, Sparkle, BookOpen, Clock, Target, Stack, CheckCircle, CaretLeft, CaretRight, CaretUp, CaretDown, ClockCounterClockwise, ArrowLeft, ChartBar, XCircle, Spinner } from '@phosphor-icons/react';
 import { Document, Page } from 'react-pdf';
 import { initiateMCQQuiz, initiateEssayQuiz, getQuizzesForBook, quizTimeToSeconds } from '../../../../services/quizService';
+import { showToastGlobal } from '../../../../hooks/useToast';
 import Button from '../../../ui/Button';
 
 /**
@@ -94,7 +95,7 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
       const config = {
         bookId, supabaseBookId, bookTitle, userId,
         selectedPages: [...selectedPages].sort((a, b) => a - b),
-        numQuestions, quizTime, difficulty,
+        numQuestions, quizTime, difficulty, fileUrl,
       };
       if (quizType === 'mcq') {
         result = await initiateMCQQuiz(config);
@@ -112,7 +113,9 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
       onClose();
     } catch (err) {
       console.error('[QuizPanel] Generation failed:', err);
-      setError(err.message || 'Quiz generation failed. Please try again.');
+      const errMsg = err.message || 'Quiz generation failed. Please try again.';
+      setError(errMsg);
+      showToastGlobal(errMsg, 'error');
     } finally {
       setGenerating(false);
     }

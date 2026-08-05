@@ -40,7 +40,7 @@ import { showToastGlobal } from '../../../../hooks/useToast';
 import apiClient from '../../../../services/apiClient';
 import { extractPageTexts } from '../../../../services/quizService';
 
-export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1, totalPages = 1 }) {
+export default function FlashcardPanel({ setFlashcardPanel, book, fileUrl, pageNumber = 1, totalPages = 1 }) {
   const [view, setView] = useState('categories'); // 'categories' | 'category_cards' | 'practice_setup' | 'practice_session' | 'history' | 'history_detail' | 'quick_setup'
   const [selectedCategory, setSelectedCategory] = useState(null); // 'highlight' | 'tab' | 'word'
   const [cards, setCards] = useState([]);
@@ -470,7 +470,7 @@ export default function FlashcardPanel({ setFlashcardPanel, book, pageNumber = 1
     setQuickSetupCards([]);
 
     try {
-      const pageTexts = extractPageTexts(pages);
+      const pageTexts = await extractPageTexts(pages, fileUrl);
       const hasText = pageTexts.some(p => p.text.trim().length > 20);
       if (!hasText) {
         setQuickSetupError('No readable text found on selected pages. Make sure those pages are visible in the reader and the PDF has a text layer.');
