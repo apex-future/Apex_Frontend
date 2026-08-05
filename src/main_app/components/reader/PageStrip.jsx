@@ -8,6 +8,25 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
     const scrollContainerRef = useRef(null);
     const [visiblePages, setVisiblePages] = useState(new Set());
     const isClosingRef = useRef(false);
+    const [isEditingPage, setIsEditingPage] = useState(false);
+    const [pageInput, setPageInput] = useState('');
+    const pageInputRef = useRef(null);
+
+    useEffect(() => {
+        if (isEditingPage && pageInputRef.current) {
+            pageInputRef.current.focus();
+        }
+    }, [isEditingPage]);
+
+    const handlePageSubmit = (e) => {
+        if (e) e.preventDefault();
+        const targetPage = parseInt(pageInput, 10);
+        if (!isNaN(targetPage) && targetPage >= 1 && targetPage <= numPages) {
+            goToPage(targetPage);
+            handleClose();
+        }
+        setIsEditingPage(false);
+    };
 
     // Entrance animation
     useEffect(() => {
@@ -192,9 +211,41 @@ const PageStrip = ({ fileUrl, isPdf, numPages, pageNumber, goToPage, onClose }) 
                         <span className="text-[10px] font-black uppercase tracking-widest text-text-tertiary px-2">
                             Jump to page
                         </span>
-                        <span className="text-sm font-bold text-text-tertiary px-2">
-                            Page {pageNumber} of {numPages}
-                        </span>
+                        <div 
+                            className="text-sm font-bold text-text-tertiary px-2 py-0.5 rounded-full cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsEditingPage(true);
+                                setPageInput(pageNumber.toString());
+                            }}
+                        >
+                            {isEditingPage ? (
+                                <form 
+                                    onSubmit={handlePageSubmit}
+                                    className="inline-flex items-center m-0"
+                                >
+                                    <span className="mr-1">Page</span>
+                                    <input
+                                        ref={pageInputRef}
+                                        type="number"
+                                        value={pageInput}
+                                        onChange={(e) => setPageInput(e.target.value)}
+                                        onBlur={handlePageSubmit}
+                                        className="w-10 bg-transparent text-center text-text-primary outline-none border-b border-accent-primary"
+                                        min={1}
+                                        max={numPages}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Escape') {
+                                                setIsEditingPage(false);
+                                            }
+                                        }}
+                                    />
+                                    <span className="ml-1">of {numPages}</span>
+                                </form>
+                            ) : (
+                                <span>Page {pageNumber} of {numPages}</span>
+                            )}
+                        </div>
                     </div>
 
                     {/* NavigationArrow Buttons (Desktop Only) */}

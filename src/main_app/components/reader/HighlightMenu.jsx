@@ -1,10 +1,11 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, Note, MagicWand, Trash, Quotes, Copy } from '@phosphor-icons/react';
+import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, Note, MagicWand, Trash, Quotes, Copy, ShareNetwork } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
 import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
 import useQuestStore from '../../store/useQuestStore';
 import Card from '../ui/Card';
+import ShareModal from '../ui/ShareModal';
 
 function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards, cachedDefinition, cachedTab }) {
     const { resolvedTheme } = useThemeStore();
@@ -30,6 +31,8 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     const savedTabIdRef = useRef(cachedTab ? (cachedTab.id || cachedTab.dexieId || cachedTab.supabaseId) : null);
 
     const [copied, setCopied] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [shareModalData, setShareModalData] = useState({ title: '', text: '', url: '' });
     const draftKey = bookId && (position?.startOffset || position?.startOffset === 0) ? `draft_tab_${bookId}_${position.startOffset}` : null;
 
     // Refs for auto-save cleanup — always hold the latest values
@@ -246,6 +249,24 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const handleShareHighlight = () => {
+        setShareModalData({
+            title: 'Shared Highlight from Apex',
+            text: `"${selection}"`,
+            url: `${window.location.origin}/share?type=highlight&text=${encodeURIComponent(selection)}`
+        });
+        setShowShareModal(true);
+    };
+
+    const handleShareTab = () => {
+        setShareModalData({
+            title: 'Shared Note from Apex',
+            text: `"${selection}"\n\nMy Note: ${tabText}`,
+            url: `${window.location.origin}/share?type=note&text=${encodeURIComponent(selection)}&note=${encodeURIComponent(tabText)}`
+        });
+        setShowShareModal(true);
+    };
+
     const playAudio = (url) => {
         if (!url) return;
         const audio = new Audio(url);
@@ -296,6 +317,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     }
 
     return (
+        <>
         <div
             className={`highlight-menu-container fixed z-[300] animate-in fade-in duration-200 pointer-events-auto ${isMobile ? 'zoom-in-95' : 'zoom-in'}`}
             style={menuStyle}
@@ -377,6 +399,16 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             >
                                 <MagicWand size={20} weight="fill" className="text-text-secondary group-hover:text-emerald-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Simplify</span>
+                            </button>
+
+                            <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
+
+                            <button
+                                onClick={handleShareHighlight}
+                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
+                            >
+                                <ShareNetwork size={20} weight="fill" className="text-text-secondary group-hover:text-blue-500 transition-colors" />
+                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Share</span>
                             </button>
                         </div>
 
@@ -538,6 +570,16 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                     {copied ? <Check size={16} weight="bold" /> : <Copy size={16} weight="bold" />}
                                 </button>
 
+                                {/* Share Button */}
+                                <button
+                                    onClick={handleShareTab}
+                                    disabled={!tabText.trim()}
+                                    className={`p-1.5 rounded-lg transition-all hover:bg-blue-500/10 ${!tabText.trim() ? 'text-text-placeholder' : 'text-blue-500'}`}
+                                    title="Share"
+                                >
+                                    <ShareNetwork size={16} weight="bold" />
+                                </button>
+
                                 {/* Bin - Close without saving */}
                                 <button
                                     onClick={handleCancelTab}
@@ -571,6 +613,16 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                 }
             `}} />
         </div>
+
+        {/* Share Modal */}
+        <ShareModal
+            isOpen={showShareModal}
+            onClose={() => setShowShareModal(false)}
+            shareTitle={shareModalData.title}
+            shareText={shareModalData.text}
+            shareUrl={shareModalData.url}
+        />
+        </>
     );
 }
 

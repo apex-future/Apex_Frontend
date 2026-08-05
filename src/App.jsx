@@ -22,6 +22,7 @@ import OnboardingPage from './landing_page/OnboardingPage';
 import AccessibilityPage from './landing_page/AccessibilityPage';
 import useQuestStore from './main_app/store/useQuestStore';
 import NotFoundPage from './main_app/pages/NotFoundPage';
+import SharePage from './main_app/pages/SharePage';
 
 function App() {
   const navigate = useNavigate();
@@ -266,6 +267,7 @@ function App() {
       <Routes>
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/accessibility" element={<AccessibilityPage />} />
+        <Route path="/share" element={<SharePage />} />
         {!isLoggedIn ? (
           <>
             <Route path="/" element={<LandingPage onLogin={handleLogin} deferredPrompt={deferredPrompt} />} />
