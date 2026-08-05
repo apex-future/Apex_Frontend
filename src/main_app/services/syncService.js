@@ -414,23 +414,21 @@ const syncService = {
           }
         }
 
+        // Build a UUID → Dexie integer id map from the freshly-pulled or existing books
+        const localBooks = await db.books.toArray();
+        const uuidToDexieId = {};
+        for (const b of localBooks) {
+          if (b.supabaseId) uuidToDexieId[b.supabaseId] = b.id;
+        }
+
         // ── READING PROGRESS ──
         if (tablesToPull.includes('reading_progress') && pulledData.reading_progress?.length > 0) {
           if (import.meta.env.DEV) console.log('[Apex Sync] Pulling reading_progress:', pulledData.reading_progress.length);
-
-          // Build a UUID → Dexie integer id map from the freshly-pulled books
-          const localBooks = await db.books.toArray();
-          const uuidToDexieId = {};
-          for (const b of localBooks) {
-            if (b.supabaseId) uuidToDexieId[b.supabaseId] = b.id;
-          }
 
           await db.reading_progress.clear();
           const mapped = pulledData.reading_progress.map(r => {
             const camel = mapSnakeToCamel(r);
             // Remap bookId from Supabase UUID to local Dexie integer id
-            // This fixes the new-device mismatch where progress.bookId is a UUID
-            // but books.id is an auto-increment integer
             const localBookId = uuidToDexieId[r.book_id];
             if (localBookId !== undefined) {
               camel.bookId = localBookId;
@@ -449,11 +447,18 @@ const syncService = {
         if (tablesToPull.includes('highlights') && pulledData.highlights?.length > 0) {
           if (import.meta.env.DEV) console.log('[Apex Sync] Pulling highlights:', pulledData.highlights.length);
           await db.highlights.clear();
-          const mapped = pulledData.highlights.map(h => ({
-            ...mapSnakeToCamel(h),
-            supabaseId: h.id,
-            synced: true,
-          }));
+          const mapped = pulledData.highlights.map(h => {
+            const camel = mapSnakeToCamel(h);
+            const localBookId = uuidToDexieId[h.book_id];
+            if (localBookId !== undefined) {
+              camel.bookId = localBookId;
+            }
+            return {
+              ...camel,
+              supabaseId: h.id,
+              synced: true,
+            };
+          });
           for (const m of mapped) { delete m.id; }
           await db.highlights.bulkAdd(mapped);
         }
@@ -462,11 +467,18 @@ const syncService = {
         if (tablesToPull.includes('bookmarks') && pulledData.bookmarks?.length > 0) {
           if (import.meta.env.DEV) console.log('[Apex Sync] Pulling bookmarks:', pulledData.bookmarks.length);
           await db.bookmarks.clear();
-          const mapped = pulledData.bookmarks.map(b => ({
-            ...mapSnakeToCamel(b),
-            supabaseId: b.id,
-            synced: true,
-          }));
+          const mapped = pulledData.bookmarks.map(b => {
+            const camel = mapSnakeToCamel(b);
+            const localBookId = uuidToDexieId[b.book_id];
+            if (localBookId !== undefined) {
+              camel.bookId = localBookId;
+            }
+            return {
+              ...camel,
+              supabaseId: b.id,
+              synced: true,
+            };
+          });
           for (const m of mapped) { delete m.id; }
           await db.bookmarks.bulkAdd(mapped);
         }
@@ -475,11 +487,18 @@ const syncService = {
         if (tablesToPull.includes('tabs') && pulledData.tabs?.length > 0) {
           if (import.meta.env.DEV) console.log('[Apex Sync] Pulling tabs:', pulledData.tabs.length);
           await db.tabs.clear();
-          const mapped = pulledData.tabs.map(n => ({
-            ...mapSnakeToCamel(n),
-            supabaseId: n.id,
-            synced: true,
-          }));
+          const mapped = pulledData.tabs.map(n => {
+            const camel = mapSnakeToCamel(n);
+            const localBookId = uuidToDexieId[n.book_id];
+            if (localBookId !== undefined) {
+              camel.bookId = localBookId;
+            }
+            return {
+              ...camel,
+              supabaseId: n.id,
+              synced: true,
+            };
+          });
           for (const m of mapped) { delete m.id; }
           await db.tabs.bulkAdd(mapped);
         }
@@ -488,11 +507,18 @@ const syncService = {
         if (tablesToPull.includes('book_notes') && pulledData.book_notes?.length > 0) {
           if (import.meta.env.DEV) console.log('[Apex Sync] Pulling book_notes:', pulledData.book_notes.length);
           await db.book_notes.clear();
-          const mapped = pulledData.book_notes.map(n => ({
-            ...mapSnakeToCamel(n),
-            supabaseId: n.id,
-            synced: true,
-          }));
+          const mapped = pulledData.book_notes.map(n => {
+            const camel = mapSnakeToCamel(n);
+            const localBookId = uuidToDexieId[n.book_id];
+            if (localBookId !== undefined) {
+              camel.bookId = localBookId;
+            }
+            return {
+              ...camel,
+              supabaseId: n.id,
+              synced: true,
+            };
+          });
           for (const m of mapped) { delete m.id; }
           await db.book_notes.bulkAdd(mapped);
         }
