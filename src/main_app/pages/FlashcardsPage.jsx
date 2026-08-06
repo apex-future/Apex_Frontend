@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Stack, Sparkle, Plus, Cards, Trash, BookOpen, Clock } from '@phosphor-icons/react';
 import db from '../db/apex.db';
 import { showToastGlobal } from '../hooks/useToast';
+import useFlashcardStore from '../store/useFlashcardStore';
 
 function FlashcardsPage() {
   const [decks, setDecks] = useState([]);
@@ -39,6 +40,14 @@ function FlashcardsPage() {
         showToastGlobal('Failed to delete deck', 'error');
       }
     }
+  };
+
+  const handleStudyDeck = (deck) => {
+    useFlashcardStore.getState().openFlashcardModal({
+      sourceType: 'deck',
+      deckId: deck.local_id,
+      bookTitle: deck.title,
+    });
   };
 
   const formatDate = (dateString) => {
@@ -97,7 +106,11 @@ function FlashcardsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {decks.map(deck => (
-            <div key={deck.local_id} className="relative group bg-bg-elevated rounded-[1.5rem] p-5 border border-border-default hover:border-accent-primary/50 hover:shadow-lg transition-all duration-300 flex flex-col justify-between min-h-[160px] cursor-pointer active:scale-[0.98]">
+            <div 
+              key={deck.local_id} 
+              onClick={() => handleStudyDeck(deck)}
+              className="relative group bg-bg-elevated rounded-[1.5rem] p-5 border border-border-default hover:border-accent-primary/50 hover:shadow-lg transition-all duration-300 flex flex-col justify-between min-h-[160px] cursor-pointer active:scale-[0.98]"
+            >
               
               <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
@@ -124,7 +137,13 @@ function FlashcardsPage() {
                   <span className="font-bold text-sm text-text-primary">{deck.count} <span className="text-text-tertiary font-medium">Cards</span></span>
                 </div>
                 
-                <button className="px-4 py-1.5 bg-text-primary text-bg-primary font-bold text-xs rounded-full hover:bg-accent-primary hover:text-white transition-colors">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStudyDeck(deck);
+                  }}
+                  className="px-4 py-1.5 bg-text-primary text-bg-primary font-bold text-xs rounded-full hover:bg-accent-primary hover:text-white transition-colors"
+                >
                   Study
                 </button>
               </div>

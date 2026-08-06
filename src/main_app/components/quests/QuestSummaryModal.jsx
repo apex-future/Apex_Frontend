@@ -317,18 +317,7 @@ export default function QuestSummaryModal({ onDone }) {
             )}
           </motion.div>
 
-          {/* All complete bonus message */}
-          {allDone && (
-            <motion.p
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: [0, 1, 0.85, 1], scale: 1 }}
-              transition={{ delay: 1.0, duration: 0.5 }}
-              className="text-amber-500 font-semibold mb-4 text-xs"
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            >
-              Today is a golden day 🔥
-            </motion.p>
-          )}
+
 
           {/* Done button */}
           <motion.div

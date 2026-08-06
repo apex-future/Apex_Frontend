@@ -39,6 +39,9 @@ import {
 import { showToastGlobal } from '../../../../hooks/useToast';
 import apiClient from '../../../../services/apiClient';
 import { extractPageTexts } from '../../../../services/quizService';
+import useQuestStore from '../../../../store/useQuestStore';
+import useXpStore from '../../../../store/useXpStore';
+import { XP_VALUES } from '../../../../../config/xpConfig';
 
 export default function FlashcardPanel({ setFlashcardPanel, book, fileUrl, pageNumber = 1, totalPages = 1 }) {
   const [view, setView] = useState('categories'); // 'categories' | 'category_cards' | 'practice_setup' | 'practice_session' | 'history' | 'history_detail' | 'quick_setup'
@@ -176,6 +179,8 @@ export default function FlashcardPanel({ setFlashcardPanel, book, fileUrl, pageN
       if (res.count > 0) {
         showToastGlobal(res.message, 'success');
         await loadData();
+        // Report quest progress for generating flashcards
+        useQuestStore.getState().reportAction('flashcard_generated', 1);
       } else {
         showToastGlobal(res.message, 'info');
       }
@@ -411,6 +416,19 @@ export default function FlashcardPanel({ setFlashcardPanel, book, fileUrl, pageN
       }, updatedResults);
 
       await loadData();
+
+      // Award XP based on practice accuracy using per-card formula: max(min, cards * per_card * accuracy/100)
+      const totalCards = updatedResults.length;
+      const easyCount = updatedResults.filter(r => r.rating === 'easy').length;
+      const score_percentage = totalCards > 0 ? Math.round((easyCount / totalCards) * 100) : 0;
+      const perCard = XP_VALUES.flashcard_practiced_per_card || 3;
+      const minXp = XP_VALUES.flashcard_practiced_min || 10;
+      const calculatedXp = Math.floor(totalCards * perCard * (score_percentage / 100));
+      const earnedXp = Math.max(minXp, calculatedXp);
+      useXpStore.getState().awardXpOptimistic('flashcard_practiced', { score_percentage, cards_count: totalCards }, earnedXp);
+
+      // Report quest progress for practicing flashcards
+      useQuestStore.getState().reportAction('flashcard_practiced', 1);
     }
   };
 
@@ -504,6 +522,8 @@ export default function FlashcardPanel({ setFlashcardPanel, book, fileUrl, pageN
 
       setQuickSetupCards(cardsWithIds);
       showToastGlobal(`${cardsWithIds.length} flashcards generated!`, 'success');
+      // Report quest progress for generating flashcards
+      useQuestStore.getState().reportAction('flashcard_generated', 1);
     } catch (err) {
       console.error('[FlashcardPanel] Quick Setup generation failed:', err);
       const detail = err?.response?.data?.detail || '';
