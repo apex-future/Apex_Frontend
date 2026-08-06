@@ -94,11 +94,11 @@ const useStudyStore = create(
         let newHistory = [...history];
         let newFrozen = [...frozen];
 
-        if (!lastActive) {
-          // First ever streak
+        if (!lastActive || currentStreak === 0) {
+          // First ever streak or starting fresh after a reset
           newStreak = 1;
           updatedLastActive = today;
-          if (import.meta.env.DEV) console.log('[Apex Streak] First streak day!');
+          if (import.meta.env.DEV) console.log('[Apex Streak] First streak day or starting fresh after reset!');
         } else {
           // Check difference between lastActive and today
           const last = new Date(lastActive + 'T00:00:00');

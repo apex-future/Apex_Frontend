@@ -70,7 +70,9 @@ const getSessionXpBreakdown = (actions, readingXp) => {
         tab_added: 'Sticky Tabs Saved',
         simplify: 'Text Simplifications',
         ai_explanation: 'AI Clarification',
-        quiz: 'Quizzes Completed'
+        quiz: 'Quizzes Completed',
+        flashcard_generated: 'Flashcards Generated',
+        flashcard_practiced: 'Flashcard Practice',
     };
 
     Object.keys(counts).forEach(action => {
@@ -1662,6 +1664,7 @@ function ReaderView() {
                     <FlashcardPanel
                         setFlashcardPanel={setFlashcardPanel}
                         book={book}
+                        fileUrl={fileUrl}
                         pageNumber={pageNumber}
                         totalPages={numPages || localPages.total || 1}
                     />
@@ -1775,21 +1778,8 @@ function ReaderView() {
                                 xpStore.awardXpOptimistic('reading', { minutes }, sessionStats.xpGained);
                                 xpStore.flushPendingXp();
                             }
-                            // Check if any quest is still incomplete — show Quest Modal if so
-                            const questState = useQuestStore.getState();
-                            const hasIncomplete = [questState.quest_1, questState.quest_2, questState.quest_3]
-                                .filter(Boolean)
-                                .some(q => !q.completed);
-
                             setShowSessionSummary(false);
-
-                            if (hasIncomplete) {
-                                setShowQuestSummary(true);
-                            } else {
-                                // All quests done (or none loaded) — skip quest modal, go to dashboard
-                                useXpStore.getState().startSessionTracker();
-                                navigate('/', { replace: true });
-                            }
+                            setShowQuestSummary(true);
                         }}
                         onCancel={() => {
                             // User clicked X — cancel exit, resume timer

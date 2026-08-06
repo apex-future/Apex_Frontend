@@ -93,6 +93,8 @@ function QuestRow({ quest, index, questKey, chestClaimed, onChestClick }) {
   const { copy, progress = 0, target = 1, completed = false, subcategory, unit } = quest;
   const Icon = SUBCATEGORY_ICONS[subcategory] || Book;
   const delay = 0.3 + index * 0.15;
+  const previousProgress = quest.previousProgress !== undefined ? quest.previousProgress : progress;
+  const oldFillPercent = Math.min((previousProgress / Math.max(target, 1)) * 100, 100);
   const fillPercent = Math.min((progress / Math.max(target, 1)) * 100, 100);
   const inProgress = progress > 0 && !completed;
 
@@ -116,21 +118,21 @@ function QuestRow({ quest, index, questKey, chestClaimed, onChestClick }) {
             <div className="flex-1 h-4 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden shadow-inner">
               {/* Base grey text */}
               <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-text-tertiary">
-                {progress} / {target}{unit ? ` ${unit}` : ''}
+                <AnimatedCounter from={previousProgress} to={progress} /> / {target}{unit ? ` ${unit}` : ''}
               </div>
 
               {/* Clipped Fill Layer */}
               <motion.div 
                 className="absolute inset-0 overflow-hidden"
-                initial={{ clipPath: `inset(0 100% 0 0 round 9999px)` }}
+                initial={{ clipPath: `inset(0 ${100 - oldFillPercent}% 0 0 round 9999px)` }}
                 animate={{ clipPath: `inset(0 ${100 - fillPercent}% 0 0 round 9999px)` }}
-                transition={{ duration: 0.8, delay: delay + 0.15, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 1.2, delay: delay + 0.15, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className={`absolute inset-0 bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] ${inProgress ? 'quest-shimmer' : ''}`} />
                 
                 {/* White text */}
                 <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow-sm">
-                  {progress} / {target}{unit ? ` ${unit}` : ''}
+                  <AnimatedCounter from={previousProgress} to={progress} /> / {target}{unit ? ` ${unit}` : ''}
                 </div>
               </motion.div>
             </div>
@@ -181,6 +183,11 @@ export default function QuestSummaryModal({ onDone }) {
   const [showRewardModal, setShowRewardModal] = React.useState(false);
   const [modalData, setModalData] = React.useState(null);
   const activeChestQuestKey = React.useRef(null);
+
+  const handleDone = () => {
+    useQuestStore.getState().syncPreviousProgress();
+    onDone();
+  };
 
   const quest_1 = useQuestStore(s => s.quest_1);
   const quest_2 = useQuestStore(s => s.quest_2);
@@ -310,18 +317,7 @@ export default function QuestSummaryModal({ onDone }) {
             )}
           </motion.div>
 
-          {/* All complete bonus message */}
-          {allDone && (
-            <motion.p
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: [0, 1, 0.85, 1], scale: 1 }}
-              transition={{ delay: 1.0, duration: 0.5 }}
-              className="text-amber-500 font-semibold mb-4 text-xs"
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            >
-              Today is a golden day 🔥
-            </motion.p>
-          )}
+
 
           {/* Done button */}
           <motion.div
@@ -331,7 +327,7 @@ export default function QuestSummaryModal({ onDone }) {
             className="w-full"
           >
             <button
-              onClick={onDone}
+              onClick={handleDone}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-brand hover:bg-brand-light active:bg-brand-mid text-white font-bold text-base font-sans transition-colors duration-200 shadow-sm"
             >
               Done

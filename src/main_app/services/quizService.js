@@ -3,6 +3,7 @@
  * Owns all quiz-related Dexie reads/writes and API orchestration.
  * Supabase sync is fire-and-forget — failures do not block the user.
  */
+import { pdfjs } from 'react-pdf';
 import db from '../db/apex.db';
 import { generateQuiz as apiGenerateQuiz, gradeEssay as apiGradeEssay } from './aiService';
 import apiClient from './apiClient';
@@ -13,20 +14,52 @@ import { XP_VALUES } from '../../config/xpConfig';
 // ─── Helpers ────────────────────────────────────────────────
 
 /**
- * Extract visible text from PDF DOM for a list of page numbers.
+ * Extract visible text from PDF DOM or pdfjs for a list of page numbers.
  * Returns array of { page: number, text: string }.
  * Pages with no text layer (image-based PDFs) return empty string for that page.
  */
-export function extractPageTexts(selectedPages) {
-  console.log('[QuizService] Extracting text from pages:', selectedPages);
-  const pageWrappers = document.querySelectorAll('.pdf-page-wrapper');
+export async function extractPageTexts(selectedPages, fileUrl = null) {
+  console.log('[QuizService] Extracting text from pages:', selectedPages, 'fileUrl provided:', !!fileUrl);
   const textMap = {};
 
+  // Method 1: If fileUrl is provided (PDF file), extract text using pdfjs
+  if (fileUrl) {
+    try {
+      const loadingTask = pdfjs.getDocument(fileUrl);
+      const docProxy = await loadingTask.promise;
+      for (const pageNum of selectedPages) {
+        try {
+          if (pageNum > 0 && pageNum <= docProxy.numPages) {
+            const page = await docProxy.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items
+              .map(item => item.str)
+              .join(' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+            if (pageText) {
+              textMap[pageNum] = pageText;
+            }
+          }
+        } catch (e) {
+          console.warn(`[QuizService] pdfjs text extraction failed for page ${pageNum}:`, e);
+        }
+      }
+    } catch (err) {
+      console.warn('[QuizService] Failed to load PDF via pdfjs for text extraction:', err);
+    }
+  }
+
+  // Method 2: Fallback to DOM elements for any pages missing text
+  const pageWrappers = document.querySelectorAll('.pdf-page-wrapper');
   pageWrappers.forEach(wrapper => {
     const pageIdx = parseInt(wrapper.dataset.pageIndex, 10);
-    if (selectedPages.includes(pageIdx)) {
+    if (selectedPages.includes(pageIdx) && (!textMap[pageIdx] || textMap[pageIdx].trim().length === 0)) {
       const textLayer = wrapper.querySelector('.react-pdf__Page__textContent');
-      textMap[pageIdx] = textLayer ? (textLayer.innerText || textLayer.textContent || '').trim() : '';
+      const text = textLayer ? (textLayer.innerText || textLayer.textContent || '').trim() : '';
+      if (text) {
+        textMap[pageIdx] = text;
+      }
     }
   });
 
@@ -131,9 +164,15 @@ async function syncQuizToSupabase(dexieId, quizData, userId, supabaseBookId) {
  * 3. Save to Dexie (incomplete row)
  * 4. Return { dexieId, questionsPayload }
  */
-export async function initiateMCQQuiz({ bookId, supabaseBookId, bookTitle, userId, selectedPages, numQuestions, quizTime, difficulty }) {
+export async function initiateMCQQuiz({ bookId, supabaseBookId, bookTitle, userId, selectedPages, numQuestions, quizTime, difficulty, fileUrl }) {
   console.log('[QuizService] Initiating MCQ quiz...');
-  const pageTexts = extractPageTexts(selectedPages);
+  const pageTexts = await extractPageTexts(selectedPages, fileUrl);
+
+  const totalChars = pageTexts.reduce((sum, pt) => sum + (pt.text || '').trim().length, 0);
+  if (totalChars < 30) {
+    const pagesStr = selectedPages.length > 0 ? selectedPages.join(', ') : 'selected';
+    throw new Error(`Cannot generate quiz: No readable text found on page(s) ${pagesStr}. Please select pages with text content.`);
+  }
 
   const { questions_payload } = await apiGenerateQuiz({
     bookId: supabaseBookId,
@@ -176,9 +215,15 @@ export async function initiateMCQQuiz({ bookId, supabaseBookId, bookTitle, userI
  * 3. Save incomplete row to Dexie
  * 4. Return { dexieId, questionsPayload }
  */
-export async function initiateEssayQuiz({ bookId, supabaseBookId, bookTitle, userId, selectedPages, numQuestions, quizTime, difficulty }) {
+export async function initiateEssayQuiz({ bookId, supabaseBookId, bookTitle, userId, selectedPages, numQuestions, quizTime, difficulty, fileUrl }) {
   console.log('[QuizService] Initiating essay quiz...');
-  const pageTexts = extractPageTexts(selectedPages);
+  const pageTexts = await extractPageTexts(selectedPages, fileUrl);
+
+  const totalChars = pageTexts.reduce((sum, pt) => sum + (pt.text || '').trim().length, 0);
+  if (totalChars < 30) {
+    const pagesStr = selectedPages.length > 0 ? selectedPages.join(', ') : 'selected';
+    throw new Error(`Cannot generate quiz: No readable text found on page(s) ${pagesStr}. Please select pages with text content.`);
+  }
 
   const { questions_payload } = await apiGenerateQuiz({
     bookId: supabaseBookId,

@@ -16,6 +16,7 @@ function GlobalAnalytics() {
     const [analyticsData, setAnalyticsData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
     const analyticsBookIdsKey = useMemo(() => (
         books
@@ -46,6 +47,15 @@ function GlobalAnalytics() {
                 const response = await apiClient.post('/api/spaces/analytics', { book_ids: bookIds });
                 console.log('[GlobalAnalytics] Received data:', response.data);
                 setAnalyticsData(response.data);
+
+                // Trigger background fetch for full 30-day activity history
+                setLoadingHistory(true);
+                apiClient.post('/api/spaces/analytics', { book_ids: bookIds, full_history: true })
+                    .then(res => {
+                        setAnalyticsData(prev => prev ? { ...prev, recent_activity: res.data.recent_activity } : prev);
+                    })
+                    .catch(bgErr => console.warn('[GlobalAnalytics] Background history fetch failed:', bgErr))
+                    .finally(() => setLoadingHistory(false));
             } catch (err) {
                 console.error('[GlobalAnalytics] Fetch error:', err);
                 // MOCK DATA FALLBACK: If the backend isn't running or the endpoint fails,
@@ -256,6 +266,8 @@ function GlobalAnalytics() {
                             currentStreak={stats.current_streak}
                             rawActivity={stats.recent_activity}
                             spaceBooks={books}
+                            readingTimeHistory={analyticsData?.reading_time_history}
+                            loadingHistory={loadingHistory}
                         />
                         <KnowledgeMasteryCard spaceBooks={books} masteryData={masteryData} />
                     </div>

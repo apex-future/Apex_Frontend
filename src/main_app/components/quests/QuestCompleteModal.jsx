@@ -183,18 +183,7 @@ export default function QuestCompleteModal({
             </motion.div>
           )}
 
-          {/* 6. Golden streak message */}
-          {allCompleted && (
-            <motion.p
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: [0, 1, 0.85, 1], scale: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="text-amber-500 font-semibold mb-4"
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 12 }}
-            >
-              Today is a golden day 🔥
-            </motion.p>
-          )}
+
 
           {/* 7. Dismiss button */}
           <Button

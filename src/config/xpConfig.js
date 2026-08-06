@@ -41,6 +41,9 @@ export const XP_VALUES = {
   dictionary_lookup: 2,        // per lookup, capped at 15/day
   tab_added: 5,                // per tab/sticky note saved, capped at 15/day
   simplify: 5,                 // per text simplification
+  flashcard_generated: 0,
+  flashcard_practiced_min: 10,
+  flashcard_practiced_per_card: 3,
 };
 
 // ─── Daily XP Caps ───────────────────────────────────────────────────────────

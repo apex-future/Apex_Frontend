@@ -256,6 +256,12 @@ const PDFReader = ({
   const renderedPagesRef = useRef(new Set());
   const [displayedPage, setDisplayedPage] = useState(pageNumber);
   const [isFading, setIsFading] = useState(false);
+
+  // ── Teleport overlay state ──
+  // Shows a skeleton overlay during large page jumps to avoid rendering intermediate pages
+  const [jumpOverlayVisible, setJumpOverlayVisible] = useState(false);
+  const [jumpOverlayFading, setJumpOverlayFading] = useState(false);
+  const jumpOverlayTimer = useRef(null);
   const isVertical = scrollOrientation === 'vertical';
   const { pageAnimations, scrollAnimation } = useSettingsStore();
 
@@ -366,7 +372,11 @@ const PDFReader = ({
   }, []);
 
   // Handle programmatic scroll for goToPage in vertical mode
+  // For large jumps (>3 pages), teleport instantly with a skeleton overlay.
+  // For small jumps (≤3 pages), use smooth scrolling as before.
   const initialScrollDone = useRef(false);
+  const TELEPORT_THRESHOLD = 3; // pages — jumps larger than this teleport instantly
+
   useEffect(() => {
     if (!isVertical || !rowVirtualizer || !numPages) return;
 
@@ -382,9 +392,50 @@ const PDFReader = ({
     initialScrollDone.current = true;
 
     if (pageNumber === lastReportedPage.current) return;
-    rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start', behavior: 'smooth' });
-    lastReportedPage.current = pageNumber;
+
+    const jumpDistance = Math.abs(pageNumber - lastReportedPage.current);
+
+    if (jumpDistance > TELEPORT_THRESHOLD) {
+      // ── TELEPORT: instant jump with skeleton overlay ──
+      // 1. Suppress scroll-based page detection during the jump
+      isJumping.current = true;
+
+      // 2. Show the skeleton overlay immediately
+      setJumpOverlayFading(false);
+      setJumpOverlayVisible(true);
+
+      // 3. Clear any pending overlay timers
+      if (jumpOverlayTimer.current) clearTimeout(jumpOverlayTimer.current);
+
+      // 4. Teleport — no smooth behavior, so the virtualizer only renders
+      //    pages around the destination, not every page in between
+      rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start' });
+      lastReportedPage.current = pageNumber;
+
+      // 5. Wait for the virtualizer to settle and the target page to render,
+      //    then fade out the overlay. We use a short delay to let the canvas paint.
+      jumpOverlayTimer.current = setTimeout(() => {
+        isJumping.current = false;
+        setJumpOverlayFading(true); // trigger CSS fade-out
+        // After the fade-out transition completes, remove the overlay from DOM
+        setTimeout(() => {
+          setJumpOverlayVisible(false);
+          setJumpOverlayFading(false);
+        }, 300); // matches the CSS transition duration
+      }, 150); // brief delay for canvas to render
+    } else {
+      // ── SMOOTH SCROLL: for small jumps (≤3 pages) ──
+      rowVirtualizer.scrollToIndex(pageNumber - 1, { align: 'start', behavior: 'smooth' });
+      lastReportedPage.current = pageNumber;
+    }
   }, [pageNumber, isVertical, numPages]);
+
+  // Cleanup overlay timer on unmount
+  useEffect(() => {
+    return () => {
+      if (jumpOverlayTimer.current) clearTimeout(jumpOverlayTimer.current);
+    };
+  }, []);
 
   // Maintain scroll position when container width changes (e.g. side panels opening)
   const prevCssScale = useRef(cssScale);
@@ -949,6 +1000,52 @@ const PDFReader = ({
           })
         )}
       </Document>
+
+      {/* Teleport skeleton overlay — shown during large page jumps */}
+      {jumpOverlayVisible && (
+        <div
+          className="absolute inset-0 z-30 flex items-center justify-center bg-bg-primary"
+          style={{
+            opacity: jumpOverlayFading ? 0 : 1,
+            transition: 'opacity 300ms ease-out',
+            pointerEvents: jumpOverlayFading ? 'none' : 'auto',
+          }}
+        >
+          {/* Inline skeleton — matches BookSkeleton style but lightweight (no router deps) */}
+          <div className="flex flex-col items-center gap-6">
+            <div className="w-[200px] h-[280px] bg-bg-subtle dark:bg-bg-elevated shadow-2xl rounded-sm p-5 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+              <div className="space-y-4">
+                <div className="h-2 w-1/3 bg-gray-200 dark:bg-black/40 rounded-full mb-6" />
+                <div className="space-y-2">
+                  <div className="h-1 w-full bg-gray-200 dark:bg-black/40 rounded-full" />
+                  <div className="h-1 w-full bg-gray-200 dark:bg-black/40 rounded-full" />
+                  <div className="h-1 w-4/5 bg-gray-200 dark:bg-black/40 rounded-full" />
+                  <div className="h-1 w-full bg-gray-200 dark:bg-black/40 rounded-full" />
+                  <div className="h-1 w-full bg-gray-200 dark:bg-black/40 rounded-full" />
+                  <div className="h-1 w-3/4 bg-gray-200 dark:bg-black/40 rounded-full" />
+                </div>
+                <div className="space-y-2 pt-4">
+                  <div className="h-1 w-full bg-gray-200 dark:bg-black/40 rounded-full" />
+                  <div className="h-1 w-full bg-gray-200 dark:bg-black/40 rounded-full" />
+                  <div className="h-1 w-5/6 bg-gray-200 dark:bg-black/40 rounded-full" />
+                  <div className="h-1 w-full bg-gray-200 dark:bg-black/40 rounded-full" />
+                  <div className="h-1 w-2/3 bg-gray-200 dark:bg-black/40 rounded-full" />
+                </div>
+              </div>
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-1 w-4 bg-gray-200 dark:bg-black/40 rounded-full" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0s' }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.4s' }} />
+            </div>
+            <p className="text-text-tertiary font-sans text-sm font-medium tracking-widest uppercase animate-pulse">
+              Jumping to page...
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

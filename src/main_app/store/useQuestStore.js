@@ -36,18 +36,20 @@ const useQuestStore = create(
           const resolveQuest = (questKey) => {
             const serverQuest = questData[questKey];
             if (!serverQuest) return serverQuest;
-            if (isNewDay) return serverQuest;
+            if (isNewDay) return { ...serverQuest, previousProgress: 0 };
 
             const localQuest = state[questKey];
-            if (!localQuest || localQuest.id !== serverQuest.id) return serverQuest;
+            if (!localQuest || localQuest.id !== serverQuest.id) return { ...serverQuest, previousProgress: serverQuest.progress ?? 0 };
 
+            const resolvedProgress = Math.max(localQuest.progress ?? 0, serverQuest.progress ?? 0);
             return {
               ...serverQuest,
-              progress: Math.max(localQuest.progress ?? 0, serverQuest.progress ?? 0),
+              progress: resolvedProgress,
               completed: localQuest.completed || serverQuest.completed,
+              previousProgress: localQuest.previousProgress !== undefined ? localQuest.previousProgress : resolvedProgress,
             };
           };
-
+        
           return {
             todayDate: questData.date,
             quest_1: resolveQuest('quest_1'),
@@ -79,7 +81,14 @@ const useQuestStore = create(
             const questId = quest.data.id;
 
             if (navigator.onLine) {
-              // Online path — unchanged behaviour
+              // Online path — optimistic update first to reduce latency
+              const oldProgress = quest.data.progress || 0;
+              const newProgress = Math.min(oldProgress + increment, quest.data.target || 1);
+              const completed = newProgress >= (quest.data.target || 1);
+
+              console.log('[Quest Store] reportAction ONLINE — optimistic update:', action, '→', newProgress);
+              get().updateQuestProgress(quest.key, newProgress, completed);
+
               try {
                 const res = await apiClient.post('/api/quests/progress', {
                   quest_id: questId,
@@ -87,10 +96,12 @@ const useQuestStore = create(
                   increment,
                 });
                 get().updateQuestProgress(quest.key, res.data.new_progress, res.data.completed);
-                console.log('[Quest Store] reportAction online:', action, '→', questId);
+                console.log('[Quest Store] reportAction online (confirmed):', action, '→', res.data.new_progress);
                 return res.data;
               } catch (err) {
                 console.error('[Quest Store] reportAction failed for', action, err);
+                // Rollback optimistic update on error
+                get().updateQuestProgress(quest.key, oldProgress, oldProgress >= (quest.data.target || 1));
               }
             } else {
               // Offline path — optimistic update + CASA-ready queue entry
@@ -144,13 +155,31 @@ const useQuestStore = create(
       updateQuestProgress: (questKey, newProgress, completed) => {
         set((state) => {
           if (!state[questKey]) return state;
+          const oldProgress = state[questKey].progress ?? 0;
           return {
             [questKey]: {
               ...state[questKey],
               progress: newProgress,
               completed,
+              previousProgress: state[questKey].previousProgress !== undefined ? state[questKey].previousProgress : oldProgress,
             },
           };
+        });
+      },
+
+      syncPreviousProgress: () => {
+        set((state) => {
+          const updates = {};
+          if (state.quest_1) {
+            updates.quest_1 = { ...state.quest_1, previousProgress: state.quest_1.progress };
+          }
+          if (state.quest_2) {
+            updates.quest_2 = { ...state.quest_2, previousProgress: state.quest_2.progress };
+          }
+          if (state.quest_3) {
+            updates.quest_3 = { ...state.quest_3, previousProgress: state.quest_3.progress };
+          }
+          return updates;
         });
       },
 
