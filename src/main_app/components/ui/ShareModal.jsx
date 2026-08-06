@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X as XIcon, Copy, Check, Link, ChatCircleDots } from '@phosphor-icons/react';
+import { X as XIcon, Copy, Check, Link, Export } from '@phosphor-icons/react';
 import useThemeStore from '../../store/themeStore';
 
 // Platform icons as inline SVGs for reliability
@@ -35,6 +35,66 @@ const EmailIcon = () => (
     </svg>
 );
 
+const generateShareImage = async (text, title) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1080;
+    const ctx = canvas.getContext('2d');
+
+    // Draw background
+    const gradient = ctx.createLinearGradient(0, 0, 1080, 1080);
+    gradient.addColorStop(0, '#1a1a2e');
+    gradient.addColorStop(1, '#16213e');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 1080, 1080);
+
+    // Draw App Name / Logo
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 60px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(title || 'Apex', 540, 150);
+
+    // Draw text (with wrapping)
+    ctx.font = '40px sans-serif';
+    ctx.fillStyle = '#e0e0e0';
+    
+    // Simple text wrapping logic
+    const wrapText = (context, text, x, y, maxWidth, lineHeight) => {
+        const words = text.split(' ');
+        let line = '';
+        let currentY = y;
+
+        for(let n = 0; n < words.length; n++) {
+            const testLine = line + words[n] + ' ';
+            const metrics = context.measureText(testLine);
+            const testWidth = metrics.width;
+            
+            if (testWidth > maxWidth && n > 0) {
+                context.fillText(line, x, currentY);
+                line = words[n] + ' ';
+                currentY += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        context.fillText(line, x, currentY);
+    };
+
+    wrapText(ctx, text, 540, 350, 880, 60);
+
+    // Draw bottom branding
+    ctx.font = '30px sans-serif';
+    ctx.fillStyle = '#888888';
+    ctx.fillText('Shared from Apex App', 540, 980);
+
+    // Return blob
+    return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+            resolve(blob);
+        }, 'image/png');
+    });
+};
+
 /**
  * ShareModal — a platform-aware share chooser.
  * 
@@ -48,6 +108,8 @@ const EmailIcon = () => (
 export default function ShareModal({ isOpen, onClose, shareText, shareUrl, shareTitle }) {
     const { resolvedTheme } = useThemeStore();
     const [copied, setCopied] = React.useState(false);
+    const [isGenerating, setIsGenerating] = React.useState(false);
+    const [shareFile, setShareFile] = React.useState(null);
     const backdropRef = useRef(null);
 
     // Lock body scroll while open
@@ -55,6 +117,23 @@ export default function ShareModal({ isOpen, onClose, shareText, shareUrl, share
         if (isOpen) document.body.style.overflow = 'hidden';
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
+
+    // Pre-generate image to avoid async rejection on iOS Safari
+    useEffect(() => {
+        if (isOpen && shareText) {
+            setIsGenerating(true);
+            generateShareImage(shareText, shareTitle).then(blob => {
+                setShareFile(new File([blob], 'apex-share.png', { type: 'image/png' }));
+                setIsGenerating(false);
+            }).catch(err => {
+                console.error("Failed to pre-generate share image", err);
+                setIsGenerating(false);
+            });
+        } else {
+            setShareFile(null);
+            setIsGenerating(false);
+        }
+    }, [isOpen, shareText, shareTitle]);
 
     if (!isOpen) return null;
 
@@ -122,9 +201,21 @@ export default function ShareModal({ isOpen, onClose, shareText, shareUrl, share
     const handleNativeShare = async () => {
         if (navigator.share) {
             try {
-                await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-            } catch (_) { /* user cancelled */ }
-            onClose();
+                const textWithUrl = `${shareText}\n\n${shareUrl}`;
+                if (shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] })) {
+                    await navigator.share({
+                        title: shareTitle,
+                        text: textWithUrl,
+                        files: [shareFile]
+                    });
+                } else {
+                    await navigator.share({ title: shareTitle, text: textWithUrl });
+                }
+            } catch (error) { 
+                console.error('Share failed:', error);
+            } finally {
+                onClose();
+            }
         }
     };
 
@@ -133,15 +224,21 @@ export default function ShareModal({ isOpen, onClose, shareText, shareUrl, share
             <div
                 ref={backdropRef}
                 className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-150"
-                onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
+                onClick={(e) => { if (e.target === backdropRef.current && !isGenerating) onClose(); }}
             >
-                <div className="w-full max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
+                <div className="w-full max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 relative"
                     style={{ backgroundColor: 'rgb(var(--bg-elevated))', border: '1px solid rgb(var(--border-default))' }}
                 >
+                    {isGenerating && (
+                        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+                            <div className="w-8 h-8 border-4 border-accent-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+                            <span className="text-sm font-semibold" style={{ color: 'rgb(var(--text-primary))' }}>Generating Image...</span>
+                        </div>
+                    )}
                     {/* Header */}
                     <div className="flex items-center justify-between px-5 pt-5 pb-3">
                         <h2 className="text-base font-bold" style={{ color: 'rgb(var(--text-primary))' }}>Share to…</h2>
-                        <button onClick={onClose} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-colors">
+                        <button onClick={onClose} disabled={isGenerating} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-colors">
                             <XIcon size={18} weight="bold" style={{ color: 'rgb(var(--text-tertiary))' }} />
                         </button>
                     </div>
@@ -159,6 +256,7 @@ export default function ShareModal({ isOpen, onClose, shareText, shareUrl, share
                             <button
                                 key={p.name}
                                 onClick={p.onClick}
+                                disabled={isGenerating}
                                 className="flex flex-col items-center gap-1.5 group"
                             >
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${p.color} transition-transform group-hover:scale-110 group-active:scale-95 shadow-sm`}>
@@ -177,6 +275,7 @@ export default function ShareModal({ isOpen, onClose, shareText, shareUrl, share
                         {/* Copy Link */}
                         <button
                             onClick={handleCopyLink}
+                            disabled={isGenerating}
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                         >
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--bg-subtle))' }}>
@@ -191,10 +290,11 @@ export default function ShareModal({ isOpen, onClose, shareText, shareUrl, share
                         {typeof navigator !== 'undefined' && navigator.share && (
                             <button
                                 onClick={handleNativeShare}
+                                disabled={isGenerating}
                                 className="flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                             >
                                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--bg-subtle))' }}>
-                                    <ChatCircleDots size={18} weight="bold" style={{ color: 'rgb(var(--text-secondary))' }} />
+                                    <Export size={18} weight="bold" style={{ color: 'rgb(var(--text-secondary))' }} />
                                 </div>
                                 <span className="text-sm font-semibold" style={{ color: 'rgb(var(--text-secondary))' }}>
                                     More options…
@@ -208,3 +308,4 @@ export default function ShareModal({ isOpen, onClose, shareText, shareUrl, share
         document.body
     );
 }
+

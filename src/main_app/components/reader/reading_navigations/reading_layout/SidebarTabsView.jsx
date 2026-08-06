@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { FileText, Plus, Trash, PencilSimple, FloppyDisk, X, CalendarBlank, MagnifyingGlass, Note, Quotes } from '@phosphor-icons/react';
+import { FileText, Plus, Trash, PencilSimple, FloppyDisk, X, CalendarBlank, MagnifyingGlass, Note, Quotes, ShareNetwork } from '@phosphor-icons/react';
 import { useXpStore } from '../../../../store/useXpStore';
 import { useQuestStore } from '../../../../store/useQuestStore';
+import ShareModal from '../../../../components/ui/ShareModal';
 
 /**
  * SidebarTabsView
@@ -13,6 +14,7 @@ function SidebarTabsView({ tabs = [], addTab, updateTab, deleteTab }) {
     const [editingId, setEditingId] = useState(null);
     const [editText, setEditText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    const [shareTab, setShareTab] = useState(null);
 
     const filteredTabs = useMemo(() => {
         if (!searchQuery.trim()) return tabs;
@@ -159,21 +161,25 @@ function SidebarTabsView({ tabs = [], addTab, updateTab, deleteTab }) {
                                         <p className='text-[15px] text-text-primary leading-relaxed font-medium flex-1'>
                                             {tab.text}
                                         </p>
-                                        <div className='flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 -mr-2 scale-90'>
-                                            <button onClick={() => handleEdit(tab.id, tab.text)} className='p-2 rounded-xl bg-bg-elevated border border-border-default shadow-sm text-text-tertiary hover:text-accent-primary hover:border-accent-primary/20 transition-all'><PencilSimple size={14} weight="bold" /></button>
-                                            <button onClick={() => deleteTab(tab.id)} className='p-2 rounded-xl bg-bg-elevated border border-border-default shadow-sm text-text-tertiary hover:text-red-500 hover:border-red-100 transition-all'><Trash size={14} weight="bold" /></button>
-                                        </div>
                                     </div>
 
-                                    <div className='flex items-center justify-between pt-3 border-t border-border-default/30'>
+                                    <div className='flex items-center justify-between pt-3 border-t border-border-default/30 mt-2'>
                                         <div className='flex items-center gap-2 text-[10px] font-bold text-text-tertiary uppercase tracking-wider'>
                                             <CalendarBlank size={12} weight="bold" className='opacity-40' />
                                             {formatDate(tab.updatedAt || tab.createdAt)}
                                             {tab.updatedAt && tab.updatedAt !== tab.createdAt && <span className='lowercase opacity-50 font-medium'>(edited)</span>}
                                         </div>
-                                        <span className='text-[9px] font-black text-text-placeholder uppercase tracking-tighter'>
-                                            {tab.type === 'highlight_note' ? 'Highlight Tab' : 'Manual Tab'}
-                                        </span>
+                                        <div className='flex items-center gap-2'>
+                                            <button onClick={() => setShareTab(tab)} className='p-1.5 rounded-lg bg-bg-subtle text-text-tertiary hover:text-accent-primary transition-all' title="Share">
+                                                <ShareNetwork size={14} weight="bold" />
+                                            </button>
+                                            <button onClick={() => handleEdit(tab.id, tab.text)} className='p-1.5 rounded-lg bg-bg-subtle text-text-tertiary hover:text-accent-primary transition-all' title="Edit">
+                                                <PencilSimple size={14} weight="bold" />
+                                            </button>
+                                            <button onClick={() => deleteTab(tab.id)} className='p-1.5 rounded-lg bg-bg-subtle text-text-tertiary hover:text-red-500 transition-all' title="Delete">
+                                                <Trash size={14} weight="bold" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </>
                             )}
@@ -181,6 +187,15 @@ function SidebarTabsView({ tabs = [], addTab, updateTab, deleteTab }) {
                     ))
                 )}
             </div>
+            
+            {/* Share Modal */}
+            <ShareModal
+                isOpen={!!shareTab}
+                onClose={() => setShareTab(null)}
+                shareTitle="Apex Note"
+                shareText={shareTab?.text || ''}
+                shareUrl={`${window.location.origin}/share?type=note&note=${encodeURIComponent(shareTab?.text || '')}`}
+            />
         </div>
     );
 }
