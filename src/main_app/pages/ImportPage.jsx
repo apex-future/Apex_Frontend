@@ -74,14 +74,14 @@ export default function ImportPage() {
 
     if (isShared) {
       // Handle Web Share Target (Android)
-      fetch('/shared-file').then(async (res) => {
-        if (res.ok) {
+      caches.open('share-target-cache').then(async (cache) => {
+        const res = await cache.match('/shared-file');
+        if (res) {
           const blob = await res.blob();
           const name = decodeURIComponent(res.headers.get('X-File-Name') || 'Shared File');
           const file = new File([blob], name, { type: res.headers.get('Content-Type') });
           
           // Clean up the cache
-          const cache = await caches.open('share-target-cache');
           await cache.delete('/shared-file');
           
           // Simulate fileHandle for processFiles (which calls getFile())
@@ -94,7 +94,7 @@ export default function ImportPage() {
           navigate('/');
         }
       }).catch((err) => {
-        console.error('Failed to fetch shared file:', err);
+        console.error('Failed to fetch shared file from cache:', err);
         navigate('/');
       });
     } else if ('launchQueue' in window) {
