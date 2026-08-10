@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 // Import Lucide icons for visual representation in the navigation
-import { Sparkle, House, X, Book, Notebook, Gear, TextAa, List, Sun, Moon, Monitor, User, TrendUp, Scroll } from '@phosphor-icons/react';
+import { Sparkle, House, X, Book, Notebook, Gear, TextAa, List, Sun, Moon, Monitor, User, TrendUp, Scroll, DownloadSimple } from '@phosphor-icons/react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
 import { NavBarContext } from './NavBarContextInstance';
 import useThemeStore from '../../../store/themeStore';
 import logoLight from "../../../../assets/logo/logo-light-removebg-preview.png";
 import logoDark from "../../../../assets/logo/logo-dark-removebg-preview.png";
+import { showToastGlobal } from '../../../hooks/useToast';
 
 /**
  * AsideNavBar Component:
@@ -260,6 +261,41 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
             </li>
 
           </ul>
+
+          {/* Bottom utility: Download Apex */}
+          <div className={`border-t border-border-default/8 dark:border-neutral-800/50 pt-4 mt-3 flex flex-col gap-2 ${!isExpanded ? 'items-center' : ''}`}>
+            <button
+              onClick={async () => {
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+                if (isStandalone) {
+                  showToastGlobal("Apex is already installed and running as an app!", "info");
+                  return;
+                }
+
+                if (window.deferredPrompt) {
+                  try {
+                    window.deferredPrompt.prompt();
+                    const choice = await window.deferredPrompt.userChoice;
+                    console.log('[Apex] Install prompt result:', choice?.outcome);
+                    window.deferredPrompt = null;
+                  } catch (err) {
+                    console.error('[Apex] Install error:', err);
+                  }
+                } else {
+                  showToastGlobal("To install Apex, open your browser menu and select 'Install Apex' or 'Add to Home Screen'.", "info");
+                }
+              }}
+              className={`flex items-center p-2.5 rounded-xl transition-all duration-300 text-text-secondary hover:bg-accent-primary/10 hover:text-accent-primary ${!isExpanded ? 'justify-center' : 'gap-3'}`}
+              title="Download Apex"
+            >
+              <DownloadSimple size={20} weight="regular" className="flex-shrink-0" />
+              <span
+                className={`whitespace-nowrap transition-all duration-300 text-sm font-medium ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}`}
+              >
+                Download Apex
+              </span>
+            </button>
+          </div>
         </nav>
       </aside>
     </>

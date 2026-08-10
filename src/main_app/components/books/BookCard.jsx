@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Heart, Eye, FolderSimplePlus, Trash, X, Info, PencilSimple, DotsThreeVertical, ShareNetwork } from '@phosphor-icons/react';
+import { Heart, Eye, FolderSimplePlus, Trash, X, Info, PencilSimple, CaretDoubleLeft, ShareNetwork } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import BookCover from './BookCover';
 import Modal from '../ui/Modal';
@@ -203,7 +203,7 @@ export default function BookCard({ book, onClick }) {
  style={{ width: `${book.progress}%` }}
  />
  </div>
- <p className="text-xs text-text-tertiary mt-1 text-left">Page {book.currentPage || 0} of {book.totalPages || 0} completed</p>
+ <p className="text-xs text-text-tertiary mt-1 text-left">Page {book.currentPage || 0} of {book.totalPages || 0}</p>
  {book.lastAccessed && (
  <p className="text-[10px] text-text-placeholder mt-0.5 text-left">
  Last read: {new Date(book.lastAccessed).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -225,48 +225,37 @@ export default function BookCard({ book, onClick }) {
             <Eye size={20} weight="bold" />
           </button>
           
-          {/* 3-Dot Menu Container */}
-          <div className="relative">
+          {/* Expandable action tray — replaces 3-dot menu */}
+          <div className="relative flex items-center">
+            <div className={`flex items-center gap-2 overflow-hidden transition-all duration-300 ease-in-out ${showMenu ? 'max-w-[150px] opacity-100 mr-1' : 'max-w-0 opacity-0'}`}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowMenu(false); handleBookmarkClick(e); }}
+                className="text-gray-400 hover:text-accent-primary transition-colors flex-shrink-0"
+                title={isInAnySpace ? 'Update Space' : 'Add to Bookspace'}
+              >
+                <FolderSimplePlus size={18} weight={isInAnySpace ? 'fill' : 'regular'} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowMenu(false); handleShareClick(e); }}
+                className="text-gray-400 hover:text-accent-primary transition-colors flex-shrink-0"
+                title="Share Book"
+              >
+                <ShareNetwork size={18} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowMenu(false); handleDeleteClick(e); }}
+                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                title="Delete"
+              >
+                <Trash size={18} weight="bold" />
+              </button>
+            </div>
             <button
               onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-              className="text-gray-400 hover:text-text-primary transition-colors focus:outline-none"
+              className={`text-gray-400 hover:text-text-primary transition-all duration-300 focus:outline-none ${showMenu ? 'rotate-180' : ''}`}
             >
-              <DotsThreeVertical size={20} weight="bold" />
+              <CaretDoubleLeft size={18} weight="bold" />
             </button>
-
-            {/* Menu Popup */}
-            {showMenu && (
-              <>
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={(e) => { e.stopPropagation(); setShowMenu(false); }}
-                />
-                <div className="absolute bottom-full right-0 mb-2 w-48 bg-white dark:bg-neutral-800 rounded-xl shadow-lg border border-neutral-200 dark:border-neutral-700 z-50 overflow-hidden flex flex-col py-1">
-                  <button
-                    onClick={(e) => { setShowMenu(false); handleBookmarkClick(e); }}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors w-full text-left"
-                  >
-                    <FolderSimplePlus size={18} weight={isInAnySpace ? 'fill' : 'regular'} className={isInAnySpace ? 'text-accent-primary' : ''} />
-                    {isInAnySpace ? 'Update Space' : 'Add to Bookspace'}
-                  </button>
-                  <button
-                    onClick={handleShareClick}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors w-full text-left"
-                  >
-                    <ShareNetwork size={18} />
-                    Share Book
-                  </button>
-                  <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1 w-full" />
-                  <button
-                    onClick={(e) => { setShowMenu(false); handleDeleteClick(e); }}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors w-full text-left"
-                  >
-                    <Trash size={18} weight="bold" />
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
           </div>
         </div>
  </div>
