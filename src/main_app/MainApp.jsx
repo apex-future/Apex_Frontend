@@ -43,6 +43,8 @@ function MainApp({ onLogout }) {
   const [asideIsOpen, setAsideIsOpen] = useState(true);
   // isMobileOpen: State variable specifically for the mobile slide-over sidebar visibility.
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  // isAsideExpanded: Controls whether the desktop sidebar is wide or narrow (icon-only).
+  const [isAsideExpanded, setIsAsideExpanded] = useState(true);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const { toasts, removeToast } = useToast();
@@ -105,14 +107,19 @@ function MainApp({ onLogout }) {
   const showAsideNav = asideIsOpen && !isReaderMode && !isNoteEditorMode;
   const showBottomNav = !isReaderMode && !isAiMode && !isNoteEditorMode;
 
+  // Compute the left margin class for the main content area to offset the fixed sidebar
+  const mainMarginClass = showAsideNav
+    ? (isAsideExpanded ? 'md:ml-[calc(20%+1rem)] md:min-w-0' : 'md:ml-[calc(5rem+1rem)]')
+    : '';
+
   return (
     <div className={`flex items-start relative min-h-screen bg-bg-primary ${resolvedTheme}`}>
 
       <BookProvider>
         <NavBarProvider asideToggleFunctions={asideToggle}>
-          {showAsideNav && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} onLogout={onLogout} />}
+          {showAsideNav && <AsideNavBar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} isExpanded={isAsideExpanded} setIsExpanded={setIsAsideExpanded} onLogout={onLogout} />}
 
-          <div className='flex-1 min-w-0 relative z-[10]'>
+          <div className={`flex-1 min-w-0 relative z-[10] transition-all duration-300 ${mainMarginClass}`}>
             <main className="">
               <Routes>
                 <Route path="/" element={

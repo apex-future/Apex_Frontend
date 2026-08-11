@@ -13,9 +13,8 @@ import { showToastGlobal } from '../../../hooks/useToast';
  * AsideNavBar Component:
  * Provides side navigation with support for both desktop (collapsible/sticky) and mobile (slide-over) layouts.
  */
-function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
+function AsideNavBar({ isMobileOpen, setIsMobileOpen, isExpanded, setIsExpanded, onLogout }) {
   const location = useLocation();
-  const [isExpanded, setIsExpanded] = useState(true);
   const { theme, setTheme } = useThemeStore();
   const { setIsNotificationOpen } = useContext(NavBarContext) || {};
 
@@ -63,9 +62,9 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, onLogout }) {
           fixed inset-y-0 left-0 w-64 md:w-auto
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
           
-          /* Desktop layout: floating card with top, bottom, and left margins */
+          /* Desktop layout: fixed card with top, bottom, and left margins */
           md:translate-x-0
-          md:sticky md:inset-auto md:top-4 md:my-4 md:ml-4 md:self-start md:h-[calc(100vh-2rem)]
+          md:fixed md:inset-auto md:top-4 md:left-4 md:h-[calc(100vh-2rem)]
           rounded-r-xl md:rounded-[2rem]
           border-r md:border border-border-default/8 dark:border-neutral-800/60
           
