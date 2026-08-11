@@ -85,7 +85,7 @@ function Shelf({ shelves }) {
   return (
     <>
     {/* Main Container: A responsive grid displaying each shelf as a separate card. */}
-    <div className='grid w-full grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-8 lg:gap-10 py-8 transition-all duration-300'>
+    <div className='grid w-full grid-cols-[repeat(auto-fill,minmax(min(100%,330px),1fr))] max-w-[1400px] gap-8 lg:gap-10 py-8 transition-all duration-300'>
       {shelves.map((shelf, index) => {
         const actualBooksCount = shelf.books?.length || 0;
         const fillersCount = Math.max(0, 3 - actualBooksCount);

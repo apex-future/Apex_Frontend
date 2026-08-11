@@ -235,7 +235,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
  </div>
 
  {booksLoading ? (
- <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-6 lg:gap-8">
+  <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,330px),1fr))] max-w-[1400px] gap-6 lg:gap-8">
  {[...Array(4)].map((_, i) => (
  <BookCardSkeleton key={i} />
  ))}
@@ -269,7 +269,7 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
       />
     )
  ) : (
- <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-6 lg:gap-8 transition-all duration-500">
+  <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,330px),1fr))] max-w-[1400px] gap-6 lg:gap-8 transition-all duration-500">
  {processedBooks.map((book) => (
  <div key={book.id} className="h-full animate-in fade-in slide-in-from-bottom-2 duration-300">
  <BookCard

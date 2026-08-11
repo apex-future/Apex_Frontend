@@ -207,7 +207,7 @@ function SpaceDetail() {
                       {/* Books List GridFour */}
                       <div className="w-full">
                         {selectedShelf.books?.length > 0 ? (
-                          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-6 lg:gap-8 transition-all duration-300">
+                          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,330px),1fr))] max-w-[1400px] gap-6 lg:gap-8 transition-all duration-300">
                             {selectedShelf.books.map((book) => (
                               <BookCard 
                                 key={book.id} 

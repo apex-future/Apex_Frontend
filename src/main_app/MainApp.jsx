@@ -108,8 +108,10 @@ function MainApp({ onLogout }) {
   const showBottomNav = !isReaderMode && !isAiMode && !isNoteEditorMode;
 
   // Compute the left margin class for the main content area to offset the fixed sidebar
+  // Sidebar is fixed at left-4 (16px) with width 280px (expanded) or 80px (collapsed)
+  // Total offset = sidebar left position + sidebar width + gap
   const mainMarginClass = showAsideNav
-    ? (isAsideExpanded ? 'md:ml-[calc(20%+1rem)] md:min-w-0' : 'md:ml-[calc(5rem+1rem)]')
+    ? (isAsideExpanded ? 'md:ml-[312px]' : 'md:ml-[112px]')
     : '';
 
   return (
