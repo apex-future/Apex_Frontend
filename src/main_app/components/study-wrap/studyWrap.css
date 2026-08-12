@@ -1,0 +1,107 @@
+/* ── Study Wrap Animations & Styles ── */
+
+/* Loader pulse — three circles animating in sequence */
+@keyframes study-wrap-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}
+
+.study-wrap-pulse-1 {
+  animation: study-wrap-pulse 1.2s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.study-wrap-pulse-2 {
+  animation: study-wrap-pulse 1.2s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.study-wrap-pulse-3 {
+  animation: study-wrap-pulse 1.2s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+/* Cycling text fade */
+.study-wrap-text-cycle {
+  transition: opacity 0.4s ease-in-out;
+}
+
+/* Card entrance animation */
+@keyframes study-wrap-card-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.study-wrap-card-enter {
+  animation: study-wrap-card-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Ambient glow float animation */
+@keyframes study-wrap-float-glow {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.45;
+  }
+
+  50% {
+    transform: translate(-50%, -52%) scale(1.15);
+    opacity: 0.65;
+  }
+}
+
+.study-wrap-glow-orb {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  filter: blur(50px);
+  pointer-events: none;
+  animation: study-wrap-float-glow 6s ease-in-out infinite;
+  z-index: 0;
+}
+
+/* Glassmorphism utility */
+.study-wrap-glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.study-wrap-glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Story progress bar transition */
+.study-wrap-progress-bar {
+  transition: width 0.3s ease-out;
+}
+
+/* Dot / segment indicator transition */
+.study-wrap-dot {
+  transition: all 0.3s ease;
+}

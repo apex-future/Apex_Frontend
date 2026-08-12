@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { showToastGlobal } from '../../hooks/useToast';
 import examBgPattern from '../../../assets/exam-bg-pattern.png';
 import Card from '../ui/Card';
+import Button from '../ui/Button';
+import StudyWrap from '../study-wrap/StudyWrap';
 const CardContainer = ({ children, onClick, className = '', title = '', activeExam, isEditing, examsList, currentIndex, onAdd }) => (
     <div className="w-full h-full relative group/container flex flex-col">
         <div className="flex justify-between items-center mb-2 px-2">
@@ -103,8 +105,12 @@ const ExamReminder = () => {
         return Math.ceil(diff / (1000 * 60 * 60 * 24));
     };
 
-    const daysLeft = calculateDaysLeft();
+    // TEMP: hardcoded for Study Wrap testing — remove when live
+    const daysLeft = 0;
     const isPaused = activeExam?.isPaused;
+
+    // Study Wrap state
+    const [showWrap, setShowWrap] = useState(false);
 
     // Evaluate if there is consistent activity across any linked space
     const hasConsistentActivity = linkedSpaces.some(s => 
@@ -461,6 +467,22 @@ const ExamReminder = () => {
                     </>
                 ) : (
                     <>
+                        {/* Purple dot indicator when daysLeft === 0 */}
+                        {daysLeft !== null && daysLeft <= 0 && (
+                            <div
+                                className="absolute z-20"
+                                style={{
+                                    top: 10,
+                                    right: 10,
+                                    width: 10,
+                                    height: 10,
+                                    borderRadius: '50%',
+                                    background: '#7C3AED',
+                                    boxShadow: '0 0 0 3px rgba(124,58,237,0.3)',
+                                }}
+                            />
+                        )}
+
                         <div className={`absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-16 blur-3xl transition-all duration-700 pointer-events-none ${moodAmbientBg}`} />
 
                         <div className="flex flex-col w-full h-full relative z-10 justify-between">
@@ -511,6 +533,22 @@ const ExamReminder = () => {
                                     )}
                                 </div>
 
+                                {/* Study Wrap button when daysLeft === 0 */}
+                                {daysLeft !== null && daysLeft <= 0 && (
+                                    <div className="w-full mt-2 px-2">
+                                        <Button
+                                            variant="primary"
+                                            fullWidth
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                console.log('[StudyWrap] Triggered from dashboard');
+                                                setShowWrap(true);
+                                            }}
+                                        >
+                                            Watch your Study Wrap 🎬
+                                        </Button>
+                                    </div>
+                                )}
 
                             </div>
                         </div>
@@ -519,6 +557,11 @@ const ExamReminder = () => {
             </CardContainer>
             {renderModal()}
             {renderDeleteModal()}
+            <StudyWrap
+                isOpen={showWrap}
+                onClose={() => setShowWrap(false)}
+                daysLeft={daysLeft}
+            />
         </>
     );
 };

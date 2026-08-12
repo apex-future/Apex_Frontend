@@ -5,7 +5,7 @@ import { NavBarContext } from './NavBarContextInstance';
 import CharacterImg from '../../../../assets/Characters/Character1.png';
 import Button from '../../ui/Button';
 
-function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
+function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery, isAsideExpanded }) {
   const { setIsNotificationOpen, unreadNotificationCount } = useContext(NavBarContext) || {};
   const navigate = useNavigate();
 
@@ -18,8 +18,10 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
     }
   };
   return (
-    <nav className='sticky top-0 z-40 w-full px-4 md:px-8 py-3'>
-      <div className="nav-wrapper flex justify-between w-full items-center gap-3">
+    <nav className={`fixed top-0 left-0 right-0 z-40 px-4 md:px-8 py-3 bg-transparent border-0 pointer-events-none transition-all duration-300 ease-in-out ${
+      isAsideExpanded ? 'md:left-[292px]' : 'md:left-[112px]'
+    }`}>
+      <div className="nav-wrapper flex justify-between w-full items-center gap-3 pointer-events-auto">
 
         {/* Left Elements (No glassmorphic wrapper, free standing) */}
         {/* Left Elements (No glassmorphic wrapper, free standing) */}
@@ -27,10 +29,10 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery }) {
           {/* Mobile List Button - Only visible on mobile */}
           <button
             onClick={() => setIsMobileOpen(true)}
-            className="md:hidden z-40 p-2 rounded-lg hover:bg-bg-subtle/50 dark:hover:bg-white/5 transition-all text-text-primary"
+            className="md:hidden z-40 p-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:bg-white/25 dark:hover:bg-white/10 transition-all text-text-primary flex items-center justify-center"
             aria-label="Open menu"
           >
-            <List size={24} weight="regular" />
+            <List size={20} weight="regular" />
           </button>
 
           {/* Go Pro Premium Badge */}

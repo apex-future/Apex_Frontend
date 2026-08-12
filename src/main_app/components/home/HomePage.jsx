@@ -7,7 +7,7 @@ import AllBooks from "./AllBooks";
 import TopNavBar from "../layout/navigation/TopNavBar";
 import { BookContext } from "../../context/BookContextInstance";
 
-function HomePage({ setIsMobileOpen }) {
+function HomePage({ setIsMobileOpen, isAsideExpanded }) {
   const { books = [], booksLoading, addBookToShelf, handleBookClick } = useContext(BookContext) || {};
   const { setActiveSpace } = useSpaceStore();
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,10 +46,11 @@ function HomePage({ setIsMobileOpen }) {
   const lastReadBook = sortedByDate.length > 0 ? sortedByDate[0] : null;
 
   return (
-    <div className="min-h-screen flex flex-col gap-6 lg:gap-8">
+    <div className="min-h-screen flex flex-col gap-6 lg:gap-8 pt-20">
       <TopNavBar
         setIsMobileOpen={setIsMobileOpen}
         onUpload={onUpload}
+        isAsideExpanded={isAsideExpanded}
       />
 
       {/* Only show Header and Slider when not searching */}

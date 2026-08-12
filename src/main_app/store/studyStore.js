@@ -276,17 +276,27 @@ const useStudyStore = create(
           });
 
           if (response.data) {
-            set({
-              streakCount: response.data.current_streak,
-              longestStreak: response.data.longest_streak,
-              lastActiveDate: response.data.last_active_date,
-              streakHistory: response.data.streak_history ?? streakHistory,
-              frozenDays: response.data.frozen_days ?? frozenDays,
-              streakFreezesHeld: response.data.streak_freezes_held ?? streakFreezesHeld,
-              lastStreakUpdatedAt: response.data.last_streak_updated_at,
-            });
-            localStorage.removeItem('apex_streak_sync_pending');
-            if (import.meta.env.DEV) console.log('[Apex Streak] Server merge applied to local store');
+            // Guard: don't let a stale server response overwrite a fresher local streak.
+            // If local lastActiveDate is newer than what the server returned, skip the merge.
+            const localActiveDate = get().lastActiveDate || '';
+            const serverActiveDate = response.data.last_active_date || '';
+
+            if (localActiveDate > serverActiveDate) {
+              if (import.meta.env.DEV) console.log('[Apex Streak] Server response is stale (local:', localActiveDate, 'server:', serverActiveDate, ') — skipping merge');
+              localStorage.removeItem('apex_streak_sync_pending');
+            } else {
+              set({
+                streakCount: response.data.current_streak,
+                longestStreak: response.data.longest_streak,
+                lastActiveDate: response.data.last_active_date,
+                streakHistory: response.data.streak_history ?? streakHistory,
+                frozenDays: response.data.frozen_days ?? frozenDays,
+                streakFreezesHeld: response.data.streak_freezes_held ?? streakFreezesHeld,
+                lastStreakUpdatedAt: response.data.last_streak_updated_at,
+              });
+              localStorage.removeItem('apex_streak_sync_pending');
+              if (import.meta.env.DEV) console.log('[Apex Streak] Server merge applied to local store');
+            }
           }
 
           if (import.meta.env.DEV) console.log('[Apex Streak] Synced to Supabase successfully');
@@ -300,6 +310,16 @@ const useStudyStore = create(
        */
       seedFromSupabase: (supabaseData) => {
         if (!supabaseData) return;
+
+        // Guard: if local lastActiveDate is TODAY, the user already earned a streak
+        // in this session. Don't let stale cloud data clobber it.
+        const today = get()._getTodayString();
+        const localDate = get().lastActiveDate || '';
+        if (localDate === today) {
+          if (import.meta.env.DEV) console.log('[Apex Streak] seedFromSupabase skipped — local streak is from today, refusing to overwrite');
+          return;
+        }
+
         const {
           current_streak,
           longest_streak,
@@ -309,7 +329,6 @@ const useStudyStore = create(
           frozen_days,
         } = supabaseData;
 
-        const localDate = get().lastActiveDate || '';
         const cloudDate = last_active_date || '';
         const localUpdatedAt = get().lastStreakUpdatedAt || '';
         const cloudUpdatedAt = supabaseData.last_streak_updated_at || '';

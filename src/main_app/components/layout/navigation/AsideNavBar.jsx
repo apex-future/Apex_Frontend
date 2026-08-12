@@ -8,6 +8,7 @@ import useThemeStore from '../../../store/themeStore';
 import logoLight from "../../../../assets/logo/logo-light-removebg-preview.png";
 import logoDark from "../../../../assets/logo/logo-dark-removebg-preview.png";
 import { showToastGlobal } from '../../../hooks/useToast';
+import ListItem from '../../ui/ListItem';
 
 /**
  * AsideNavBar Component:
@@ -59,7 +60,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, isExpanded, setIsExpanded,
           flex flex-col
           
           /* Mobile layout: fixed, attached to left edge */
-          fixed inset-y-0 left-0 w-64 md:w-auto
+          fixed inset-y-0 left-0 w-64
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
           
           /* Desktop layout: fixed card with top, bottom, and left margins */
@@ -68,8 +69,8 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, isExpanded, setIsExpanded,
           rounded-r-xl md:rounded-[2rem]
           border-r md:border border-border-default/8 dark:border-neutral-800/60
           
-          /* Dynamic Width: Swaps between 280px and 80px based on isExpanded state */
-          ${isExpanded ? 'md:w-[280px]' : 'md:w-20'}
+          /* Dynamic Width: Swaps between 260px and 80px based on isExpanded state */
+          ${isExpanded ? 'md:w-[260px]' : 'md:w-20'}
         `}
       >
         {/* Sidebar Header: Contains the close button (mobile) or the toggle button (desktop) */}
@@ -130,47 +131,18 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, isExpanded, setIsExpanded,
                   ? location.pathname === '/' && location.hash === ''
                   : location.pathname === item.path);
 
-              const itemContent = (
-                <>
-                <Icon
-                    size={20}
-                    weight={isActive ? 'fill' : 'regular'}
-                    className={`flex-shrink-0 transition-colors z-10`}
-                  />
-                  <span
-                    className={`
-                      whitespace-nowrap transition-all duration-300 text-sm z-10
-                      ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
-                    `}
-                  >
-                    {item.label}
-                  </span>
-                </>
-              );
-
-              const baseClasses = `
-                flex items-center px-3 py-2.5 rounded-full
-                transition-all duration-300
-                font-medium relative group w-full
-                ${!isExpanded ? 'justify-center' : 'gap-3'}
-                ${isActive
-                  ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default/8 dark:border-neutral-800/50 shadow-sm'
-                  : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
-                }
-              `;
-
-
-
               return (
                 <li key={item.label}>
-                  <NavLink
+                  <ListItem
+                    as={NavLink}
                     to={item.path}
-                    className={baseClasses}
+                    icon={Icon}
+                    label={isExpanded ? item.label : ''}
+                    isActive={isActive}
                     title={!isExpanded ? item.label : ''}
                     onClick={() => isMobileOpen && closeMobileNav()}
-                  >
-                    {itemContent}
-                  </NavLink>
+                    className={!isExpanded ? 'flex items-center justify-center px-0 [&>div]:justify-center [&>div]:gap-0' : ''}
+                  />
                 </li>
               );
             })}
@@ -205,65 +177,39 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, isExpanded, setIsExpanded,
             </li>
 
             <li>
-              <NavLink
+              <ListItem
+                as={NavLink}
                 to="/profile"
-                className={`flex items-center p-3 rounded-xl transition-all duration-300 
-                  ${!isExpanded ? 'justify-center' : 'gap-3'}
-                  ${location.pathname === '/profile'
-                    ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default/8 dark:border-neutral-800/50 shadow-sm'
-                    : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
-                  }`}
+                icon={User}
+                label={isExpanded ? 'Profile' : ''}
+                isActive={location.pathname === '/profile'}
                 title={!isExpanded ? 'Profile' : ''}
                 onClick={() => isMobileOpen && closeMobileNav()}
-              >
-                <User
-                  size={20}
-                  weight={location.pathname === '/profile' ? 'fill' : 'regular'}
-                  className={`flex-shrink-0 transition-colors z-10`}
-                />
-                <span
-                  className={`
-                    whitespace-nowrap transition-all duration-300 text-sm z-10
-                    ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
-                  `}
-                >
-                  Profile
-                </span>
-              </NavLink>
+                className={!isExpanded ? 'flex items-center justify-center px-0 [&>div]:justify-center [&>div]:gap-0' : ''}
+              />
             </li>
             <li>
-              <NavLink
+              <ListItem
+                as={NavLink}
                 to="/settings"
-                className={`flex items-center p-3 rounded-xl transition-all duration-300 
-                  ${!isExpanded ? 'justify-center' : 'gap-3'}
-                  ${location.pathname === '/settings'
-                    ? 'bg-gradient-to-r from-accent-primary/20 to-bg-subtle text-text-primary border border-border-default/8 dark:border-neutral-800/50 shadow-sm'
-                    : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
-                  }`}
-                title={!isExpanded ? 'Gear' : ''}
+                icon={Gear}
+                label={isExpanded ? 'Settings' : ''}
+                isActive={location.pathname === '/settings'}
+                title={!isExpanded ? 'Settings' : ''}
                 onClick={() => isMobileOpen && closeMobileNav()}
-              >
-                <Gear
-                  size={20}
-                  weight={location.pathname === '/settings' ? 'fill' : 'regular'}
-                  className={`flex-shrink-0 transition-colors z-10`}
-                />
-                <span
-                  className={`
-                    whitespace-nowrap transition-all duration-300 text-sm z-10
-                    ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}
-                  `}
-                >
-                  Settings
-                </span>
-              </NavLink>
+                className={!isExpanded ? 'flex items-center justify-center px-0 [&>div]:justify-center [&>div]:gap-0' : ''}
+              />
             </li>
 
           </ul>
 
           {/* Bottom utility: Download Apex */}
           <div className={`border-t border-border-default/8 dark:border-neutral-800/50 pt-4 mt-3 flex flex-col gap-2 ${!isExpanded ? 'items-center' : ''}`}>
-            <button
+            <ListItem
+              as="button"
+              icon={DownloadSimple}
+              label={isExpanded ? 'Download Apex' : ''}
+              title={!isExpanded ? 'Download Apex' : ''}
               onClick={async () => {
                 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
                 if (isStandalone) {
@@ -284,16 +230,8 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, isExpanded, setIsExpanded,
                   showToastGlobal("To install Apex, open your browser menu and select 'Install Apex' or 'Add to Home Screen'.", "info");
                 }
               }}
-              className={`flex items-center p-2.5 rounded-xl transition-all duration-300 text-text-secondary hover:bg-accent-primary/10 hover:text-accent-primary ${!isExpanded ? 'justify-center' : 'gap-3'}`}
-              title="Download Apex"
-            >
-              <DownloadSimple size={20} weight="regular" className="flex-shrink-0" />
-              <span
-                className={`whitespace-nowrap transition-all duration-300 text-sm font-medium ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}`}
-              >
-                Download Apex
-              </span>
-            </button>
+              className={!isExpanded ? 'flex items-center justify-center px-0 [&>div]:justify-center [&>div]:gap-0' : ''}
+            />
           </div>
         </nav>
       </aside>

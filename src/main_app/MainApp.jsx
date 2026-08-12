@@ -108,10 +108,10 @@ function MainApp({ onLogout }) {
   const showBottomNav = !isReaderMode && !isAiMode && !isNoteEditorMode;
 
   // Compute the left margin class for the main content area to offset the fixed sidebar
-  // Sidebar is fixed at left-4 (16px) with width 280px (expanded) or 80px (collapsed)
+  // Sidebar is fixed at left-4 (16px) with width 260px (expanded) or 80px (collapsed)
   // Total offset = sidebar left position + sidebar width + gap
   const mainMarginClass = showAsideNav
-    ? (isAsideExpanded ? 'md:ml-[312px]' : 'md:ml-[112px]')
+    ? (isAsideExpanded ? 'md:ml-[292px]' : 'md:ml-[112px]')
     : '';
 
   return (
@@ -127,6 +127,7 @@ function MainApp({ onLogout }) {
                 <Route path="/" element={
                   <HomePage
                     setIsMobileOpen={setIsMobileOpen}
+                    isAsideExpanded={isAsideExpanded}
                   />
                 } />
                 <Route path="/profile" element={<Profile />} />
