@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, CaretLeft, CaretRight, Sparkle, ShareNetwork } from '@phosphor-icons/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import StudyWrapLoader from './StudyWrapLoader';
 
 import StudyWrapOpener from './StudyWrapOpener';
@@ -51,9 +52,36 @@ const CARD_TOPIC_LABELS = [
 
 
 
+const SPRING_OPTIONS = { type: 'spring', stiffness: 300, damping: 30 };
+
+const cardVariants = {
+  enter: (dir) => ({
+    x: dir > 0 ? '100%' : '-100%',
+    rotateY: dir > 0 ? 80 : -80,
+    opacity: 0,
+    scale: 0.92,
+  }),
+  center: {
+    x: '0%',
+    rotateY: 0,
+    opacity: 1,
+    scale: 1,
+    transition: SPRING_OPTIONS,
+  },
+  exit: (dir) => ({
+    x: dir > 0 ? '-100%' : '100%',
+    rotateY: dir > 0 ? -80 : 80,
+    opacity: 0,
+    scale: 0.92,
+    transition: SPRING_OPTIONS,
+  }),
+};
+
 export default function StudyWrap({ isOpen, onClose, daysLeft }) {
   const [currentCard, setCurrentCard] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const direction = useRef(1);
+  const lastTransitionTime = useRef(0);
 
   // Swipe tracking
   const touchStartX = useRef(0);
@@ -81,16 +109,26 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
     }
   }, [isOpen]);
 
-  // Navigation
+  // Navigation with consistent animation debounce
   const goNext = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTransitionTime.current < 280) return;
     if (currentCard < TOTAL_CARDS - 1) {
+      lastTransitionTime.current = now;
+      direction.current = 1;
+      console.log(`[StudyWrap] Card transition — direction: ${direction.current}`);
       console.log(`[StudyWrap] Card ${currentCard} → ${currentCard + 1}`);
       setCurrentCard((prev) => prev + 1);
     }
   }, [currentCard]);
 
   const goPrev = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTransitionTime.current < 280) return;
     if (currentCard > 0) {
+      lastTransitionTime.current = now;
+      direction.current = -1;
+      console.log(`[StudyWrap] Card transition — direction: ${direction.current}`);
       setCurrentCard((prev) => prev - 1);
     }
   }, [currentCard]);
@@ -154,6 +192,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         return (
           <StudyWrapOpener
             key={0}
+            direction={direction.current}
             userName={data.userName}
             examName={data.examName}
             image={card1Img}
@@ -163,6 +202,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         return (
           <StudyWrapCard
             key={1}
+            direction={direction.current}
             topicLabel="Course Coverage"
             image={card2Img}
             headline={data.courseCoverage.headline}
@@ -175,6 +215,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         return (
           <StudyWrapCard
             key={2}
+            direction={direction.current}
             topicLabel="Time Spent"
             image={card3Img}
             headline={data.timeSpent.headline}
@@ -187,6 +228,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         return (
           <StudyWrapCard
             key={3}
+            direction={direction.current}
             topicLabel="Quiz Performance"
             image={card4Img}
             headline={data.quizPerformance.headline}
@@ -200,6 +242,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         return (
           <StudyWrapCard
             key={4}
+            direction={direction.current}
             topicLabel="Study Consistency"
             image={card5Img}
             headline={data.studyConsistency.headline}
@@ -212,6 +255,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         return (
           <StudyWrapClosing
             key={5}
+            direction={direction.current}
             image={card6Img}
             wrapData={data}
             onClose={handleClose}
@@ -256,13 +300,24 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
               className="flex-1 h-1 rounded-full bg-white/20 overflow-hidden cursor-pointer"
               onClick={() => setCurrentCard(i)}
             >
-              <div
-                className="h-full bg-white transition-all duration-300"
-                style={{
-                  width: i < currentCard ? '100%' : i === currentCard ? '100%' : '0%',
-                  opacity: i === currentCard ? 1 : i < currentCard ? 0.7 : 0.3,
-                }}
-              />
+              {i === currentCard ? (
+                <motion.div
+                  key={currentCard}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: 2.2, ease: 'linear' }}
+                  className="h-full w-full bg-white origin-left"
+                  style={{
+                    opacity: 1,
+                    transformOrigin: '0% 50%',
+                    willChange: 'transform',
+                  }}
+                />
+              ) : i < currentCard ? (
+                <div className="h-full bg-white w-full" style={{ opacity: 0.7 }} />
+              ) : (
+                <div className="h-full bg-white w-0" style={{ opacity: 0.3 }} />
+              )}
             </div>
           ))}
         </div>
@@ -296,7 +351,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
           md:w-[420px] md:h-[680px] md:rounded-[24px]
           overflow-hidden flex flex-col
           shadow-2xl border border-white/10
-          transition-all duration-700 ease-in-out
+          transition-colors duration-300
         "
         style={{
           background: CARD_GRADIENTS[currentCard] || CARD_GRADIENTS[0],
@@ -324,13 +379,19 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             <div className="pointer-events-auto">
               {renderStoryProgress()}
             </div>
-            <div className="flex items-center justify-center w-full px-4 pb-1">
+            <motion.div
+              key={`topic-${currentCard}`}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
+              className="flex items-center justify-center w-full px-4 pb-1"
+            >
               <div className="text-[10px] font-extrabold text-amber-200 uppercase tracking-[0.16em] text-center">
                 <span style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                   {CARD_TOPIC_LABELS[currentCard] || "STUDY WRAP"}
                 </span>
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
 
@@ -338,8 +399,33 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         {isLoading ? (
           <StudyWrapLoader />
         ) : (
-          <div className="flex-1 w-full h-full overflow-y-auto study-wrap-no-scrollbar pt-[60px] pb-6 relative z-10">
-            {renderCard()}
+          <div
+            className="flex-1 w-full h-full overflow-y-auto study-wrap-no-scrollbar pt-[60px] pb-6 relative z-10"
+            style={{
+              perspective: 1000,
+              perspectiveOrigin: '50% 50%',
+              transformStyle: 'preserve-3d',
+            }}
+          >
+            <AnimatePresence initial={false} custom={direction.current} mode="popLayout">
+              <motion.div
+                key={currentCard}
+                custom={direction.current}
+                variants={cardVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="w-full h-full flex flex-col"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  willChange: 'transform, opacity',
+                }}
+              >
+                {renderCard()}
+              </motion.div>
+            </AnimatePresence>
           </div>
         )}
 

@@ -16,6 +16,7 @@ const StrokeText = ({
   fillColor = '#F8FAFC',
   strokeWidth = 1.4,
   drawDuration = 1.6,
+  delay = 0,
   fillDelay = 0.2,
   stagger = 0.05,
   ease = 'power2.out',
@@ -133,6 +134,7 @@ const StrokeText = ({
     const build = () => {
       setStart();
       const tl = gsap.timeline({
+        delay,
         paused: true,
         repeat: trigger === 'loop' ? -1 : 0,
         repeatDelay: trigger === 'loop' ? 0.9 : 0,
@@ -191,7 +193,7 @@ const StrokeText = ({
       timeline?.kill();
       gsap.killTweensOf(targets);
     };
-  }, [box, dash, drawDuration, fillDelay, stagger, ease, trigger, fillMode, reverse]);
+  }, [box, dash, drawDuration, delay, fillDelay, stagger, ease, trigger, fillMode, reverse]);
 
   const viewBox = box ? `${box.x} ${box.y} ${box.width} ${box.height}` : `0 ${-fontSize} 600 ${fontSize * 1.3}`;
 

@@ -35,21 +35,9 @@
   transition: opacity 0.4s ease-in-out;
 }
 
-/* Card entrance animation */
-@keyframes study-wrap-card-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
+/* Card entrance animation - handled exclusively by Framer Motion */
 .study-wrap-card-enter {
-  animation: study-wrap-card-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* Clean passthrough */
 }
 
 /* Ambient glow float animation */

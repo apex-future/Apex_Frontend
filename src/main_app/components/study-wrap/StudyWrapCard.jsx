@@ -1,7 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShareNetwork, Trophy, Quotes, BookOpen, Clock, Flame, Lightning, Fire, CalendarCheck, ListChecks } from '@phosphor-icons/react';
-import StrokeText from '../ui/StrokeText';
+import { motion } from 'framer-motion';
+import DepthText from '../ui/DepthText';
+import ShuffleText from '../ui/ShuffleText';
 import bgImg from '../../../assets/Exam_Day_Asset/background.jpg';
+
+const imageVariants = {
+  hidden: {
+    y: 30,
+    opacity: 0,
+    scale: 0.96
+  },
+  visible: {
+    y: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 260,
+      damping: 24,
+      mass: 0.8,
+      delay: 0.15
+    }
+  }
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (delay) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay,
+      duration: 0.4,
+      ease: "easeOut"
+    }
+  })
+};
+
+const statRowVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: (delay) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay,
+      duration: 0.4,
+      ease: "easeOut"
+    }
+  })
+};
 
 const getStatCardData = (key, value) => {
   let title = '';
@@ -104,7 +152,94 @@ const getStatCardData = (key, value) => {
   return { title, IconComponent, number, measurement };
 };
 
+function StatNumber({ value = '' }) {
+  const [displayValue, setDisplayValue] = useState(() => {
+    if (!value) return '';
+    const str = String(value);
+    const hasPercent = str.includes('%');
+    const hasDecimals = str.includes('.');
+    return (hasDecimals ? '0.0' : '0') + (hasPercent ? '%' : '');
+  });
+
+  useEffect(() => {
+    if (!value) {
+      setDisplayValue('');
+      return;
+    }
+
+    const str = String(value).trim();
+    const hasPercent = str.includes('%');
+    const hasCommas = str.includes(',');
+
+    const cleanStr = str.replace(/[,%]/g, '');
+    const targetNum = parseFloat(cleanStr);
+
+    if (isNaN(targetNum)) {
+      setDisplayValue(str);
+      return;
+    }
+
+    const decimalPlaces = cleanStr.includes('.') ? (cleanStr.split('.')[1] || '').length : 0;
+
+    let animFrame = null;
+    let timeoutId = null;
+
+    const delayMs = 1700;
+    const durationMs = 800;
+
+    timeoutId = setTimeout(() => {
+      const startTime = performance.now();
+
+      const animate = (now) => {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / durationMs, 1);
+        const easeOutProgress = 1 - Math.pow(1 - t, 3);
+        const currentVal = targetNum * easeOutProgress;
+
+        let formattedNum = currentVal.toFixed(decimalPlaces);
+
+        if (hasCommas) {
+          const parts = formattedNum.split('.');
+          parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          formattedNum = parts.join('.');
+        }
+
+        if (hasPercent) {
+          formattedNum += '%';
+        }
+
+        setDisplayValue(formattedNum);
+
+        if (t < 1) {
+          animFrame = requestAnimationFrame(animate);
+        } else {
+          let finalFormatted = targetNum.toFixed(decimalPlaces);
+          if (hasCommas) {
+            const parts = finalFormatted.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            finalFormatted = parts.join('.');
+          }
+          if (hasPercent) {
+            finalFormatted += '%';
+          }
+          setDisplayValue(finalFormatted);
+        }
+      };
+
+      animFrame = requestAnimationFrame(animate);
+    }, delayMs);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (animFrame) cancelAnimationFrame(animFrame);
+    };
+  }, [value]);
+
+  return <>{displayValue}</>;
+}
+
 export default function StudyWrapCard({
+  direction = 1,
   topicLabel,
   image,
   headline,
@@ -124,34 +259,51 @@ export default function StudyWrapCard({
       <div className="relative z-10 w-full flex flex-col items-center text-center gap-2">
         {/* Large Hero Image (Fills 98% of container width) */}
         <div className="relative w-full flex items-center justify-center my-0.5">
-          <img
+          <motion.img
+            key={image}
             src={image}
             alt={topicLabel}
+            initial="hidden"
+            animate="visible"
+            variants={imageVariants}
             className="w-[98%] mx-auto max-h-[190px] md:max-h-[215px] object-cover rounded-[20px] drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] transition-transform duration-500 hover:scale-105"
-            style={imageStyle}
+            style={{
+              ...imageStyle,
+              willChange: "transform",
+            }}
           />
         </div>
 
         {/* Non-Image Content Wrapper */}
         <div className="w-full px-4 pb-1 md:px-5 flex flex-col items-center text-center gap-2">
-          <StrokeText
-            text={headline}
-            strokeColor="#C084FC"
-            fillColor="#FFFFFF"
-            strokeWidth={1.8}
-            drawDuration={1.3}
-            fillDelay={0.15}
-            fontSize={36}
-            fontWeight={900}
-            letterSpacing={-1}
-            trigger="mount"
-            fillMode="wipe"
-            className="w-full drop-shadow-md"
-          />
+          <motion.div
+            custom={0.5}
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
+            className="w-full"
+          >
+            <DepthText
+              text={headline}
+              layers={18}
+              depth={2}
+              faceColor="#FFFFFF"
+              depthColor="#7C3AED"
+              fontSize="clamp(1.5rem, 5.5vw, 2.25rem)"
+              fontWeight={900}
+              shadow
+            />
+          </motion.div>
 
           {/* Achievement Badge Block */}
           {achievementTitle && (
-            <div className="relative w-full overflow-visible mt-2 mb-2">
+            <motion.div
+              custom={0.9}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              className="relative w-full overflow-visible mt-2 mb-2"
+            >
               {/* SVG Gradient Definition */}
               <svg width="0" height="0" className="absolute pointer-events-none">
                 <defs>
@@ -194,19 +346,40 @@ export default function StudyWrapCard({
                   style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                   {/* Playfair Display retained — intentional accent */}
-                  {achievementTitle}
+                  <ShuffleText
+                    text={achievementTitle}
+                    shuffleDirection="right"
+                    duration={1.2}
+                    delay={0.9}
+                    animationMode="evenodd"
+                    shuffleTimes={2}
+                    ease="power3.out"
+                    stagger={0.06}
+                  />
                 </div>
 
-                <p className="text-xs text-white/95 italic font-medium mt-2 px-2 leading-relaxed max-w-[340px] text-center relative z-10">
+                <motion.p
+                  custom={1.5}
+                  initial="hidden"
+                  animate="visible"
+                  variants={fadeUp}
+                  className="text-xs text-white/95 italic font-medium mt-2 px-2 leading-relaxed max-w-[340px] text-center relative z-10"
+                >
                   {achievementWhy}
-                </p>
+                </motion.p>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Supporting Stat Cards */}
           {supportingEntries.length > 0 && (
-            <div className="w-full grid grid-cols-2 gap-3 mt-2 px-1">
+            <motion.div
+              custom={1.7}
+              initial="hidden"
+              animate="visible"
+              variants={statRowVariants}
+              className="w-full grid grid-cols-2 gap-3 mt-2 px-1"
+            >
               {supportingEntries.slice(0, 2).map(([key, value]) => {
                 const { title, IconComponent, number, measurement } = getStatCardData(key, value);
                 return (
@@ -235,7 +408,7 @@ export default function StudyWrapCard({
                       className="text-[22px] font-bold text-white opacity-100 leading-none tracking-tight mb-0.5"
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
-                      {number}
+                      <StatNumber value={number} />
                     </div>
 
                     {/* Measurement */}
@@ -250,7 +423,7 @@ export default function StudyWrapCard({
                   </div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
