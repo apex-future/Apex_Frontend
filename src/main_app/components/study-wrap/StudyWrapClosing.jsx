@@ -12,23 +12,23 @@ const GRID_ITEMS = [
 
 export default function StudyWrapClosing({ image, wrapData, onClose }) {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center px-4 py-2 study-wrap-card-enter relative z-10 select-none">
+    <div className="w-full min-h-full flex flex-col items-center justify-center px-4 py-4 study-wrap-card-enter relative z-10 select-none">
       {/* Gold Ambient Light Orb */}
       <div className="study-wrap-glow-orb bg-amber-500/35" />
 
-      {/* Frosted Glass Overlay Container */}
-      <div className="relative z-10 w-full study-wrap-glass-card rounded-[24px] p-2 flex flex-col items-center text-center gap-3">
+      {/* Transparent Content Container */}
+      <div className="relative z-10 w-full flex flex-col items-center text-center gap-2">
         {/* Large Hero Image (Fills 98% of container width) */}
         <div className="relative w-full flex items-center justify-center my-0.5">
           <img
             src={image}
             alt="Study Wrap Closing"
-            className="w-[98%] mx-auto max-h-[170px] md:max-h-[190px] object-cover rounded-[20px] drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] transition-transform duration-500 hover:scale-105"
+            className="w-[98%] mx-auto max-h-[190px] md:max-h-[215px] object-cover rounded-[20px] drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] transition-transform duration-500 hover:scale-105"
           />
         </div>
 
-        {/* Non-Image Content Wrapper (Retains original padding) */}
-        <div className="w-full px-3.5 pb-2 md:px-4 flex flex-col items-center text-center gap-3">
+        {/* Non-Image Content Wrapper */}
+        <div className="w-full px-3.5 pb-1 md:px-4 flex flex-col items-center text-center gap-2">
           <StrokeText
             text="That's not luck. That's work."
             strokeColor="#FBBF24"

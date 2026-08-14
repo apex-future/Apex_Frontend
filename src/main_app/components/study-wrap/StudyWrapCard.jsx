@@ -116,24 +116,24 @@ export default function StudyWrapCard({
   const supportingEntries = supporting ? Object.entries(supporting) : [];
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center px-4 py-2 study-wrap-card-enter relative z-10 select-none">
+    <div className="w-full min-h-full flex flex-col items-center justify-center px-4 py-4 study-wrap-card-enter relative z-10 select-none">
       {/* Ambient Glow */}
       <div className="study-wrap-glow-orb bg-purple-400/35" />
 
-      {/* Frosted Glass Overlay Container */}
-      <div className="relative z-10 w-full study-wrap-glass-card rounded-[24px] p-2 flex flex-col items-center text-center gap-3.5">
+      {/* Transparent Content Container */}
+      <div className="relative z-10 w-full flex flex-col items-center text-center gap-2">
         {/* Large Hero Image (Fills 98% of container width) */}
         <div className="relative w-full flex items-center justify-center my-0.5">
           <img
             src={image}
             alt={topicLabel}
-            className="w-[98%] mx-auto max-h-[195px] md:max-h-[220px] object-cover rounded-[20px] drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] transition-transform duration-500 hover:scale-105"
+            className="w-[98%] mx-auto max-h-[190px] md:max-h-[215px] object-cover rounded-[20px] drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] transition-transform duration-500 hover:scale-105"
             style={imageStyle}
           />
         </div>
 
-        {/* Non-Image Content Wrapper (Retains original padding) */}
-        <div className="w-full px-4 pb-2 md:px-5 flex flex-col items-center text-center gap-3.5">
+        {/* Non-Image Content Wrapper */}
+        <div className="w-full px-4 pb-1 md:px-5 flex flex-col items-center text-center gap-2">
           <StrokeText
             text={headline}
             strokeColor="#C084FC"
@@ -151,7 +151,7 @@ export default function StudyWrapCard({
 
           {/* Achievement Badge Block */}
           {achievementTitle && (
-            <div className="relative w-full overflow-visible mt-4 mb-2">
+            <div className="relative w-full overflow-visible mt-2 mb-2">
               {/* SVG Gradient Definition */}
               <svg width="0" height="0" className="absolute pointer-events-none">
                 <defs>
@@ -212,7 +212,7 @@ export default function StudyWrapCard({
                 return (
                   <div
                     key={key}
-                    className="flex flex-col items-start rounded-[14px] p-[12px_14px] text-left overflow-hidden"
+                    className="flex flex-col items-start rounded-[14px] p-[10px_12px] text-left overflow-hidden"
                     style={{
                       background: 'rgba(255, 255, 255, 0.08)',
                       backdropFilter: 'blur(12px)',
@@ -232,7 +232,7 @@ export default function StudyWrapCard({
 
                     {/* Bold number */}
                     <div
-                      className="text-[26px] font-bold text-white opacity-100 leading-none tracking-tight mb-0.5"
+                      className="text-[22px] font-bold text-white opacity-100 leading-none tracking-tight mb-0.5"
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
                       {number}
@@ -241,7 +241,7 @@ export default function StudyWrapCard({
                     {/* Measurement */}
                     {measurement && (
                       <div
-                        className="text-[11px] text-white/50 font-normal leading-tight"
+                        className="text-[10.5px] text-white/50 font-normal leading-tight"
                         style={{ fontFamily: "'Inter', sans-serif" }}
                       >
                         {measurement}

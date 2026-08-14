@@ -225,7 +225,16 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
   // Story-style top progress bar with Share button on left and Close button on right
   const renderStoryProgress = () => {
     return (
-      <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-1 z-30 flex-shrink-0">
+      <div
+        className="flex items-center gap-2.5 px-4 pt-3.5 pb-1 z-30 flex-shrink-0 bg-transparent border-0 shadow-none"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          boxShadow: 'none',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+        }}
+      >
         {/* Share Button on Top Left — transparent, no background */}
         <button
           className="p-1 text-white/70 hover:text-white transition-colors flex-shrink-0 bg-transparent"
@@ -272,7 +281,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
 
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-4">
       {/* Backdrop overlay */}
       <div
         className="absolute inset-0 bg-black/80 backdrop-blur-md hidden md:block transition-opacity"
@@ -309,27 +318,28 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
           saturation={1.3}
         />
 
-        {/* Top Header: Story Progress Bar & Close Button */}
-        {!isLoading && renderStoryProgress()}
-
-        {/* Centered Topic Pill (No Sparkle, Reduced Size, Fully Transparent) */}
+        {/* Top Header: Story Progress Bar, Close Button & Centered Topic Pill (Absolute Overlay) */}
         {!isLoading && (
-          <div className="flex items-center justify-center w-full px-4 pt-1 pb-1 z-30">
-            <div className="text-[10px] font-extrabold text-amber-200 uppercase tracking-[0.16em] text-center">
-              <span style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                {CARD_TOPIC_LABELS[currentCard] || "STUDY WRAP"}
-              </span>
+          <div className="absolute top-0 left-0 right-0 z-40 bg-transparent flex flex-col pointer-events-none">
+            <div className="pointer-events-auto">
+              {renderStoryProgress()}
+            </div>
+            <div className="flex items-center justify-center w-full px-4 pb-1">
+              <div className="text-[10px] font-extrabold text-amber-200 uppercase tracking-[0.16em] text-center">
+                <span style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  {CARD_TOPIC_LABELS[currentCard] || "STUDY WRAP"}
+                </span>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Content Container (Lifted upwards, not touching bottom) */}
+        {/* Content Container (Full-height scrollable area with padding top to make space for top overlay nav bar) */}
         {isLoading ? (
           <StudyWrapLoader />
         ) : (
-          <div className="flex-1 flex flex-col justify-center overflow-hidden relative z-10 pb-6">
-            {/* Card Content */}
-            <div className="flex-1 flex flex-col justify-center overflow-y-auto study-wrap-no-scrollbar">{renderCard()}</div>
+          <div className="flex-1 w-full h-full overflow-y-auto study-wrap-no-scrollbar pt-[60px] pb-6 relative z-10">
+            {renderCard()}
           </div>
         )}
 
