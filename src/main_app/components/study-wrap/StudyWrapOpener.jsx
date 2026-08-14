@@ -8,7 +8,7 @@ export default function StudyWrapOpener({ userName, examName, image }) {
       <div className="study-wrap-glow-orb bg-indigo-500/40" />
 
       {/* Frosted Glass Overlay Container */}
-      <div className="relative z-10 w-full study-wrap-glass-card rounded-[24px] p-2 flex flex-col items-center text-center gap-3.5 shadow-2xl border border-white/25">
+      <div className="relative z-10 w-full study-wrap-glass-card rounded-[24px] p-2 flex flex-col items-center text-center gap-3.5">
         {/* Large Hero Image (Fills 98% of container width) */}
         <div className="relative w-full flex items-center justify-center my-0.5">
           <img

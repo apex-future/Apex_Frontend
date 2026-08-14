@@ -89,11 +89,11 @@
 }
 
 .study-wrap-glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Story progress bar transition */
@@ -104,4 +104,13 @@
 /* Dot / segment indicator transition */
 .study-wrap-dot {
   transition: all 0.3s ease;
+}
+
+/* Hide scrollbars for container elements */
+.study-wrap-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.study-wrap-no-scrollbar {
+  -ms-overflow-style: none;  /* IE/Edge */
+  scrollbar-width: none;  /* Firefox */
 }

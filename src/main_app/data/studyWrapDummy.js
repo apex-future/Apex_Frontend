@@ -20,7 +20,8 @@ const studyWrapDummy = {
       why: "you logged 11 sessions after midnight when everyone else was asleep"
     },
     supporting: {
-      longestSession: "3.5 hours",
+      totalHours: "47 — hours studied",
+      longestSession: "3.5 — hours in one sit",
       averageSession: "45 minutes",
       mostActiveHour: "10pm"
     }
@@ -32,7 +33,8 @@ const studyWrapDummy = {
       why: "your score jumped 22 points from your first quiz to your last"
     },
     supporting: {
-      bestScore: "88%",
+      bestScore: "88% — correct answers",
+      quizzesTaken: "12 — total attempts",
       lowestScore: "54%",
       avgScore: "74%"
     }
@@ -44,7 +46,8 @@ const studyWrapDummy = {
       why: "38 out of 60 days — quiet, consistent, there"
     },
     supporting: {
-      longestStreak: "14 days",
+      longestStreak: "14 — consecutive days",
+      daysStudied: "38 — out of 60 days",
       mostActiveDay: "Sunday",
       streaksBroken: "2 times"
     }

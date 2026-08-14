@@ -65,6 +65,13 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
       setCurrentCard(0);
       console.log('[StudyWrap] Opened — starting data load simulation');
 
+      // Preload all card images to ensure they show instantly
+      const imagesToPreload = [card1Img, card2Img, card3Img, card4Img, card5Img, card6Img];
+      imagesToPreload.forEach((src) => {
+        const img = new Image();
+        img.src = src;
+      });
+
       const timer = setTimeout(() => {
         setIsLoading(false);
         setCurrentCard(0);
@@ -146,6 +153,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
       case 0:
         return (
           <StudyWrapOpener
+            key={0}
             userName={data.userName}
             examName={data.examName}
             image={card1Img}
@@ -154,6 +162,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
       case 1:
         return (
           <StudyWrapCard
+            key={1}
             topicLabel="Course Coverage"
             image={card2Img}
             headline={data.courseCoverage.headline}
@@ -165,6 +174,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
       case 2:
         return (
           <StudyWrapCard
+            key={2}
             topicLabel="Time Spent"
             image={card3Img}
             headline={data.timeSpent.headline}
@@ -176,17 +186,20 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
       case 3:
         return (
           <StudyWrapCard
+            key={3}
             topicLabel="Quiz Performance"
             image={card4Img}
             headline={data.quizPerformance.headline}
             achievementTitle={data.quizPerformance.achievement.title}
             achievementWhy={data.quizPerformance.achievement.why}
             supporting={data.quizPerformance.supporting}
+            imageStyle={{ objectPosition: 'center 20%' }}
           />
         );
       case 4:
         return (
           <StudyWrapCard
+            key={4}
             topicLabel="Study Consistency"
             image={card5Img}
             headline={data.studyConsistency.headline}
@@ -198,6 +211,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
       case 5:
         return (
           <StudyWrapClosing
+            key={5}
             image={card6Img}
             wrapData={data}
             onClose={handleClose}
@@ -298,10 +312,10 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         {/* Top Header: Story Progress Bar & Close Button */}
         {!isLoading && renderStoryProgress()}
 
-        {/* Centered Topic Pill (No Sparkle, Reduced Size) */}
+        {/* Centered Topic Pill (No Sparkle, Reduced Size, Fully Transparent) */}
         {!isLoading && (
           <div className="flex items-center justify-center w-full px-4 pt-1 pb-1 z-30">
-            <div className="px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[10px] font-extrabold text-amber-200 uppercase tracking-[0.16em] shadow-sm text-center">
+            <div className="text-[10px] font-extrabold text-amber-200 uppercase tracking-[0.16em] text-center">
               <span style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 {CARD_TOPIC_LABELS[currentCard] || "STUDY WRAP"}
               </span>
@@ -315,7 +329,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         ) : (
           <div className="flex-1 flex flex-col justify-center overflow-hidden relative z-10 pb-6">
             {/* Card Content */}
-            <div className="flex-1 flex flex-col justify-center overflow-y-auto">{renderCard()}</div>
+            <div className="flex-1 flex flex-col justify-center overflow-y-auto study-wrap-no-scrollbar">{renderCard()}</div>
           </div>
         )}
 
