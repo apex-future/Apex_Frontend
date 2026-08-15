@@ -143,6 +143,14 @@ const ExamReminder = () => {
             moodLabel = 'Completed';
             moodGlow = 'shadow-[inset_0_0_15px_rgba(37,99,235,0.25)]';
             moodAmbientBg = 'bg-blue-600/5 group-hover:bg-blue-600/10';
+        } else if (daysLeft === 0) {
+            moodColor = 'bg-amber-400';
+            moodTextColor = 'text-amber-600 dark:text-amber-400';
+            moodBgColor = 'bg-amber-400/15';
+            moodBorderColor = 'border-amber-400/30';
+            moodLabel = 'D-Day';
+            moodGlow = 'shadow-[inset_0_0_15px_rgba(251,191,36,0.35)]';
+            moodAmbientBg = 'bg-amber-400/15 group-hover:bg-amber-400/25';
         } else if (daysLeft <= 3) {
             moodColor = 'bg-gradient-to-r from-orange-500 to-red-600';
             moodTextColor = 'text-red-600 dark:text-red-500';
@@ -467,22 +475,6 @@ const ExamReminder = () => {
                     </>
                 ) : (
                     <>
-                        {/* Purple dot indicator when daysLeft === 0 */}
-                        {daysLeft !== null && daysLeft <= 0 && (
-                            <div
-                                className="absolute z-20"
-                                style={{
-                                    top: 10,
-                                    right: 10,
-                                    width: 10,
-                                    height: 10,
-                                    borderRadius: '50%',
-                                    background: '#7C3AED',
-                                    boxShadow: '0 0 0 3px rgba(124,58,237,0.3)',
-                                }}
-                            />
-                        )}
-
                         <div className={`absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-16 blur-3xl transition-all duration-700 pointer-events-none ${moodAmbientBg}`} />
 
                         <div className="flex flex-col w-full h-full relative z-10 justify-between">
@@ -535,7 +527,7 @@ const ExamReminder = () => {
 
                                 {/* Study Wrap button when daysLeft === 0 */}
                                 {daysLeft !== null && daysLeft <= 0 && (
-                                    <div className="w-full mt-2 px-2">
+                                    <div className="w-full mt-2 px-1">
                                         <Button
                                             variant="primary"
                                             fullWidth
@@ -544,8 +536,10 @@ const ExamReminder = () => {
                                                 console.log('[StudyWrap] Triggered from dashboard');
                                                 setShowWrap(true);
                                             }}
+                                            className="!py-2.5 md:!py-3 !font-bold !text-xs md:!text-sm !shadow-lg shadow-purple-900/40 hover:brightness-110 active:scale-[0.98] transition-all"
+                                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                                         >
-                                            Watch your Study Wrap 🎬
+                                            Watch your Study Wrap
                                         </Button>
                                     </div>
                                 )}

@@ -281,7 +281,7 @@ export default function StudyWrapCard({
             initial="hidden"
             animate="visible"
             variants={fadeUp}
-            className="w-full"
+            className="w-full py-1.5 md:py-2"
           >
             <DepthText
               text={headline}
@@ -387,11 +387,12 @@ export default function StudyWrapCard({
                     key={key}
                     className="flex flex-col items-start rounded-[14px] p-[10px_12px] text-left overflow-hidden"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      backdropFilter: 'blur(12px)',
-                      WebkitBackdropFilter: 'blur(12px)',
-                      borderTop: '1px solid rgba(255, 255, 255, 0.25)',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                      background: 'rgba(255, 255, 255, 0.22)',
+                      backdropFilter: 'blur(16px)',
+                      WebkitBackdropFilter: 'blur(16px)',
+                      border: 'none',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.45)',
+                      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
                     }}
                   >
                     {/* Icon + Title row */}
@@ -399,13 +400,13 @@ export default function StudyWrapCard({
                       className="flex items-center gap-1.5 text-[10px] uppercase text-white/60 tracking-wider mb-1"
                       style={{ fontFamily: "'Inter', sans-serif" }}
                     >
-                      <IconComponent size={12} weight="bold" />
+                      <IconComponent size={12} weight="bold" className="text-white/80" />
                       <span>{title}</span>
                     </div>
 
                     {/* Bold number */}
                     <div
-                      className="text-[22px] font-bold text-white opacity-100 leading-none tracking-tight mb-0.5"
+                      className="text-[22px] font-bold text-white leading-none tracking-tight mb-0.5"
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
                       <StatNumber value={number} />

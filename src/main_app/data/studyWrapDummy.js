@@ -1,6 +1,7 @@
 const studyWrapDummy = {
   userName: "Isaac",
   examName: "JAMB 2026",
+  studyDays: 34,
   courseCoverage: {
     headline: "I covered 5 out of 6 books.",
     achievement: {

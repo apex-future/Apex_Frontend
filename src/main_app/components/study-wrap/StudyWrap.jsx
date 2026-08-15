@@ -8,11 +8,13 @@ import StudyWrapOpener from './StudyWrapOpener';
 import StudyWrapCard from './StudyWrapCard';
 import StudyWrapClosing from './StudyWrapClosing';
 import studyWrapDummy from '../../data/studyWrapDummy';
-import LightRays from '../ui/LightRays';
+import Modal from '../ui/Modal';
 import './studyWrap.css';
 
 // Image imports from src/assets/Exam_Day_Asset/
 import card1Img from '../../../assets/Exam_Day_Asset/card1.png';
+import cardBgImg from '../../../assets/Exam_Day_Asset/card_background.png';
+import logoImg from '../../../assets/logo/logo-dark-removebg-preview.png';
 import card2Img from '../../../assets/Exam_Day_Asset/card2.png';
 import card3Img from '../../../assets/Exam_Day_Asset/card3.png';
 import card4Img from '../../../assets/Exam_Day_Asset/card4.png';
@@ -22,24 +24,6 @@ import card6Img from '../../../assets/Exam_Day_Asset/card6.png';
 const TOTAL_CARDS = 6;
 const SWIPE_THRESHOLD = 50;
 
-// Curated vibrant dark gradients tailored for each card step (No white bottom fade)
-const CARD_GRADIENTS = [
-  'linear-gradient(135deg, #1E1B4B 0%, #311042 50%, #0F0C20 100%)', // Card 0: Opener (Deep Cosmic Indigo)
-  'linear-gradient(135deg, #064E3B 0%, #022C22 50%, #0F172A 100%)', // Card 1: Coverage (Neon Emerald)
-  'linear-gradient(135deg, #4C1D95 0%, #3B0764 50%, #0F0C20 100%)', // Card 2: Time Spent (Sunset Violet)
-  'linear-gradient(135deg, #1E3A8A 0%, #172554 50%, #0B132B 100%)', // Card 3: Quiz Performance (Sapphire Blue)
-  'linear-gradient(135deg, #581C87 0%, #3B0764 50%, #111827 100%)', // Card 4: Study Consistency (Cyber Purple)
-  'linear-gradient(135deg, #451A03 0%, #2A0800 50%, #0A0A0A 100%)', // Card 5: Closing (Obsidian Gold)
-];
-
-const CARD_RAY_COLORS = [
-  '#A78BFA', // Card 0 / Loader: Cosmic Violet
-  '#34D399', // Card 1: Emerald Green
-  '#C084FC', // Card 2: Sunset Purple
-  '#60A5FA', // Card 3: Sapphire Blue
-  '#F0ABFC', // Card 4: Cyber Magenta
-  '#FBBF24', // Card 5: Obsidian Gold
-];
 
 const CARD_TOPIC_LABELS = [
   "OVERVIEW",
@@ -80,8 +64,10 @@ const cardVariants = {
 export default function StudyWrap({ isOpen, onClose, daysLeft }) {
   const [currentCard, setCurrentCard] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const direction = useRef(1);
   const lastTransitionTime = useRef(0);
+  const hasFiredConfetti = useRef(false);
 
   // Swipe tracking
   const touchStartX = useRef(0);
@@ -91,6 +77,8 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
     if (isOpen) {
       setIsLoading(true);
       setCurrentCard(0);
+      setShowExitConfirm(false);
+      hasFiredConfetti.current = false;
       console.log('[StudyWrap] Opened — starting data load simulation');
 
       // Preload all card images to ensure they show instantly
@@ -99,15 +87,26 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         const img = new Image();
         img.src = src;
       });
-
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-        setCurrentCard(0);
-      }, 3500);
-
-      return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  const handleLoadComplete = () => {
+    setIsLoading(false);
+    setCurrentCard(0);
+  };
+
+  // Request close triggers confirmation modal
+  const handleRequestClose = useCallback(() => {
+    setShowExitConfirm(true);
+  }, []);
+
+  // Confirmed close
+  const handleFinalClose = useCallback(() => {
+    setShowExitConfirm(false);
+    setCurrentCard(0);
+    setIsLoading(true);
+    onClose?.();
+  }, [onClose]);
 
   // Navigation with consistent animation debounce
   const goNext = useCallback(() => {
@@ -133,18 +132,18 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
     }
   }, [currentCard]);
 
-  // Close handler
-  const handleClose = useCallback(() => {
-    setCurrentCard(0);
-    setIsLoading(true);
-    onClose?.();
-  }, [onClose]);
-
   // Keyboard navigation
   useEffect(() => {
     if (!isOpen || isLoading) return;
 
     const handleKeyDown = (e) => {
+      if (showExitConfirm) {
+        if (e.key === 'Escape') {
+          setShowExitConfirm(false);
+        }
+        return;
+      }
+
       if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault();
         goNext();
@@ -152,13 +151,13 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         e.preventDefault();
         goPrev();
       } else if (e.key === 'Escape') {
-        handleClose();
+        handleRequestClose();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isLoading, goNext, goPrev, handleClose]);
+  }, [isOpen, isLoading, showExitConfirm, goNext, goPrev, handleRequestClose]);
 
   // Touch handlers for mobile swipe
   const handleTouchStart = useCallback((e) => {
@@ -196,6 +195,10 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             userName={data.userName}
             examName={data.examName}
             image={card1Img}
+            triggerConfetti={!hasFiredConfetti.current}
+            onConfettiFired={() => {
+              hasFiredConfetti.current = true;
+            }}
           />
         );
       case 1:
@@ -258,7 +261,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             direction={direction.current}
             image={card6Img}
             wrapData={data}
-            onClose={handleClose}
+            onClose={handleFinalClose}
           />
         );
       default:
@@ -324,8 +327,8 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
 
         {/* Close Button on Top Right — transparent, no background */}
         <button
-          className="p-1 text-white/70 hover:text-white transition-colors flex-shrink-0 bg-transparent"
-          onClick={handleClose}
+          className="p-1 text-white/70 hover:text-white transition-colors flex-shrink-0 bg-transparent cursor-pointer"
+          onClick={handleRequestClose}
           title="Close"
         >
           <X size={18} weight="bold" />
@@ -337,10 +340,9 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
 
   const modalContent = (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-4">
-      {/* Backdrop overlay */}
+      {/* Backdrop overlay — non-interactive on desktop to prevent accidental dismiss */}
       <div
         className="absolute inset-0 bg-black/80 backdrop-blur-md hidden md:block transition-opacity"
-        onClick={handleClose}
       />
 
       {/* Main Surface */}
@@ -354,24 +356,11 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
           transition-colors duration-300
         "
         style={{
-          background: CARD_GRADIENTS[currentCard] || CARD_GRADIENTS[0],
+          background: `linear-gradient(to bottom, #000000 0%, #000000 50%, rgba(0, 0, 0, 0.95) 55%, rgba(0, 0, 0, 0.65) 75%, rgba(0, 0, 0, 0.65) 100%), url(${cardBgImg}) bottom center / 100% auto no-repeat, #000000`,
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Animated Light Rays WebGL Background — Bright, Crisp & Clear */}
-        <LightRays
-          raysOrigin="top-center"
-          raysColor={CARD_RAY_COLORS[currentCard] || '#A78BFA'}
-          raysSpeed={1.8}
-          lightSpread={1.2}
-          rayLength={2.2}
-          followMouse={true}
-          mouseInfluence={0.15}
-          noiseAmount={0.04}
-          distortion={0.05}
-          saturation={1.3}
-        />
 
         {/* Top Header: Story Progress Bar, Close Button & Centered Topic Pill (Absolute Overlay) */}
         {!isLoading && (
@@ -379,28 +368,30 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             <div className="pointer-events-auto">
               {renderStoryProgress()}
             </div>
-            <motion.div
-              key={`topic-${currentCard}`}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
-              className="flex items-center justify-center w-full px-4 pb-1"
-            >
-              <div className="text-[10px] font-extrabold text-amber-200 uppercase tracking-[0.16em] text-center">
-                <span style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  {CARD_TOPIC_LABELS[currentCard] || "STUDY WRAP"}
-                </span>
-              </div>
-            </motion.div>
+            {currentCard > 0 && currentCard < TOTAL_CARDS - 1 && (
+              <motion.div
+                key={`topic-${currentCard}`}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
+                className="flex items-center justify-center w-full px-4 pb-1"
+              >
+                <div className="text-[10px] font-extrabold text-amber-200 uppercase tracking-[0.16em] text-center">
+                  <span style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    {CARD_TOPIC_LABELS[currentCard] || "STUDY WRAP"}
+                  </span>
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
 
         {/* Content Container (Full-height scrollable area with padding top to make space for top overlay nav bar) */}
         {isLoading ? (
-          <StudyWrapLoader />
+          <StudyWrapLoader onComplete={handleLoadComplete} studyDays={data.studyDays} />
         ) : (
           <div
-            className="flex-1 w-full h-full overflow-y-auto study-wrap-no-scrollbar pt-[60px] pb-6 relative z-10"
+            className="flex-1 w-full h-full overflow-y-auto study-wrap-no-scrollbar pt-[60px] pb-14 relative z-10"
             style={{
               perspective: 1000,
               perspectiveOrigin: '50% 50%',
@@ -455,7 +446,55 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             )}
           </>
         )}
+
+        {/* Bottom branded footer watermark */}
+        {!isLoading && (
+          <div className="absolute bottom-4 left-5 right-5 flex items-center justify-between pointer-events-none z-30">
+            {/* Left side: Logo + Brand Name */}
+            <div className="flex items-center gap-2">
+              <img
+                src={logoImg}
+                alt="Apex Logo"
+                className="h-5 w-auto object-contain"
+              />
+              <span
+                className="text-[12px] font-bold text-white uppercase tracking-wider"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                Apex
+              </span>
+            </div>
+
+            {/* Right side: Study Wrap */}
+            <span
+              className="text-[11px] font-bold text-white uppercase tracking-[0.2em]"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              Study Wrap
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* Exit Confirmation Modal */}
+      <Modal
+        isOpen={showExitConfirm}
+        title="Exit Study Wrap?"
+        message="Are you sure you want to leave? You can revisit your full Study Wrap anytime from your home dashboard."
+        onClose={() => setShowExitConfirm(false)}
+        actions={[
+          {
+            label: 'Keep Watching',
+            variant: 'ghost',
+            onClick: () => setShowExitConfirm(false),
+          },
+          {
+            label: 'Exit Wrap',
+            variant: 'danger',
+            onClick: handleFinalClose,
+          },
+        ]}
+      />
     </div>
   );
 

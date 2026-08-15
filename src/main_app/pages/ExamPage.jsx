@@ -315,6 +315,14 @@ const ExamCard = ({ exam, linkedSpaces, onEdit, onDelete, onTogglePause }) => {
         moodTextColor = 'text-blue-500';
         moodBorderColor = 'border-blue-500/20';
         moodAmbientBg = 'from-blue-500/20 to-transparent';
+    } else if (daysLeft === 0) {
+        moodLabel = 'D-Day';
+        moodColor = 'bg-amber-400';
+        moodBgColor = 'bg-amber-400/20';
+        moodTextColor = 'text-amber-500 dark:text-amber-400';
+        moodBorderColor = 'border-amber-400/35';
+        moodAmbientBg = 'from-amber-400/35 to-transparent';
+        moodGlow = 'shadow-[0_0_25px_rgba(251,191,36,0.35)]';
     } else if (daysLeft <= 3) {
         moodLabel = 'Final Push';
         moodColor = 'bg-red-500';
