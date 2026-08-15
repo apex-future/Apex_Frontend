@@ -19,7 +19,7 @@ export default defineConfig({
       },
       workbox: {
         importScripts: ['sw-push.js'],
-        globPatterns: ['**/*.{js,mjs,css,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,mjs,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/assets\//, /\.(js|css|map|webmanifest)$/],
         skipWaiting: true,
