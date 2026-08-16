@@ -17,7 +17,7 @@ const CIRCLE_RADIUS = 36;
 const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS; // ≈ 226.2
 const HOLD_DURATION_MS = 5200; // Relaxed hold & countdown duration (~1.04s per number)
 
-export default function StudyWrapLoader({ onComplete }) {
+export default function StudyWrapLoader({ onComplete, isDataReady = false, studyDays = 5 }) {
   const [phase, setPhase] = useState('loading'); // 'loading' | 'hold'
   const [messageIndex, setMessageIndex] = useState(0);
   const [holdProgress, setHoldProgress] = useState(0);
@@ -27,29 +27,42 @@ export default function StudyWrapLoader({ onComplete }) {
   const holdStartTimeRef = useRef(null);
   const holdAnimFrameRef = useRef(null);
   const isHoldingRef = useRef(false);
+  const minTimePassedRef = useRef(false);
+  const isDataReadyRef = useRef(isDataReady);
+  isDataReadyRef.current = isDataReady;
 
-  // Phase 1: Loading
-  useEffect(() => {
-    console.log('[StudyWrap] Loader mounted');
-  }, []);
-
+  // Phase 1: Loading & Message cycling
   useEffect(() => {
     if (phase !== 'loading') return;
-
-    const timer = setTimeout(() => {
-      setPhase('hold');
-      console.log('[StudyWrap] Loading complete — showing hold and countdown screen');
-    }, 3500);
 
     const interval = setInterval(() => {
       setMessageIndex((prev) => (prev + 1) % LOADER_MESSAGES.length);
     }, 1800);
 
-    return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [phase]);
+
+  // Phase 1 Minimum display timer (at least 2.2s for smooth experience)
+  useEffect(() => {
+    minTimePassedRef.current = false;
+    const minTimer = setTimeout(() => {
+      minTimePassedRef.current = true;
+      if (isDataReadyRef.current) {
+        setPhase('hold');
+        console.log('[StudyWrap] Data ready & min time met — transitioning to hold screen');
+      }
+    }, 2200);
+
+    return () => clearTimeout(minTimer);
+  }, []);
+
+  // When isDataReady becomes true, check if minimum time has passed
+  useEffect(() => {
+    if (isDataReady && minTimePassedRef.current && phase === 'loading') {
+      setPhase('hold');
+      console.log('[StudyWrap] Data ready — transitioning to hold screen');
+    }
+  }, [isDataReady, phase]);
 
   // Hold mechanic & countdown
   const startHold = () => {
@@ -91,10 +104,10 @@ export default function StudyWrapLoader({ onComplete }) {
         }
         console.log('[StudyWrap] Hold complete — countdown reached 0');
 
-        // Smooth transition after reaching 0
+        // Smooth instantaneous transition after reaching 0
         setTimeout(() => {
           onComplete?.();
-        }, 350);
+        }, 100);
       } else {
         holdAnimFrameRef.current = requestAnimationFrame(updateLoop);
       }

@@ -109,6 +109,27 @@ const ExamReminder = () => {
     const daysLeft = 0;
     const isPaused = activeExam?.isPaused;
 
+    // Resolve the best bookSpaceId for Study Wrap
+    const effectiveBookSpaceId = useMemo(() => {
+        if (activeExam?.bookSpaceSupabaseId) return activeExam.bookSpaceSupabaseId;
+        if (activeExam?.bookSpaceId) return activeExam.bookSpaceId;
+
+        const linked = spaces.find(s => !s.isSystem && (s.examDate === activeExam?.date || s.isLinkedToExam));
+        if (linked?.supabaseId) return linked.supabaseId;
+        if (linked?.id && linked.id !== 'active-reading' && linked.id !== 'favorites') return linked.id;
+
+        const custom = spaces.find(s => !s.isSystem && s.supabaseId);
+        if (custom?.supabaseId) return custom.supabaseId;
+
+        const anyCustom = spaces.find(s => !s.isSystem);
+        if (anyCustom?.id) return anyCustom.id;
+
+        const anySpace = spaces.find(s => s.supabaseId);
+        if (anySpace?.supabaseId) return anySpace.supabaseId;
+
+        return 'default';
+    }, [activeExam, spaces]);
+
     // Study Wrap state
     const [showWrap, setShowWrap] = useState(false);
 
@@ -555,6 +576,7 @@ const ExamReminder = () => {
                 isOpen={showWrap}
                 onClose={() => setShowWrap(false)}
                 daysLeft={daysLeft}
+                bookSpaceId={effectiveBookSpaceId}
             />
         </>
     );

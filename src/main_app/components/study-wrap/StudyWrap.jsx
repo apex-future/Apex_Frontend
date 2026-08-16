@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CaretLeft, CaretRight, Sparkle, ShareNetwork } from '@phosphor-icons/react';
+import { X, CaretLeft, CaretRight, Sparkle, ShareNetwork, WifiSlash, ArrowClockwise } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import StudyWrapLoader from './StudyWrapLoader';
-
 import StudyWrapOpener from './StudyWrapOpener';
 import StudyWrapCard from './StudyWrapCard';
 import StudyWrapClosing from './StudyWrapClosing';
-import studyWrapDummy from '../../data/studyWrapDummy';
 import Modal from '../ui/Modal';
+import Button from '../ui/Button';
+import apiClient from '../../services/apiClient';
 import './studyWrap.css';
 
 // Image imports from src/assets/Exam_Day_Asset/
@@ -24,7 +24,6 @@ import card6Img from '../../../assets/Exam_Day_Asset/card6.png';
 const TOTAL_CARDS = 6;
 const SWIPE_THRESHOLD = 50;
 
-
 const CARD_TOPIC_LABELS = [
   "OVERVIEW",
   "COURSE COVERAGE",
@@ -33,8 +32,6 @@ const CARD_TOPIC_LABELS = [
   "STUDY CONSISTENCY",
   "WRAP SUMMARY"
 ];
-
-
 
 const SPRING_OPTIONS = { type: 'spring', stiffness: 300, damping: 30 };
 
@@ -61,36 +58,71 @@ const cardVariants = {
   }),
 };
 
-export default function StudyWrap({ isOpen, onClose, daysLeft }) {
+export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
   const [currentCard, setCurrentCard] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [wrapData, setWrapData] = useState(null);
+  const [wrapError, setWrapError] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const direction = useRef(1);
   const lastTransitionTime = useRef(0);
   const hasFiredConfetti = useRef(false);
 
-  // Swipe tracking
-  const touchStartX = useRef(0);
+  const fetchPromiseRef = useRef(null);
 
-  // Simulate data load when opened
-  useEffect(() => {
-    if (isOpen) {
-      setIsLoading(true);
-      setCurrentCard(0);
-      setShowExitConfirm(false);
-      hasFiredConfetti.current = false;
-      console.log('[StudyWrap] Opened — starting data load simulation');
-
-      // Preload all card images to ensure they show instantly
-      const imagesToPreload = [card1Img, card2Img, card3Img, card4Img, card5Img, card6Img];
-      imagesToPreload.forEach((src) => {
-        const img = new Image();
-        img.src = src;
-      });
+  // Fetch wrap data from backend
+  const fetchWrapData = useCallback(async (spaceId) => {
+    if (!navigator.onLine) {
+      console.warn('[StudyWrap] Offline detected — cannot generate study wrap');
+      setWrapError(true);
+      return;
     }
-  }, [isOpen]);
 
-  const handleLoadComplete = () => {
+    try {
+      const spaceTarget = spaceId || 'default';
+      console.log('[StudyWrap] Prefetching wrap data from /api/wrap/' + spaceTarget);
+      const promise = apiClient.get(`/api/wrap/${spaceTarget}`);
+      fetchPromiseRef.current = promise;
+      const response = await promise;
+      setWrapData(response.data);
+      console.log('[StudyWrap] Data prefetched and ready in state');
+      return response.data;
+    } catch (err) {
+      console.error('[StudyWrap] Failed to prefetch wrap data:', err);
+      setWrapError(true);
+    }
+  }, []);
+
+  // Run when modal is opened
+  useEffect(() => {
+    if (!isOpen) return;
+    setIsLoading(true);
+    setCurrentCard(0);
+    setWrapData(null);
+    setWrapError(false);
+    setShowExitConfirm(false);
+    hasFiredConfetti.current = false;
+    console.log('[StudyWrap] Opened — starting instant prefetch in background');
+
+    // Prefetch wrap data immediately while user sees loader / hold countdown
+    fetchWrapData(bookSpaceId);
+
+    // Preload all card images to ensure they show instantly
+    const imagesToPreload = [card1Img, card2Img, card3Img, card4Img, card5Img, card6Img];
+    imagesToPreload.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, [isOpen, bookSpaceId, fetchWrapData]);
+
+  const handleLoadComplete = async () => {
+    if (fetchPromiseRef.current) {
+      try {
+        await fetchPromiseRef.current;
+      } catch (err) {
+        // Error already handled
+      }
+    }
     setIsLoading(false);
     setCurrentCard(0);
   };
@@ -182,10 +214,66 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
 
   if (!isOpen) return null;
 
-  const data = studyWrapDummy;
-
   // Render the correct card by index
   const renderCard = () => {
+    if (!wrapData) {
+      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+      return (
+        <div className="w-full min-h-full flex flex-col items-center justify-center text-center px-6 py-8 select-none relative z-10 gap-5">
+          <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shadow-[0_0_24px_rgba(239,68,68,0.25)]">
+            <WifiSlash size={32} weight="bold" />
+          </div>
+
+          <div className="flex flex-col gap-2 max-w-[320px]">
+            <h3
+              className="text-lg font-bold text-white tracking-wide"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              {isOffline ? "You're Currently Offline" : "Unable to Generate Study Wrap"}
+            </h3>
+            <p
+              className="text-xs text-white/60 leading-relaxed font-medium"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              {isOffline
+                ? "Study Wrap compiles your latest reading analytics and AI achievements, which requires an active internet connection."
+                : "We couldn't compile your Study Wrap analytics and AI achievements. Please check your connection and try again."}
+            </p>
+          </div>
+
+          <div className="flex flex-col w-full max-w-[260px] gap-2.5 mt-2">
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={() => {
+                setWrapError(false);
+                setIsLoading(true);
+                fetchWrapData(bookSpaceId);
+              }}
+              className="!py-2.5 !text-xs !font-bold"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              <ArrowClockwise size={16} weight="bold" />
+              <span>Try Again</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={handleFinalClose}
+              className="!py-2.5 !text-xs !font-bold !text-white/80 hover:!text-white !border-white/20 hover:!bg-white/10"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    const data = wrapData;
+
     switch (currentCard) {
       case 0:
         return (
@@ -211,7 +299,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             headline={data.courseCoverage.headline}
             achievementTitle={data.courseCoverage.achievement.title}
             achievementWhy={data.courseCoverage.achievement.why}
-            supporting={data.courseCoverage.supporting}
+            stats={data.courseCoverage.stats}
           />
         );
       case 2:
@@ -224,7 +312,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             headline={data.timeSpent.headline}
             achievementTitle={data.timeSpent.achievement.title}
             achievementWhy={data.timeSpent.achievement.why}
-            supporting={data.timeSpent.supporting}
+            stats={data.timeSpent.stats}
           />
         );
       case 3:
@@ -237,7 +325,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             headline={data.quizPerformance.headline}
             achievementTitle={data.quizPerformance.achievement.title}
             achievementWhy={data.quizPerformance.achievement.why}
-            supporting={data.quizPerformance.supporting}
+            stats={data.quizPerformance.stats}
             imageStyle={{ objectPosition: 'center 20%' }}
           />
         );
@@ -251,7 +339,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             headline={data.studyConsistency.headline}
             achievementTitle={data.studyConsistency.achievement.title}
             achievementWhy={data.studyConsistency.achievement.why}
-            supporting={data.studyConsistency.supporting}
+            stats={data.studyConsistency.stats}
           />
         );
       case 5:
@@ -260,7 +348,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             key={5}
             direction={direction.current}
             image={card6Img}
-            wrapData={data}
+            wrapData={wrapData}
             onClose={handleFinalClose}
           />
         );
@@ -337,7 +425,6 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
     );
   };
 
-
   const modalContent = (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-4">
       {/* Backdrop overlay — non-interactive on desktop to prevent accidental dismiss */}
@@ -361,7 +448,6 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-
         {/* Top Header: Story Progress Bar, Close Button & Centered Topic Pill (Absolute Overlay) */}
         {!isLoading && (
           <div className="absolute top-0 left-0 right-0 z-40 bg-transparent flex flex-col pointer-events-none">
@@ -388,7 +474,11 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
 
         {/* Content Container (Full-height scrollable area with padding top to make space for top overlay nav bar) */}
         {isLoading ? (
-          <StudyWrapLoader onComplete={handleLoadComplete} studyDays={data.studyDays} />
+          <StudyWrapLoader
+            onComplete={handleLoadComplete}
+            isDataReady={Boolean(wrapData || wrapError)}
+            studyDays={5}
+          />
         ) : (
           <div
             className="flex-1 w-full h-full overflow-y-auto study-wrap-no-scrollbar pt-[60px] pb-14 relative z-10"
@@ -419,7 +509,6 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             </AnimatePresence>
           </div>
         )}
-
 
         {/* Side Click Hotzones for Desktop Navigation */}
         {!isLoading && (
@@ -500,4 +589,3 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
 
   return createPortal(modalContent, document.body);
 }
-

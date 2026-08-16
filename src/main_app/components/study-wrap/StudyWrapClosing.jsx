@@ -1,8 +1,31 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Button from '../ui/Button';
-import { ShareNetwork, BookOpen, Clock, Trophy, Fire } from '@phosphor-icons/react';
+import {
+  ShareNetwork,
+  BookOpen,
+  Clock,
+  Lightning,
+  Trophy,
+  ListChecks,
+  Fire,
+  CalendarCheck,
+  Stack,
+  Flame,
+} from '@phosphor-icons/react';
 import DepthText from '../ui/DepthText';
+
+const ICON_MAP = {
+  BookOpen,
+  Clock,
+  Lightning,
+  Trophy,
+  ListChecks,
+  Fire,
+  CalendarCheck,
+  Stack,
+  Flame,
+};
 
 const imageVariants = {
   hidden: {
@@ -37,45 +60,40 @@ const fadeUp = {
   }),
 };
 
-const ICON_MAP = {
-  BookOpen,
-  Clock,
-  Trophy,
-  Fire,
-};
-
-const CLOSING_GRID_STATS = [
-  {
-    key: 'courseCoverage',
-    icon: 'BookOpen',
-    title: 'Books Covered',
-    number: '5',
-    measurement: 'out of 6 books',
-  },
-  {
-    key: 'timeSpent',
-    icon: 'Clock',
-    title: 'Time Spent',
-    number: '47',
-    measurement: 'hours studied',
-  },
-  {
-    key: 'quizPerformance',
-    icon: 'Trophy',
-    title: 'Best Score',
-    number: '88%',
-    measurement: 'correct answers',
-  },
-  {
-    key: 'studyConsistency',
-    icon: 'Fire',
-    title: 'Days Studied',
-    number: '38',
-    measurement: 'out of 60 days',
-  },
-];
-
 export default function StudyWrapClosing({ direction = 1, image, wrapData, onClose }) {
+  const closingStats = wrapData
+    ? [
+        {
+          key: 'courseCoverage',
+          icon: 'BookOpen',
+          title: 'Books Covered',
+          number: wrapData.courseCoverage?.stats?.[0]?.number || '0%',
+          measurement: wrapData.courseCoverage?.stats?.[1]?.measurement || 'pages read',
+        },
+        {
+          key: 'timeSpent',
+          icon: 'Clock',
+          title: 'Time Spent',
+          number: wrapData.timeSpent?.stats?.[0]?.number || '0.0',
+          measurement: wrapData.timeSpent?.stats?.[0]?.measurement || 'hours studied',
+        },
+        {
+          key: 'quizPerformance',
+          icon: 'Trophy',
+          title: 'Best Score',
+          number: wrapData.quizPerformance?.stats?.[0]?.number || '0%',
+          measurement: wrapData.quizPerformance?.stats?.[0]?.measurement || 'correct answers',
+        },
+        {
+          key: 'studyConsistency',
+          icon: 'Fire',
+          title: 'Days Studied',
+          number: wrapData.studyConsistency?.stats?.[1]?.number || '0',
+          measurement: wrapData.studyConsistency?.stats?.[1]?.measurement || 'days studied',
+        },
+      ]
+    : [];
+
   return (
     <div className="w-full min-h-full flex flex-col items-center justify-center px-4 py-3 study-wrap-card-enter relative z-10 select-none">
       {/* Ambient Glow */}
@@ -132,8 +150,8 @@ export default function StudyWrapClosing({ direction = 1, image, wrapData, onClo
             variants={fadeUp}
             className="w-full grid grid-cols-2 gap-2 my-0.5"
           >
-            {CLOSING_GRID_STATS.map(({ key, icon, title, number, measurement }, index) => {
-              const Icon = ICON_MAP[icon];
+            {closingStats.map(({ key, icon, title, number, measurement }, index) => {
+              const Icon = ICON_MAP[icon] || Trophy;
               return (
                 <motion.div
                   key={key}

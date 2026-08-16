@@ -14,15 +14,15 @@ const FeaturedSlider = ({ lastReadBook, isLoading }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Slide definition based on screen size
+  // Slide definition based on screen size (60/40 ratio on desktop)
   const slides = isLarge
     ? [
         {
           id: 'combined',
           component: (
-            <div className="flex gap-4 md:gap-6 w-full items-stretch">
-              <div className="flex-1 flex flex-col"><LastReadCard book={lastReadBook} isLoading={isLoading} /></div>
-              <div className="flex-1 flex flex-col"><ExamReminder /></div>
+            <div className="grid grid-cols-5 gap-4 md:gap-6 w-full items-stretch">
+              <div className="col-span-3 w-full h-full flex flex-col min-w-0"><LastReadCard book={lastReadBook} isLoading={isLoading} /></div>
+              <div className="col-span-2 w-full h-full flex flex-col min-w-0"><ExamReminder /></div>
             </div>
           )
         }
