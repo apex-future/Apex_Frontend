@@ -73,7 +73,7 @@ export default function Header() {
             <div className="px-4 sm:px-6 md:px-8 pt-2 pb-6 sm:pt-4 sm:pb-8 w-full max-w-5xl mx-auto">
                 
                 {/* Title Section */}
-                <div className="flex flex-col gap-1 mb-6">
+                <div id="tour-welcome" className="flex flex-col gap-1 mb-6">
                     <div className="flex items-center gap-3">
                         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight min-h-[1.2em] text-text-primary">
                             <Typewriter text={greeting} speed={40} showCursor={false} skipAnimation={skipAnimation} />

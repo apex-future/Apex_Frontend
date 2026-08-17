@@ -6,12 +6,44 @@ import FeaturedSlider from "./FeaturedSlider";
 import AllBooks from "./AllBooks";
 import TopNavBar from "../layout/navigation/TopNavBar";
 import { BookContext } from "../../context/BookContextInstance";
+import useTour from "../../hooks/useTour";
 
 function HomePage({ setIsMobileOpen, isAsideExpanded }) {
   const { books = [], booksLoading, addBookToShelf, handleBookClick } = useContext(BookContext) || {};
   const { setActiveSpace } = useSpaceStore();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+
+  const dashboardTourSteps = useMemo(() => [
+    {
+      element: '#tour-welcome',
+      popover: {
+        title: 'Welcome to Apex! 🚀',
+        description: 'Apex is your all-in-one AI learning space. We solve the problem of fragmented study tools by bringing your books, notes, flashcards, and an AI tutor into one seamless platform.',
+        side: "bottom",
+        align: 'start'
+      }
+    },
+    {
+      element: '#tour-add-book',
+      popover: {
+        title: 'Add Your First Book',
+        description: 'Start by uploading a PDF, EPUB, or DOCX. Apex will process it so you can read, highlight, and interact with the AI directly on the text.',
+        side: "bottom",
+        align: 'end'
+      }
+    },
+    {
+      popover: {
+        title: 'Explore the Reader',
+        description: 'Once you open a book, you can highlight text to ask the AI questions, define words, change colors, create flashcards, and take quizzes!',
+        side: "center",
+        align: 'center'
+      }
+    }
+  ], []);
+
+  useTour('Dashboard', dashboardTourSteps);
 
   useEffect(() => {
     setActiveSpace(null);

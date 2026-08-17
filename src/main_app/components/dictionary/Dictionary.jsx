@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MagnifyingGlass, Book, SpeakerHigh, ArrowLeft, Spinner, Sparkle, ClockCounterClockwise, WifiSlash } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import dictionaryService from '../../services/dictionaryService';
+import useTour from '../../hooks/useTour';
 
 function Dictionary() {
     const [word, setWord] = useState('');
@@ -21,6 +22,37 @@ function Dictionary() {
     useEffect(() => {
         dictionaryService.checkOfflineDictionaryStatus().then(setOfflineReady);
     }, []);
+
+    const dictionaryTourSteps = React.useMemo(() => [
+        {
+            popover: {
+                title: 'Welcome to the Dictionary 📚',
+                description: 'This is your offline-capable dictionary. Search for any word to get definitions, synonyms, and hear audio pronunciations.',
+                side: "bottom",
+                align: 'center'
+            }
+        },
+        {
+            element: '#tour-dict-search',
+            popover: {
+                title: 'Search Words',
+                description: 'Type any word here to look it up.',
+                side: "bottom",
+                align: 'center'
+            }
+        },
+        {
+            element: '#tour-dict-offline',
+            popover: {
+                title: 'Offline Support',
+                description: 'You can download the dictionary package to look up words even when you do not have internet access!',
+                side: "top",
+                align: 'center'
+            }
+        }
+    ], []);
+
+    useTour('Dictionary', dictionaryTourSteps);
 
     // Load history from backend on mount (Category B — online only)
     useEffect(() => {
@@ -117,7 +149,7 @@ function Dictionary() {
 
             <div className="max-w-4xl mx-auto px-4 py-8">
                 {/* MagnifyingGlass Bar - Premium Thick Border System */}
-                <form onSubmit={handleSearch} className="mb-10">
+                <form id="tour-dict-search" onSubmit={handleSearch} className="mb-10">
                     <div className="relative group">
                         <input
                             type="text"
@@ -193,7 +225,7 @@ function Dictionary() {
 
                 {/* Offline Dictionary Gear */}
                 {!loading && !offlineReady && (
-                    <div className="mt-10 p-6 bg-bg-subtle border-t border-border-default rounded-3xl shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
+                    <div id="tour-dict-offline" className="mt-10 p-6 bg-bg-subtle border-t border-border-default rounded-3xl shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-base font-bold text-text-primary flex items-center gap-2">
                                 <WifiSlash size={18} weight="bold" className="text-accent-primary" />

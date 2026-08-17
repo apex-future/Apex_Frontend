@@ -35,6 +35,7 @@ import { CaretLeft, CaretRight, Plus, List, ArrowLeft, ArrowRight, WarningCircle
 import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
 import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
 import FlashcardPanel from './reading_navigations/reading_layout/FlashcardPanel';
+import useTour from '../../hooks/useTour';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
@@ -143,6 +144,36 @@ function ReaderView() {
         return () => document.removeEventListener('visibilitychange', handleSessionVisibility);
     }, []);
     // ────────────────────────────────────────────────────────────────────────
+
+    const readerTourSteps = useMemo(() => [
+        {
+            popover: {
+                title: 'Welcome to the Reader 📖',
+                description: 'This is where the magic happens. You can read your books and interact with the AI directly on the text.',
+                side: "center",
+                align: 'center'
+            }
+        },
+        {
+            popover: {
+                title: 'Highlight to Interact',
+                description: 'Try selecting any text on the page! A menu will pop up allowing you to ask the AI to explain it, define words, simplify complex sentences, or just color-highlight it for later.',
+                side: "top",
+                align: 'center'
+            }
+        },
+        {
+            element: '#tour-reader-nav',
+            popover: {
+                title: 'Tools & Navigation',
+                description: 'Here you can access the AI Chat, Dictionary, and Notebook. You can also track your reading progress, jump to pages, and lock the scroll to prevent accidental swipes.',
+                side: "top",
+                align: 'center'
+            }
+        }
+    ], []);
+
+    useTour('Reader', readerTourSteps, !isLoading);
 
     // removed immediate page visit tracking
 
