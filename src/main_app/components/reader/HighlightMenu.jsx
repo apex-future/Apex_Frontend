@@ -374,6 +374,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
 
                             <button
+                                id="tour-ask-ai"
                                 onClick={onAskAI}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
@@ -394,6 +395,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
 
                             <button
+                                id="tour-simplify"
                                 onClick={() => onSimplify?.()}
                                 className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
                             >
@@ -412,7 +414,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             </button>
                         </div>
 
-                        <div className="flex items-center justify-center gap-4 p-3 bg-bg-subtle/50 border-t border-gray-200 dark:border-neutral-800/80">
+                        <div id="tour-colors" className="flex items-center justify-center gap-4 p-3 bg-bg-subtle/50 border-t border-gray-200 dark:border-neutral-800/80">
                             {['#d1d5db', '#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff'].map(color => (
                                 <button
                                     key={color}

@@ -8,10 +8,20 @@ const useOnboardingStore = create(
       hasSeenReaderTour: false,
       hasSeenDictionaryTour: false,
 
+      dashboardTourStep: 0,
+      readerTourStep: 0,
+
       completeTour: (tourName) => {
         set((state) => ({
           ...state,
           [`hasSeen${tourName}Tour`]: true,
+        }));
+      },
+
+      setTourStep: (tourName, stepIndex) => {
+        set((state) => ({
+            ...state,
+            [`${tourName.toLowerCase()}TourStep`]: stepIndex
         }));
       },
       
@@ -20,6 +30,8 @@ const useOnboardingStore = create(
           hasSeenDashboardTour: false,
           hasSeenReaderTour: false,
           hasSeenDictionaryTour: false,
+          dashboardTourStep: 0,
+          readerTourStep: 0,
         })
       }
     }),

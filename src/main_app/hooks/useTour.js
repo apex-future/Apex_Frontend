@@ -9,11 +9,13 @@ import useOnboardingStore from '../store/useOnboardingStore';
  * @param {Array} steps - Array of driver.js steps
  * @param {boolean} autoStart - Whether to start automatically if not seen
  */
-export default function useTour(tourName, steps, autoStart = true) {
+export default function useTour(tourName, steps, autoStart = true, isFinalSubTour = true, onSubTourComplete = null) {
   const { [`hasSeen${tourName}Tour`]: hasSeen, completeTour } = useOnboardingStore();
   const driverObj = useRef(null);
 
   useEffect(() => {
+    let isDestroyed = false;
+
     driverObj.current = driver({
       showProgress: true,
       animate: true,
@@ -24,13 +26,21 @@ export default function useTour(tourName, steps, autoStart = true) {
       prevBtnText: '&larr; Prev',
       steps: steps,
       onDestroyStarted: () => {
+        if (isDestroyed) return;
+        isDestroyed = true;
+        
         if (!hasSeen && driverObj.current.hasNextStep() === false) {
-             completeTour(tourName);
+             // Finished this sub-tour normally
+             if (isFinalSubTour) {
+                 completeTour(tourName);
+             } else if (onSubTourComplete) {
+                 onSubTourComplete();
+             }
              driverObj.current.destroy();
         } else if (!hasSeen) {
-            // User skipped early, still mark as completed so it doesn't annoy them
-            completeTour(tourName);
-            driverObj.current.destroy();
+             // User clicked close/X early. Always mark complete so we don't annoy them again.
+             completeTour(tourName);
+             driverObj.current.destroy();
         } else {
              driverObj.current.destroy();
         }
@@ -40,10 +50,22 @@ export default function useTour(tourName, steps, autoStart = true) {
     if (autoStart && !hasSeen && steps && steps.length > 0) {
         // slight delay to ensure UI is fully rendered
         const timer = setTimeout(() => {
-            driverObj.current.drive();
+            if (!isDestroyed) {
+                driverObj.current.drive();
+            }
         }, 500);
-        return () => clearTimeout(timer);
+        
+        return () => {
+            clearTimeout(timer);
+            isDestroyed = true;
+            driverObj.current?.destroy();
+        };
     }
+
+    return () => {
+        isDestroyed = true;
+        driverObj.current?.destroy();
+    };
   }, [hasSeen, tourName, steps, autoStart, completeTour]);
 
   const startTour = () => {
