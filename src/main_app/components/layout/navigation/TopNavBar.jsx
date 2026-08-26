@@ -67,7 +67,8 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery, isA
                 multiple
               />
               <Button 
-                variant="primary" 
+                variant="primary"
+                id="tour-add-book"
                 onClick={() => document.getElementById('top-nav-upload').click()}
               >
                 <Plus size={18} weight="bold" />

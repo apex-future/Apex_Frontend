@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MagnifyingGlass, Book, SpeakerHigh, ArrowLeft, Spinner, Sparkle, ClockCounterClockwise, WifiSlash } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import dictionaryService from '../../services/dictionaryService';
+import useTour from '../../hooks/useTour';
 
 function Dictionary() {
     const [word, setWord] = useState('');
@@ -16,10 +17,42 @@ function Dictionary() {
     const [downloadingOffline, setDownloadingOffline] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [offlineError, setOfflineError] = useState(null);
+    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
     useEffect(() => {
         dictionaryService.checkOfflineDictionaryStatus().then(setOfflineReady);
     }, []);
+
+    const dictionaryTourSteps = React.useMemo(() => [
+        {
+            popover: {
+                title: 'Welcome to the Dictionary 📚',
+                description: 'This is your offline-capable dictionary. Search for any word to get definitions, synonyms, and hear audio pronunciations.',
+                side: "bottom",
+                align: 'center'
+            }
+        },
+        {
+            element: '#tour-dict-search',
+            popover: {
+                title: 'Search Words',
+                description: 'Type any word here to look it up.',
+                side: "bottom",
+                align: 'center'
+            }
+        },
+        {
+            element: '#tour-dict-offline',
+            popover: {
+                title: 'Offline Support',
+                description: 'You can download the dictionary package to look up words even when you do not have internet access!',
+                side: "top",
+                align: 'center'
+            }
+        }
+    ], []);
+
+    useTour('Dictionary', dictionaryTourSteps);
 
     // Load history from backend on mount (Category B — online only)
     useEffect(() => {
@@ -84,6 +117,7 @@ function Dictionary() {
         try {
             await dictionaryService.downloadOfflineDictionary(setDownloadProgress);
             setOfflineReady(true);
+            setShowSuccessDialog(true);
         } catch (err) {
             setOfflineError(err.message);
         } finally {
@@ -115,7 +149,7 @@ function Dictionary() {
 
             <div className="max-w-4xl mx-auto px-4 py-8">
                 {/* MagnifyingGlass Bar - Premium Thick Border System */}
-                <form onSubmit={handleSearch} className="mb-10">
+                <form id="tour-dict-search" onSubmit={handleSearch} className="mb-10">
                     <div className="relative group">
                         <input
                             type="text"
@@ -190,18 +224,14 @@ function Dictionary() {
                 )}
 
                 {/* Offline Dictionary Gear */}
-                {!loading && (
-                    <div className="mt-10 p-6 bg-bg-subtle border-t border-border-default rounded-3xl shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
+                {!loading && !offlineReady && (
+                    <div id="tour-dict-offline" className="mt-10 p-6 bg-bg-subtle border-t border-border-default rounded-3xl shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-base font-bold text-text-primary flex items-center gap-2">
                                 <WifiSlash size={18} weight="bold" className="text-accent-primary" />
                                 Offline Dictionary Support
                             </h4>
-                            {offlineReady ? (
-                                <span className="text-xs font-bold text-green-600 bg-green-100 px-3 py-1 rounded-xl uppercase tracking-wider">Ready</span>
-                            ) : (
-                                <span className="text-xs font-bold text-slate-500 bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-xl uppercase tracking-wider">Not Downloaded</span>
-                            )}
+                            <span className="text-xs font-bold text-slate-500 bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-xl uppercase tracking-wider">Not Downloaded</span>
                         </div>
                         <p className="text-sm text-text-secondary mb-5 leading-relaxed font-medium">
                             Download the offline dictionary (~6MB) to look up definitions without an internet connection. Previously looked up words are cached, but downloading this package ensures complete dictionary support. Note: Audio pronunciations are not available offline.
@@ -212,7 +242,7 @@ function Dictionary() {
                                 onClick={handleDownloadOfflineDictionary}
                                 className="px-6 py-3 bg-accent-primary hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-accent-primary/20 active:scale-95"
                             >
-                                {offlineReady ? 'Update Offline Package' : 'DownloadSimple Offline Package'}
+                                Download Offline Package
                             </button>
                         )}
                         
@@ -334,6 +364,26 @@ function Dictionary() {
                     </div>
                 )}
             </div>
+
+            {showSuccessDialog && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-surface-card w-full max-w-sm rounded-3xl p-8 shadow-2xl border border-border-default text-center animate-in zoom-in-95 duration-500">
+                        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                            <Sparkle size={32} weight="fill" />
+                        </div>
+                        <h3 className="text-2xl font-bold font-display text-text-primary mb-3">Ready for Offline!</h3>
+                        <p className="text-text-secondary font-medium mb-8 leading-relaxed">
+                            The dictionary has been successfully downloaded. You can now look up words completely offline!
+                        </p>
+                        <button
+                            onClick={() => setShowSuccessDialog(false)}
+                            className="w-full py-4 bg-accent-primary hover:bg-accent-hover text-white rounded-2xl font-bold text-lg transition-all active:scale-95 shadow-lg shadow-accent-primary/20"
+                        >
+                            Awesome
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

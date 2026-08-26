@@ -101,7 +101,7 @@ function Shelf({ shelves }) {
             <div className="shelf-img-container flex gap-2 items-center justify-center absolute inset-x-0 bottom-20 z-0 transition-transform duration-500 ease-out group-hover:-translate-y-8">
 
               {/* 1. Actual Books */}
-              {shelf.books?.slice(0, 3).map((book, bIndex) => {
+              {(shelf.books || []).slice(0, 3).map((book, bIndex) => {
                 const rotationClasses = bIndex === 0
                   ? '-rotate-6 group-hover:-rotate-9 group-hover:-translate-x-2'
                   : bIndex === 1

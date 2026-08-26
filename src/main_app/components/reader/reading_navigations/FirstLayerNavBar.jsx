@@ -134,6 +134,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
 
       <div
         ref={bottomBarRef}
+        id="tour-reader-nav"
         className="bottom-bar flex flex-col gap-4 items-center pointer-events-auto w-full px-2 pb-6"
         onClick={(e) => e.stopPropagation()}
       >

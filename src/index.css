@@ -290,4 +290,66 @@
 /* Text align */
 .tiptap-editor .ProseMirror [style*="text-align: center"] { text-align: center; }
 .tiptap-editor .ProseMirror [style*="text-align: right"]  { text-align: right; }
-.tiptap-editor .ProseMirror [style*="text-align: justify"] { text-align: justify; }
+.tiptap-editor .ProseMirror [style*="text-align: justify"] { text-align: justify; }
+
+/* ── Driver.js Custom Overrides for Apex ────────────────────────────────────── */
+.driver-popover {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+    color: rgb(var(--text-primary)) !important;
+    font-family: 'Space Grotesk', 'Inter', sans-serif !important;
+}
+
+.dark .driver-popover {
+    background: rgba(24, 24, 27, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+    color: rgb(var(--text-primary)) !important;
+}
+
+.driver-popover-title {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.5rem !important;
+    color: #8B5CF6 !important; /* Apex Purple */
+}
+
+.driver-popover-description {
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    color: rgb(var(--text-secondary)) !important;
+}
+
+.driver-popover-footer button {
+    background-color: transparent !important;
+    border: 1px solid rgb(var(--border-default)) !important;
+    color: rgb(var(--text-primary)) !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    text-shadow: none !important;
+}
+
+.driver-popover-footer button:hover {
+    background-color: rgb(var(--bg-subtle)) !important;
+}
+
+.driver-popover-footer .driver-popover-next-btn {
+    background-color: #8B5CF6 !important; /* Apex Purple */
+    color: white !important;
+    border-color: #8B5CF6 !important;
+}
+
+.driver-popover-footer .driver-popover-next-btn:hover {
+    background-color: #7C3AED !important;
+}
+
+.driver-popover-progress-text {
+    color: rgb(var(--text-tertiary)) !important;
+    font-weight: 500 !important;
+}

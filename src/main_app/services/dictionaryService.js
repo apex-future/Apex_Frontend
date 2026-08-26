@@ -188,16 +188,25 @@ const dictionaryService = {
       
       onProgress(70);
       
-      // Prepare bulk insert
-      const entries = Object.keys(data).map(word => ({
-        word: word.toLowerCase(),
-        definition: data[word]
-      }));
+      // Prepare bulk insert with deduplication
+      const entries = [];
+      const seenWords = new Set();
+      
+      for (const [key, value] of Object.entries(data)) {
+        const lower = key.toLowerCase();
+        if (!seenWords.has(lower)) {
+            seenWords.add(lower);
+            entries.push({
+                word: lower,
+                definition: value
+            });
+        }
+      }
       
       onProgress(80);
       
-      // Dexie bulkAdd is highly optimized for large inserts
-      await db.offline_dictionary.bulkAdd(entries);
+      // Dexie bulkPut is highly optimized for large inserts and handles duplicates without throwing
+      await db.offline_dictionary.bulkPut(entries);
       
       onProgress(100);
       return true;

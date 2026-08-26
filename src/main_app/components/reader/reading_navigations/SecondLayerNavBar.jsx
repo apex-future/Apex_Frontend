@@ -76,6 +76,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
         {/* Right: Flashcards & Quiz buttons — stacked on mobile (Flashcard underneath Quiz), side-by-side on desktop */}
         <div className='flex flex-col-reverse sm:flex-row gap-2 right-side items-center'>
           <button
+            id="tour-flashcards"
             className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { 
               e.stopPropagation(); 
@@ -86,6 +87,7 @@ function SecondLayerNavBar({ visible, setAiModal, setQuizModal, setLeftPanel, pd
             <Stack size={18} weight="bold" />
           </button>
           <button
+            id="tour-quiz"
             className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
             onClick={(e) => { e.stopPropagation(); setQuizModal(prev => !prev); }}
             title="Quiz Generation Settings"

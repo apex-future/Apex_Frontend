@@ -93,6 +93,7 @@ export default function BookCard({ book, onClick }) {
  return (
  <>
  <Card
+ id={`book-card-${book.id}`}
  onClick={() => onClick && onClick(book.id)}
  variant={onClick ? "interactive" : "default"}
  className="group relative flex flex-col p-4 transition-all duration-300"

@@ -35,6 +35,8 @@ import { CaretLeft, CaretRight, Plus, List, ArrowLeft, ArrowRight, WarningCircle
 import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
 import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
 import FlashcardPanel from './reading_navigations/reading_layout/FlashcardPanel';
+import useTour from '../../hooks/useTour';
+import useOnboardingStore from '../../store/useOnboardingStore';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
@@ -96,9 +98,9 @@ function ReaderView() {
 
     // Find the book and determine type
     const book = useMemo(() => books.find(b => b.id.toString() === bookId), [books, bookId]);
-    const isPdf = useMemo(() => book?.file?.type === 'application/pdf' || book?.file?.name.toLowerCase().endsWith('.pdf'), [book]);
-    const isDocx = useMemo(() => book?.file?.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || book?.file?.name.toLowerCase().endsWith('.docx'), [book]);
-    const isDoc = useMemo(() => book?.file?.type === 'application/msword' || book?.file?.name.toLowerCase().endsWith('.doc'), [book]);
+    const isPdf = useMemo(() => book?.file?.type === 'application/pdf' || book?.file?.name?.toLowerCase()?.endsWith('.pdf'), [book]);
+    const isDocx = useMemo(() => book?.file?.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || book?.file?.name?.toLowerCase()?.endsWith('.docx'), [book]);
+    const isDoc = useMemo(() => book?.file?.type === 'application/msword' || book?.file?.name?.toLowerCase()?.endsWith('.doc'), [book]);
 
     // --- Lifted PDF Controls State ---
     const [pageNumber, setPageNumber] = useState(book?.currentPage || 1);
@@ -254,6 +256,133 @@ function ReaderView() {
     // Flashcard feature state
     const [activeFlashcardSession, setActiveFlashcardSession] = useState(null); // { selection, count }
     const [flashcardPanel, setFlashcardPanel] = useState(false);
+
+    // ============================================
+    // READER TOUR — moved here so isLoading, showHighlightMenu, flashcardPanel are all declared
+    // ============================================
+    const { hasSeenReaderTour, readerTourStep, setTourStep, completeTour } = useOnboardingStore();
+
+    const readerTourSteps = useMemo(() => {
+        if (readerTourStep === 0) {
+            return [
+                {
+                    popover: {
+                        title: 'Welcome to the Reader 📖',
+                        description: 'This is where the magic happens. You can read your books and interact with the AI directly on the text.',
+                        side: "center",
+                        align: 'center'
+                    }
+                },
+                {
+                    popover: {
+                        title: 'Highlight to Interact',
+                        description: 'Try selecting any text on the page! A menu will pop up allowing you to ask the AI to explain it, define words, simplify complex sentences, or just color-highlight it for later.',
+                        side: "top",
+                        align: 'center',
+                        showButtons: ['close']
+                    }
+                }
+            ];
+        } else if (readerTourStep === 1) {
+            return [
+                {
+                    element: '#tour-ask-ai',
+                    popover: {
+                        title: 'Ask Contextual Questions',
+                        description: 'Click here to ask the AI any question about the text you just highlighted.',
+                        side: "bottom",
+                        align: 'center'
+                    }
+                },
+                {
+                    element: '#tour-simplify',
+                    popover: {
+                        title: 'Simplify Text',
+                        description: 'If a concept is too complex, click here to have the AI rewrite it in simpler terms.',
+                        side: "bottom",
+                        align: 'center'
+                    }
+                },
+                {
+                    element: '#tour-colors',
+                    popover: {
+                        title: 'Save for Later',
+                        description: 'Use these colors to save highlights and add notes to them in your Notebook.',
+                        side: "top",
+                        align: 'center'
+                    }
+                }
+            ];
+        } else if (readerTourStep === 2) {
+            return [
+                {
+                    element: '#tour-flashcards',
+                    popover: {
+                        title: 'Generate Flashcards',
+                        description: 'After reading, you can generate smart flashcards based on the pages you select to test your memory.',
+                        side: "top",
+                        align: 'center',
+                        showButtons: ['close', 'next']
+                    }
+                }
+            ];
+        } else if (readerTourStep === 3) {
+            return [
+                {
+                    element: '#tour-quiz',
+                    popover: {
+                        title: 'Take a Quiz',
+                        description: 'Generate a multiple-choice quiz to ensure you fully understood what you just read. You can skip this or take it!',
+                        side: "top",
+                        align: 'center',
+                        showButtons: ['close', 'next']
+                    }
+                }
+            ];
+        }
+        return [];
+    }, [readerTourStep]);
+
+    const shouldStartReaderTour = !isLoading && !hasSeenReaderTour && readerTourSteps.length > 0;
+
+    const handleSubTourComplete = useCallback(() => {
+        if (!hasSeenReaderTour && readerTourStep < 3) {
+            setTourStep('Reader', readerTourStep + 1);
+        }
+    }, [hasSeenReaderTour, readerTourStep, setTourStep]);
+
+    useTour('Reader', readerTourSteps, shouldStartReaderTour, readerTourStep === 3, handleSubTourComplete);
+
+    useEffect(() => {
+        if (!hasSeenReaderTour && readerTourStep === 0 && showHighlightMenu) {
+            setTourStep('Reader', 1);
+        }
+    }, [showHighlightMenu, readerTourStep, hasSeenReaderTour, setTourStep]);
+
+    const wasHighlightMenuOpenForTourRef = useRef(false);
+    useEffect(() => {
+        if (showHighlightMenu && readerTourStep === 1) {
+            wasHighlightMenuOpenForTourRef.current = true;
+        } else if (!showHighlightMenu && wasHighlightMenuOpenForTourRef.current) {
+            wasHighlightMenuOpenForTourRef.current = false;
+            if (!hasSeenReaderTour) {
+                setTourStep('Reader', 2);
+            }
+        }
+    }, [showHighlightMenu, readerTourStep, hasSeenReaderTour, setTourStep]);
+
+    const wasFlashcardPanelOpenForTourRef = useRef(false);
+    useEffect(() => {
+        if (flashcardPanel && readerTourStep === 2) {
+            wasFlashcardPanelOpenForTourRef.current = true;
+        } else if (!flashcardPanel && wasFlashcardPanelOpenForTourRef.current) {
+            wasFlashcardPanelOpenForTourRef.current = false;
+            if (!hasSeenReaderTour) {
+                setTourStep('Reader', 3);
+            }
+        }
+    }, [flashcardPanel, readerTourStep, hasSeenReaderTour, setTourStep]);
+    // ============================================
 
     const openPageStrip = useCallback(() => {
         setNavState('none');
@@ -1205,9 +1334,9 @@ function ReaderView() {
 
         const file = book?.file;
         if (file) {
-            const isTypePdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-            const isTypeImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(file.name);
-            const isTypeText = file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt');
+            const isTypePdf = file.type === 'application/pdf' || file.name?.toLowerCase()?.endsWith('.pdf');
+            const isTypeImage = file.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(file.name || '');
+            const isTypeText = file.type === 'text/plain' || file.name?.toLowerCase()?.endsWith('.txt');
 
             if (isTypePdf || isTypeImage) {
                 const url = URL.createObjectURL(file);
@@ -1256,36 +1385,15 @@ function ReaderView() {
     useEffect(() => {
         if (!isLoading) return;
 
-        const messages = ["Setting up file", "Loading all pages", "Finalizing load", "Rendering"];
-        let currentIndex = 0;
+        if (fileUrl || htmlContent || textContent) {
+            setIsLoading(false);
+            setShowMenuBriefly(true);
+            setShowScrollOverlay(true);
 
-        const interval = setInterval(() => {
-            if (currentIndex < messages.length - 1) {
-                currentIndex++;
-                setLoadingMessage(messages[currentIndex]);
-            }
-        }, 800);
-
-        // Completion logic - wait for bit after "Rendering"
-        const finalTimer = setTimeout(() => {
-            if (book?.file) {
-                setIsLoading(false);
-                // Trigger UX effects - Slide menu out and show overlay
-                setShowMenuBriefly(true);
-                setShowScrollOverlay(true);
-
-                // Retract menu after 3 seconds
-                setTimeout(() => setShowMenuBriefly(false), 3000);
-                // Hide overlay after 3 seconds
-                setTimeout(() => setShowScrollOverlay(false), 3000);
-            }
-        }, messages.length * 800 + 400);
-
-        return () => {
-            clearInterval(interval);
-            clearTimeout(finalTimer);
-        };
-    }, [isLoading, book?.file]);
+            setTimeout(() => setShowMenuBriefly(false), 3000);
+            setTimeout(() => setShowScrollOverlay(false), 3000);
+        }
+    }, [isLoading, fileUrl, htmlContent, textContent]);
 
 
     const lastBookIdRef = useRef(null);

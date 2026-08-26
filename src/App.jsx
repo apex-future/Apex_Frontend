@@ -226,7 +226,6 @@ function App() {
     if (userData?.user) {
       useAuthStore.getState().setUser(userData.user);
 
-      // Check if user needs onboarding
       if (!userData.user?.user_type) {
         setNeedsOnboarding(true);
       }
@@ -280,6 +279,7 @@ function App() {
             {/* Redirect protected app routes to landing page when unauthenticated */}
             <Route path="/profile" element={<Navigate to="/" replace />} />
             <Route path="/settings" element={<Navigate to="/" replace />} />
+            <Route path="/onboarding" element={<OnboardingPage onComplete={() => navigate('/')} />} />
             <Route path="/reader/*" element={<Navigate to="/" replace />} />
             <Route path="/spaces" element={<Navigate to="/" replace />} />
             <Route path="/space/*" element={<Navigate to="/" replace />} />
@@ -301,6 +301,7 @@ function App() {
         ) : (
           <>
             {/* When logged in, MainApp takes over root and handles all sub-routes */}
+            <Route path="/onboarding" element={<OnboardingPage onComplete={() => navigate('/')} />} />
             <Route path="/*" element={<MainApp onLogout={handleLogout} />} />
           </>
         )}
