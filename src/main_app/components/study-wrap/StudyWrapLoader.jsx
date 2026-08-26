@@ -15,7 +15,7 @@ const LOADER_MESSAGES = [
 
 const CIRCLE_RADIUS = 36;
 const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS; // ≈ 226.2
-const HOLD_DURATION_MS = 5200; // Relaxed hold & countdown duration (~1.04s per number)
+const HOLD_DURATION_MS = 5200; // Total hold duration
 
 export default function StudyWrapLoader({ onComplete, isDataReady = false, studyDays = 5 }) {
   const [phase, setPhase] = useState('loading'); // 'loading' | 'hold'
@@ -64,7 +64,7 @@ export default function StudyWrapLoader({ onComplete, isDataReady = false, study
     }
   }, [isDataReady, phase]);
 
-  // Hold mechanic & countdown
+  // Hold mechanic & countdown: 5, 4, 3, 2, 1 with equal pacing (~940ms), and 0 slightly faster (~520ms)
   const startHold = () => {
     if (phase !== 'hold') return;
     isHoldingRef.current = true;
@@ -77,17 +77,16 @@ export default function StudyWrapLoader({ onComplete, isDataReady = false, study
       const progress = Math.min(elapsed / HOLD_DURATION_MS, 1);
       setHoldProgress(progress);
 
-      // Map progress (0 to 1) evenly to number 5 down to 0
       let nextNum = 5;
-      if (progress >= 1) {
-        nextNum = 0;
-      } else if (progress >= 0.8) {
+      if (progress >= 0.90) {
+        nextNum = 0; // 0 shows from 90% to 100% (~520ms — slightly faster)
+      } else if (progress >= 0.72) {
         nextNum = 1;
-      } else if (progress >= 0.6) {
+      } else if (progress >= 0.54) {
         nextNum = 2;
-      } else if (progress >= 0.4) {
+      } else if (progress >= 0.36) {
         nextNum = 3;
-      } else if (progress >= 0.2) {
+      } else if (progress >= 0.18) {
         nextNum = 4;
       } else {
         nextNum = 5;
@@ -102,12 +101,10 @@ export default function StudyWrapLoader({ onComplete, isDataReady = false, study
           cancelAnimationFrame(holdAnimFrameRef.current);
           holdAnimFrameRef.current = null;
         }
-        console.log('[StudyWrap] Hold complete — countdown reached 0');
+        console.log('[StudyWrap] Hold complete — transitioning to opener');
 
-        // Smooth instantaneous transition after reaching 0
-        setTimeout(() => {
-          onComplete?.();
-        }, 100);
+        // Transition to first card
+        onComplete?.();
       } else {
         holdAnimFrameRef.current = requestAnimationFrame(updateLoop);
       }

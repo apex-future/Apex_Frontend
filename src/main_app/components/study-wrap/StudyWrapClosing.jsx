@@ -60,7 +60,13 @@ const fadeUp = {
   }),
 };
 
-export default function StudyWrapClosing({ direction = 1, image, wrapData, onClose }) {
+export default function StudyWrapClosing({
+  direction = 1,
+  image,
+  wrapData,
+  onClose,
+  onShareAll,
+}) {
   const closingStats = wrapData
     ? [
         {
@@ -212,7 +218,7 @@ export default function StudyWrapClosing({ direction = 1, image, wrapData, onClo
             <Button
               variant="primary"
               fullWidth
-              onClick={() => console.log('[StudyWrap] Share full wrap tapped')}
+              onClick={onShareAll}
               className="!py-2.5 md:!py-3 !font-black !text-xs md:!text-sm !uppercase !tracking-wider !shadow-lg shadow-purple-900/40 hover:brightness-110 active:scale-[0.98] transition-all"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >

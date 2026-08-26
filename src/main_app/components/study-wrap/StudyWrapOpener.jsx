@@ -174,22 +174,22 @@ export default function StudyWrapOpener({
         </div>
 
         {/* Content Wrapper */}
-        <div className="w-full px-4 md:px-5 flex flex-col items-center text-center">
+        <div className="w-full px-4 md:px-5 flex flex-col items-center text-center gap-1.5">
           {/* 2. Header — The D-Day Has Arrived */}
           <motion.div
             custom={0.5}
             initial="hidden"
             animate="visible"
             variants={fadeUp}
-            className="w-full py-1.5 md:py-2 mb-1.5"
+            className="w-full py-1 mb-1"
           >
             <DepthText
               text="The D-Day Has Arrived"
-              layers={18}
-              depth={2}
+              layers={16}
+              depth={1.6}
               faceColor="#FFFFFF"
               depthColor="#7C3AED"
-              fontSize="clamp(1.45rem, 5.2vw, 2.15rem)"
+              fontSize="clamp(1.35rem, 4.8vw, 1.95rem)"
               fontWeight={900}
               shadow
             />
@@ -201,7 +201,7 @@ export default function StudyWrapOpener({
             initial="hidden"
             animate="visible"
             variants={fadeUp}
-            className="px-5 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-extrabold text-white uppercase tracking-widest shadow-xl mb-3"
+            className="px-5 py-1.5 rounded-full bg-white/20 border border-white/30 text-xs font-extrabold text-white uppercase tracking-widest shadow-xl mb-2.5"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             {examName}
@@ -213,7 +213,7 @@ export default function StudyWrapOpener({
             initial="hidden"
             animate="visible"
             variants={fadeUp}
-            className="relative w-full h-[124px] flex items-end justify-center mb-3"
+            className="relative w-full h-[124px] flex items-end justify-center mb-2.5"
           >
             {FAN_CARDS.map((card, index) => (
               <div
@@ -224,18 +224,16 @@ export default function StudyWrapOpener({
                   height: '116px',
                   borderRadius: '14px',
                   background: card.isCenter
-                    ? 'rgba(255, 255, 255, 0.15)'
-                    : 'rgba(255, 255, 255, 0.08)',
-                  backdropFilter: 'blur(14px)',
-                  WebkitBackdropFilter: 'blur(14px)',
+                    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.12))'
+                    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05))',
                   border: card.isCenter
-                    ? '1.5px solid rgba(255, 255, 255, 0.45)'
-                    : '1px solid rgba(255, 255, 255, 0.2)',
+                    ? '1.5px solid rgba(255, 255, 255, 0.55)'
+                    : '1px solid rgba(255, 255, 255, 0.25)',
                   borderTop: card.isCenter
-                    ? '1.5px solid rgba(255, 255, 255, 0.7)'
-                    : '1px solid rgba(255, 255, 255, 0.35)',
+                    ? '1.5px solid rgba(255, 255, 255, 0.8)'
+                    : '1px solid rgba(255, 255, 255, 0.4)',
                   boxShadow: card.isCenter
-                    ? '0 10px 28px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.25)'
+                    ? '0 10px 28px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.3)'
                     : '0 6px 20px rgba(0, 0, 0, 0.35)',
                   transformOrigin: 'bottom center',
                   transform: `translateX(${card.x}px) rotate(${card.rotation}deg)`,
