@@ -1,15 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { ShareNetwork, Trophy, Quotes, BookOpen, Clock, Flame, Lightning, Fire, CalendarCheck, ListChecks } from '@phosphor-icons/react';
+import {
+  BookOpen,
+  Clock,
+  Lightning,
+  Trophy,
+  ListChecks,
+  Fire,
+  CalendarCheck,
+  Stack,
+  Flame,
+  Quotes,
+} from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
 import DepthText from '../ui/DepthText';
 import ShuffleText from '../ui/ShuffleText';
 import bgImg from '../../../assets/Exam_Day_Asset/background.jpg';
 
+const ICON_MAP = {
+  BookOpen,
+  Clock,
+  Lightning,
+  Trophy,
+  ListChecks,
+  Fire,
+  CalendarCheck,
+  Stack,
+  Flame,
+};
+
 const imageVariants = {
   hidden: {
     y: 30,
     opacity: 0,
-    scale: 0.96
+    scale: 0.96,
   },
   visible: {
     y: 0,
@@ -20,9 +43,9 @@ const imageVariants = {
       stiffness: 260,
       damping: 24,
       mass: 0.8,
-      delay: 0.15
-    }
-  }
+      delay: 0.15,
+    },
+  },
 };
 
 const fadeUp = {
@@ -33,9 +56,9 @@ const fadeUp = {
     transition: {
       delay,
       duration: 0.4,
-      ease: "easeOut"
-    }
-  })
+      ease: 'easeOut',
+    },
+  }),
 };
 
 const statRowVariants = {
@@ -46,110 +69,9 @@ const statRowVariants = {
     transition: {
       delay,
       duration: 0.4,
-      ease: "easeOut"
-    }
-  })
-};
-
-const getStatCardData = (key, value) => {
-  let title = '';
-  let IconComponent = Trophy;
-
-  switch (key) {
-    case 'mostRead':
-      title = 'Most Read';
-      IconComponent = BookOpen;
-      break;
-    case 'leastRead':
-      title = 'Least Read';
-      IconComponent = BookOpen;
-      break;
-    case 'totalPages':
-      title = 'Total Pages';
-      IconComponent = BookOpen;
-      break;
-    case 'totalHours':
-      title = 'Total Hours';
-      IconComponent = Clock;
-      break;
-    case 'longestSession':
-      title = 'Longest Session';
-      IconComponent = Lightning;
-      break;
-    case 'averageSession':
-      title = 'Average';
-      IconComponent = Clock;
-      break;
-    case 'mostActiveHour':
-      title = 'Peak Hour';
-      IconComponent = Clock;
-      break;
-    case 'bestScore':
-      title = 'Best Score';
-      IconComponent = Trophy;
-      break;
-    case 'lowestScore':
-      title = 'Lowest';
-      IconComponent = Trophy;
-      break;
-    case 'avgScore':
-      title = 'Avg Score';
-      IconComponent = Trophy;
-      break;
-    case 'quizzesTaken':
-      title = 'Quizzes Taken';
-      IconComponent = ListChecks;
-      break;
-    case 'longestStreak':
-      title = 'Longest Streak';
-      IconComponent = Fire;
-      break;
-    case 'daysStudied':
-      title = 'Days Studied';
-      IconComponent = CalendarCheck;
-      break;
-    case 'mostActiveDay':
-      title = 'Active Day';
-      IconComponent = Flame;
-      break;
-    case 'streaksBroken':
-      title = 'Broken';
-      IconComponent = Flame;
-      break;
-    default:
-      title = key.replace(/([A-Z])/g, ' $1');
-      IconComponent = Trophy;
-  }
-
-  let number = '';
-  let measurement = '';
-
-  if (value.includes('—')) {
-    const parts = value.split('—');
-    const partA = parts[0].trim();
-    const partB = parts[1].trim();
-
-    const startsWithDigit = (str) => /^[+-]?[\d.,%]+/.test(str);
-
-    if (startsWithDigit(partB) && !startsWithDigit(partA)) {
-      number = partB;
-      measurement = partA;
-    } else {
-      number = partA;
-      measurement = partB;
-    }
-  } else {
-    const match = value.match(/^([\d.,%]+)\s*(.*)$/);
-    if (match) {
-      number = match[1];
-      measurement = match[2];
-    } else {
-      number = value;
-      measurement = '';
-    }
-  }
-
-  return { title, IconComponent, number, measurement };
+      ease: 'easeOut',
+    },
+  }),
 };
 
 function StatNumber({ value = '' }) {
@@ -245,11 +167,9 @@ export default function StudyWrapCard({
   headline,
   achievementTitle,
   achievementWhy,
-  supporting,
+  stats,
   imageStyle,
 }) {
-  const supportingEntries = supporting ? Object.entries(supporting) : [];
-
   return (
     <div className="w-full min-h-full flex flex-col items-center justify-center px-4 py-4 study-wrap-card-enter relative z-10 select-none">
       {/* Ambient Glow */}
@@ -269,7 +189,7 @@ export default function StudyWrapCard({
             className="w-[98%] mx-auto max-h-[190px] md:max-h-[215px] object-cover rounded-[20px] drop-shadow-[0_16px_36px_rgba(0,0,0,0.45)] transition-transform duration-500 hover:scale-105"
             style={{
               ...imageStyle,
-              willChange: "transform",
+              willChange: 'transform',
             }}
           />
         </div>
@@ -314,7 +234,7 @@ export default function StudyWrapCard({
                 </defs>
               </svg>
 
-              {/* Back Card (peaking out, rotated and colored purple gradient, matching design blob style) */}
+              {/* Back Card */}
               <div className="absolute inset-0 rounded-[24px] bg-gradient-to-tr from-purple-700 to-violet-500 opacity-90 transform -rotate-3 scale-[1.02] shadow-xl" />
 
               {/* Front Card (achievement box) */}
@@ -326,7 +246,7 @@ export default function StudyWrapCard({
                   backgroundPosition: 'center',
                 }}
               >
-                {/* Quotes: One at top-left, one at bottom-right rotated 180 degrees */}
+                {/* Quotes */}
                 <Quotes
                   size={32}
                   weight="fill"
@@ -340,12 +260,11 @@ export default function StudyWrapCard({
                   style={{ fill: 'url(#quote-gradient)' }}
                 />
 
-                {/* Achievement Header - Creative Playfair Display Italic (No trophy icon) */}
+                {/* Achievement Header */}
                 <div
                   className="text-amber-200 font-extrabold italic text-sm md:text-base tracking-wide mb-1 text-center drop-shadow"
                   style={{ fontFamily: "'Playfair Display', serif" }}
                 >
-                  {/* Playfair Display retained — intentional accent */}
                   <ShuffleText
                     text={achievementTitle}
                     shuffleDirection="right"
@@ -372,7 +291,7 @@ export default function StudyWrapCard({
           )}
 
           {/* Supporting Stat Cards */}
-          {supportingEntries.length > 0 && (
+          {stats && stats.length > 0 && (
             <motion.div
               custom={1.7}
               initial="hidden"
@@ -380,11 +299,11 @@ export default function StudyWrapCard({
               variants={statRowVariants}
               className="w-full grid grid-cols-2 gap-3 mt-2 px-1"
             >
-              {supportingEntries.slice(0, 2).map(([key, value]) => {
-                const { title, IconComponent, number, measurement } = getStatCardData(key, value);
+              {stats.slice(0, 2).map((stat, idx) => {
+                const IconComponent = ICON_MAP[stat.icon] || Trophy;
                 return (
                   <div
-                    key={key}
+                    key={idx}
                     className="flex flex-col items-start rounded-[14px] p-[10px_12px] text-left overflow-hidden"
                     style={{
                       background: 'rgba(255, 255, 255, 0.22)',
@@ -400,8 +319,10 @@ export default function StudyWrapCard({
                       className="flex items-center gap-1.5 text-[10px] uppercase text-white/60 tracking-wider mb-1"
                       style={{ fontFamily: "'Inter', sans-serif" }}
                     >
-                      <IconComponent size={12} weight="bold" className="text-white/80" />
-                      <span>{title}</span>
+                      {IconComponent && (
+                        <IconComponent size={12} weight="bold" className="text-white/80" />
+                      )}
+                      <span>{stat.title}</span>
                     </div>
 
                     {/* Bold number */}
@@ -409,16 +330,16 @@ export default function StudyWrapCard({
                       className="text-[22px] font-bold text-white leading-none tracking-tight mb-0.5"
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
-                      <StatNumber value={number} />
+                      <StatNumber value={stat.number} />
                     </div>
 
                     {/* Measurement */}
-                    {measurement && (
+                    {stat.measurement && (
                       <div
                         className="text-[10.5px] text-white/50 font-normal leading-tight"
                         style={{ fontFamily: "'Inter', sans-serif" }}
                       >
-                        {measurement}
+                        {stat.measurement}
                       </div>
                     )}
                   </div>
@@ -428,11 +349,6 @@ export default function StudyWrapCard({
           )}
         </div>
       </div>
-
     </div>
   );
 }
-
-
-
-

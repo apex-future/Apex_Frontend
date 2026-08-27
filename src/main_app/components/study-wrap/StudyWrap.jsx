@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CaretLeft, CaretRight, Sparkle, ShareNetwork } from '@phosphor-icons/react';
+import { X, CaretLeft, CaretRight, Sparkle, ShareNetwork, WifiSlash, ArrowClockwise } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as htmlToImage from 'html-to-image';
+import html2canvas from 'html2canvas';
+import { showToastGlobal } from '../../hooks/useToast';
 import StudyWrapLoader from './StudyWrapLoader';
-
 import StudyWrapOpener from './StudyWrapOpener';
 import StudyWrapCard from './StudyWrapCard';
 import StudyWrapClosing from './StudyWrapClosing';
-import studyWrapDummy from '../../data/studyWrapDummy';
 import Modal from '../ui/Modal';
+import Button from '../ui/Button';
+import apiClient from '../../services/apiClient';
 import './studyWrap.css';
 
 // Image imports from src/assets/Exam_Day_Asset/
@@ -24,7 +27,6 @@ import card6Img from '../../../assets/Exam_Day_Asset/card6.png';
 const TOTAL_CARDS = 6;
 const SWIPE_THRESHOLD = 50;
 
-
 const CARD_TOPIC_LABELS = [
   "OVERVIEW",
   "COURSE COVERAGE",
@@ -33,8 +35,6 @@ const CARD_TOPIC_LABELS = [
   "STUDY CONSISTENCY",
   "WRAP SUMMARY"
 ];
-
-
 
 const SPRING_OPTIONS = { type: 'spring', stiffness: 300, damping: 30 };
 
@@ -61,38 +61,105 @@ const cardVariants = {
   }),
 };
 
-export default function StudyWrap({ isOpen, onClose, daysLeft }) {
+export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
   const [currentCard, setCurrentCard] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [wrapData, setWrapData] = useState(null);
+  const [wrapError, setWrapError] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const direction = useRef(1);
   const lastTransitionTime = useRef(0);
   const hasFiredConfetti = useRef(false);
 
-  // Swipe tracking
-  const touchStartX = useRef(0);
+  const modalCardRef = useRef(null);
+  const cardSurfaceRef = useRef(null);
+  const fetchPromiseRef = useRef(null);
+  const cardEnteredAtRef = useRef(Date.now());
+  const cardBlobCacheRef = useRef({});
 
-  // Simulate data load when opened
-  useEffect(() => {
-    if (isOpen) {
-      setIsLoading(true);
-      setCurrentCard(0);
-      setShowExitConfirm(false);
-      hasFiredConfetti.current = false;
-      console.log('[StudyWrap] Opened — starting data load simulation');
-
-      // Preload all card images to ensure they show instantly
-      const imagesToPreload = [card1Img, card2Img, card3Img, card4Img, card5Img, card6Img];
-      imagesToPreload.forEach((src) => {
-        const img = new Image();
-        img.src = src;
-      });
+  // Fetch wrap data from backend
+  const fetchWrapData = useCallback(async (spaceId) => {
+    if (!navigator.onLine) {
+      console.warn('[StudyWrap] Offline detected — cannot generate study wrap');
+      setWrapError(true);
+      return;
     }
-  }, [isOpen]);
 
-  const handleLoadComplete = () => {
+    try {
+      const spaceTarget = spaceId || 'default';
+      console.log('[StudyWrap] Prefetching wrap data from /api/wrap/' + spaceTarget);
+      const promise = apiClient.get(`/api/wrap/${spaceTarget}`);
+      fetchPromiseRef.current = promise;
+      const response = await promise;
+      setWrapData(response.data);
+      console.log('[StudyWrap] Data prefetched and ready in state');
+      return response.data;
+    } catch (err) {
+      console.error('[StudyWrap] Failed to prefetch wrap data:', err);
+      setWrapError(true);
+    }
+  }, []);
+
+  // Run when modal is opened
+  useEffect(() => {
+    if (!isOpen) return;
+    setIsLoading(true);
+    setCurrentCard(0);
+    setWrapData(null);
+    setWrapError(false);
+    setShowExitConfirm(false);
+    hasFiredConfetti.current = false;
+    cardEnteredAtRef.current = Date.now();
+    cardBlobCacheRef.current = {};
+    console.log('[StudyWrap] Opened — starting instant prefetch in background');
+
+    // Prefetch wrap data immediately while user sees loader / hold countdown
+    fetchWrapData(bookSpaceId);
+
+    // Preload all card images to ensure they show instantly
+    const imagesToPreload = [card1Img, card2Img, card3Img, card4Img, card5Img, card6Img];
+    imagesToPreload.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, [isOpen, bookSpaceId, fetchWrapData]);
+
+  // Track when each card transition begins & pre-cache active card blob in background
+  useEffect(() => {
+    cardEnteredAtRef.current = Date.now();
+
+    if (isLoading || !wrapData) return;
+
+    // Pre-cache current card blob after entrance animation settles so click share is 100% synchronous
+    const timer = setTimeout(async () => {
+      const el = getCardElement();
+      if (el) {
+        try {
+          const blob = await captureCardBlob(el);
+          if (blob) {
+            cardBlobCacheRef.current[currentCard] = blob;
+            console.log(`[StudyWrap] Card ${currentCard} pre-cached for instant 0ms share`);
+          }
+        } catch (e) {
+          // ignore background cache failure
+        }
+      }
+    }, 1100);
+
+    return () => clearTimeout(timer);
+  }, [currentCard, isLoading, wrapData]);
+
+  const handleLoadComplete = async () => {
+    if (fetchPromiseRef.current) {
+      try {
+        await fetchPromiseRef.current;
+      } catch (err) {
+        // Error already handled
+      }
+    }
     setIsLoading(false);
     setCurrentCard(0);
+    cardEnteredAtRef.current = Date.now();
   };
 
   // Request close triggers confirmation modal
@@ -107,6 +174,261 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
     setIsLoading(true);
     onClose?.();
   }, [onClose]);
+
+  // Helper to reliably find the entire styled card modal surface
+  const getCardElement = () => {
+    return (
+      modalCardRef.current ||
+      document.getElementById('study-wrap-modal-card') ||
+      cardSurfaceRef.current ||
+      document.getElementById('study-wrap-active-card')
+    );
+  };
+
+  // Robust capture utility using html-to-image (with html2canvas fallback)
+  const captureCardBlob = async (element) => {
+    const el = element || getCardElement();
+    if (!el) {
+      console.error('[StudyWrap] No element found to capture');
+      return null;
+    }
+
+    try {
+      const rect = el.getBoundingClientRect();
+      const targetWidth = rect.width || 420;
+      const targetHeight = rect.height || 680;
+
+      const blob = await htmlToImage.toBlob(el, {
+        pixelRatio: 2,
+        width: targetWidth,
+        height: targetHeight,
+        canvasWidth: targetWidth * 2,
+        canvasHeight: targetHeight * 2,
+        backgroundColor: '#000000',
+        skipFonts: true,
+        cacheBust: false,
+        filter: (node) => {
+          if (node.classList && node.classList.contains('study-wrap-nav-ignore')) {
+            return false;
+          }
+          return true;
+        },
+      });
+      if (blob) return blob;
+    } catch (err) {
+      console.warn('[StudyWrap] html-to-image failed, trying html2canvas fallback:', err);
+    }
+
+    try {
+      const canvas = await html2canvas(el, {
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#000000',
+        scale: 2,
+        logging: false,
+        ignoreElements: (targetEl) => {
+          return targetEl.classList?.contains('study-wrap-nav-ignore');
+        },
+      });
+      return await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    } catch (hErr) {
+      console.error('[StudyWrap] Both capture methods failed:', hErr);
+      showToastGlobal("Failed to capture card", "error");
+      return null;
+    }
+  };
+
+  // Individual card share (top left share button)
+  const handleIndividualShare = async () => {
+    console.log('[StudyWrap] Individual share tapped — card:', currentCard);
+
+    const shareText = "I just got my Study Wrap. The work was real and the numbers don't lie. Now it's your turn — apexapp.click 🎯";
+
+    // 1. If we have a pre-cached blob for this card, trigger navigator.share SYNCHRONOUSLY on the user gesture tick!
+    let blob = cardBlobCacheRef.current[currentCard];
+    if (blob) {
+      const file = new File([blob], `apex-wrap-card-${currentCard + 1}.png`, { type: 'image/png' });
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        try {
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: 'Apex Study Wrap',
+              text: shareText,
+              files: [file],
+            });
+            console.log('[StudyWrap] Instant synchronous native share completed');
+            showToastGlobal("Shared successfully! 🎯", "success");
+            return;
+          }
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            console.log('[StudyWrap] Native share dismissed by user');
+            return;
+          }
+          console.warn('[StudyWrap] Synchronous native share error:', err);
+        }
+      }
+    }
+
+    // 2. If not cached yet, capture immediately
+    showToastGlobal("Opening share...", "info", 1500);
+
+    const element = getCardElement();
+    if (!element) {
+      console.error('[StudyWrap] No card surface element found');
+      showToastGlobal("Could not capture card", "error");
+      return;
+    }
+
+    if (!blob) {
+      blob = await captureCardBlob(element);
+      if (blob) {
+        cardBlobCacheRef.current[currentCard] = blob;
+      }
+    }
+
+    if (!blob) {
+      showToastGlobal("Could not generate card image", "error");
+      return;
+    }
+
+    try {
+      const file = new File([blob], `apex-wrap-card-${currentCard + 1}.png`, { type: 'image/png' });
+
+      // Trigger native share sheet
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        try {
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: 'Apex Study Wrap',
+              text: shareText,
+              files: [file],
+            });
+            console.log('[StudyWrap] Native share completed');
+            showToastGlobal("Shared successfully! 🎯", "success");
+            return;
+          } else {
+            await navigator.share({
+              title: 'Apex Study Wrap',
+              text: shareText,
+              url: window.location.origin,
+            });
+            console.log('[StudyWrap] Native share completed (url/text)');
+            showToastGlobal("Shared successfully! 🎯", "success");
+            return;
+          }
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            console.log('[StudyWrap] Native share dismissed by user');
+            return;
+          }
+          console.warn('[StudyWrap] Native share unavailable, falling back to download:', err);
+        }
+      }
+
+      // Download fallback
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `apex-wrap-card-${currentCard + 1}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      console.log('[StudyWrap] Downloaded card image (fallback)');
+      showToastGlobal("Card image saved! 🎯", "success");
+    } catch (e) {
+      console.error('[StudyWrap] Export error:', e);
+      showToastGlobal("Failed to export image", "error");
+    }
+  };
+
+  // Full wrap share
+  const handleFullWrapShare = async () => {
+    console.log('[StudyWrap] Full wrap share triggered');
+
+    // Show start toast
+    showToastGlobal("Downloading your Study Wrap...", "info");
+
+    const FILE_NAMES = [
+      'apex-wrap-1-overview.png',
+      'apex-wrap-2-course-coverage.png',
+      'apex-wrap-3-time-spent.png',
+      'apex-wrap-4-quiz-performance.png',
+      'apex-wrap-5-study-consistency.png',
+      'apex-wrap-6-summary.png',
+    ];
+
+    const shareText = "I just got my Study Wrap. The work was real and the numbers don't lie. Now it's your turn — apexapp.click 🎯";
+
+    const downloadedBlobs = [];
+
+    // Iterate through each card, navigate to it, 
+    // wait for render, capture it
+    for (let i = 0; i < TOTAL_CARDS; i++) {
+      direction.current = 1;
+      setCurrentCard(i);
+
+      // Wait for card to fully render and all text/numbers to settle into final state
+      await new Promise((resolve) => setTimeout(resolve, 2600));
+
+      const el = getCardElement();
+      const blob = await captureCardBlob(el);
+      if (blob) {
+        downloadedBlobs.push({ blob, name: FILE_NAMES[i] });
+      }
+    }
+
+    // Download all captured images
+    for (const { blob, name } of downloadedBlobs) {
+      if (!blob) continue;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      // Small gap between downloads so browser doesn't block
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+
+    // Success toast
+    showToastGlobal("Study Wrap saved! 🎯", "success");
+
+    // Restore to closing card
+    setCurrentCard(5);
+
+    // Share closing card via native share
+    const closingBlob = downloadedBlobs[5]?.blob;
+    if (closingBlob) {
+      const file = new File(
+        [closingBlob], 
+        'apex-wrap-6-summary.png', 
+        { type: 'image/png' }
+      );
+      if (
+        navigator.share && 
+        navigator.canShare && 
+        navigator.canShare({ files: [file] })
+      ) {
+        try {
+          await navigator.share({
+            text: shareText,
+            files: [file],
+          });
+          console.log('[StudyWrap] Closing card shared via native share');
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.error('[StudyWrap] Native share failed:', err);
+          }
+        }
+      }
+    }
+
+    console.log('[StudyWrap] Full wrap share complete');
+  };
 
   // Navigation with consistent animation debounce
   const goNext = useCallback(() => {
@@ -160,6 +482,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
   }, [isOpen, isLoading, showExitConfirm, goNext, goPrev, handleRequestClose]);
 
   // Touch handlers for mobile swipe
+  const touchStartX = useRef(0);
   const handleTouchStart = useCallback((e) => {
     touchStartX.current = e.touches[0].clientX;
   }, []);
@@ -182,10 +505,66 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
 
   if (!isOpen) return null;
 
-  const data = studyWrapDummy;
-
   // Render the correct card by index
   const renderCard = () => {
+    if (!wrapData) {
+      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+      return (
+        <div className="w-full min-h-full flex flex-col items-center justify-center text-center px-6 py-8 select-none relative z-10 gap-5">
+          <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shadow-[0_0_24px_rgba(239,68,68,0.25)]">
+            <WifiSlash size={32} weight="bold" />
+          </div>
+
+          <div className="flex flex-col gap-2 max-w-[320px]">
+            <h3
+              className="text-lg font-bold text-white tracking-wide"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              {isOffline ? "You're Currently Offline" : "Unable to Generate Study Wrap"}
+            </h3>
+            <p
+              className="text-xs text-white/60 leading-relaxed font-medium"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              {isOffline
+                ? "Study Wrap compiles your latest reading analytics and AI achievements, which requires an active internet connection."
+                : "We couldn't compile your Study Wrap analytics and AI achievements. Please check your connection and try again."}
+            </p>
+          </div>
+
+          <div className="flex flex-col w-full max-w-[260px] gap-2.5 mt-2">
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={() => {
+                setWrapError(false);
+                setIsLoading(true);
+                fetchWrapData(bookSpaceId);
+              }}
+              className="!py-2.5 !text-xs !font-bold"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              <ArrowClockwise size={16} weight="bold" />
+              <span>Try Again</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={handleFinalClose}
+              className="!py-2.5 !text-xs !font-bold !text-white/80 hover:!text-white !border-white/20 hover:!bg-white/10"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    const data = wrapData;
+
     switch (currentCard) {
       case 0:
         return (
@@ -211,7 +590,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             headline={data.courseCoverage.headline}
             achievementTitle={data.courseCoverage.achievement.title}
             achievementWhy={data.courseCoverage.achievement.why}
-            supporting={data.courseCoverage.supporting}
+            stats={data.courseCoverage.stats}
           />
         );
       case 2:
@@ -224,7 +603,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             headline={data.timeSpent.headline}
             achievementTitle={data.timeSpent.achievement.title}
             achievementWhy={data.timeSpent.achievement.why}
-            supporting={data.timeSpent.supporting}
+            stats={data.timeSpent.stats}
           />
         );
       case 3:
@@ -237,7 +616,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             headline={data.quizPerformance.headline}
             achievementTitle={data.quizPerformance.achievement.title}
             achievementWhy={data.quizPerformance.achievement.why}
-            supporting={data.quizPerformance.supporting}
+            stats={data.quizPerformance.stats}
             imageStyle={{ objectPosition: 'center 20%' }}
           />
         );
@@ -251,7 +630,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             headline={data.studyConsistency.headline}
             achievementTitle={data.studyConsistency.achievement.title}
             achievementWhy={data.studyConsistency.achievement.why}
-            supporting={data.studyConsistency.supporting}
+            stats={data.studyConsistency.stats}
           />
         );
       case 5:
@@ -260,8 +639,9 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             key={5}
             direction={direction.current}
             image={card6Img}
-            wrapData={data}
+            wrapData={wrapData}
             onClose={handleFinalClose}
+            onShareAll={handleFullWrapShare}
           />
         );
       default:
@@ -269,11 +649,11 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
     }
   };
 
-  // Story-style top progress bar with Share button on left and Close button on right
+  // Story-style top progress bar with Share button on the top-left and Close button on the top-right
   const renderStoryProgress = () => {
     return (
       <div
-        className="flex items-center gap-2.5 px-4 pt-3.5 pb-1 z-30 flex-shrink-0 bg-transparent border-0 shadow-none"
+        className="study-wrap-nav-ignore flex items-center gap-2.5 px-4 pt-3.5 pb-1 z-30 flex-shrink-0 bg-transparent border-0 shadow-none"
         style={{
           background: 'transparent',
           border: 'none',
@@ -282,21 +662,18 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
           WebkitBackdropFilter: 'none',
         }}
       >
-        {/* Share Button on Top Left — transparent, no background */}
+        {/* Share Button on Top Left Corner */}
         <button
-          className="p-1 text-white/70 hover:text-white transition-colors flex-shrink-0 bg-transparent"
-          onClick={() =>
-            console.log(
-              `[StudyWrap] Share tapped — card step: ${currentCard}`
-            )
-          }
-          title="Share"
+          type="button"
+          className="study-wrap-nav-ignore p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors flex-shrink-0 bg-transparent cursor-pointer flex items-center justify-center"
+          onClick={handleIndividualShare}
+          title="Share this card"
         >
           <ShareNetwork size={18} weight="bold" />
         </button>
 
         {/* Center Story Indicator Bars */}
-        <div className="flex-1 flex items-center gap-1.5">
+        <div className="flex-1 flex items-center gap-1.5 mx-1">
           {Array.from({ length: TOTAL_CARDS }).map((_, i) => (
             <div
               key={i}
@@ -325,9 +702,10 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
           ))}
         </div>
 
-        {/* Close Button on Top Right — transparent, no background */}
+        {/* Close Button on Top Right Corner */}
         <button
-          className="p-1 text-white/70 hover:text-white transition-colors flex-shrink-0 bg-transparent cursor-pointer"
+          type="button"
+          className="study-wrap-nav-ignore p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors flex-shrink-0 bg-transparent cursor-pointer flex items-center justify-center"
           onClick={handleRequestClose}
           title="Close"
         >
@@ -336,7 +714,6 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
       </div>
     );
   };
-
 
   const modalContent = (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-4">
@@ -347,6 +724,8 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
 
       {/* Main Surface */}
       <div
+        ref={modalCardRef}
+        id="study-wrap-modal-card"
         className="
           relative z-10
           w-full h-full
@@ -361,7 +740,6 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-
         {/* Top Header: Story Progress Bar, Close Button & Centered Topic Pill (Absolute Overlay) */}
         {!isLoading && (
           <div className="absolute top-0 left-0 right-0 z-40 bg-transparent flex flex-col pointer-events-none">
@@ -388,9 +766,14 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
 
         {/* Content Container (Full-height scrollable area with padding top to make space for top overlay nav bar) */}
         {isLoading ? (
-          <StudyWrapLoader onComplete={handleLoadComplete} studyDays={data.studyDays} />
+          <StudyWrapLoader
+            onComplete={handleLoadComplete}
+            isDataReady={Boolean(wrapData || wrapError)}
+            studyDays={5}
+          />
         ) : (
           <div
+            id="study-wrap-card-container"
             className="flex-1 w-full h-full overflow-y-auto study-wrap-no-scrollbar pt-[60px] pb-14 relative z-10"
             style={{
               perspective: 1000,
@@ -400,6 +783,8 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
           >
             <AnimatePresence initial={false} custom={direction.current} mode="popLayout">
               <motion.div
+                ref={cardSurfaceRef}
+                id="study-wrap-active-card"
                 key={currentCard}
                 custom={direction.current}
                 variants={cardVariants}
@@ -420,13 +805,12 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
           </div>
         )}
 
-
         {/* Side Click Hotzones for Desktop Navigation */}
         {!isLoading && (
           <>
             {currentCard > 0 && (
               <div
-                className="absolute left-0 top-16 bottom-0 w-16 z-20 cursor-pointer hidden md:flex items-center justify-start pl-2 group"
+                className="study-wrap-nav-ignore absolute left-0 top-16 bottom-0 w-16 z-20 cursor-pointer hidden md:flex items-center justify-start pl-2 group"
                 onClick={goPrev}
               >
                 <div className="w-8 h-8 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all">
@@ -436,7 +820,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
             )}
             {currentCard < TOTAL_CARDS - 1 && (
               <div
-                className="absolute right-0 top-16 bottom-0 w-16 z-20 cursor-pointer hidden md:flex items-center justify-end pr-2 group"
+                className="study-wrap-nav-ignore absolute right-0 top-16 bottom-0 w-16 z-20 cursor-pointer hidden md:flex items-center justify-end pr-2 group"
                 onClick={goNext}
               >
                 <div className="w-8 h-8 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all">
@@ -500,4 +884,3 @@ export default function StudyWrap({ isOpen, onClose, daysLeft }) {
 
   return createPortal(modalContent, document.body);
 }
-
