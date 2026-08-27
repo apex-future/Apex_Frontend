@@ -346,8 +346,12 @@ function ReaderView() {
     const shouldStartReaderTour = !isLoading && !hasSeenReaderTour && readerTourSteps.length > 0;
 
     const handleSubTourComplete = useCallback(() => {
-        if (!hasSeenReaderTour && readerTourStep < 3) {
-            setTourStep('Reader', readerTourStep + 1);
+        if (!hasSeenReaderTour) {
+            if (readerTourStep === 1) {
+                setTourStep('Reader', 2);
+            } else if (readerTourStep === 2) {
+                setTourStep('Reader', 3);
+            }
         }
     }, [hasSeenReaderTour, readerTourStep, setTourStep]);
 

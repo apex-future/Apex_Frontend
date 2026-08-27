@@ -45,7 +45,7 @@ function HomePage({ setIsMobileOpen, isAsideExpanded }) {
           }
         },
         {
-          element: '#tour-add-book',
+          element: window.innerWidth < 768 ? '#tour-add-book-mobile' : '#tour-add-book',
           popover: {
             title: 'Add Your First Book',
             description: 'Click the + button to upload a PDF, EPUB, or DOCX. Start by adding a document to read and interact with the AI.',
