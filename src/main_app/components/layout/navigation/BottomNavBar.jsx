@@ -96,6 +96,7 @@ function BottomNavBar() {
 
         {/* Connect Button to Input */}
         <label
+          id="tour-add-book-mobile"
           htmlFor="nav-upload"
           className='bg-accent-primary hover:bg-accent-hover size-11 rounded-full shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center transform'
         >

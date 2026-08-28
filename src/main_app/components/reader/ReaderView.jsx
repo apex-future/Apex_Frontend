@@ -325,21 +325,17 @@ function ReaderView() {
                     element: '#tour-flashcards',
                     popover: {
                         title: 'Generate Flashcards',
-                        description: 'After reading, you can generate smart flashcards based on the pages you select to test your memory.',
-                        side: "top",
-                        align: 'center',
-                        showButtons: ['close', 'next']
+                        description: 'After reading, you can generate smart flashcards based on the pages you select to test your memory. You can access this any time from the top menu.',
+                        side: "bottom",
+                        align: 'center'
                     }
-                }
-            ];
-        } else if (readerTourStep === 3) {
-            return [
+                },
                 {
                     element: '#tour-quiz',
                     popover: {
                         title: 'Take a Quiz',
-                        description: 'Generate a multiple-choice quiz to ensure you fully understood what you just read. You can skip this or take it!',
-                        side: "top",
+                        description: 'Generate a multiple-choice quiz to ensure you fully understood what you just read. You can access this any time from the top menu.',
+                        side: "bottom",
                         align: 'center',
                         showButtons: ['close', 'next']
                     }
@@ -352,12 +348,15 @@ function ReaderView() {
     const shouldStartReaderTour = !isLoading && !hasSeenReaderTour && readerTourSteps.length > 0;
 
     const handleSubTourComplete = useCallback(() => {
-        if (!hasSeenReaderTour && readerTourStep < 3) {
-            setTourStep('Reader', readerTourStep + 1);
+        if (!hasSeenReaderTour) {
+            if (readerTourStep === 1) {
+                setNavState('first'); // Force show the nav menu for step 2
+                setTourStep('Reader', 2);
+            }
         }
     }, [hasSeenReaderTour, readerTourStep, setTourStep]);
 
-    useTour('Reader', readerTourSteps, shouldStartReaderTour, readerTourStep === 3, handleSubTourComplete);
+    useTour('Reader', readerTourSteps, shouldStartReaderTour, readerTourStep === 2, handleSubTourComplete);
 
     useEffect(() => {
         if (!hasSeenReaderTour && readerTourStep === 0 && showHighlightMenu) {
@@ -372,22 +371,11 @@ function ReaderView() {
         } else if (!showHighlightMenu && wasHighlightMenuOpenForTourRef.current) {
             wasHighlightMenuOpenForTourRef.current = false;
             if (!hasSeenReaderTour) {
+                setNavState('first'); // Force show the nav menu for step 2
                 setTourStep('Reader', 2);
             }
         }
     }, [showHighlightMenu, readerTourStep, hasSeenReaderTour, setTourStep]);
-
-    const wasFlashcardPanelOpenForTourRef = useRef(false);
-    useEffect(() => {
-        if (flashcardPanel && readerTourStep === 2) {
-            wasFlashcardPanelOpenForTourRef.current = true;
-        } else if (!flashcardPanel && wasFlashcardPanelOpenForTourRef.current) {
-            wasFlashcardPanelOpenForTourRef.current = false;
-            if (!hasSeenReaderTour) {
-                setTourStep('Reader', 3);
-            }
-        }
-    }, [flashcardPanel, readerTourStep, hasSeenReaderTour, setTourStep]);
     // ============================================
 
     const openPageStrip = useCallback(() => {

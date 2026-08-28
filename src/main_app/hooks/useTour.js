@@ -20,7 +20,7 @@ export default function useTour(tourName, steps, autoStart = true, isFinalSubTou
       showProgress: true,
       animate: true,
       allowClose: true,
-      overlayColor: 'rgba(0, 0, 0, 0.6)',
+      overlayColor: 'rgba(0, 0, 0, 0.85)',
       doneBtnText: 'Got it',
       nextBtnText: 'Next &rarr;',
       prevBtnText: '&larr; Prev',
