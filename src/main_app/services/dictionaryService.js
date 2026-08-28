@@ -21,7 +21,8 @@ const dictionaryService = {
    * @returns {object} The definition data (array from dictionary API)
    */
   lookupWord: async function (word, lookupType = 'general', bookId = null) {
-    const cleanWord = word.trim().toLowerCase();
+    const rawClean = word.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '');
+    const cleanWord = rawClean.toLowerCase();
     if (!cleanWord) throw new Error('No word provided');
 
     // Step 1: Check Dexie dictionary_cache
@@ -29,6 +30,10 @@ const dictionaryService = {
       const cached = await db.dictionary_cache.get(cleanWord);
       if (cached && cached.definition) {
         if (import.meta.env.DEV) console.log(`Dictionary cache hit for "${cleanWord}"`);
+        const defData = Array.isArray(cached.definition) ? cached.definition[0] : cached.definition;
+        if (defData) {
+          defData.isAiGenerated = !!cached.isAiGenerated;
+        }
         // Fire-and-forget: save to history
         this.saveToHistory(cleanWord, cached.definition, lookupType, bookId);
         return cached.definition;
@@ -52,49 +57,88 @@ const dictionaryService = {
       throw new Error('Connect to internet to look up new words, or download the Offline Dictionary in settings.');
     }
 
-    // Step 3: Fetch directly from Free Dictionary API to bypass backend dependency
+    // Step 3: Fetch standard definition via Backend (checks Supabase cache -> external Free Dictionary API via server-side httpx)
+    let definition = null;
+
     try {
-      const fetchResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`);
-      
-      if (!fetchResponse.ok) {
-        if (fetchResponse.status === 404) {
-          throw new Error('Word not found');
+      const response = await apiClient.get(`/api/dictionary/${encodeURIComponent(cleanWord)}`, {
+        timeout: 5000,
+      });
+      if (response.data) {
+        const data = Array.isArray(response.data) ? response.data : [response.data];
+        if (data.length > 0) {
+          definition = data;
         }
-        throw new Error(`Dictionary API error: ${fetchResponse.statusText}`);
       }
-
-      const definition = await fetchResponse.json();
-
-      // Step 4: Save to Dexie cache
-      try {
-        const phonetic = Array.isArray(definition)
-          ? definition[0]?.phonetic || definition[0]?.phonetics?.[0]?.text || ''
-          : definition?.phonetic || '';
-        const audioUrl = Array.isArray(definition)
-          ? definition[0]?.phonetics?.find(p => p.audio)?.audio || ''
-          : definition?.phonetics?.find(p => p.audio)?.audio || '';
-
-        await db.dictionary_cache.put({
-          word: cleanWord,
-          definition,
-          phonetic,
-          audioUrl,
-          cachedAt: new Date().toISOString(),
-        });
-      } catch (cacheErr) {
-        if (import.meta.env.DEV) console.warn('Failed to save to Dexie cache:', cacheErr);
-      }
-
-      // Step 5: Fire-and-forget: save to history via backend (if backend is running)
-      this.saveToHistory(cleanWord, definition, lookupType, bookId);
-
-      return definition;
     } catch (err) {
-      if (err.message === 'Word not found') {
-        throw err;
+      if (err.response?.status !== 404) {
+        // If backend route had a non-404 error, try direct fetch as quick fallback with 5s timeout
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const fetchResponse = await fetch(
+            `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`,
+            { signal: controller.signal }
+          );
+          clearTimeout(timeoutId);
+          if (fetchResponse.ok) {
+            const data = await fetchResponse.json();
+            if (Array.isArray(data) && data.length > 0) {
+              definition = data;
+            }
+          }
+        } catch (fetchErr) {
+          // Direct fetch failed or timed out
+        }
       }
-      throw new Error(err.message || 'Failed to look up word');
     }
+
+    // Step 4: If word was not found in standard dictionary (404, rate-limited, or timed out), route to AI (Groq/Gemini) fallback
+    if (!definition) {
+      try {
+        if (import.meta.env.DEV) console.log(`Routing word "${cleanWord}" to AI dictionary definition fallback...`);
+        const aiResponse = await apiClient.post('/api/ai/define', {
+          word: cleanWord,
+          book_id: bookId || null,
+        });
+
+        if (aiResponse.data) {
+          definition = Array.isArray(aiResponse.data) ? aiResponse.data : [aiResponse.data];
+          if (definition[0]) {
+            definition[0].isAiGenerated = true;
+          }
+        }
+      } catch (aiErr) {
+        if (import.meta.env.DEV) console.warn('AI dictionary fallback failed:', aiErr);
+      }
+    }
+
+    if (!definition || definition.length === 0) {
+      throw new Error(`Couldn't find definition for "${rawClean || word}".`);
+    }
+
+    // Step 5: Save to Dexie cache
+    try {
+      const defData = Array.isArray(definition) ? definition[0] : definition;
+      const phonetic = defData?.phonetic || defData?.phonetics?.[0]?.text || '';
+      const audioUrl = defData?.phonetics?.find(p => p.audio)?.audio || '';
+
+      await db.dictionary_cache.put({
+        word: cleanWord,
+        definition,
+        phonetic,
+        audioUrl,
+        isAiGenerated: !!defData?.isAiGenerated,
+        cachedAt: new Date().toISOString(),
+      });
+    } catch (cacheErr) {
+      if (import.meta.env.DEV) console.warn('Failed to save to Dexie cache:', cacheErr);
+    }
+
+    // Step 6: Fire-and-forget: save to history via backend
+    this.saveToHistory(cleanWord, definition, lookupType, bookId);
+
+    return definition;
   },
 
   /**

@@ -13,6 +13,7 @@ import DOMPurify from 'dompurify';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import SessionSummaryModal from './SessionSummaryModal';
+import TestKnowledgeModal from './TestKnowledgeModal';
 import QuestSummaryModal from '../quests/QuestSummaryModal';
 import useXpStore from '../../store/useXpStore';
 import AIModal from './reading_navigations/reading_layout/AIModal';
@@ -111,9 +112,10 @@ function ReaderView() {
 
     // Session Summary State
     const [showSessionSummary, setShowSessionSummary] = useState(false);
+    const [showTestKnowledgeModal, setShowTestKnowledgeModal] = useState(false);
     const showSessionSummaryRef = useRef(false);
     useEffect(() => { showSessionSummaryRef.current = showSessionSummary; }, [showSessionSummary]);
-    const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [] });
+    const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [], visitedPagesList: [] });
     const [showQuestSummary, setShowQuestSummary] = useState(false);
     const quizFromSessionRef = useRef(false);
     const sessionActiveSeconds = useRef(0);
@@ -180,12 +182,16 @@ function ReaderView() {
             if (fromPopState === true) {
                 window.history.pushState(null, '', window.location.href);
             }
+            const visitedPagesList = visitedPages.current.size > 0
+                ? Array.from(visitedPages.current)
+                : [pageNumber];
             setSessionStats({ 
                 xpGained: Math.max(0, readingXp), 
                 pagesRead, 
                 timeSpentSeconds,
                 totalXp: Math.max(0, totalXp),
-                breakdown: getSessionXpBreakdown(sessionXpActions, readingXp)
+                breakdown: getSessionXpBreakdown(sessionXpActions, readingXp),
+                visitedPagesList,
             });
             setShowSessionSummary(true);
         } else {
@@ -412,7 +418,7 @@ function ReaderView() {
         supabaseBookId: book?.supabaseId,
         currentPage: pageNumber,
         totalPages: numPages || book?.totalPages,
-        isEnabled: !!book?.supabaseId,
+        isEnabled: !!(book?.id || book?.supabaseId),
         onVisitRecorded: (page) => visitedPages.current.add(page)
     });
 
@@ -1770,11 +1776,27 @@ function ReaderView() {
                 {/* Flashcard panel */}
                 {flashcardPanel && (
                     <FlashcardPanel
-                        setFlashcardPanel={setFlashcardPanel}
+                        setFlashcardPanel={(val) => {
+                            setFlashcardPanel(val);
+                            // If user came from SessionSummary and dismissed flashcard panel, return to SessionSummaryModal
+                            if (!val && quizFromSessionRef.current) {
+                                quizFromSessionRef.current = false;
+                                const updatedActions = useXpStore.getState().sessionXpActions || [];
+                                const readingXp = sessionStats.xpGained;
+                                const activityXp = updatedActions.reduce((sum, act) => sum + act.estimatedXp, 0);
+                                setSessionStats(prev => ({
+                                    ...prev,
+                                    totalXp: Math.max(0, readingXp + activityXp),
+                                    breakdown: getSessionXpBreakdown(updatedActions, readingXp),
+                                }));
+                                setShowSessionSummary(true);
+                            }
+                        }}
                         book={book}
                         fileUrl={fileUrl}
                         pageNumber={pageNumber}
                         totalPages={numPages || localPages.total || 1}
+                        initialSelectedPages={sessionStats.visitedPagesList || (visitedPages.current.size > 0 ? Array.from(visitedPages.current) : [pageNumber])}
                     />
                 )}
 
@@ -1806,6 +1828,7 @@ function ReaderView() {
                         isPdf={isPdf}
                         numPages={numPages || (isPdf ? 0 : localPages.total)}
                         userId={authUser?.id}
+                        initialSelectedPages={sessionStats.visitedPagesList || (visitedPages.current.size > 0 ? Array.from(visitedPages.current) : [pageNumber])}
                         onQuizStart={(session) => {
                             console.log('[ReaderView] QuizPanel onQuizStart — launching QuizView', session);
                             setQuizModal(false);
@@ -1897,15 +1920,35 @@ function ReaderView() {
                         }}
                         onStartQuiz={() => {
                             setShowSessionSummary(false);
-                            quizFromSessionRef.current = true;
-                            setNavState('first');
-                            setTimeout(() => {
-                                setQuizModal(true);
-                            }, 300);
+                            setShowTestKnowledgeModal(true);
                         }}
                     />
                 )}
             </AnimatePresence>
+            <TestKnowledgeModal
+                isOpen={showTestKnowledgeModal}
+                trackedPages={sessionStats.visitedPagesList || (visitedPages.current.size > 0 ? Array.from(visitedPages.current) : [pageNumber])}
+                onClose={() => {
+                    setShowTestKnowledgeModal(false);
+                    setShowSessionSummary(true);
+                }}
+                onSelectQuiz={() => {
+                    setShowTestKnowledgeModal(false);
+                    quizFromSessionRef.current = true;
+                    setNavState('first');
+                    setTimeout(() => {
+                        setQuizModal(true);
+                    }, 250);
+                }}
+                onSelectFlashcards={() => {
+                    setShowTestKnowledgeModal(false);
+                    quizFromSessionRef.current = true;
+                    setNavState('first');
+                    setTimeout(() => {
+                        setFlashcardPanel(true);
+                    }, 250);
+                }}
+            />
             {showQuestSummary && (
                 <QuestSummaryModal
                     onDone={() => {
