@@ -70,6 +70,16 @@ const useStudyStore = create(
       },
 
       /**
+       * isStreakFiredToday — returns true if today's streak was already earned/counted
+       */
+      isStreakFiredToday: () => {
+        const today = get()._getTodayString();
+        const lastActive = get().lastActiveDate;
+        const history = get().streakHistory || [];
+        return (get().streakCount || 0) > 0 && (lastActive === today || history.includes(today));
+      },
+
+      /**
        * updateStreak — called after user reads for 1 minute
        * Increments streak if consecutive day, resets if broken (unless protected by streak freeze)
        * Adds today to streakHistory if not already present

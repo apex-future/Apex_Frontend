@@ -18,6 +18,14 @@ const colorMap = {
  icon: 'text-purple-500',
  value: 'text-purple-600 dark:text-purple-400',
  },
+ gray: {
+ icon: 'text-neutral-400 dark:text-neutral-500',
+ value: 'text-neutral-500 dark:text-neutral-400',
+ },
+ grey: {
+ icon: 'text-neutral-400 dark:text-neutral-500',
+ value: 'text-neutral-500 dark:text-neutral-400',
+ },
 };
 
 export default function StatCard({
@@ -49,9 +57,9 @@ export default function StatCard({
  {/* Value row */}
  <div className="flex items-center gap-1 sm:gap-1.5">
  {Icon && (
- <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${colors.icon}`} weight="fill" />
+ <Icon className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-300 ${colors.icon}`} weight="fill" />
  )}
- <span className={`text-xl sm:text-2xl md:text-3xl font-bold whitespace-nowrap ${colors.value}`}>
+ <span className={`text-xl sm:text-2xl md:text-3xl font-bold whitespace-nowrap transition-colors duration-300 ${colors.value}`}>
  {value}
  </span>
  </div>
