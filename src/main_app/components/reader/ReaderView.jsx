@@ -1256,7 +1256,7 @@ function ReaderView() {
                 }
             }
 
-            selDebounceRef.current = setTimeout(processSelection, 400);
+            selDebounceRef.current = setTimeout(processSelection, 250);
         };
 
         const handleSelectionChangeRaw = () => {

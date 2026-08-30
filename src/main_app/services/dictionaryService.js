@@ -54,7 +54,13 @@ const dictionaryService = {
 
     // Step 3: Fetch directly from Free Dictionary API to bypass backend dependency
     try {
-      const fetchResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout to prevent infinite rolling
+
+      const fetchResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
       
       if (!fetchResponse.ok) {
         if (fetchResponse.status === 404) {
@@ -90,6 +96,9 @@ const dictionaryService = {
 
       return definition;
     } catch (err) {
+      if (err.name === 'AbortError') {
+        throw new Error('Dictionary took too long to respond. Please try again.');
+      }
       if (err.message === 'Word not found') {
         throw err;
       }
