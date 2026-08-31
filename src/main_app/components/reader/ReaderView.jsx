@@ -434,11 +434,14 @@ function ReaderView() {
     useEffect(() => { updateStreakRef.current = updateStreak; }, [updateStreak]);
     useEffect(() => { logSpaceActivityRef.current = logSpaceActivity; }, [logSpaceActivity]);
     const streakTimerRef = useRef(null);
-    const streakFiredTodayRef = useRef(false);
+    const streakFiredTodayRef = useRef(
+        localStorage.getItem('apex_streak_fired_today') === new Date().toLocaleDateString('en-CA')
+    );
 
     // Track elapsed time so visibility changes don't reset the full 60s
     const streakElapsedRef = useRef(0);
     const streakStartTimeRef = useRef(null);
+    const dexieStreakLoadedRef = useRef(false);
 
     useEffect(() => {
         if (isLoading || !bookId) return;
@@ -451,7 +454,6 @@ function ReaderView() {
         const MINUTE_DURATION = 60 * 1000;
         console.log(`[Apex Streak] Threshold set to ${streakThresholdMinutes} minutes (${STREAK_DURATION / 1000}s)`);
 
-        // Load today's accumulated progress from Dexie IndexedDB
         db.user_daily_streak_progress
             .where('date').equals(today)
             .first()
@@ -468,11 +470,13 @@ function ReaderView() {
 
                 console.log(`[Apex Streak] Loaded accumulated today progress: ${initialSeconds}s (fired=${streakFiredTodayRef.current})`);
 
+                dexieStreakLoadedRef.current = true;
                 streakStartTimeRef.current = Date.now();
                 runInterval();
             })
             .catch((err) => {
                 console.error('[Apex Streak] Failed to load daily progress:', err);
+                dexieStreakLoadedRef.current = true;
                 if (!isCancelled) runInterval();
             });
 
@@ -502,20 +506,27 @@ function ReaderView() {
                     const lastFired = localStorage.getItem('apex_streak_fired_today');
                     
                     if (lastFired !== today) {
-                        updateStreakRef.current();
-                        streakFiredTodayRef.current = true;
-                        localStorage.setItem('apex_streak_fired_today', today);
+                        // Triple-check: store might have been updated by a sync during reading
+                        if (useStudyStore.getState().isStreakFiredToday()) {
+                            streakFiredTodayRef.current = true;
+                            localStorage.setItem('apex_streak_fired_today', today);
+                            console.log('[Apex Streak] Store already has today — skipping duplicate fire');
+                        } else {
+                            updateStreakRef.current();
+                            streakFiredTodayRef.current = true;
+                            localStorage.setItem('apex_streak_fired_today', today);
 
-                        // Read AFTER the synchronous store mutation — authoritative snapshot
-                        const store = useStudyStore.getState();
-                        const { streakCelebrationEnabled = true } = useSettingsStore.getState();
-                        setCelebrationData({ streakCount: store.streakCount, streakHistory: store.streakHistory });
-                        if (streakCelebrationEnabled) {
-                            setShowStreakCelebration(true);
+                            // Read AFTER the synchronous store mutation — authoritative snapshot
+                            const store = useStudyStore.getState();
+                            const { streakCelebrationEnabled = true } = useSettingsStore.getState();
+                            setCelebrationData({ streakCount: store.streakCount, streakHistory: store.streakHistory });
+                            if (streakCelebrationEnabled) {
+                                setShowStreakCelebration(true);
+                            }
+
+                            // Persist streak fired status
+                            syncService.saveDailyStreakProgress(today, currentSeconds, true);
                         }
-
-                        // Persist streak fired status
-                        syncService.saveDailyStreakProgress(today, currentSeconds, true);
                     }
                 }
             }, 1000); // 1-second ticks for accurate pausing
@@ -528,6 +539,11 @@ function ReaderView() {
                 clearInterval(streakTimerRef.current);
                 syncService.saveDailyStreakProgress(today, currentSeconds, streakFiredTodayRef.current);
             } else {
+                // Only resume if Dexie has loaded — otherwise timer would track from 0
+                if (!dexieStreakLoadedRef.current) {
+                    console.log('[Apex Reader] Tab visible — but Dexie not loaded yet, skipping resume');
+                    return;
+                }
                 console.log('[Apex Reader] Tab visible — resuming timer');
                 runInterval();
             }

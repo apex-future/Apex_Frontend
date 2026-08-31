@@ -166,6 +166,7 @@ const useStudyStore = create(
           streakHistory: newHistory,
           streakFreezesHeld: freezes,
           frozenDays: newFrozen,
+          lastStreakUpdatedAt: new Date().toISOString(),
         });
 
         if (import.meta.env.DEV) console.log('[Apex Streak] Updated:', { newStreak, newLongest, today });
@@ -287,12 +288,16 @@ const useStudyStore = create(
 
           if (response.data) {
             // Guard: don't let a stale server response overwrite a fresher local streak.
-            // If local lastActiveDate is newer than what the server returned, skip the merge.
+            // Check 1: If local lastActiveDate is newer than server, skip entirely.
+            // Check 2: If dates match but local streakCount is higher, skip — local just incremented.
             const localActiveDate = get().lastActiveDate || '';
             const serverActiveDate = response.data.last_active_date || '';
+            const localStreak = get().streakCount;
+            const serverStreak = response.data.current_streak;
 
-            if (localActiveDate > serverActiveDate) {
-              if (import.meta.env.DEV) console.log('[Apex Streak] Server response is stale (local:', localActiveDate, 'server:', serverActiveDate, ') — skipping merge');
+            if (localActiveDate > serverActiveDate ||
+                (localActiveDate === serverActiveDate && localStreak > serverStreak)) {
+              if (import.meta.env.DEV) console.log('[Apex Streak] Server response is stale — local:', localActiveDate, '/', localStreak, 'server:', serverActiveDate, '/', serverStreak, '— skipping merge');
               localStorage.removeItem('apex_streak_sync_pending');
             } else {
               set({
