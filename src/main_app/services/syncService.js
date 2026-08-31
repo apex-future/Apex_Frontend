@@ -441,6 +441,18 @@ const syncService = {
           });
           for (const m of mapped) { delete m.id; }
           await db.reading_progress.bulkAdd(mapped);
+
+          // Also update the local db.books records with the latest reading progress
+          for (const item of mapped) {
+            if (item.bookId && typeof item.bookId === 'number') {
+              await db.books.update(item.bookId, {
+                currentPage: item.currentPage || 1,
+                progress: item.progressPercentage || 0,
+                scrollPosition: item.scrollPosition || 0,
+                lastReadAt: item.lastReadAt,
+              }).catch(() => {});
+            }
+          }
         }
 
         // ── HIGHLIGHTS ──
@@ -736,6 +748,9 @@ const syncService = {
 
       if (import.meta.env.DEV) console.log('[Apex Sync] Sync complete. Decisions were:', decisions);
 
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('apex:sync-complete', { detail: { pulled: tablesToPull, decisions } }));
+      }
     } catch (error) {
       if (import.meta.env.DEV) console.error('[Apex Sync] pullAllUserData failed:', error);
       throw error;

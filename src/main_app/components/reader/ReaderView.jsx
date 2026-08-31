@@ -110,6 +110,28 @@ function ReaderView() {
     const [rotation, setRotation] = useState(0);
     const [tocOutline, setTocOutline] = useState(null);
 
+    // Direct Dexie progress recovery on mount — ensures saved chapter/page is restored immediately on another device
+    useEffect(() => {
+        if (!bookId) return;
+        const fetchInitialProgress = async () => {
+            try {
+                const numericId = !isNaN(Number(bookId)) ? Number(bookId) : null;
+                const progressRecord = await db.reading_progress
+                    .filter(p => (numericId !== null && p.bookId === numericId) || p.bookId === bookId || (book?.supabaseId && p.bookId === book?.supabaseId))
+                    .first();
+
+                if (progressRecord && progressRecord.currentPage && progressRecord.currentPage > 1) {
+                    if (import.meta.env.DEV) console.log('[Apex Reader] Restored saved page from Dexie:', progressRecord.currentPage);
+                    setPageNumber(prev => prev === 1 ? progressRecord.currentPage : prev);
+                    setLocalPages(prev => prev.current === 1 ? { ...prev, current: progressRecord.currentPage } : prev);
+                }
+            } catch (err) {
+                if (import.meta.env.DEV) console.warn('[Apex Reader] Failed to fetch initial progress from Dexie:', err);
+            }
+        };
+        fetchInitialProgress();
+    }, [bookId, book?.supabaseId]);
+
     // Session Summary State
     const [showSessionSummary, setShowSessionSummary] = useState(false);
     const [showTestKnowledgeModal, setShowTestKnowledgeModal] = useState(false);
@@ -714,7 +736,12 @@ function ReaderView() {
             }
         }
 
-        Promise.resolve().then(() => syncProgress(pageNumber, total));
+        const effectivePage = pageNumber > 1 ? pageNumber : (book?.currentPage || 1);
+        if (effectivePage > 1 && pageNumber === 1) {
+            setPageNumber(effectivePage);
+            setLocalPages(prev => ({ ...prev, current: effectivePage }));
+        }
+        Promise.resolve().then(() => syncProgress(effectivePage, total));
 
         // --- Outline extraction ---
         // Check Dexie cache first
@@ -1407,22 +1434,32 @@ function ReaderView() {
 
 
     const lastBookIdRef = useRef(null);
+    const lastPageRef = useRef(null);
     useEffect(() => {
-        if (!bookId || !book || lastBookIdRef.current === bookId) return;
-        lastBookIdRef.current = bookId;
-        // For non-PDF books, restore saved scroll position; for PDFs, page number handles it
-        if (!isPdf && book.scrollPosition > 0) {
-            // Delay to let content render before scrolling
-            setTimeout(() => window.scrollTo(0, book.scrollPosition), 300);
-        } else {
-            window.scrollTo(0, 0);
+        if (!bookId || !book) return;
+
+        const targetPage = book.currentPage || 1;
+        const isNewBook = lastBookIdRef.current !== bookId;
+        const isNewProgress = lastPageRef.current !== targetPage && targetPage > 1;
+
+        if (isNewBook || isNewProgress) {
+            lastBookIdRef.current = bookId;
+            lastPageRef.current = targetPage;
+
+            // For non-PDF books, restore saved scroll position; for PDFs, page number handles it
+            if (!isPdf && book.scrollPosition > 0) {
+                setTimeout(() => window.scrollTo(0, book.scrollPosition), 300);
+            } else if (isNewBook) {
+                window.scrollTo(0, 0);
+            }
+
+            Promise.resolve().then(() => {
+                setLocalProgress(book.progress || 0);
+                setLocalPages({ current: targetPage, total: book.totalPages || 1 });
+                setPageNumber(prev => (isNewBook || prev === 1) ? targetPage : prev);
+            });
         }
-        Promise.resolve().then(() => {
-            setLocalProgress(book.progress || 0);
-            setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
-            setPageNumber(book.currentPage || 1);
-        });
-    }, [bookId, book]);
+    }, [bookId, book, isPdf]);
 
     const lastUpdateRef = useRef(0);
     useEffect(() => {
