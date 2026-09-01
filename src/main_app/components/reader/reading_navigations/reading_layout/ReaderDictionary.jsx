@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MagnifyingGlass, X, SpeakerHigh, Spinner, Book, WifiSlash } from '@phosphor-icons/react';
 import dictionaryService from '../../../../services/dictionaryService';
+import Label from '../../../ui/Label';
 
 function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
     const [word, setWord] = useState('');
@@ -19,9 +20,9 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
 
     useEffect(() => {
         if (isOpen && initialWord?.trim()) {
-            setWord(initialWord.trim());
-            // User requested to cut the automatic search trigger
-            // fetchDefinition(initialWord.trim());
+            const rawClean = initialWord.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '');
+            setWord(rawClean);
+            fetchDefinition(rawClean);
         }
     }, [isOpen, initialWord]);
 
@@ -134,7 +135,12 @@ function ReaderDictionary({ isOpen, onClose, bookId, initialWord }) {
                         <div className="animate-in fade-in duration-500">
                             <div className="flex items-center justify-between mb-6 pb-6">
                                 <div>
-                                    <h3 className="text-3xl font-black font-display text-text-primary capitalize tracking-tight mb-1">{definition.word}</h3>
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                        <h3 className="text-3xl font-black font-display text-text-primary capitalize tracking-tight">{definition.word}</h3>
+                                        {definition.isAiGenerated && (
+                                            <Label variant="accent" color="purple" size="sm">AI-generated</Label>
+                                        )}
+                                    </div>
                                     <p className="text-accent-primary font-bold italic text-base">
                                         {definition.phonetic || definition.phonetics?.[0]?.text}
                                     </p>

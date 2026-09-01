@@ -9,15 +9,17 @@ import Button from '../../../ui/Button';
  * QuizPanel — config + history panel for AI quiz generation.
  * Mobile: full-screen bottom sheet. Desktop: right side panel (like AIModal).
  */
-function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf, numPages, userId, onQuizStart }) {
-  console.log('[QuizPanel] Mounted — bookId:', bookId, 'userId:', userId);
+function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf, numPages, userId, onQuizStart, initialSelectedPages = [] }) {
+  console.log('[QuizPanel] Mounted — bookId:', bookId, 'userId:', userId, 'initialSelectedPages:', initialSelectedPages);
 
   const [view, setView] = useState('config'); // 'config' | 'history'
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState(null);
 
   // ─── Config state (copied from QuizGenerationModal internals) ───
-  const [selectedPages, setSelectedPages] = useState([]);
+  const [selectedPages, setSelectedPages] = useState(() => (
+    initialSelectedPages && initialSelectedPages.length > 0 ? [...new Set(initialSelectedPages)].sort((a, b) => a - b) : []
+  ));
   const [numQuestions, setNumQuestions] = useState(5);
   const [quizTime, setQuizTime] = useState('10m');
   const [quizType, setQuizType] = useState('mcq');
@@ -62,6 +64,20 @@ function QuizPanel({ onClose, bookId, supabaseBookId, bookTitle, fileUrl, isPdf,
       }
     };
   }, [numPages]);
+
+  // Scroll to first selected page on mount if initialSelectedPages provided
+  useEffect(() => {
+    if (initialSelectedPages && initialSelectedPages.length > 0 && scrollContainerRef.current) {
+      const minPage = Math.min(...initialSelectedPages);
+      const timer = setTimeout(() => {
+        const targetElement = scrollContainerRef.current?.querySelector(`[data-page="${minPage}"]`);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [initialSelectedPages]);
 
   const togglePageSelection = useCallback((pageNum) => {
     setSelectedPages(prev => prev.includes(pageNum) ? prev.filter(p => p !== pageNum) : [...prev, pageNum]);

@@ -43,7 +43,7 @@ import useQuestStore from '../../../../store/useQuestStore';
 import useXpStore from '../../../../store/useXpStore';
 import { XP_VALUES } from '../../../../../config/xpConfig';
 
-export default function FlashcardPanel({ setFlashcardPanel, book, fileUrl, pageNumber = 1, totalPages = 1 }) {
+export default function FlashcardPanel({ setFlashcardPanel, book, fileUrl, pageNumber = 1, totalPages = 1, initialSelectedPages = [] }) {
   const [view, setView] = useState('categories'); // 'categories' | 'category_cards' | 'practice_setup' | 'practice_session' | 'history' | 'history_detail' | 'quick_setup'
   const [selectedCategory, setSelectedCategory] = useState(null); // 'highlight' | 'tab' | 'word'
   const [cards, setCards] = useState([]);
@@ -797,8 +797,15 @@ export default function FlashcardPanel({ setFlashcardPanel, book, fileUrl, pageN
                     onClick={() => {
                       setQuickSetupCards([]);
                       setQuickSetupError('');
-                      setQuickSetupRangeStart(String(Math.max(1, pageNumber)));
-                      setQuickSetupRangeEnd(String(Math.min(totalPages, pageNumber + 9)));
+                      if (initialSelectedPages && initialSelectedPages.length > 0) {
+                        const minPage = Math.min(...initialSelectedPages);
+                        const maxPage = Math.max(...initialSelectedPages);
+                        setQuickSetupRangeStart(String(Math.max(1, minPage)));
+                        setQuickSetupRangeEnd(String(Math.min(totalPages, maxPage)));
+                      } else {
+                        setQuickSetupRangeStart(String(Math.max(1, pageNumber)));
+                        setQuickSetupRangeEnd(String(Math.min(totalPages, pageNumber + 9)));
+                      }
                       setView('quick_setup');
                     }}
                     className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 text-[10px] font-bold transition-all border border-amber-500/20 active:scale-95"

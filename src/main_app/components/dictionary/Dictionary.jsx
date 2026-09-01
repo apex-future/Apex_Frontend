@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { MagnifyingGlass, Book, SpeakerHigh, ArrowLeft, Spinner, Sparkle, ClockCounterClockwise, WifiSlash } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import dictionaryService from '../../services/dictionaryService';
-import useTour from '../../hooks/useTour';
+import DictionaryTour from './DictionaryTour';
+import Label from '../ui/Label';
 
 function Dictionary() {
     const [word, setWord] = useState('');
@@ -22,37 +23,6 @@ function Dictionary() {
     useEffect(() => {
         dictionaryService.checkOfflineDictionaryStatus().then(setOfflineReady);
     }, []);
-
-    const dictionaryTourSteps = React.useMemo(() => [
-        {
-            popover: {
-                title: 'Welcome to the Dictionary 📚',
-                description: 'This is your offline-capable dictionary. Search for any word to get definitions, synonyms, and hear audio pronunciations.',
-                side: "bottom",
-                align: 'center'
-            }
-        },
-        {
-            element: '#tour-dict-search',
-            popover: {
-                title: 'Search Words',
-                description: 'Type any word here to look it up.',
-                side: "bottom",
-                align: 'center'
-            }
-        },
-        {
-            element: '#tour-dict-offline',
-            popover: {
-                title: 'Offline Support',
-                description: 'You can download the dictionary package to look up words even when you do not have internet access!',
-                side: "top",
-                align: 'center'
-            }
-        }
-    ], []);
-
-    useTour('Dictionary', dictionaryTourSteps);
 
     // Load history from backend on mount (Category B — online only)
     useEffect(() => {
@@ -177,26 +147,17 @@ function Dictionary() {
                 {error && !loading && (
                     <div className="bg-red-50/50 border-2 border-red-100 rounded-2xl p-8 text-center animate-in slide-in-from-top-4 duration-500">
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
-                            {error.includes('internet') ? <WifiSlash size={28} weight="bold" /> : <Sparkle size={28} weight="fill" />}
+                            {error.includes('internet') ? <WifiSlash size={28} weight="bold" /> : <Book size={28} weight="bold" />}
                         </div>
                         <h3 className="text-lg font-bold text-red-900 mb-2">
                             {error.includes('internet') ? 'You\'re offline' : 'Word not found'}
                         </h3>
-                        <p className="text-red-700 font-medium mb-4">
+                        <p className="text-red-700 font-medium">
                             {error.includes('internet')
                                 ? 'Connect to the internet to look up new words. Previously looked up words are available offline.'
                                 : `Sorry, we couldn't find a definition for "${word}". Please try another word.`
                             }
                         </p>
-                        {!error.includes('internet') && (
-                            <button
-                                onClick={() => navigate('/ai', { state: { initialPrompt: `Can you define the word "${word}" for me?` } })}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-xl transition-all font-bold text-sm shadow-sm"
-                            >
-                                <Sparkle size={18} weight="fill" className="text-purple-600" />
-                                Ask Cleo instead
-                            </button>
-                        )}
                     </div>
                 )}
 
@@ -271,9 +232,14 @@ function Dictionary() {
                         {/* Word and Phonetics */}
                         <div className="flex items-center justify-between mb-8 pb-8 border-b border-border-default">
                             <div>
-                                <h2 className="text-5xl font-bold font-display text-text-primary mb-3 tracking-tightest">
-                                    {definition.word}
-                                </h2>
+                                <div className="flex items-center gap-3 mb-3 flex-wrap">
+                                    <h2 className="text-5xl font-bold font-display text-text-primary tracking-tightest">
+                                        {definition.word}
+                                    </h2>
+                                    {definition.isAiGenerated && (
+                                        <Label variant="accent" color="purple" size="sm">AI-generated</Label>
+                                    )}
+                                </div>
                                 <p className="text-xl text-accent-primary font-medium italic">
                                     {definition.phonetic || definition.phonetics?.[0]?.text}
                                 </p>
@@ -384,6 +350,7 @@ function Dictionary() {
                     </div>
                 </div>
             )}
+            <DictionaryTour />
         </div>
     );
 }

@@ -17,7 +17,7 @@ import ElectricBorder from '../ui/ElectricBorder';
 export default function Header() {
     const { user } = useAuthStore();
     const { books = [] } = useContext(BookContext) || {};
-    const { streakCount = 0 } = useStudyStore() || {};
+    const { streakCount = 0, lastActiveDate, streakHistory = [] } = useStudyStore() || {};
     const navigate = useNavigate();
     const { resolvedTheme } = useThemeStore();
     const isDark = resolvedTheme === 'dark';
@@ -66,7 +66,17 @@ export default function Header() {
     
     const questsCompletedCount = [quest_1, quest_2, quest_3].filter(q => q?.completed).length;
 
-    console.log('[Header] rendered');
+    // Check if the streak for today has been fired / earned
+    const todayStr = (() => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    })();
+    const isStreakFiredToday = streakCount > 0 && (lastActiveDate === todayStr || (Array.isArray(streakHistory) && streakHistory.includes(todayStr)));
+
+    console.log('[Header] rendered | streakCount:', streakCount, '| isStreakFiredToday:', isStreakFiredToday);
 
     return (
         <div className={`w-full font-sans ${resolvedTheme}`}>
@@ -90,7 +100,7 @@ export default function Header() {
                         label="Daily Streak"
                         value={streakCount}
                         icon={Fire}
-                        colorScheme="orange"
+                        colorScheme={isStreakFiredToday ? "orange" : "gray"}
                         unit="days"
                         onClick={() => navigate('/streak')}
                     />

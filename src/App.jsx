@@ -169,6 +169,17 @@ function App() {
                 useStudyStore.getState().checkStreakIntegrity();
                 console.log('[Apex Streak] Re-seeded from full pull data');
               }
+
+              // Streak safety net — server reconciles streak from history
+              apiClient.post('/api/auth/streak/reconcile')
+                .then((res) => {
+                  if (res.data?.corrected) {
+                    useStudyStore.getState().seedFromSupabase(res.data);
+                    console.log('[Apex Streak] Safety net corrected streak:', res.data.current_streak);
+                  }
+                })
+                .catch(() => {}); // Non-blocking
+
               return syncService.pushSync();
             })
             .catch((err) => console.error('Pull sync failed, continuing with local data:', err.message));

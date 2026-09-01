@@ -70,6 +70,16 @@ const useStudyStore = create(
       },
 
       /**
+       * isStreakFiredToday — returns true if today's streak was already earned/counted
+       */
+      isStreakFiredToday: () => {
+        const today = get()._getTodayString();
+        const lastActive = get().lastActiveDate;
+        const history = get().streakHistory || [];
+        return (get().streakCount || 0) > 0 && (lastActive === today || history.includes(today));
+      },
+
+      /**
        * updateStreak — called after user reads for 1 minute
        * Increments streak if consecutive day, resets if broken (unless protected by streak freeze)
        * Adds today to streakHistory if not already present
@@ -156,6 +166,7 @@ const useStudyStore = create(
           streakHistory: newHistory,
           streakFreezesHeld: freezes,
           frozenDays: newFrozen,
+          lastStreakUpdatedAt: new Date().toISOString(),
         });
 
         if (import.meta.env.DEV) console.log('[Apex Streak] Updated:', { newStreak, newLongest, today });
@@ -277,12 +288,16 @@ const useStudyStore = create(
 
           if (response.data) {
             // Guard: don't let a stale server response overwrite a fresher local streak.
-            // If local lastActiveDate is newer than what the server returned, skip the merge.
+            // Check 1: If local lastActiveDate is newer than server, skip entirely.
+            // Check 2: If dates match but local streakCount is higher, skip — local just incremented.
             const localActiveDate = get().lastActiveDate || '';
             const serverActiveDate = response.data.last_active_date || '';
+            const localStreak = get().streakCount;
+            const serverStreak = response.data.current_streak;
 
-            if (localActiveDate > serverActiveDate) {
-              if (import.meta.env.DEV) console.log('[Apex Streak] Server response is stale (local:', localActiveDate, 'server:', serverActiveDate, ') — skipping merge');
+            if (localActiveDate > serverActiveDate ||
+                (localActiveDate === serverActiveDate && localStreak > serverStreak)) {
+              if (import.meta.env.DEV) console.log('[Apex Streak] Server response is stale — local:', localActiveDate, '/', localStreak, 'server:', serverActiveDate, '/', serverStreak, '— skipping merge');
               localStorage.removeItem('apex_streak_sync_pending');
             } else {
               set({

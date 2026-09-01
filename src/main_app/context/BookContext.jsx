@@ -65,151 +65,177 @@ export const BookProvider = ({ children }) => {
     });
   }, [spaces]);
 
-  useEffect(() => {
-    const loadBooks = async () => {
-      try {
-        const storedBooks = await db.books.toArray();
+  const loadBooks = useCallback(async () => {
+    try {
+      const storedBooks = await db.books.toArray();
 
-        if (storedBooks && Array.isArray(storedBooks) && storedBooks.length > 0) {
-          // Reconstruct File objects from stored ArrayBuffers
-          const hydratedBooks = storedBooks.map(b => {
-            if (b.fileBlob && !b.file) {
-              const fileExt = b.fileType === 'application/epub+zip' ? '.epub' :
-                b.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' :
-                  b.fileType === 'application/msword' ? '.doc' :
-                    '.pdf';
-              const file = new File([b.fileBlob], b.title + fileExt, { type: b.fileType || 'application/pdf' });
-              return { ...b, file };
+      if (storedBooks && Array.isArray(storedBooks) && storedBooks.length > 0) {
+        // Reconstruct File objects from stored ArrayBuffers
+        const hydratedBooks = storedBooks.map(b => {
+          if (b.fileBlob && !b.file) {
+            const fileExt = b.fileType === 'application/epub+zip' ? '.epub' :
+              b.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' :
+                b.fileType === 'application/msword' ? '.doc' :
+                  '.pdf';
+            const file = new File([b.fileBlob], b.title + fileExt, { type: b.fileType || 'application/pdf' });
+            return { ...b, file };
+          }
+          return b;
+        });
+
+        // Load reading progress — match by Dexie integer ID, Supabase UUID, and local_id
+        const progressRecords = await db.reading_progress.toArray();
+        const progressMap = {};
+        for (const p of progressRecords) {
+          const key = p.bookId; // Could be integer (local) or UUID (pulled)
+          if (!progressMap[key] || new Date(p.lastReadAt) > new Date(progressMap[key].lastReadAt)) {
+            progressMap[key] = p;
+          }
+          if (p.supabaseId) {
+            if (!progressMap[p.supabaseId] || new Date(p.lastReadAt) > new Date(progressMap[p.supabaseId].lastReadAt)) {
+              progressMap[p.supabaseId] = p;
             }
-            return b;
-          });
-
-          // Load reading progress — match by both Dexie integer ID AND Supabase UUID
-          const progressRecords = await db.reading_progress.toArray();
-          const progressMap = {};
-          for (const p of progressRecords) {
-            const key = p.bookId; // Could be integer (local) or UUID (pulled)
-            if (!progressMap[key] || new Date(p.lastReadAt) > new Date(progressMap[key].lastReadAt)) {
-              progressMap[key] = p;
+          }
+          if (p.local_id) {
+            if (!progressMap[p.local_id] || new Date(p.lastReadAt) > new Date(progressMap[p.local_id].lastReadAt)) {
+              progressMap[p.local_id] = p;
             }
           }
-
-          // Load highlights from Dexie highlights table (includes pulled records)
-          const allHighlights = await db.highlights.toArray();
-          const highlightsByBook = {};
-          for (const h of allHighlights) {
-            const key = h.bookId;
-            if (!highlightsByBook[key]) highlightsByBook[key] = [];
-            highlightsByBook[key].push({
-              id: h.id,
-              text: h.highlightedText,
-              highlightedText: h.highlightedText,
-              color: h.color,
-              page: h.pageNumber,
-              pageNumber: h.pageNumber,
-              position: h.textPosition,
-              textPosition: h.textPosition,
-              note: h.note,
-              addedAt: h.createdAt,
-              supabaseId: h.supabaseId,
-              dexieId: h.id,
-            });
-          }
-
-          // Load bookmarks from Dexie bookmarks table (includes pulled records)
-          const allBookmarks = await db.bookmarks.toArray();
-          const bookmarksByBook = {};
-          for (const bm of allBookmarks) {
-            const key = bm.bookId;
-            if (!bookmarksByBook[key]) bookmarksByBook[key] = [];
-            bookmarksByBook[key].push({
-              page: bm.pageNumber,
-              label: bm.label || `Page ${bm.pageNumber}`,
-              addedAt: bm.createdAt,
-              supabaseId: bm.supabaseId,
-              dexieId: bm.id,
-            });
-          }
-
-          // Load tabs from Dexie tabs table
-          // Tabs are stored by bookId (integer OR supabaseId string)
-          const allTabs = await db.tabs.toArray();
-          const tabsByBook = {};
-          for (const n of allTabs) {
-            const key = n.bookId;
-            if (!tabsByBook[key]) tabsByBook[key] = [];
-            tabsByBook[key].push({
-              id: n.id,           // Dexie integer id — used for UI operations
-              dexieId: n.id,
-              supabaseId: n.supabaseId,
-              text: n.text,
-              context: n.context || null,
-              type: n.noteType || 'manual_note',
-              noteType: n.noteType || 'manual_note',
-              createdAt: n.createdAt,
-              updatedAt: n.updatedAt,
-              local_id: n.local_id,
-            });
-          }
-
-          const booksWithProgress = hydratedBooks.map(b => {
-            // Match by Dexie integer id OR Supabase UUID
-            const progress = progressMap[b.id] || progressMap[b.supabaseId];
-
-            // Merge highlights: combine metadata-stored + Dexie table highlights
-            const metadataHighlights = b.metadata?.highlights || [];
-            const tableHighlights = highlightsByBook[b.id] || highlightsByBook[b.supabaseId] || [];
-            // Deduplicate: if a highlight exists in both, prefer the table version
-            const existingTexts = new Set(tableHighlights.map(h => h.highlightedText?.toLowerCase()));
-            const uniqueMetaHighlights = metadataHighlights.filter(
-              h => !existingTexts.has((h.text || h.highlightedText || '').toLowerCase())
-            );
-            const mergedHighlights = [...tableHighlights, ...uniqueMetaHighlights];
-
-            // Merge bookmarks
-            const metadataBookmarks = b.metadata?.bookmarks || [];
-            const tableBookmarks = bookmarksByBook[b.id] || bookmarksByBook[b.supabaseId] || [];
-            const existingPages = new Set(tableBookmarks.map(bm => bm.page));
-            const uniqueMetaBookmarks = metadataBookmarks.filter(bm => !existingPages.has(bm.page));
-            const mergedBookmarks = [...tableBookmarks, ...uniqueMetaBookmarks].sort((a, c) => a.page - c.page);
-
-            // Merge tabs from Dexie tabs table
-            const tableTabs = tabsByBook[b.id] || tabsByBook[b.supabaseId] || [];
-
-            // Compute progress from currentPage / totalPages — single source of truth
-            // Never trust stored progress_percentage — it gets corrupted
-            const currentPage = progress?.currentPage || b.currentPage || 0;
-            const totalPages = b.totalPages || progress?.totalPages || 1;
-            const computedProgress = totalPages > 1 && currentPage > 0
-              ? Math.min(Math.round((currentPage / totalPages) * 100), 100)
-              : (progress?.progressPercentage || b.progress || 0);
-
-            return {
-              ...b,
-              isUploading: false,
-              progress: computedProgress,
-              currentPage: currentPage || 1,
-              totalPages: totalPages,
-              scrollPosition: progress?.scrollPosition || b.scrollPosition || 0,
-              metadata: {
-                ...(b.metadata || {}),
-                highlights: mergedHighlights,
-                bookmarks: mergedBookmarks,
-                tabs: tableTabs, // ← from Dexie tabs table, not metadata
-              },
-            };
-          });
-
-          setAllBooks(booksWithProgress);
         }
-      } catch (error) {
-        console.error("Failed to load books from Dexie:", error);
-      } finally {
-        setBooksLoading(false);
+
+        // Load highlights from Dexie highlights table (includes pulled records)
+        const allHighlights = await db.highlights.toArray();
+        const highlightsByBook = {};
+        for (const h of allHighlights) {
+          const key = h.bookId;
+          if (!highlightsByBook[key]) highlightsByBook[key] = [];
+          highlightsByBook[key].push({
+            id: h.id,
+            text: h.highlightedText,
+            highlightedText: h.highlightedText,
+            color: h.color,
+            page: h.pageNumber,
+            pageNumber: h.pageNumber,
+            position: h.textPosition,
+            textPosition: h.textPosition,
+            note: h.note,
+            addedAt: h.createdAt,
+            supabaseId: h.supabaseId,
+            dexieId: h.id,
+          });
+        }
+
+        // Load bookmarks from Dexie bookmarks table (includes pulled records)
+        const allBookmarks = await db.bookmarks.toArray();
+        const bookmarksByBook = {};
+        for (const bm of allBookmarks) {
+          const key = bm.bookId;
+          if (!bookmarksByBook[key]) bookmarksByBook[key] = [];
+          bookmarksByBook[key].push({
+            page: bm.pageNumber,
+            label: bm.label || `Page ${bm.pageNumber}`,
+            addedAt: bm.createdAt,
+            supabaseId: bm.supabaseId,
+            dexieId: bm.id,
+          });
+        }
+
+        // Load tabs from Dexie tabs table
+        // Tabs are stored by bookId (integer OR supabaseId string)
+        const allTabs = await db.tabs.toArray();
+        const tabsByBook = {};
+        for (const n of allTabs) {
+          const key = n.bookId;
+          if (!tabsByBook[key]) tabsByBook[key] = [];
+          tabsByBook[key].push({
+            id: n.id,           // Dexie integer id — used for UI operations
+            dexieId: n.id,
+            supabaseId: n.supabaseId,
+            text: n.text,
+            context: n.context || null,
+            type: n.noteType || 'manual_note',
+            noteType: n.noteType || 'manual_note',
+            createdAt: n.createdAt,
+            updatedAt: n.updatedAt,
+            local_id: n.local_id,
+          });
+        }
+
+        const booksWithProgress = hydratedBooks.map(b => {
+          // Match by Dexie integer id OR Supabase UUID OR local_id
+          const progress = progressMap[b.id] || (b.supabaseId && progressMap[b.supabaseId]) || (b.local_id && progressMap[b.local_id]);
+
+          // Merge highlights: combine metadata-stored + Dexie table highlights
+          const metadataHighlights = b.metadata?.highlights || [];
+          const tableHighlights = highlightsByBook[b.id] || (b.supabaseId && highlightsByBook[b.supabaseId]) || [];
+          // Deduplicate: if a highlight exists in both, prefer the table version
+          const existingTexts = new Set(tableHighlights.map(h => h.highlightedText?.toLowerCase()));
+          const uniqueMetaHighlights = metadataHighlights.filter(
+            h => !existingTexts.has((h.text || h.highlightedText || '').toLowerCase())
+          );
+          const mergedHighlights = [...tableHighlights, ...uniqueMetaHighlights];
+
+          // Merge bookmarks
+          const metadataBookmarks = b.metadata?.bookmarks || [];
+          const tableBookmarks = bookmarksByBook[b.id] || (b.supabaseId && bookmarksByBook[b.supabaseId]) || [];
+          const existingPages = new Set(tableBookmarks.map(bm => bm.page));
+          const uniqueMetaBookmarks = metadataBookmarks.filter(bm => !existingPages.has(bm.page));
+          const mergedBookmarks = [...tableBookmarks, ...uniqueMetaBookmarks].sort((a, c) => a.page - c.page);
+
+          // Merge tabs from Dexie tabs table
+          const tableTabs = tabsByBook[b.id] || (b.supabaseId && tabsByBook[b.supabaseId]) || [];
+
+          // Compute progress from currentPage / totalPages — single source of truth
+          // Never trust stored progress_percentage — it gets corrupted
+          const currentPage = progress?.currentPage || b.currentPage || 0;
+          const totalPages = b.totalPages || progress?.totalPages || 1;
+          const computedProgress = totalPages > 1 && currentPage > 0
+            ? Math.min(Math.round((currentPage / totalPages) * 100), 100)
+            : (progress?.progressPercentage || b.progress || 0);
+
+          return {
+            ...b,
+            isUploading: false,
+            progress: computedProgress,
+            currentPage: currentPage || 1,
+            totalPages: totalPages,
+            scrollPosition: progress?.scrollPosition || b.scrollPosition || 0,
+            metadata: {
+              ...(b.metadata || {}),
+              highlights: mergedHighlights,
+              bookmarks: mergedBookmarks,
+              tabs: tableTabs, // ← from Dexie tabs table, not metadata
+            },
+          };
+        });
+
+        setAllBooks(booksWithProgress);
+      } else {
+        setAllBooks([]);
       }
-    };
-    loadBooks();
+    } catch (error) {
+      console.error("Failed to load books from Dexie:", error);
+    } finally {
+      setBooksLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadBooks();
+
+    const handleSyncComplete = (e) => {
+      if (import.meta.env.DEV) console.log('[Apex Context] Sync complete event received — reloading books & reading progress', e?.detail);
+      loadBooks();
+    };
+
+    window.addEventListener('apex:sync-complete', handleSyncComplete);
+    window.addEventListener('apex:books-updated', handleSyncComplete);
+
+    return () => {
+      window.removeEventListener('apex:sync-complete', handleSyncComplete);
+      window.removeEventListener('apex:books-updated', handleSyncComplete);
+    };
+  }, [loadBooks]);
 
   const addBookToShelf = useCallback(async (fileObject, shelfName = 'Active Reading') => {
     if (!fileObject) return;
@@ -1194,6 +1220,7 @@ export const BookProvider = ({ children }) => {
       removeSimplification,
       showDuplicateModal,
       setShowDuplicateModal,
+      reloadBooks: loadBooks,
     }}>
       {children}
     </BookContext.Provider>

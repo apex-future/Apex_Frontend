@@ -77,6 +77,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
   const cardEnteredAtRef = useRef(Date.now());
   const cardBlobCacheRef = useRef({});
 
+
   // Fetch wrap data from backend
   const fetchWrapData = useCallback(async (spaceId) => {
     if (!navigator.onLine) {
@@ -124,29 +125,11 @@ export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
     });
   }, [isOpen, bookSpaceId, fetchWrapData]);
 
-  // Track when each card transition begins & pre-cache active card blob in background
+  // Track when each card transition begins (no pre-cache — in-place DOM
+  // modifications cause a visible flash that disrupts the experience).
+  // Blob is captured on-demand when the user taps share, then cached.
   useEffect(() => {
     cardEnteredAtRef.current = Date.now();
-
-    if (isLoading || !wrapData) return;
-
-    // Pre-cache current card blob after entrance animation settles so click share is 100% synchronous
-    const timer = setTimeout(async () => {
-      const el = getCardElement();
-      if (el) {
-        try {
-          const blob = await captureCardBlob(el);
-          if (blob) {
-            cardBlobCacheRef.current[currentCard] = blob;
-            console.log(`[StudyWrap] Card ${currentCard} pre-cached for instant 0ms share`);
-          }
-        } catch (e) {
-          // ignore background cache failure
-        }
-      }
-    }, 1100);
-
-    return () => clearTimeout(timer);
   }, [currentCard, isLoading, wrapData]);
 
   const handleLoadComplete = async () => {
@@ -185,7 +168,8 @@ export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
     );
   };
 
-  // Robust capture utility using html-to-image (with html2canvas fallback)
+  // In-place capture — temporarily expands the outer card + inner scroll container,
+  // neutralises unsupported CSS features, captures, then restores everything.
   const captureCardBlob = async (element) => {
     const el = element || getCardElement();
     if (!el) {
@@ -193,48 +177,127 @@ export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
       return null;
     }
 
-    try {
-      const rect = el.getBoundingClientRect();
-      const targetWidth = rect.width || 420;
-      const targetHeight = rect.height || 680;
+    // Restore-list pattern — collects undo functions, runs them in finally
+    const restoreList = [];
+    const tempStyle = (node, prop, value) => {
+      const prev = node.style[prop];
+      node.style[prop] = value;
+      restoreList.push(() => { node.style[prop] = prev; });
+    };
 
-      const blob = await htmlToImage.toBlob(el, {
-        pixelRatio: 2,
-        width: targetWidth,
-        height: targetHeight,
-        canvasWidth: targetWidth * 2,
-        canvasHeight: targetHeight * 2,
-        backgroundColor: '#000000',
-        skipFonts: true,
-        cacheBust: false,
-        filter: (node) => {
-          if (node.classList && node.classList.contains('study-wrap-nav-ignore')) {
-            return false;
+    try {
+      // ── 1. Outer card wrapper ─────────────────────────────────────────────
+      // Tailwind overflow-hidden + md:h-[680px] clip captured output.
+      tempStyle(el, 'overflow',  'visible');
+      tempStyle(el, 'height',    'auto');
+      tempStyle(el, 'maxHeight', 'none');
+
+      // ── 2. Inner scroll container ─────────────────────────────────────────
+      const scrollContainer =
+        el.querySelector('#study-wrap-card-container') ||
+        el.querySelector('.study-wrap-no-scrollbar');
+      if (scrollContainer) {
+        tempStyle(scrollContainer, 'overflow',  'visible');
+        tempStyle(scrollContainer, 'height',    'auto');
+        tempStyle(scrollContainer, 'maxHeight', 'none');
+        scrollContainer.scrollTop = 0;
+      }
+
+      // ── 3. Hide nav chrome from share image ───────────────────────────────
+      el.querySelectorAll('.study-wrap-nav-ignore')
+        .forEach((n) => tempStyle(n, 'display', 'none'));
+
+      // ── 4. Neutralise backdrop-filter ──────────────────────────────────────
+      // html-to-image cannot render backdrop-filter — it outputs a broken
+      // translucent box. Swap to a more opaque solid background so the card
+      // still looks like frosted glass in the share image.
+      el.querySelectorAll('*').forEach((node) => {
+        const cs = window.getComputedStyle(node);
+        const bf = cs.getPropertyValue('backdrop-filter') ||
+                   cs.getPropertyValue('-webkit-backdrop-filter');
+        if (bf && bf !== 'none') {
+          tempStyle(node, 'backdropFilter',       'none');
+          tempStyle(node, 'webkitBackdropFilter',  'none');
+          // Bump opacity of existing background so it approximates the blur
+          const bg = cs.backgroundColor;
+          if (bg && bg.includes('rgba')) {
+            // Increase alpha from ~0.22 to ~0.65 for a solid frosted look
+            const boosted = bg.replace(
+              /rgba\(([^,]+),\s*([^,]+),\s*([^,]+),\s*([\d.]+)\)/,
+              (_, r, g, b, a) => `rgba(${r}, ${g}, ${b}, ${Math.min(parseFloat(a) + 0.45, 0.85)})`
+            );
+            tempStyle(node, 'backgroundColor', boosted);
           }
-          return true;
-        },
+        }
       });
-      if (blob) return blob;
-    } catch (err) {
-      console.warn('[StudyWrap] html-to-image failed, trying html2canvas fallback:', err);
-    }
 
-    try {
-      const canvas = await html2canvas(el, {
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#000000',
-        scale: 2,
-        logging: false,
-        ignoreElements: (targetEl) => {
-          return targetEl.classList?.contains('study-wrap-nav-ignore');
-        },
+      // ── 5. Flatten DepthText 3D perspective ────────────────────────────────
+      // DepthText uses perspective + preserve-3d + backface-visibility:hidden
+      // which causes layer misalignment in the SVG foreignObject renderer.
+      el.querySelectorAll('.depth-text').forEach((dt) => {
+        tempStyle(dt, 'perspective', 'none');
       });
-      return await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-    } catch (hErr) {
-      console.error('[StudyWrap] Both capture methods failed:', hErr);
-      showToastGlobal("Failed to capture card", "error");
-      return null;
+      el.querySelectorAll('.depth-text__stage').forEach((stage) => {
+        tempStyle(stage, 'transformStyle', 'flat');
+        tempStyle(stage, 'transform',     'none');
+      });
+      el.querySelectorAll('.depth-text__layer, .depth-text__face').forEach((layer) => {
+        tempStyle(layer, 'transformStyle',     'flat');
+        tempStyle(layer, 'backfaceVisibility', 'visible');
+        tempStyle(layer, 'transform',          'none');
+      });
+
+      // ── 6. Wait for reflow ────────────────────────────────────────────────
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      const captureWidth  = el.scrollWidth  || 420;
+      const captureHeight = el.scrollHeight || 720;
+
+      console.log(`[StudyWrap] In-place capture dims — ${captureWidth}×${captureHeight}`);
+
+      // ── 7. Primary: html-to-image ─────────────────────────────────────────
+      try {
+        const blob = await htmlToImage.toBlob(el, {
+          pixelRatio:      2,
+          width:           captureWidth,
+          height:          captureHeight,
+          canvasWidth:     captureWidth  * 2,
+          canvasHeight:    captureHeight * 2,
+          backgroundColor: '#000000',
+          skipFonts:       true,
+          cacheBust:       false,
+          filter: (node) => !node.classList?.contains('study-wrap-nav-ignore'),
+        });
+        if (blob) {
+          console.log('[StudyWrap] Capture succeeded via html-to-image');
+          return blob;
+        }
+      } catch (err) {
+        console.warn('[StudyWrap] html-to-image failed, trying html2canvas:', err);
+      }
+
+      // ── 8. Fallback: html2canvas ──────────────────────────────────────────
+      try {
+        const canvas = await html2canvas(el, {
+          useCORS:         true,
+          allowTaint:      true,
+          backgroundColor: '#000000',
+          scale:           2,
+          logging:         false,
+          width:           captureWidth,
+          height:          captureHeight,
+          ignoreElements:  (n) => n.classList?.contains('study-wrap-nav-ignore'),
+        });
+        return await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      } catch (err) {
+        console.error('[StudyWrap] Both capture methods failed:', err);
+        showToastGlobal('Failed to capture card', 'error');
+        return null;
+      }
+
+    } finally {
+      // ── 9. Always restore — runs even if an error is thrown ───────────────
+      restoreList.forEach((fn) => fn());
     }
   };
 
@@ -724,7 +787,7 @@ export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
 
       {/* Main Surface */}
       <div
-        ref={modalCardRef}
+        ref={(node) => { modalCardRef.current = node; cardSurfaceRef.current = node; }}
         id="study-wrap-modal-card"
         className="
           relative z-10
@@ -783,7 +846,6 @@ export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
           >
             <AnimatePresence initial={false} custom={direction.current} mode="popLayout">
               <motion.div
-                ref={cardSurfaceRef}
                 id="study-wrap-active-card"
                 key={currentCard}
                 custom={direction.current}

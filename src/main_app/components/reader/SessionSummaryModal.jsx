@@ -143,7 +143,7 @@ export default function SessionSummaryModal({
     ];
 
   return (
-    <div className={`fixed inset-0 z-[1000] flex items-center justify-center font-sans ${bgGradient} sm:bg-transparent sm:backdrop-blur-sm`}>
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center font-sans ${bgGradient} sm:bg-transparent sm:backdrop-blur-sm`}>
       {/* Desktop backdrop */}
       <div className="hidden sm:block fixed inset-0 bg-black/60 backdrop-blur-sm" />
 

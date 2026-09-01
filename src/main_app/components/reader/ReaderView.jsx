@@ -13,6 +13,7 @@ import DOMPurify from 'dompurify';
 import PDFReader from './PDFReader';
 import ReaderNavBar from './ReaderNavBar';
 import SessionSummaryModal from './SessionSummaryModal';
+import TestKnowledgeModal from './TestKnowledgeModal';
 import QuestSummaryModal from '../quests/QuestSummaryModal';
 import useXpStore from '../../store/useXpStore';
 import AIModal from './reading_navigations/reading_layout/AIModal';
@@ -35,7 +36,7 @@ import { CaretLeft, CaretRight, Plus, List, ArrowLeft, ArrowRight, WarningCircle
 import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
 import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
 import FlashcardPanel from './reading_navigations/reading_layout/FlashcardPanel';
-import useTour from '../../hooks/useTour';
+import ReaderTour from './ReaderTour';
 import useOnboardingStore from '../../store/useOnboardingStore';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
@@ -109,11 +110,34 @@ function ReaderView() {
     const [rotation, setRotation] = useState(0);
     const [tocOutline, setTocOutline] = useState(null);
 
+    // Direct Dexie progress recovery on mount — ensures saved chapter/page is restored immediately on another device
+    useEffect(() => {
+        if (!bookId) return;
+        const fetchInitialProgress = async () => {
+            try {
+                const numericId = !isNaN(Number(bookId)) ? Number(bookId) : null;
+                const progressRecord = await db.reading_progress
+                    .filter(p => (numericId !== null && p.bookId === numericId) || p.bookId === bookId || (book?.supabaseId && p.bookId === book?.supabaseId))
+                    .first();
+
+                if (progressRecord && progressRecord.currentPage && progressRecord.currentPage > 1) {
+                    if (import.meta.env.DEV) console.log('[Apex Reader] Restored saved page from Dexie:', progressRecord.currentPage);
+                    setPageNumber(prev => prev === 1 ? progressRecord.currentPage : prev);
+                    setLocalPages(prev => prev.current === 1 ? { ...prev, current: progressRecord.currentPage } : prev);
+                }
+            } catch (err) {
+                if (import.meta.env.DEV) console.warn('[Apex Reader] Failed to fetch initial progress from Dexie:', err);
+            }
+        };
+        fetchInitialProgress();
+    }, [bookId, book?.supabaseId]);
+
     // Session Summary State
     const [showSessionSummary, setShowSessionSummary] = useState(false);
+    const [showTestKnowledgeModal, setShowTestKnowledgeModal] = useState(false);
     const showSessionSummaryRef = useRef(false);
     useEffect(() => { showSessionSummaryRef.current = showSessionSummary; }, [showSessionSummary]);
-    const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [] });
+    const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [], visitedPagesList: [] });
     const [showQuestSummary, setShowQuestSummary] = useState(false);
     const quizFromSessionRef = useRef(false);
     const sessionActiveSeconds = useRef(0);
@@ -151,6 +175,8 @@ function ReaderView() {
     useEffect(() => {
         // Start tracking XP actions for this session
         useXpStore.getState().startSessionTracker();
+        // Complete Dashboard tour since reader has been entered
+        useOnboardingStore.getState().completeTour('Dashboard');
     }, [bookId]);
 
     const handleExitReader = async (fromPopState = false) => {
@@ -177,15 +203,20 @@ function ReaderView() {
         console.log('[Apex Session] Exit — active reading time:', timeSpentSeconds, 's');
 
         if (totalXp > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
+            setNavState('none');
             if (fromPopState === true) {
                 window.history.pushState(null, '', window.location.href);
             }
+            const visitedPagesList = visitedPages.current.size > 0
+                ? Array.from(visitedPages.current)
+                : [pageNumber];
             setSessionStats({ 
                 xpGained: Math.max(0, readingXp), 
                 pagesRead, 
                 timeSpentSeconds,
                 totalXp: Math.max(0, totalXp),
-                breakdown: getSessionXpBreakdown(sessionXpActions, readingXp)
+                breakdown: getSessionXpBreakdown(sessionXpActions, readingXp),
+                visitedPagesList,
             });
             setShowSessionSummary(true);
         } else {
@@ -257,121 +288,6 @@ function ReaderView() {
     const [activeFlashcardSession, setActiveFlashcardSession] = useState(null); // { selection, count }
     const [flashcardPanel, setFlashcardPanel] = useState(false);
 
-    // ============================================
-    // READER TOUR — moved here so isLoading, showHighlightMenu, flashcardPanel are all declared
-    // ============================================
-    const { hasSeenReaderTour, readerTourStep, setTourStep, completeTour } = useOnboardingStore();
-
-    const readerTourSteps = useMemo(() => {
-        if (readerTourStep === 0) {
-            return [
-                {
-                    popover: {
-                        title: 'Welcome to the Reader 📖',
-                        description: 'This is where the magic happens. You can read your books and interact with the AI directly on the text.',
-                        side: "center",
-                        align: 'center'
-                    }
-                },
-                {
-                    popover: {
-                        title: 'Highlight to Interact',
-                        description: 'Try selecting any text on the page! A menu will pop up allowing you to ask the AI to explain it, define words, simplify complex sentences, or just color-highlight it for later.',
-                        side: "top",
-                        align: 'center',
-                        showButtons: ['close']
-                    }
-                }
-            ];
-        } else if (readerTourStep === 1) {
-            return [
-                {
-                    element: '#tour-ask-ai',
-                    popover: {
-                        title: 'Ask Contextual Questions',
-                        description: 'Click here to ask the AI any question about the text you just highlighted.',
-                        side: "bottom",
-                        align: 'center'
-                    }
-                },
-                {
-                    element: '#tour-simplify',
-                    popover: {
-                        title: 'Simplify Text',
-                        description: 'If a concept is too complex, click here to have the AI rewrite it in simpler terms.',
-                        side: "bottom",
-                        align: 'center'
-                    }
-                },
-                {
-                    element: '#tour-colors',
-                    popover: {
-                        title: 'Save for Later',
-                        description: 'Use these colors to save highlights and add notes to them in your Notebook.',
-                        side: "top",
-                        align: 'center'
-                    }
-                }
-            ];
-        } else if (readerTourStep === 2) {
-            return [
-                {
-                    element: '#tour-flashcards',
-                    popover: {
-                        title: 'Generate Flashcards',
-                        description: 'After reading, you can generate smart flashcards based on the pages you select to test your memory. You can access this any time from the top menu.',
-                        side: "bottom",
-                        align: 'center'
-                    }
-                },
-                {
-                    element: '#tour-quiz',
-                    popover: {
-                        title: 'Take a Quiz',
-                        description: 'Generate a multiple-choice quiz to ensure you fully understood what you just read. You can access this any time from the top menu.',
-                        side: "bottom",
-                        align: 'center',
-                        showButtons: ['close', 'next']
-                    }
-                }
-            ];
-        }
-        return [];
-    }, [readerTourStep]);
-
-    const shouldStartReaderTour = !isLoading && !hasSeenReaderTour && readerTourSteps.length > 0;
-
-    const handleSubTourComplete = useCallback(() => {
-        if (!hasSeenReaderTour) {
-            if (readerTourStep === 1) {
-                setNavState('first'); // Force show the nav menu for step 2
-                setTourStep('Reader', 2);
-            }
-        }
-    }, [hasSeenReaderTour, readerTourStep, setTourStep]);
-
-    useTour('Reader', readerTourSteps, shouldStartReaderTour, readerTourStep === 2, handleSubTourComplete);
-
-    useEffect(() => {
-        if (!hasSeenReaderTour && readerTourStep === 0 && showHighlightMenu) {
-            setTourStep('Reader', 1);
-        }
-    }, [showHighlightMenu, readerTourStep, hasSeenReaderTour, setTourStep]);
-
-    const wasHighlightMenuOpenForTourRef = useRef(false);
-    useEffect(() => {
-        if (showHighlightMenu && readerTourStep === 1) {
-            wasHighlightMenuOpenForTourRef.current = true;
-        } else if (!showHighlightMenu && wasHighlightMenuOpenForTourRef.current) {
-            wasHighlightMenuOpenForTourRef.current = false;
-            if (!hasSeenReaderTour) {
-                setNavState('first'); // Force show the nav menu for step 2
-                setTourStep('Reader', 2);
-            }
-        }
-    }, [showHighlightMenu, readerTourStep, hasSeenReaderTour, setTourStep]);
-    // ============================================
-
     const openPageStrip = useCallback(() => {
         setNavState('none');
         setShowPageStrip(true);
@@ -382,11 +298,14 @@ function ReaderView() {
         setNavState('first');
     }, []);
 
-    const toggleNav = useCallback(() => {
-        // If text is selected, don't toggle nav — let the highlight menu handle it
-        if (window.getSelection().toString().trim()) return;
+    const toggleNav = useCallback((force = false) => {
+        // If text is selected and not forced, don't toggle nav
+        if (!force && window.getSelection()?.toString()?.trim()) return;
         
-        setNavState(prev => (prev === 'first' || prev === 'second') ? 'none' : 'first');
+        setNavState(prev => {
+            if (force === true || force === 'first') return 'first';
+            return (prev === 'first' || prev === 'second') ? 'none' : 'first';
+        });
         // Close overlay modals
         setAiModal(false);
         setQuizModal(false);
@@ -400,7 +319,7 @@ function ReaderView() {
         supabaseBookId: book?.supabaseId,
         currentPage: pageNumber,
         totalPages: numPages || book?.totalPages,
-        isEnabled: !!book?.supabaseId,
+        isEnabled: !!(book?.id || book?.supabaseId),
         onVisitRecorded: (page) => visitedPages.current.add(page)
     });
 
@@ -428,11 +347,14 @@ function ReaderView() {
     useEffect(() => { updateStreakRef.current = updateStreak; }, [updateStreak]);
     useEffect(() => { logSpaceActivityRef.current = logSpaceActivity; }, [logSpaceActivity]);
     const streakTimerRef = useRef(null);
-    const streakFiredTodayRef = useRef(false);
+    const streakFiredTodayRef = useRef(
+        localStorage.getItem('apex_streak_fired_today') === new Date().toLocaleDateString('en-CA')
+    );
 
     // Track elapsed time so visibility changes don't reset the full 60s
     const streakElapsedRef = useRef(0);
     const streakStartTimeRef = useRef(null);
+    const dexieStreakLoadedRef = useRef(false);
 
     useEffect(() => {
         if (isLoading || !bookId) return;
@@ -445,7 +367,6 @@ function ReaderView() {
         const MINUTE_DURATION = 60 * 1000;
         console.log(`[Apex Streak] Threshold set to ${streakThresholdMinutes} minutes (${STREAK_DURATION / 1000}s)`);
 
-        // Load today's accumulated progress from Dexie IndexedDB
         db.user_daily_streak_progress
             .where('date').equals(today)
             .first()
@@ -462,11 +383,13 @@ function ReaderView() {
 
                 console.log(`[Apex Streak] Loaded accumulated today progress: ${initialSeconds}s (fired=${streakFiredTodayRef.current})`);
 
+                dexieStreakLoadedRef.current = true;
                 streakStartTimeRef.current = Date.now();
                 runInterval();
             })
             .catch((err) => {
                 console.error('[Apex Streak] Failed to load daily progress:', err);
+                dexieStreakLoadedRef.current = true;
                 if (!isCancelled) runInterval();
             });
 
@@ -474,6 +397,11 @@ function ReaderView() {
             if (streakTimerRef.current) clearInterval(streakTimerRef.current);
             streakTimerRef.current = setInterval(() => {
                 if (showSessionSummaryRef.current) return; // skip if modal is open
+                // Pause streak counting while reader tour is active
+                if (!useOnboardingStore.getState().hasSeenReaderTour) {
+                    streakStartTimeRef.current = Date.now();
+                    return;
+                }
 
                 streakElapsedRef.current += 1000;
                 const currentSeconds = Math.floor(streakElapsedRef.current / 1000);
@@ -496,20 +424,27 @@ function ReaderView() {
                     const lastFired = localStorage.getItem('apex_streak_fired_today');
                     
                     if (lastFired !== today) {
-                        updateStreakRef.current();
-                        streakFiredTodayRef.current = true;
-                        localStorage.setItem('apex_streak_fired_today', today);
+                        // Triple-check: store might have been updated by a sync during reading
+                        if (useStudyStore.getState().isStreakFiredToday()) {
+                            streakFiredTodayRef.current = true;
+                            localStorage.setItem('apex_streak_fired_today', today);
+                            console.log('[Apex Streak] Store already has today — skipping duplicate fire');
+                        } else {
+                            updateStreakRef.current();
+                            streakFiredTodayRef.current = true;
+                            localStorage.setItem('apex_streak_fired_today', today);
 
-                        // Read AFTER the synchronous store mutation — authoritative snapshot
-                        const store = useStudyStore.getState();
-                        const { streakCelebrationEnabled = true } = useSettingsStore.getState();
-                        setCelebrationData({ streakCount: store.streakCount, streakHistory: store.streakHistory });
-                        if (streakCelebrationEnabled) {
-                            setShowStreakCelebration(true);
+                            // Read AFTER the synchronous store mutation — authoritative snapshot
+                            const store = useStudyStore.getState();
+                            const { streakCelebrationEnabled = true } = useSettingsStore.getState();
+                            setCelebrationData({ streakCount: store.streakCount, streakHistory: store.streakHistory });
+                            if (streakCelebrationEnabled) {
+                                setShowStreakCelebration(true);
+                            }
+
+                            // Persist streak fired status
+                            syncService.saveDailyStreakProgress(today, currentSeconds, true);
                         }
-
-                        // Persist streak fired status
-                        syncService.saveDailyStreakProgress(today, currentSeconds, true);
                     }
                 }
             }, 1000); // 1-second ticks for accurate pausing
@@ -522,6 +457,11 @@ function ReaderView() {
                 clearInterval(streakTimerRef.current);
                 syncService.saveDailyStreakProgress(today, currentSeconds, streakFiredTodayRef.current);
             } else {
+                // Only resume if Dexie has loaded — otherwise timer would track from 0
+                if (!dexieStreakLoadedRef.current) {
+                    console.log('[Apex Reader] Tab visible — but Dexie not loaded yet, skipping resume');
+                    return;
+                }
                 console.log('[Apex Reader] Tab visible — resuming timer');
                 runInterval();
             }
@@ -692,7 +632,12 @@ function ReaderView() {
             }
         }
 
-        Promise.resolve().then(() => syncProgress(pageNumber, total));
+        const effectivePage = pageNumber > 1 ? pageNumber : (book?.currentPage || 1);
+        if (effectivePage > 1 && pageNumber === 1) {
+            setPageNumber(effectivePage);
+            setLocalPages(prev => ({ ...prev, current: effectivePage }));
+        }
+        Promise.resolve().then(() => syncProgress(effectivePage, total));
 
         // --- Outline extraction ---
         // Check Dexie cache first
@@ -1385,22 +1330,32 @@ function ReaderView() {
 
 
     const lastBookIdRef = useRef(null);
+    const lastPageRef = useRef(null);
     useEffect(() => {
-        if (!bookId || !book || lastBookIdRef.current === bookId) return;
-        lastBookIdRef.current = bookId;
-        // For non-PDF books, restore saved scroll position; for PDFs, page number handles it
-        if (!isPdf && book.scrollPosition > 0) {
-            // Delay to let content render before scrolling
-            setTimeout(() => window.scrollTo(0, book.scrollPosition), 300);
-        } else {
-            window.scrollTo(0, 0);
+        if (!bookId || !book) return;
+
+        const targetPage = book.currentPage || 1;
+        const isNewBook = lastBookIdRef.current !== bookId;
+        const isNewProgress = lastPageRef.current !== targetPage && targetPage > 1;
+
+        if (isNewBook || isNewProgress) {
+            lastBookIdRef.current = bookId;
+            lastPageRef.current = targetPage;
+
+            // For non-PDF books, restore saved scroll position; for PDFs, page number handles it
+            if (!isPdf && book.scrollPosition > 0) {
+                setTimeout(() => window.scrollTo(0, book.scrollPosition), 300);
+            } else if (isNewBook) {
+                window.scrollTo(0, 0);
+            }
+
+            Promise.resolve().then(() => {
+                setLocalProgress(book.progress || 0);
+                setLocalPages({ current: targetPage, total: book.totalPages || 1 });
+                setPageNumber(prev => (isNewBook || prev === 1) ? targetPage : prev);
+            });
         }
-        Promise.resolve().then(() => {
-            setLocalProgress(book.progress || 0);
-            setLocalPages({ current: book.currentPage || 1, total: book.totalPages || 1 });
-            setPageNumber(book.currentPage || 1);
-        });
-    }, [bookId, book]);
+    }, [bookId, book, isPdf]);
 
     const lastUpdateRef = useRef(0);
     useEffect(() => {
@@ -1596,7 +1551,8 @@ function ReaderView() {
                     {/* Subtle List Trigger - Persistent at top, now relative to content area */}
                     <div className={`absolute top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center transition-all duration-500 ease-in-out ${navState !== 'none' ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
                         <button
-                            onClick={(e) => { e.stopPropagation(); toggleNav(); }}
+                            id="tour-reader-menu-btn"
+                            onClick={(e) => { e.stopPropagation(); toggleNav(true); }}
                             className="group bg-white/15 dark:bg-white/5 hover:bg-white/25 dark:hover:bg-white/10 backdrop-blur-xl shadow-sm border-0 border-t border-white/25 dark:border-white/10 px-3 py-1.5 rounded-b-xl transition-all duration-300 flex items-center gap-1.5"
                         >
                             <div className={`w-1 h-1 rounded-full transition-colors ${navState !== 'none' ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-accent-primary'}`} />
@@ -1758,11 +1714,27 @@ function ReaderView() {
                 {/* Flashcard panel */}
                 {flashcardPanel && (
                     <FlashcardPanel
-                        setFlashcardPanel={setFlashcardPanel}
+                        setFlashcardPanel={(val) => {
+                            setFlashcardPanel(val);
+                            // If user came from SessionSummary and dismissed flashcard panel, return to SessionSummaryModal
+                            if (!val && quizFromSessionRef.current) {
+                                quizFromSessionRef.current = false;
+                                const updatedActions = useXpStore.getState().sessionXpActions || [];
+                                const readingXp = sessionStats.xpGained;
+                                const activityXp = updatedActions.reduce((sum, act) => sum + act.estimatedXp, 0);
+                                setSessionStats(prev => ({
+                                    ...prev,
+                                    totalXp: Math.max(0, readingXp + activityXp),
+                                    breakdown: getSessionXpBreakdown(updatedActions, readingXp),
+                                }));
+                                setShowSessionSummary(true);
+                            }
+                        }}
                         book={book}
                         fileUrl={fileUrl}
                         pageNumber={pageNumber}
                         totalPages={numPages || localPages.total || 1}
+                        initialSelectedPages={sessionStats.visitedPagesList || (visitedPages.current.size > 0 ? Array.from(visitedPages.current) : [pageNumber])}
                     />
                 )}
 
@@ -1794,6 +1766,7 @@ function ReaderView() {
                         isPdf={isPdf}
                         numPages={numPages || (isPdf ? 0 : localPages.total)}
                         userId={authUser?.id}
+                        initialSelectedPages={sessionStats.visitedPagesList || (visitedPages.current.size > 0 ? Array.from(visitedPages.current) : [pageNumber])}
                         onQuizStart={(session) => {
                             console.log('[ReaderView] QuizPanel onQuizStart — launching QuizView', session);
                             setQuizModal(false);
@@ -1885,15 +1858,35 @@ function ReaderView() {
                         }}
                         onStartQuiz={() => {
                             setShowSessionSummary(false);
-                            quizFromSessionRef.current = true;
-                            setNavState('first');
-                            setTimeout(() => {
-                                setQuizModal(true);
-                            }, 300);
+                            setShowTestKnowledgeModal(true);
                         }}
                     />
                 )}
             </AnimatePresence>
+            <TestKnowledgeModal
+                isOpen={showTestKnowledgeModal}
+                trackedPages={sessionStats.visitedPagesList || (visitedPages.current.size > 0 ? Array.from(visitedPages.current) : [pageNumber])}
+                onClose={() => {
+                    setShowTestKnowledgeModal(false);
+                    setShowSessionSummary(true);
+                }}
+                onSelectQuiz={() => {
+                    setShowTestKnowledgeModal(false);
+                    quizFromSessionRef.current = true;
+                    setNavState('first');
+                    setTimeout(() => {
+                        setQuizModal(true);
+                    }, 250);
+                }}
+                onSelectFlashcards={() => {
+                    setShowTestKnowledgeModal(false);
+                    quizFromSessionRef.current = true;
+                    setNavState('first');
+                    setTimeout(() => {
+                        setFlashcardPanel(true);
+                    }, 250);
+                }}
+            />
             {showQuestSummary && (
                 <QuestSummaryModal
                     onDone={() => {
@@ -1902,6 +1895,13 @@ function ReaderView() {
                     }}
                 />
             )}
+            {/* Compute document ready state so tour only starts after rendering is complete */}
+            <ReaderTour
+                showHighlightMenu={showHighlightMenu}
+                navState={navState}
+                setNavState={setNavState}
+                isLoading={!Boolean(book && ((isPdf && numPages !== null) || (!isPdf && (textContent || htmlContent))))}
+            />
         </div>
     );
 }

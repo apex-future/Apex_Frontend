@@ -6,7 +6,7 @@ import FeaturedSlider from "./FeaturedSlider";
 import AllBooks from "./AllBooks";
 import TopNavBar from "../layout/navigation/TopNavBar";
 import { BookContext } from "../../context/BookContextInstance";
-import useTour from "../../hooks/useTour";
+import DashboardTour from "./DashboardTour";
 import useAuthStore from "../../store/authStore";
 import useOnboardingStore from "../../store/useOnboardingStore";
 
@@ -17,9 +17,9 @@ function HomePage({ setIsMobileOpen, isAsideExpanded }) {
   const navigate = useNavigate();
 
   const user = useAuthStore(state => state.user);
-  const { hasSeenDashboardTour, dashboardTourStep, setTourStep, completeTour } = useOnboardingStore();
+  const { hasSeenDashboardTour, completeTour } = useOnboardingStore();
 
-  const isPersonalizationDone = user && user.user_type;
+  const isPersonalizationDone = user ? Boolean(user.user_type) : true;
 
   // Sort logic for "Last Read" — computed early because we also need firstBookId for the tour
   const sortedByDate = [...books].sort((a, b) => {
@@ -31,51 +31,6 @@ function HomePage({ setIsMobileOpen, isAsideExpanded }) {
   
   // To highlight the first book after upload (it will be sorted to the top)
   const firstBookId = sortedByDate.length > 0 ? sortedByDate[0].id : null;
-
-  const dashboardTourSteps = useMemo(() => {
-    if (dashboardTourStep === 0) {
-      return [
-        {
-          element: '#tour-welcome',
-          popover: {
-            title: 'Welcome to Apex! 🚀',
-            description: 'Apex is your all-in-one AI learning space. We solve the problem of fragmented study tools by bringing your books, notes, flashcards, and an AI tutor into one seamless platform.',
-            side: "bottom",
-            align: 'start'
-          }
-        },
-        {
-          element: window.innerWidth < 768 ? '#tour-add-book-mobile' : '#tour-add-book',
-          popover: {
-            title: 'Add Your First Book',
-            description: 'Click the + button to upload a PDF, EPUB, or DOCX. Start by adding a document to read and interact with the AI.',
-            side: "bottom",
-            align: 'end',
-            showButtons: ['close'] // Hide 'next' — user must actually click upload
-          }
-        }
-      ];
-    } else if (dashboardTourStep === 1) {
-      // Step 2: The upload finished, tell them to click the book
-      return [
-        {
-          element: firstBookId ? `#book-card-${firstBookId}` : 'body',
-          popover: {
-            title: 'Awesome! Now Open It 📖',
-            description: 'Click on your newly uploaded book to enter the Reader Screen and continue the tour.',
-            side: "bottom",
-            align: 'center',
-            showButtons: ['close']
-          }
-        }
-      ];
-    }
-    return [];
-  }, [dashboardTourStep, firstBookId]);
-
-  // Only auto-start the dashboard tour when: personalization is done AND not already seen
-  const shouldStartDashboardTour = !!isPersonalizationDone && !hasSeenDashboardTour && dashboardTourSteps.length > 0;
-  useTour('Dashboard', dashboardTourSteps, shouldStartDashboardTour);
 
   useEffect(() => {
     setActiveSpace(null);
@@ -136,6 +91,13 @@ function HomePage({ setIsMobileOpen, isAsideExpanded }) {
         isSearching={!!searchQuery}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+      />
+
+      <DashboardTour
+        isPersonalizationDone={isPersonalizationDone}
+        books={books}
+        firstBookId={firstBookId}
+        isLoading={booksLoading}
       />
     </div>
   )

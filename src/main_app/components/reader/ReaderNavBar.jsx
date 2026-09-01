@@ -9,17 +9,16 @@ function ReaderNavBar({ navigate, navState, setNavState, aiModal, setAiModal, qu
   };
 
   return (
-    <div className="reading-nav-bar absolute inset-0 z-50 pointer-events-none h-full">
-      {navState === 'first' && (
-        <FirstLayerNavBar
-          navigate={navigate}
-          onDotsClick={handleDotsClick}
-          readerControls={readerControls}
-          scrollOrientation={scrollOrientation}
-          onNotebookClick={onNotebookClick}
-          setAiModal={setAiModal}
-        />
-      )}
+    <div className={`reading-nav-bar absolute inset-0 ${navState !== 'none' ? 'z-[9985]' : 'z-50'} pointer-events-none h-full`}>
+      <FirstLayerNavBar
+        visible={navState === 'first'}
+        navigate={navigate}
+        onDotsClick={handleDotsClick}
+        readerControls={readerControls}
+        scrollOrientation={scrollOrientation}
+        onNotebookClick={onNotebookClick}
+        setAiModal={setAiModal}
+      />
       <SecondLayerNavBar
         visible={navState === 'second'}
         aiModal={aiModal}

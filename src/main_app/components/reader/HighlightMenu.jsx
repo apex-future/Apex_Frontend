@@ -6,6 +6,7 @@ import useXpStore from '../../store/useXpStore';
 import useQuestStore from '../../store/useQuestStore';
 import Card from '../ui/Card';
 import ShareModal from '../ui/ShareModal';
+import Label from '../ui/Label';
 
 function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards, cachedDefinition, cachedTab }) {
     const { resolvedTheme } = useThemeStore();
@@ -319,6 +320,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     return (
         <>
         <div
+            id="tour-highlight-menu"
             className={`highlight-menu-container fixed z-[300] animate-in fade-in duration-200 pointer-events-auto ${isMobile ? 'zoom-in-95' : 'zoom-in'}`}
             style={menuStyle}
             onClick={(e) => e.stopPropagation()}
@@ -437,47 +439,36 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
 
                         {loading ? (
                             <div className="flex items-center justify-center py-8">
-                                <Spinner size={28} weight="bold" className="animate-spin text-blue-500 opacity-60" />
+                                <Spinner size={28} weight="bold" className="animate-spin text-accent-primary opacity-60" />
                             </div>
                         ) : error ? (
-                            <div className="py-6">
-                                {error.includes('internet') ? (
-                                    <div className="flex flex-col items-center gap-2 text-center">
-                                        <WifiSlash size={24} weight="bold" className="text-amber-500" />
-                                        <p className="text-sm text-amber-700 font-medium font-sans">
-                                            {error}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center gap-4 text-center mt-2">
-                                        <p className="text-sm text-red-500 font-medium font-sans italic">"{selection}" not found in standard dictionary.</p>
-                                        <button
-                                            onClick={() => {
-                                                setShowDict(false);
-                                                if (onAskAI) onAskAI();
-                                            }}
-                                            className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition-all border border-purple-200 shadow-sm font-bold text-sm"
-                                        >
-                                            <Sparkle size={16} weight="fill" className="text-purple-600" />
-                                            Ask Cleo to define it
-                                        </button>
-                                    </div>
-                                )}
+                            <div className="py-6 text-center">
+                                <div className="flex flex-col items-center gap-2">
+                                    <WifiSlash size={24} weight="bold" className="text-amber-500" />
+                                    <p className="text-sm text-text-secondary font-medium font-sans">
+                                        {error}
+                                    </p>
+                                </div>
                             </div>
                         ) : definition && (
                             <div className="max-h-64 overflow-y-auto custom-scrollbar pr-1">
                                 <div className="flex items-center justify-between gap-3 mb-3">
-                                    <h2 className="text-2xl font-black text-text-primary capitalize font-sans tracking-tight">{definition.word}</h2>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h2 className="text-2xl font-black text-text-primary capitalize font-sans tracking-tight">{definition.word}</h2>
+                                        {definition.isAiGenerated && (
+                                            <Label variant="accent" color="purple" size="sm">AI-generated</Label>
+                                        )}
+                                    </div>
                                     {definition.phonetics?.find(p => p.audio) && (
                                         <button
                                             onClick={() => playAudio(definition.phonetics.find(p => p.audio).audio)}
-                                            className="w-8 h-8 rounded-full bg-accent-subtle flex items-center justify-center text-blue-500 hover:bg-accent-subtle transition-all hover:scale-110"
+                                            className="w-8 h-8 rounded-full bg-accent-subtle flex items-center justify-center text-accent-primary hover:bg-accent-subtle transition-all hover:scale-110"
                                         >
                                             <SpeakerHigh size={18} weight="fill" />
                                         </button>
                                     )}
                                 </div>
-                                <p className="text-sm text-blue-600 font-bold mb-5 font-sans bg-accent-subtle/50 px-2 py-1 rounded-md inline-block">{definition.phonetic}</p>
+                                <p className="text-sm text-accent-primary font-bold mb-5 font-sans bg-accent-subtle/50 px-2 py-1 rounded-md inline-block">{definition.phonetic}</p>
 
                                 {(definition.meanings || []).slice(0, 3).map((m, i) => (
                                     <div key={i} className="mb-5 last:mb-2">
