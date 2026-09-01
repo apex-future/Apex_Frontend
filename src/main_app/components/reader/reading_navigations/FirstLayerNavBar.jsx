@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import { ArrowLeft, BookmarkSimple, DotsThreeVertical, CornersOut, LockKey, LockKeyOpen, ArrowsOut, ArrowsIn, Notebook, Gear, TextAa, Sparkle } from '@phosphor-icons/react';
 import { gsap } from 'gsap'
 
-function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookClick, setAiModal }) {
+function FirstLayerNavBar({ visible = true, navigate, onDotsClick, readerControls, onNotebookClick, setAiModal }) {
   const topBarRef = useRef(null);
   const bottomBarRef = useRef(null);
 
@@ -42,23 +42,27 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
   };
 
   useEffect(() => {
-    if (topBarRef.current) {
-      gsap.killTweensOf(topBarRef.current);
-      gsap.fromTo(
-        topBarRef.current,
-        { y: -60, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.7)' }
-      );
+    if (visible) {
+      if (topBarRef.current) {
+        gsap.killTweensOf(topBarRef.current);
+        gsap.fromTo(
+          topBarRef.current,
+          { y: -80, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.7)' }
+        );
+      }
+      if (bottomBarRef.current) {
+        gsap.killTweensOf(bottomBarRef.current);
+        gsap.fromTo(
+          bottomBarRef.current,
+          { y: 80, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.7)' }
+        );
+      }
     }
-    if (bottomBarRef.current) {
-      gsap.killTweensOf(bottomBarRef.current);
-      gsap.fromTo(
-        bottomBarRef.current,
-        { y: 60, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.7)' }
-      );
-    }
+  }, [visible]);
 
+  useEffect(() => {
     const handleFsChange = () => {
       setIsFullScreen(!!document.fullscreenElement);
     };
@@ -79,11 +83,14 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
     }
   };
 
+  if (!visible) return null;
+
   return (
-    <div className='absolute inset-0 z-50 flex flex-col justify-between p-2 pr-4 sm:pr-6 pointer-events-none'>
+    <div className='absolute inset-0 z-50 pointer-events-none'>
+      {/* Top Bar - Anchored directly to top */}
       <div
         ref={topBarRef}
-        className='flex top-bar pb-4 items-start sm:items-center justify-between w-full pointer-events-auto'
+        className='absolute top-0 left-0 right-0 z-50 p-2 pr-4 sm:pr-6 flex top-bar pb-4 items-start sm:items-center justify-between w-full pointer-events-auto'
         onClick={(e) => e.stopPropagation()}
       >
         {/* Back and Gear buttons */}
@@ -123,6 +130,7 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
 
             {/* Dots — open second layer */}
             <button
+              id="tour-reader-dots"
               className="w-10 h-10 flex shrink-0 items-center justify-center bg-bg-subtle dark:bg-bg-elevated border border-border-default shadow-aura-sm rounded-full transition-all active:scale-90 text-text-primary hover:bg-bg-subtle"
               onClick={onDotsClick}
             >
@@ -132,10 +140,11 @@ function FirstLayerNavBar({ navigate, onDotsClick, readerControls, onNotebookCli
         </div>
       </div>
 
+      {/* Bottom Bar - Anchored directly to bottom */}
       <div
         ref={bottomBarRef}
         id="tour-reader-nav"
-        className="bottom-bar flex flex-col gap-4 items-center pointer-events-auto w-full px-2 pb-6"
+        className="absolute bottom-0 left-0 right-0 z-50 bottom-bar flex flex-col gap-4 items-center pointer-events-auto w-full px-2 pb-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className='flex items-end sm:items-center justify-between w-full'>

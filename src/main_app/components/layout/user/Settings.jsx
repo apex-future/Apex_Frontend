@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { showToastGlobal } from '../../../hooks/useToast';
 import {
   ArrowLeft, Moon, Sun, Monitor, Bell, HardDrives, DownloadSimple, Trash, Question,
-  FileText, ArrowSquareOut, BookOpen, Robot, SignOut, User, UserMinus, SlidersHorizontal, Bug
+  FileText, ArrowSquareOut, BookOpen, Robot, SignOut, User, UserMinus, SlidersHorizontal, Bug,
+  ArrowCounterClockwise
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 
 import { AnimatePresence } from 'framer-motion';
 import useThemeStore from '../../../store/themeStore';
 import useSettingsStore from '../../../store/settingsStore';
+import useOnboardingStore from '../../../store/useOnboardingStore';
 import { APP_VERSION } from '../../../constants/version';
 import Modal from '../../ui/Modal';
 import db from '../../../db/apex.db';
@@ -22,6 +24,7 @@ function Settings({ onLogout }) {
     const navigate = useNavigate();
     // Global state for theme
     const { theme, setTheme } = useThemeStore();
+    const { resetTours } = useOnboardingStore();
 
     // Settings from store
     const {
@@ -51,6 +54,17 @@ function Settings({ onLogout }) {
     const [clearing, setClearing] = useState(false);
     const [showBugReport, setShowBugReport] = useState(false);
     const [previewStyle, setPreviewStyle] = useState(null);
+
+    /**
+     * handleReplayTour — Resets all tour flags and steps so the user
+     * can experience the guided onboarding tour again from the dashboard.
+     * User data, books, and progress are completely untouched.
+     */
+    const handleReplayTour = () => {
+      resetTours();
+      showToastGlobal('In-app tour reset! Starting guided walkthrough...', 'success');
+      navigate('/');
+    };
 
     /**
      * clearDeviceOnly — Wipes all local Dexie data and localStorage
@@ -487,8 +501,14 @@ function Settings({ onLogout }) {
                     />
                 </SettingSection>
 
-                {/* About */}
+                {/* About & Guide */}
                 <SettingSection title="About" icon={<Question size={18} weight="bold" />}>
+                    <ActionRow
+                        icon={<ArrowCounterClockwise size={16} weight="bold" className="text-accent-primary" />}
+                        label="Replay In-App Tour"
+                        desc="Restart the interactive guided walkthrough across the app"
+                        onClick={handleReplayTour}
+                    />
                     <ActionRow
                         icon={<FileText size={16} weight="bold" className="text-text-secondary" />}
                         label="Terms & Privacy"

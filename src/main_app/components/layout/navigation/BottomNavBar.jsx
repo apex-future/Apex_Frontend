@@ -29,6 +29,15 @@ function BottomNavBar() {
         self.direction === -1 ? showAnim.play() : showAnim.reverse();
       }
     });
+
+    // Allow guided tour to explicitly bring the bottom bar up
+    const handleForceShow = () => {
+      if (navRef.current) {
+        gsap.to(navRef.current, { yPercent: 0, duration: 0.35, ease: "power2.out" });
+      }
+    };
+    window.addEventListener('apex-force-show-bottom-nav', handleForceShow);
+    return () => window.removeEventListener('apex-force-show-bottom-nav', handleForceShow);
   }, { scope: navRef });
 
   const handleFileChange = (e) => {

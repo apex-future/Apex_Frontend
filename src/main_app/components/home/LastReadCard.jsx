@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import BookCover from '../books/BookCover';
 import Card from '../ui/Card';
 import WeeklyGoldenBar from '../quests/WeeklyGoldenBar';
+import useOnboardingStore from '../../store/useOnboardingStore';
 
 const LastReadCard = ({ book, isLoading }) => {
     const navigate = useNavigate();
+    const { hasSeenDashboardTour, completeTour } = useOnboardingStore();
 
     if (isLoading) {
         return (
@@ -52,7 +54,10 @@ const LastReadCard = ({ book, isLoading }) => {
                     <h2 className="text-xs font-bold uppercase tracking-wider text-text-tertiary">Last Read</h2>
                 </div>
                 <Card
-                    onClick={() => navigate(`/reader/${book.id}`)}
+                    onClick={() => {
+                        if (!hasSeenDashboardTour) completeTour('Dashboard');
+                        navigate(`/reader/${book.id}`);
+                    }}
                     variant="interactive"
                     className="group relative flex flex-col flex-1 p-4 transition-all duration-300 cursor-pointer justify-between"
                 >

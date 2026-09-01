@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MagnifyingGlass, Book, SpeakerHigh, ArrowLeft, Spinner, Sparkle, ClockCounterClockwise, WifiSlash } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import dictionaryService from '../../services/dictionaryService';
-import useTour from '../../hooks/useTour';
+import DictionaryTour from './DictionaryTour';
 import Label from '../ui/Label';
 
 function Dictionary() {
@@ -23,37 +23,6 @@ function Dictionary() {
     useEffect(() => {
         dictionaryService.checkOfflineDictionaryStatus().then(setOfflineReady);
     }, []);
-
-    const dictionaryTourSteps = React.useMemo(() => [
-        {
-            popover: {
-                title: 'Welcome to the Dictionary 📚',
-                description: 'This is your offline-capable dictionary. Search for any word to get definitions, synonyms, and hear audio pronunciations.',
-                side: "bottom",
-                align: 'center'
-            }
-        },
-        {
-            element: '#tour-dict-search',
-            popover: {
-                title: 'Search Words',
-                description: 'Type any word here to look it up.',
-                side: "bottom",
-                align: 'center'
-            }
-        },
-        {
-            element: '#tour-dict-offline',
-            popover: {
-                title: 'Offline Support',
-                description: 'You can download the dictionary package to look up words even when you do not have internet access!',
-                side: "top",
-                align: 'center'
-            }
-        }
-    ], []);
-
-    useTour('Dictionary', dictionaryTourSteps);
 
     // Load history from backend on mount (Category B — online only)
     useEffect(() => {
@@ -381,6 +350,7 @@ function Dictionary() {
                     </div>
                 </div>
             )}
+            <DictionaryTour />
         </div>
     );
 }

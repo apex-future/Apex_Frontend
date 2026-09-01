@@ -36,7 +36,7 @@ import { CaretLeft, CaretRight, Plus, List, ArrowLeft, ArrowRight, WarningCircle
 import ReaderNotebookPanel from './reading_navigations/reading_layout/ReaderNotebookPanel';
 import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEditor';
 import FlashcardPanel from './reading_navigations/reading_layout/FlashcardPanel';
-import useTour from '../../hooks/useTour';
+import ReaderTour from './ReaderTour';
 import useOnboardingStore from '../../store/useOnboardingStore';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
@@ -175,6 +175,8 @@ function ReaderView() {
     useEffect(() => {
         // Start tracking XP actions for this session
         useXpStore.getState().startSessionTracker();
+        // Complete Dashboard tour since reader has been entered
+        useOnboardingStore.getState().completeTour('Dashboard');
     }, [bookId]);
 
     const handleExitReader = async (fromPopState = false) => {
@@ -201,6 +203,7 @@ function ReaderView() {
         console.log('[Apex Session] Exit — active reading time:', timeSpentSeconds, 's');
 
         if (totalXp > 0 || pagesRead > 1 || timeSpentMinutes >= 1) {
+            setNavState('none');
             if (fromPopState === true) {
                 window.history.pushState(null, '', window.location.href);
             }
@@ -285,121 +288,6 @@ function ReaderView() {
     const [activeFlashcardSession, setActiveFlashcardSession] = useState(null); // { selection, count }
     const [flashcardPanel, setFlashcardPanel] = useState(false);
 
-    // ============================================
-    // READER TOUR — moved here so isLoading, showHighlightMenu, flashcardPanel are all declared
-    // ============================================
-    const { hasSeenReaderTour, readerTourStep, setTourStep, completeTour } = useOnboardingStore();
-
-    const readerTourSteps = useMemo(() => {
-        if (readerTourStep === 0) {
-            return [
-                {
-                    popover: {
-                        title: 'Welcome to the Reader 📖',
-                        description: 'This is where the magic happens. You can read your books and interact with the AI directly on the text.',
-                        side: "center",
-                        align: 'center'
-                    }
-                },
-                {
-                    popover: {
-                        title: 'Highlight to Interact',
-                        description: 'Try selecting any text on the page! A menu will pop up allowing you to ask the AI to explain it, define words, simplify complex sentences, or just color-highlight it for later.',
-                        side: "top",
-                        align: 'center',
-                        showButtons: ['close']
-                    }
-                }
-            ];
-        } else if (readerTourStep === 1) {
-            return [
-                {
-                    element: '#tour-ask-ai',
-                    popover: {
-                        title: 'Ask Contextual Questions',
-                        description: 'Click here to ask the AI any question about the text you just highlighted.',
-                        side: "bottom",
-                        align: 'center'
-                    }
-                },
-                {
-                    element: '#tour-simplify',
-                    popover: {
-                        title: 'Simplify Text',
-                        description: 'If a concept is too complex, click here to have the AI rewrite it in simpler terms.',
-                        side: "bottom",
-                        align: 'center'
-                    }
-                },
-                {
-                    element: '#tour-colors',
-                    popover: {
-                        title: 'Save for Later',
-                        description: 'Use these colors to save highlights and add notes to them in your Notebook.',
-                        side: "top",
-                        align: 'center'
-                    }
-                }
-            ];
-        } else if (readerTourStep === 2) {
-            return [
-                {
-                    element: '#tour-flashcards',
-                    popover: {
-                        title: 'Generate Flashcards',
-                        description: 'After reading, you can generate smart flashcards based on the pages you select to test your memory. You can access this any time from the top menu.',
-                        side: "bottom",
-                        align: 'center'
-                    }
-                },
-                {
-                    element: '#tour-quiz',
-                    popover: {
-                        title: 'Take a Quiz',
-                        description: 'Generate a multiple-choice quiz to ensure you fully understood what you just read. You can access this any time from the top menu.',
-                        side: "bottom",
-                        align: 'center',
-                        showButtons: ['close', 'next']
-                    }
-                }
-            ];
-        }
-        return [];
-    }, [readerTourStep]);
-
-    const shouldStartReaderTour = !isLoading && !hasSeenReaderTour && readerTourSteps.length > 0;
-
-    const handleSubTourComplete = useCallback(() => {
-        if (!hasSeenReaderTour) {
-            if (readerTourStep === 1) {
-                setNavState('first'); // Force show the nav menu for step 2
-                setTourStep('Reader', 2);
-            }
-        }
-    }, [hasSeenReaderTour, readerTourStep, setTourStep]);
-
-    useTour('Reader', readerTourSteps, shouldStartReaderTour, readerTourStep === 2, handleSubTourComplete);
-
-    useEffect(() => {
-        if (!hasSeenReaderTour && readerTourStep === 0 && showHighlightMenu) {
-            setTourStep('Reader', 1);
-        }
-    }, [showHighlightMenu, readerTourStep, hasSeenReaderTour, setTourStep]);
-
-    const wasHighlightMenuOpenForTourRef = useRef(false);
-    useEffect(() => {
-        if (showHighlightMenu && readerTourStep === 1) {
-            wasHighlightMenuOpenForTourRef.current = true;
-        } else if (!showHighlightMenu && wasHighlightMenuOpenForTourRef.current) {
-            wasHighlightMenuOpenForTourRef.current = false;
-            if (!hasSeenReaderTour) {
-                setNavState('first'); // Force show the nav menu for step 2
-                setTourStep('Reader', 2);
-            }
-        }
-    }, [showHighlightMenu, readerTourStep, hasSeenReaderTour, setTourStep]);
-    // ============================================
-
     const openPageStrip = useCallback(() => {
         setNavState('none');
         setShowPageStrip(true);
@@ -410,11 +298,14 @@ function ReaderView() {
         setNavState('first');
     }, []);
 
-    const toggleNav = useCallback(() => {
-        // If text is selected, don't toggle nav — let the highlight menu handle it
-        if (window.getSelection().toString().trim()) return;
+    const toggleNav = useCallback((force = false) => {
+        // If text is selected and not forced, don't toggle nav
+        if (!force && window.getSelection()?.toString()?.trim()) return;
         
-        setNavState(prev => (prev === 'first' || prev === 'second') ? 'none' : 'first');
+        setNavState(prev => {
+            if (force === true || force === 'first') return 'first';
+            return (prev === 'first' || prev === 'second') ? 'none' : 'first';
+        });
         // Close overlay modals
         setAiModal(false);
         setQuizModal(false);
@@ -506,6 +397,11 @@ function ReaderView() {
             if (streakTimerRef.current) clearInterval(streakTimerRef.current);
             streakTimerRef.current = setInterval(() => {
                 if (showSessionSummaryRef.current) return; // skip if modal is open
+                // Pause streak counting while reader tour is active
+                if (!useOnboardingStore.getState().hasSeenReaderTour) {
+                    streakStartTimeRef.current = Date.now();
+                    return;
+                }
 
                 streakElapsedRef.current += 1000;
                 const currentSeconds = Math.floor(streakElapsedRef.current / 1000);
@@ -1655,7 +1551,8 @@ function ReaderView() {
                     {/* Subtle List Trigger - Persistent at top, now relative to content area */}
                     <div className={`absolute top-0 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center transition-all duration-500 ease-in-out ${navState !== 'none' ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
                         <button
-                            onClick={(e) => { e.stopPropagation(); toggleNav(); }}
+                            id="tour-reader-menu-btn"
+                            onClick={(e) => { e.stopPropagation(); toggleNav(true); }}
                             className="group bg-white/15 dark:bg-white/5 hover:bg-white/25 dark:hover:bg-white/10 backdrop-blur-xl shadow-sm border-0 border-t border-white/25 dark:border-white/10 px-3 py-1.5 rounded-b-xl transition-all duration-300 flex items-center gap-1.5"
                         >
                             <div className={`w-1 h-1 rounded-full transition-colors ${navState !== 'none' ? 'bg-accent-primary' : 'bg-slate-300 group-hover:bg-accent-primary'}`} />
@@ -1998,6 +1895,13 @@ function ReaderView() {
                     }}
                 />
             )}
+            {/* Compute document ready state so tour only starts after rendering is complete */}
+            <ReaderTour
+                showHighlightMenu={showHighlightMenu}
+                navState={navState}
+                setNavState={setNavState}
+                isLoading={!Boolean(book && ((isPdf && numPages !== null) || (!isPdf && (textContent || htmlContent))))}
+            />
         </div>
     );
 }

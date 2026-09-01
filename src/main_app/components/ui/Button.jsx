@@ -53,15 +53,19 @@ export default function Button({
   disabled = false,
   className = '',
   type = 'button',
+  id,
+  ...rest
 }) {
   const widthClass = fullWidth ? 'w-full' : 'w-auto';
 
   return (
     <button
+      id={id}
       type={type}
       onClick={onClick}
       disabled={disabled}
       className={`${styles.base} ${widthClass} ${styles.variants[variant]} ${className}`}
+      {...rest}
     >
       {children}
     </button>

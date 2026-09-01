@@ -320,6 +320,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     return (
         <>
         <div
+            id="tour-highlight-menu"
             className={`highlight-menu-container fixed z-[300] animate-in fade-in duration-200 pointer-events-auto ${isMobile ? 'zoom-in-95' : 'zoom-in'}`}
             style={menuStyle}
             onClick={(e) => e.stopPropagation()}

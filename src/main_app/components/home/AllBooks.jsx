@@ -270,15 +270,20 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
     )
  ) : (
   <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,330px),1fr))] max-w-[1400px] gap-6 lg:gap-8 transition-all duration-500">
- {processedBooks.map((book) => (
- <div key={book.id} className="h-full animate-in fade-in slide-in-from-bottom-2 duration-300">
- <BookCard
- book={book}
- onClick={onBookClick}
- />
- </div>
- ))}
- </div>
+  {processedBooks.map((book, idx) => (
+  <div
+    key={book.id}
+    id={`book-card-${book.id}`}
+    data-tour-first-book={idx === 0 ? "true" : undefined}
+    className="h-full animate-in fade-in slide-in-from-bottom-2 duration-300"
+  >
+  <BookCard
+  book={book}
+  onClick={onBookClick}
+  />
+  </div>
+  ))}
+  </div>
  )}
  </section>
  );
