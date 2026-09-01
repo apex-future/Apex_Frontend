@@ -335,11 +335,11 @@ const useStudyStore = create(
 
         let cloudWins;
         if (cloudDate > localDate) {
-            cloudWins = true;
+          cloudWins = true;
         } else if (cloudDate < localDate) {
-            cloudWins = false;
+          cloudWins = false;
         } else {
-            cloudWins = cloudUpdatedAt > localUpdatedAt;
+          cloudWins = cloudUpdatedAt > localUpdatedAt;
         }
 
         const mergedStreakCount = cloudWins ? (current_streak || 0) : (get().streakCount || 0);
@@ -359,8 +359,8 @@ const useStudyStore = create(
           frozenDays: mergedFrozenDays,
           streakFreezesHeld: Math.min(Math.max(0, mergedFreezesHeld), 2),
           lastStreakUpdatedAt: cloudWins
-              ? (supabaseData.last_streak_updated_at || null)
-              : (get().lastStreakUpdatedAt || null),
+            ? (supabaseData.last_streak_updated_at || null)
+            : (get().lastStreakUpdatedAt || null),
         });
 
         if (import.meta.env.DEV) console.log(
