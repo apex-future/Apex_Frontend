@@ -9,9 +9,11 @@ import db from '../db/apex.db';
 import WeeklyGoldenBar from '../components/quests/WeeklyGoldenBar';
 import QuestCard from '../components/quests/QuestCard';
 import QuestCompleteModal from '../components/quests/QuestCompleteModal';
+import QuestTour from '../components/quests/QuestTour';
 import EmptyState from '../components/ui/EmptyState';
 import Card from '../components/ui/Card';
 import useQuestStore from '../store/useQuestStore';
+import useOnboardingStore from '../store/useOnboardingStore';
 import { showToastGlobal } from '../hooks/useToast';
 
 // ─── Skeleton loader ──────────────────────────────────────────────────────────
@@ -100,8 +102,108 @@ export default function QuestPage() {
   
   const lastCompletedData = useRef({});
   const questStore = useQuestStore();
+  const { hasSeenQuestTour, tourTextSelected } = useOnboardingStore();
+
+  const [replayChestsClaimed, setReplayChestsClaimed] = useState({
+    quest_1: false,
+    quest_2: false,
+    quest_3: false,
+  });
 
   const awardXpOptimistic = useXpStore((s) => s.awardXpOptimistic);
+
+  const isRealOnboarding = Boolean(
+    quests?.quest_1?.is_onboarding || quests?.quest_2?.is_onboarding
+  );
+
+  // Whenever a tour is replayed, reset the replay chests state so all chests start closed
+  useEffect(() => {
+    if (!hasSeenQuestTour && !isRealOnboarding) {
+      setReplayChestsClaimed({
+        quest_1: false,
+        quest_2: false,
+        quest_3: false,
+      });
+    }
+  }, [hasSeenQuestTour, isRealOnboarding]);
+
+  // During tour replay for existing users, temporarily display the preset onboarding quests
+  // Once the tour completes (or is dismissed), activeQuests reverts to the user's real quests
+  const activeQuests = React.useMemo(() => {
+    if (!quests) return null;
+    if (!hasSeenQuestTour && !isRealOnboarding) {
+      return {
+        date: quests.date,
+        quest_1: {
+          id: 'onboarding_upload_book',
+          copy: 'Add your first book to your library',
+          action: 'book_uploaded',
+          target: 1,
+          unit: 'books',
+          type: 'onboarding',
+          subcategory: 'reading',
+          progress: 1,
+          completed: true,
+          forced_reward: 'streak_freeze',
+          is_onboarding: true,
+        },
+        quest_2: {
+          id: 'onboarding_select_text',
+          copy: 'Select text in any book',
+          action: 'text_selected',
+          target: 1,
+          unit: 'selections',
+          type: 'onboarding',
+          subcategory: 'annotation',
+          progress: tourTextSelected ? 1 : 0,
+          completed: tourTextSelected,
+          forced_reward: 'refresh_token',
+          is_onboarding: true,
+        },
+        quest_3: {
+          id: 'lookup_3',
+          copy: 'Look up 3 words in the dictionary today',
+          action: 'dictionary_lookup',
+          target: 3,
+          unit: 'words',
+          type: 'onboarding',
+          subcategory: 'dictionary',
+          progress: 0,
+          completed: false,
+          is_onboarding: true,
+        },
+        all_completed: false,
+        refresh_tokens: questStore.refreshTokens ?? 2,
+        refreshed_today: false,
+      };
+    }
+    return quests;
+  }, [quests, hasSeenQuestTour, isRealOnboarding, tourTextSelected, questStore.refreshTokens]);
+
+  // Auto-detect if user already has books in Dexie for onboarding book upload quest
+  useEffect(() => {
+    const checkInitialBookUpload = async () => {
+      if (quests?.quest_1?.action === 'book_uploaded' && !quests.quest_1.completed) {
+        try {
+          const bookCount = await db.books.count();
+          if (bookCount > 0) {
+            useQuestStore.getState().reportAction('book_uploaded', 1);
+            setQuests((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    quest_1: { ...prev.quest_1, progress: 1, completed: true },
+                  }
+                : prev
+            );
+          }
+        } catch (err) {
+          console.error('[Quest Page] Failed to check book count:', err);
+        }
+      }
+    };
+    checkInitialBookUpload();
+  }, [quests?.quest_1?.action, quests?.quest_1?.completed]);
 
   // ─── Data fetching ──────────────────────────────────────────────────────────
   const fetchQuests = useCallback(async () => {
@@ -338,31 +440,78 @@ export default function QuestPage() {
   }, [quests]);
 
   const handleChestClick = useCallback((questKey) => {
-    const questId = quests?.[questKey]?.id;
-    if (!questId) return;
+    const targetQuest = activeQuests?.[questKey];
+    if (!targetQuest) return;
 
-    const data = lastCompletedData.current[questId];
-    const questCopy = quests[questKey]?.copy || '';
-    
-    // Fallback if somehow missing
-    const xpAwarded = data?.xp_awarded ?? 20;
-    const reward = data?.reward ?? null;
-    const allCompleted = data?.all_completed ?? quests.all_completed ?? false;
+    const questId = targetQuest.id;
+    const questCopy = targetQuest.copy || '';
+    const forcedItem = targetQuest.forced_reward;
+    const isReplay = !hasSeenQuestTour && !isRealOnboarding;
+
+    const onboardingStore = useOnboardingStore.getState();
+    const isAlreadyClaimedTourReward =
+      isReplay ||
+      (forcedItem === 'streak_freeze' && onboardingStore.hasClaimedQuestTourStreakFreeze) ||
+      (forcedItem === 'refresh_token' && onboardingStore.hasClaimedQuestTourRefreshToken);
+
+    let reward = null;
+    if (forcedItem === 'streak_freeze') {
+      reward = {
+        item: 'streak_freeze',
+        label: isAlreadyClaimedTourReward ? 'Streak Freeze' : '1 Streak Freeze',
+        alreadyClaimed: isAlreadyClaimedTourReward,
+        tag: isAlreadyClaimedTourReward ? 'Tour Reward Already Claimed' : null,
+      };
+    } else if (forcedItem === 'refresh_token') {
+      reward = {
+        item: 'refresh_token',
+        label: isAlreadyClaimedTourReward ? 'Refresh Token' : '1 Refresh Token',
+        alreadyClaimed: isAlreadyClaimedTourReward,
+        tag: isAlreadyClaimedTourReward ? 'Tour Reward Already Claimed' : null,
+      };
+    } else {
+      const data = lastCompletedData.current[questId];
+      reward = data?.reward || null;
+    }
+
+    const xpAwarded = isReplay ? 0 : (lastCompletedData.current[questId]?.xp_awarded ?? 20);
+    const allCompleted = activeQuests?.all_completed ?? false;
 
     setModalData({ questCopy, xpAwarded, reward, allCompleted });
     setShowModal(true);
-    
-    // Keep track of which quest modal we're showing so we can mark it claimed on close
+
     lastCompletedData.current.activeChestQuestKey = questKey;
-  }, [quests]);
+    lastCompletedData.current.activeForcedItem = forcedItem;
+    lastCompletedData.current.activeIsReplay = isReplay;
+    lastCompletedData.current.activeAlreadyClaimed = isAlreadyClaimedTourReward;
+  }, [activeQuests, hasSeenQuestTour, isRealOnboarding]);
 
   const handleModalClose = useCallback(async () => {
     setShowModal(false);
     const activeKey = lastCompletedData.current.activeChestQuestKey;
+    const forcedItem = lastCompletedData.current.activeForcedItem;
+    const isReplay = lastCompletedData.current.activeIsReplay;
+    const alreadyClaimed = lastCompletedData.current.activeAlreadyClaimed;
+
+    lastCompletedData.current.activeChestQuestKey = null;
+    lastCompletedData.current.activeForcedItem = null;
+    lastCompletedData.current.activeIsReplay = null;
+    lastCompletedData.current.activeAlreadyClaimed = null;
+
     if (!activeKey) return;
 
+    // If this was an onboarding reward claim and not already claimed, mark it claimed in store
+    if (forcedItem && !alreadyClaimed) {
+      useOnboardingStore.getState().markQuestTourRewardClaimed(forcedItem);
+    }
+
+    // If replaying tour, mark it claimed in the replay session so it opens in the preview, without touching real chest states
+    if (isReplay) {
+      setReplayChestsClaimed((prev) => ({ ...prev, [activeKey]: true }));
+      return;
+    }
+
     useQuestStore.getState().claimChest(activeKey);
-    lastCompletedData.current.activeChestQuestKey = null;
 
     if (navigator.onLine) {
       try {
@@ -407,6 +556,8 @@ export default function QuestPage() {
     day: 'numeric',
     month: 'long',
   });
+
+  const isReplay = !hasSeenQuestTour && !isRealOnboarding;
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   if (error && !quests) {
@@ -473,7 +624,7 @@ export default function QuestPage() {
             Today's Quests
           </p>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-text-tertiary text-xs font-medium bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full border border-black/5 dark:border-white/5">
+            <div id="quest-refresh-token-badge" className="flex items-center gap-1.5 text-text-tertiary text-xs font-medium bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full border border-black/5 dark:border-white/5">
               <ArrowsClockwise size={13} weight="bold" className="text-purple-600 dark:text-purple-400" />
               <span>Refresh Tokens: <strong className="text-text-primary font-bold">{questStore.refreshTokens ?? 2}</strong></span>
             </div>
@@ -490,32 +641,36 @@ export default function QuestPage() {
         <div className="flex flex-col gap-3 -mt-4">
           {loading ? (
             <QuestListSkeleton />
-          ) : quests ? (
+          ) : activeQuests ? (
             <Card className="w-full flex flex-col p-4 gap-5 sm:p-5 sm:gap-6">
-              {quests.quest_1 && (
+              {activeQuests.quest_1 && (
                 <motion.div
+                  id="quest-card-1"
+                  data-quest-key="quest_1"
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: 0.1 }}
                 >
                   <QuestCard
-                    quest={quests.quest_1}
-                    chestClaimed={questStore.chest_1_claimed}
+                    quest={activeQuests.quest_1}
+                    chestClaimed={isReplay ? replayChestsClaimed.quest_1 : questStore.chest_1_claimed}
                     onChestClick={() => handleChestClick('quest_1')}
                     onProgressUpdate={handleProgressUpdate}
                     isRefreshing={refreshingKey === 'quest_1'}
                   />
                 </motion.div>
               )}
-              {quests.quest_2 && (
+              {activeQuests.quest_2 && (
                 <motion.div
+                  id="quest-card-2"
+                  data-quest-key="quest_2"
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: 0.18 }}
                 >
                   <QuestCard
-                    quest={quests.quest_2}
-                    chestClaimed={questStore.chest_2_claimed}
+                    quest={activeQuests.quest_2}
+                    chestClaimed={isReplay ? replayChestsClaimed.quest_2 : questStore.chest_2_claimed}
                     onChestClick={() => handleChestClick('quest_2')}
                     onProgressUpdate={handleProgressUpdate}
                     onRefreshQuest={() => handleRefreshQuest('quest_2')}
@@ -523,15 +678,15 @@ export default function QuestPage() {
                   />
                 </motion.div>
               )}
-              {quests.quest_3 && (
+              {activeQuests.quest_3 && (
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: 0.26 }}
                 >
                   <QuestCard
-                    quest={quests.quest_3}
-                    chestClaimed={questStore.chest_3_claimed}
+                    quest={activeQuests.quest_3}
+                    chestClaimed={isReplay ? replayChestsClaimed.quest_3 : questStore.chest_3_claimed}
                     onChestClick={() => handleChestClick('quest_3')}
                     onProgressUpdate={handleProgressUpdate}
                     onRefreshQuest={() => handleRefreshQuest('quest_3')}
@@ -555,6 +710,8 @@ export default function QuestPage() {
         reward={modalData.reward}
         allCompleted={modalData.allCompleted}
       />
+
+      <QuestTour quests={activeQuests} />
     </div>
   );
 }

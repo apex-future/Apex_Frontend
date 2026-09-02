@@ -4,6 +4,7 @@ import syncService from '../services/syncService';
 import { showToastGlobal } from '../hooks/useToast';
 import { BookContext } from './BookContextInstance.jsx';
 import useSpaceStore from '../store/spaceStore';
+import useQuestStore from '../store/useQuestStore';
 import { pdfjs } from 'react-pdf';
 
 export const BookProvider = ({ children }) => {
@@ -321,6 +322,7 @@ export const BookProvider = ({ children }) => {
     ));
 
     console.log('[Apex] Book added to UI optimistically:', title);
+    useQuestStore.getState().reportAction('book_uploaded', 1);
 
     // Concise toast informing user they can read immediately
     showToastGlobal('Uploading your book, but you can start reading.', 'info', 4000);

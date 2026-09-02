@@ -4,6 +4,7 @@ import dictionaryService from '../../services/dictionaryService';
 import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
 import useQuestStore from '../../store/useQuestStore';
+import useOnboardingStore from '../../store/useOnboardingStore';
 import Card from '../ui/Card';
 import ShareModal from '../ui/ShareModal';
 import Label from '../ui/Label';
@@ -52,6 +53,12 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     useEffect(() => { selectionRef.current = selection; }, [selection]);
     useEffect(() => { positionRef.current = position; }, [position]);
     useEffect(() => { draftKeyRef.current = draftKey; }, [draftKey]);
+
+    // Report text selection for onboarding/daily quest
+    useEffect(() => {
+        useQuestStore.getState().reportAction('text_selected', 1);
+        useOnboardingStore.getState().setTourTextSelected(true);
+    }, []);
 
     // Auto-save: when tab closes (showTab→false OR unmount) without explicit save/trash
     useEffect(() => {

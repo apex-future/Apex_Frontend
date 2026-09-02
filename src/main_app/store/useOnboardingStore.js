@@ -7,6 +7,15 @@ const useOnboardingStore = create(
       hasSeenDashboardTour: false,
       hasSeenReaderTour: false,
       hasSeenDictionaryTour: false,
+      hasSeenQuestTour: false,
+
+      hasClaimedQuestTourStreakFreeze: false,
+      hasClaimedQuestTourRefreshToken: false,
+
+      tourTextSelected: false,
+      setTourTextSelected: (val = true) => {
+        set({ tourTextSelected: val });
+      },
 
       dashboardTourStep: 0,
       readerTourStep: 0,
@@ -18,6 +27,16 @@ const useOnboardingStore = create(
         }));
       },
 
+      markQuestTourRewardClaimed: (item) => {
+        set((state) => ({
+          ...state,
+          hasClaimedQuestTourStreakFreeze:
+            item === 'streak_freeze' ? true : state.hasClaimedQuestTourStreakFreeze,
+          hasClaimedQuestTourRefreshToken:
+            item === 'refresh_token' ? true : state.hasClaimedQuestTourRefreshToken,
+        }));
+      },
+
       setTourStep: (tourName, stepIndex) => {
         set((state) => ({
             ...state,
@@ -26,13 +45,16 @@ const useOnboardingStore = create(
       },
       
       resetTours: () => {
-        set({
+        set((state) => ({
           hasSeenDashboardTour: false,
           hasSeenReaderTour: false,
           hasSeenDictionaryTour: false,
+          hasSeenQuestTour: false,
+          tourTextSelected: false,
           dashboardTourStep: 0,
           readerTourStep: 0,
-        })
+          // Note: hasClaimedQuestTourStreakFreeze and hasClaimedQuestTourRefreshToken are intentionally preserved
+        }));
       }
     }),
     {

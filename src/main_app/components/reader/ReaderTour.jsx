@@ -223,7 +223,7 @@ export default function ReaderTour({
 
         if (currentStep === 'menu-button') {
           selector = '#tour-reader-menu-btn';
-          isCircle = true;
+          isCircle = false;
         } else if (currentStep === 'dots-button') {
           selector = '#tour-reader-dots';
           isCircle = true;
@@ -240,7 +240,7 @@ export default function ReaderTour({
                 width: rect.width,
                 height: rect.height,
                 isCircle,
-                radius: isCircle ? Math.max(rect.width, rect.height) / 2 + 4 : 16,
+                radius: currentStep === 'menu-button' ? 12 : (isCircle ? Math.max(rect.width, rect.height) / 2 + 4 : 16),
               });
               return;
             }
@@ -368,11 +368,11 @@ export default function ReaderTour({
                     />
                   ) : (
                     <rect
-                      x={targetRect.left - pad}
-                      y={targetRect.top - pad}
-                      width={targetRect.width + pad * 2}
-                      height={targetRect.height + pad * 2}
-                      rx={targetRect.radius}
+                      x={targetRect.left - (currentStep === 'menu-button' ? 8 : pad)}
+                      y={Math.max(0, targetRect.top - (currentStep === 'menu-button' ? 4 : pad))}
+                      width={targetRect.width + (currentStep === 'menu-button' ? 16 : pad * 2)}
+                      height={targetRect.height + (currentStep === 'menu-button' ? 8 : pad * 2)}
+                      rx={targetRect.radius || 12}
                       fill="black"
                     />
                   )
@@ -566,7 +566,12 @@ export default function ReaderTour({
       {/* ── Step 4: Top Center Persistent Menu Button Spotlight ────────── */}
       <AnimatePresence>
         {currentStep === 'menu-button' && (
-          <div className="fixed top-14 inset-x-0 flex justify-center px-4 z-[9990] pointer-events-none">
+          <div
+            className="fixed inset-x-0 flex justify-center px-4 z-[9990] pointer-events-none"
+            style={{
+              top: targetRect ? `${Math.max(80, targetRect.top + targetRect.height + 24)}px` : '84px',
+            }}
+          >
             <motion.div
               initial={{ opacity: 0, y: -16, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}

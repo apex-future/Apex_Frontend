@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
-import { Trophy, CheckCircle, X } from '@phosphor-icons/react';
+import { Trophy, CheckCircle, X, Snowflake, ArrowCounterClockwise } from '@phosphor-icons/react';
 import Button from '../ui/Button';
 
 /**
@@ -139,24 +139,61 @@ export default function QuestCompleteModal({
             "{questCopy}"
           </p>
 
-          {/* 4. XP badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-            className="mb-4"
-          >
-            <span
-              className="inline-block px-4 py-1.5 rounded-full text-white font-bold"
-              style={{
-                fontFamily: 'Space Grotesk, sans-serif',
-                fontSize: 14,
-                background: 'linear-gradient(135deg, #7C3AED, #3B0764)',
-              }}
-            >
-              +{xpAwarded} XP
-            </span>
-          </motion.div>
+          {/* 4. Badges / Reward display */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+            {/* Streak Freeze item badge */}
+            {reward?.item === 'streak_freeze' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-bold shadow-md shadow-sky-500/20"
+                style={{
+                  fontFamily: 'Space Grotesk, sans-serif',
+                  fontSize: 14,
+                  background: 'linear-gradient(135deg, #0284C7, #0369A1)',
+                }}
+              >
+                <Snowflake size={17} weight="bold" />
+                <span>+1 Streak Freeze</span>
+              </motion.div>
+            )}
+
+            {/* Refresh Token item badge */}
+            {reward?.item === 'refresh_token' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-bold shadow-md shadow-amber-500/20"
+                style={{
+                  fontFamily: 'Space Grotesk, sans-serif',
+                  fontSize: 14,
+                  background: 'linear-gradient(135deg, #D97706, #B45309)',
+                }}
+              >
+                <ArrowCounterClockwise size={17} weight="bold" />
+                <span>+1 Refresh Token</span>
+              </motion.div>
+            )}
+
+            {/* XP badge: show if xpAwarded > 0 or if no item reward exists */}
+            {(xpAwarded > 0 || !reward?.item) && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+                className="inline-flex items-center px-4 py-1.5 rounded-full text-white font-bold shadow-md shadow-purple-500/20"
+                style={{
+                  fontFamily: 'Space Grotesk, sans-serif',
+                  fontSize: 14,
+                  background: 'linear-gradient(135deg, #7C3AED, #3B0764)',
+                }}
+              >
+                +{xpAwarded} XP
+              </motion.div>
+            )}
+          </div>
 
           {/* 5. Reward section */}
           {reward && (
@@ -166,19 +203,35 @@ export default function QuestCompleteModal({
               transition={{ delay: 0.3, duration: 0.3 }}
               className="w-full mb-4"
             >
-              <div className="border-t border-black/10 dark:border-white/10 pt-3 mt-1">
-                <p
-                  className="text-text-tertiary uppercase tracking-widest mb-1"
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 10 }}
-                >
-                  You earned
-                </p>
-                <p
-                  className="text-text-primary font-bold"
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 13 }}
-                >
-                  {reward.label}
-                </p>
+              <div className="border-t border-black/10 dark:border-white/10 pt-3 mt-1 flex flex-col items-center">
+                {reward.alreadyClaimed ? (
+                  <div className="flex flex-col items-center gap-1.5 w-full">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold font-sans">
+                      <CheckCircle size={14} weight="bold" />
+                      {reward.tag || 'Tour Reward Already Claimed'}
+                    </span>
+                    <p
+                      className="text-text-tertiary text-xs text-center max-w-[280px] font-sans mt-0.5"
+                    >
+                      You've already received your onboarding {reward.label || 'reward'}. Replaying the tour gives a preview without duplicate items.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p
+                      className="text-text-tertiary uppercase tracking-widest mb-1"
+                      style={{ fontFamily: 'Inter, sans-serif', fontSize: 10 }}
+                    >
+                      You earned
+                    </p>
+                    <p
+                      className="text-text-primary font-bold"
+                      style={{ fontFamily: 'Inter, sans-serif', fontSize: 13 }}
+                    >
+                      {reward.label}
+                    </p>
+                  </>
+                )}
               </div>
             </motion.div>
           )}

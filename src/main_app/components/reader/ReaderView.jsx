@@ -1152,6 +1152,8 @@ function ReaderView() {
                         setSelectionData(newData);
                         console.log('[Apex Performance] Selection captured via State');
                     }
+                    useOnboardingStore.getState().setTourTextSelected(true);
+                    useQuestStore.getState().reportAction('text_selected', 1);
                     setShowHighlightMenu(true);
                 }
             } else {
