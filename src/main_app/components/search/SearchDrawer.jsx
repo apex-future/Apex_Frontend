@@ -12,6 +12,7 @@ import { BookContext } from '../../context/BookContextInstance';
 import Card from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import BookCover from '../books/BookCover';
+import { isValidAuthor } from '../../utils/documentMetadata';
 
 const SEARCH_HISTORY_KEY = 'apex_book_search_history';
 
@@ -364,9 +365,11 @@ export default function SearchDrawer({ isOpen, onClose }) {
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-text-secondary truncate mt-0.5">
-                            {book.author || 'Unknown Author'}
-                          </p>
+                          {isValidAuthor(book.author) && (
+                            <p className="text-xs text-text-secondary truncate mt-0.5">
+                              {book.author}
+                            </p>
+                          )}
 
                           {typeof book.progress === 'number' && (
                             <div className="flex items-center gap-2 mt-2">

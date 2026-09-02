@@ -9,6 +9,7 @@ import useXpStore from '../store/useXpStore';
 import useQuestStore from '../store/useQuestStore';
 import { XP_VALUES } from '../../config/xpConfig';
 import { cleanUserMessage } from '../utils/aiUtils';
+import { isValidAuthor } from '../utils/documentMetadata';
 
 // Helper: generate a local ID
 function generateLocalId() {
@@ -185,7 +186,7 @@ const syncService = {
 
       const formData = new FormData();
       formData.append('title', title);
-      formData.append('author', author || 'Unknown');
+      formData.append('author', isValidAuthor(author) ? author : '');
       formData.append('local_id', dexieBookId.toString());
       if (totalPages > 1) formData.append('total_pages', totalPages.toString());
       formData.append('file', fileObject);
@@ -1586,7 +1587,8 @@ const syncService = {
       await db.books.update(dexieBookId, { sync_retry_count: currentRetry });
 
       const file = new File([freshBook.fileBlob], freshBook.title, { type: freshBook.fileType || 'application/pdf' });
-      const result = await this.uploadBook(file, freshBook.title, freshBook.author || 'Unknown', dexieBookId);
+      const validAuthor = isValidAuthor(freshBook.author) ? freshBook.author : '';
+      const result = await this.uploadBook(file, freshBook.title, validAuthor, dexieBookId);
 
       if (result) {
         console.log('[Apex Sync] Book retry succeeded for:', freshBook.title);
@@ -1638,7 +1640,8 @@ const syncService = {
       await db.books.update(book.id, { sync_status: 'pending', sync_retry_count: nextRetry });
 
       const file = new File([book.fileBlob], book.title, { type: book.fileType || 'application/pdf' });
-      const result = await this.uploadBook(file, book.title, book.author || 'Unknown', book.id);
+      const validAuthor = isValidAuthor(book.author) ? book.author : '';
+      const result = await this.uploadBook(file, book.title, validAuthor, book.id);
 
       if (result) {
         console.log('[Apex Sync] Reentry retry succeeded for:', book.title);
@@ -1717,7 +1720,8 @@ const syncService = {
         );
 
         if (import.meta.env.DEV) console.log('[Apex Sync] Uploading offline book to Supabase:', localBook.title);
-        const result = await this.uploadBook(file, localBook.title, localBook.author || 'Unknown', localBook.id);
+        const validAuthor = isValidAuthor(localBook.author) ? localBook.author : '';
+        const result = await this.uploadBook(file, localBook.title, validAuthor, localBook.id);
 
         if (import.meta.env.DEV) console.log('[Apex Sync] Book upload result:', {
           title: localBook.title,
@@ -2143,7 +2147,7 @@ const syncService = {
             local_id: localId,
             payload: {
               title: book.title || 'Untitled',
-              author: book.author || 'Unknown',
+              author: isValidAuthor(book.author) ? book.author : '',
               file_type: book.fileType,
               file_size: book.fileSize,
               last_read_at: book.lastReadAt || book.uploadedAt || new Date().toISOString(),

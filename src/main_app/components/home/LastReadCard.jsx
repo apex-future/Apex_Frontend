@@ -4,6 +4,7 @@ import BookCover from '../books/BookCover';
 import Card from '../ui/Card';
 import WeeklyGoldenBar from '../quests/WeeklyGoldenBar';
 import useOnboardingStore from '../../store/useOnboardingStore';
+import { isValidAuthor } from '../../utils/documentMetadata';
 
 const LastReadCard = ({ book, isLoading }) => {
     const navigate = useNavigate();
@@ -79,7 +80,9 @@ const LastReadCard = ({ book, isLoading }) => {
                                 <h3 className="font-semibold text-base sm:text-lg md:text-xl font-display text-text-primary truncate mb-1 group-hover:text-accent-primary transition-colors">
                                     {book.title}
                                 </h3>
-                                <p className="text-sm text-text-tertiary mb-3 text-left">by {book.author || "N/A"}</p>
+                                {isValidAuthor(book.author) && (
+                                    <p className="text-sm text-text-tertiary mb-3 text-left">by {book.author}</p>
+                                )}
                             </div>
 
                             {/* Progress section — pushed down */}

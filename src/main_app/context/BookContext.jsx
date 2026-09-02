@@ -6,6 +6,7 @@ import { BookContext } from './BookContextInstance.jsx';
 import useSpaceStore from '../store/spaceStore';
 import useQuestStore from '../store/useQuestStore';
 import { pdfjs } from 'react-pdf';
+import { isValidAuthor, cleanAuthor, extractAuthorFromFilename } from '../utils/documentMetadata';
 
 export const BookProvider = ({ children }) => {
   const { spaces, addBookToSpace, removeBookFromSpace } = useSpaceStore();
@@ -253,23 +254,32 @@ export const BookProvider = ({ children }) => {
     const arrayBuffer = await fileObject.arrayBuffer();
     const fileType = fileObject.type || 'application/pdf';
 
-    // Extract total page count from PDF at upload time
-    // This ensures totalPages is accurate from the start — no recalibration needed
+    // Extract total page count and author from PDF at upload time
     let extractedPageCount = 0;
+    let extractedAuthor = null;
     const isPdf = fileType === 'application/pdf' || fileObject.name?.toLowerCase().endsWith('.pdf');
     if (isPdf) {
       try {
         const pdfDoc = await pdfjs.getDocument({ data: arrayBuffer.slice(0) }).promise;
         extractedPageCount = pdfDoc.numPages;
-        console.log('[Apex] Extracted page count from PDF:', extractedPageCount);
+        const meta = await pdfDoc.getMetadata().catch(() => null);
+        if (meta?.info?.Author) {
+          extractedAuthor = cleanAuthor(meta.info.Author);
+        }
+        console.log('[Apex] Extracted PDF metadata — pages:', extractedPageCount, 'author:', extractedAuthor);
       } catch (err) {
-        console.warn('[Apex] Failed to extract page count from PDF:', err);
+        console.warn('[Apex] Failed to extract metadata from PDF:', err);
       }
+    }
+
+    // Heuristic filename author extraction if not discovered in PDF metadata
+    if (!extractedAuthor && fileObject.name) {
+      extractedAuthor = extractAuthorFromFilename(fileObject.name);
     }
 
     const newBookData = {
       title,
-      author: "N/A",
+      author: extractedAuthor || null,
       fileType,
       fileSize: fileObject.size,
       fileBlob: arrayBuffer,

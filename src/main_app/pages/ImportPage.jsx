@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spinner, WarningCircle } from '@phosphor-icons/react';
 import db from '../db/apex.db';
+import { extractAuthorFromFilename } from '../utils/documentMetadata';
 
 export default function ImportPage() {
   const navigate = useNavigate();
@@ -24,9 +25,11 @@ export default function ImportPage() {
              file.name.endsWith('.rtf') ? 'application/rtf' :
              'application/pdf');
 
+          const extractedAuthor = extractAuthorFromFilename(file.name);
+
           const bookId = await db.books.add({
             title,
-            author: 'Unknown',
+            author: extractedAuthor || null,
             fileType,
             fileSize: file.size,
             fileBlob: arrayBuffer,

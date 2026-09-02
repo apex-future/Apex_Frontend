@@ -1,4 +1,5 @@
 import React from 'react';
+import { isValidAuthor } from '../../utils/documentMetadata';
 
 const PALETTES = [
     { bg: '#F8FAFC', accent: '#6366F1', secondary: '#818CF8' }, // Indigo
@@ -48,15 +49,22 @@ export default function BookCover({ title, author, className = "" }) {
                         {title}
                     </h4>
                 </div>
-                <div className="flex flex-col gap-0.5">
-                    <p className="font-sans font-bold text-[6px] text-slate-500 uppercase tracking-[0.2em] line-clamp-1">
-                        {author || "Uploaded by User"}
-                    </p>
+                {isValidAuthor(author) ? (
+                    <div className="flex flex-col gap-0.5">
+                        <p className="font-sans font-bold text-[6px] text-slate-500 uppercase tracking-[0.2em] line-clamp-1">
+                            {author}
+                        </p>
+                        <div className="flex items-center gap-1 opacity-20">
+                            <div className="w-1 h-1 rounded-full bg-slate-900" />
+                            <div className="w-8 h-[1px] bg-slate-900" />
+                        </div>
+                    </div>
+                ) : (
                     <div className="flex items-center gap-1 opacity-20">
                         <div className="w-1 h-1 rounded-full bg-slate-900" />
                         <div className="w-8 h-[1px] bg-slate-900" />
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Premium Texture Overlay */}

@@ -6,10 +6,15 @@ import { ArrowLeft, Heart, ShareNetwork, FolderSimplePlus, CheckCircle, Trash, X
 import useSpaceStore from '../../store/spaceStore';
 import useThemeStore from '../../store/themeStore';
 import db from '../../db/apex.db';
+import apiClient from '../../services/apiClient';
+import syncService from '../../services/syncService';
+import { showToastGlobal } from '../../hooks/useToast';
+import ShareModal from '../ui/ShareModal';
 
 import BookCover from './BookCover';
 import Label from '../ui/Label';
 import Modal from '../ui/Modal';
+import { isValidAuthor } from '../../utils/documentMetadata';
 import DocumentChatHistory from './book_details_related/DocumentChatHistory';
 import DocumentBookmarks from './book_details_related/DocumentBookmarks';
 import DocumentNotes from './book_details_related/DocumentNotes';
@@ -27,6 +32,8 @@ function BookDetails() {
     const [activeTab, setActiveTab] = useState('chat');
     const [showSpaceModal, setShowSpaceModal] = useState(false);
     const [showSyncPopover, setShowSyncPopover] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [shareUrl, setShareUrl] = useState('');
     const [selectedIds, setSelectedIds] = useState([]);
 
     // Find the book first
@@ -129,6 +136,70 @@ function BookDetails() {
         }
     };
 
+    const handleShareClick = async () => {
+        if (!book) return;
+        let cloudId = book.supabaseId || book.recordId;
+
+        if (!cloudId) {
+            try {
+                const localRecord = await db.books.get(book.id);
+                if (localRecord?.supabaseId) {
+                    cloudId = localRecord.supabaseId;
+                }
+            } catch (_) {}
+        }
+
+        if (!cloudId) {
+            if (!navigator.onLine) {
+                showToastGlobal('Connect to the internet to share a downloadable copy of this book.', 'warning');
+                setShareUrl(`${window.location.origin}/share?type=book&title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author || "")}`);
+                setShowShareModal(true);
+                return;
+            }
+
+            showToastGlobal('Preparing shareable download link...', 'info', 2500);
+            try {
+                let file = book.file;
+                if (!file && book.fileBlob) {
+                    const fileExt = book.fileType === 'application/epub+zip' ? '.epub' : '.pdf';
+                    const fileName = book.title.endsWith(fileExt) ? book.title : book.title + fileExt;
+                    file = new File([book.fileBlob], fileName, { type: book.fileType || 'application/pdf' });
+                }
+                if (file) {
+                    const uploaded = await syncService.uploadBook(file, book.title, book.author || 'Unknown', book.id);
+                    if (uploaded && uploaded.id) {
+                        cloudId = uploaded.id;
+                        book.supabaseId = cloudId;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to upload book before sharing:', err);
+            }
+        }
+
+        const validAuthor = isValidAuthor(book?.author) ? book.author : '';
+        const authorParam = validAuthor ? `&author=${encodeURIComponent(validAuthor)}` : '';
+
+        if (cloudId) {
+            try {
+                const res = await apiClient.post(`/api/books/${cloudId}/share`);
+                const token = res.data?.share_token;
+                if (token) {
+                    const fullUrl = `${window.location.origin}/share?type=book&id=${cloudId}&token=${token}&title=${encodeURIComponent(book.title)}${authorParam}`;
+                    setShareUrl(fullUrl);
+                    setShowShareModal(true);
+                    return;
+                }
+            } catch (err) {
+                console.warn('Failed to obtain share token from backend:', err);
+            }
+        }
+
+        const fallbackUrl = `${window.location.origin}/share?type=book&title=${encodeURIComponent(book.title)}${authorParam}${cloudId ? `&id=${cloudId}` : ''}`;
+        setShareUrl(fallbackUrl);
+        setShowShareModal(true);
+    };
+
     const tabs = [
         { id: 'chat', label: 'Chat', component: DocumentChatHistory },
         { id: 'bookmarks', label: 'Bookmarks', component: DocumentBookmarks },
@@ -185,16 +256,34 @@ function BookDetails() {
 
             <div className="flex flex-col pt-8 items-start">
                 <div className="book-header flex md:flex-row gap-8 lg:gap-12 flex-col w-full mb-12">
-                    <div className='img-wrapper flex flex-col items-center justify-start gap-6'>
-                        <div className="w-60 h-80 sm:w-64 sm:h-84 flex-shrink-0 rounded-2xl overflow-hidden mx-auto md:mx-0 border-4 border-white shadow-2xl transform hover:scale-[1.02] transition-all duration-500">
+                    <div className='img-wrapper flex flex-col items-center justify-start gap-5 flex-shrink-0'>
+                        {/* 3D Book Mockup matching SharePage */}
+                        <div className="w-48 h-72 sm:w-52 sm:h-80 md:w-56 md:h-88 rounded-xl sm:rounded-2xl overflow-hidden shadow-md sm:shadow-lg shadow-black/10 dark:shadow-black/40 border border-black/10 dark:border-white/15 relative transform hover:scale-[1.02] transition-transform duration-500 bg-white mx-auto md:mx-0">
+                            {/* Spine Shadow Effect */}
+                            <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/15 to-transparent pointer-events-none z-20" />
+
+                            {/* Floating Format Pill */}
+                            <div className="absolute top-3 right-3 z-20">
+                                <Label 
+                                    variant="accent" 
+                                    color="purple" 
+                                    size="sm" 
+                                    content={book.fileType?.includes('epub') || book.title?.toLowerCase().endsWith('.epub') ? 'EPUB' : 'PDF'} 
+                                />
+                            </div>
+
                             {book.cover ? (
                                 <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
                             ) : (
-                                <BookCover title={book.title} author={book.author} className="w-full h-full" />
+                                <BookCover 
+                                    title={book.title} 
+                                    author={isValidAuthor(book.author) ? book.author : null} 
+                                    className="w-full h-full" 
+                                />
                             )}
                         </div>
 
-                        <div className="flex flex-col items-center justify-center gap-2.5">
+                        <div className="flex flex-col items-center justify-center gap-2.5 w-full">
                             <Label variant="neutral" content={`${Math.round(book.progress || 0)}% Completed`} />
                             <Label
                                 variant={syncInfo.variant}
@@ -212,7 +301,9 @@ function BookDetails() {
                             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-display text-text-primary dark:text-text-primary-dark mb-3 tracking-tightest break-all md:break-words leading-premium-tight">
                                 {book.title}
                             </h1>
-                            <p className="text-base sm:text-lg text-text-tertiary dark:text-text-tertiary-dark font-medium tracking-tight italic">by {book.author || "N/A"}</p>
+                            {isValidAuthor(book.author) && (
+                                <p className="text-base sm:text-lg text-text-tertiary dark:text-text-tertiary-dark font-medium tracking-tight italic">by {book.author}</p>
+                            )}
                         </div>
 
                         <div className="max-w-2xl">
@@ -279,9 +370,13 @@ function BookDetails() {
                                 >
                                     <FolderSimplePlus size={20} weight={isInAnySpace ? 'fill' : 'regular'} />
                                 </button>
-                                <button className="p-3 text-gray-400 rounded-xl hover:text-blue-500 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50 transition-all">
-                                    <ShareNetwork size={20} weight="bold" />
-                                </button>
+                                <button
+                                     onClick={handleShareClick}
+                                     className="p-3 text-gray-400 rounded-xl hover:text-blue-500 hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50 transition-all"
+                                     title="Share Book"
+                                 >
+                                     <ShareNetwork size={20} weight="bold" />
+                                 </button>
                                 <button onClick={handleDelete} className="p-3 text-gray-400 rounded-xl hover:text-error hover:bg-neutral-100 dark:hover:bg-bg-dark-elevated/50 transition-all">
                                     <Trash size={20} weight="bold" />
                                 </button>
@@ -422,6 +517,14 @@ function BookDetails() {
                     </div>
                 </div>
             </Modal>
+
+            <ShareModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                shareTitle="Check out this book on Apex"
+                shareText={isValidAuthor(book?.author) ? `I'm reading "${book?.title}" by ${book.author} on Apex!` : `I'm reading "${book?.title}" on Apex!`}
+                shareUrl={shareUrl || `${window.location.origin}/share?type=book&title=${encodeURIComponent(book?.title || "")}${isValidAuthor(book?.author) ? `&author=${encodeURIComponent(book.author)}` : ''}`}
+            />
         </div>
     );
 }

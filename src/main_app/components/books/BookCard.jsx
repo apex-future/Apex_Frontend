@@ -9,6 +9,11 @@ import { BookContext } from '../../context/BookContextInstance';
 import useSpaceStore from '../../store/spaceStore';
 import useThemeStore from '../../store/themeStore';
 import Card from '../ui/Card';
+import apiClient from '../../services/apiClient';
+import syncService from '../../services/syncService';
+import db from '../../db/apex.db';
+import { showToastGlobal } from '../../hooks/useToast';
+import { isValidAuthor } from '../../utils/documentMetadata';
 
 const statusStyles = {
  literature: 'bg-blue-100 text-blue-600',
@@ -31,6 +36,8 @@ export default function BookCard({ book, onClick }) {
  const [showDeleteModal, setShowDeleteModal] = useState(false);
  const [showSpaceModal, setShowSpaceModal] = useState(false);
  const [showShareModal, setShowShareModal] = useState(false);
+ const [shareUrl, setShareUrl] = useState('');
+ const [isPreparingShare, setIsPreparingShare] = useState(false);
  const [selectedIds, setSelectedIds] = useState([]);
  const [syncPopover, setSyncPopover] = useState(null); // null | 'pending' | 'failed'
 
@@ -84,11 +91,76 @@ export default function BookCard({ book, onClick }) {
  setShowDeleteModal(true);
  };
 
- const handleShareClick = (e) => {
-   e.stopPropagation();
-   setShowMenu(false);
-   setShowShareModal(true);
- };
+  const handleShareClick = async (e) => {
+    e.stopPropagation();
+    setShowMenu(false);
+
+    let cloudId = book.supabaseId || book.recordId;
+
+    if (!cloudId) {
+      try {
+        const localRecord = await db.books.get(book.id);
+        if (localRecord?.supabaseId) {
+          cloudId = localRecord.supabaseId;
+          book.supabaseId = cloudId;
+        }
+      } catch (_) {}
+    }
+
+    if (!cloudId) {
+      if (!navigator.onLine) {
+        showToastGlobal('Connect to the internet to share a downloadable copy of this book.', 'warning');
+        setShareUrl(`${window.location.origin}/share?type=book&title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author || "")}`);
+        setShowShareModal(true);
+        return;
+      }
+
+      setIsPreparingShare(true);
+      showToastGlobal('Preparing shareable download link...', 'info', 2500);
+      try {
+        let file = book.file;
+        if (!file && book.fileBlob) {
+          const fileExt = book.fileType === 'application/epub+zip' ? '.epub' : '.pdf';
+          const fileName = book.title.endsWith(fileExt) ? book.title : book.title + fileExt;
+          file = new File([book.fileBlob], fileName, { type: book.fileType || 'application/pdf' });
+        }
+        if (file) {
+          const uploaded = await syncService.uploadBook(file, book.title, book.author || 'Unknown', book.id);
+          if (uploaded && uploaded.id) {
+            cloudId = uploaded.id;
+            book.supabaseId = cloudId;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to upload book before sharing:', err);
+      } finally {
+        setIsPreparingShare(false);
+      }
+    }
+
+    const validAuthor = isValidAuthor(book.author) ? book.author : '';
+    const authorParam = validAuthor ? `&author=${encodeURIComponent(validAuthor)}` : '';
+
+    if (cloudId) {
+      try {
+        const res = await apiClient.post(`/api/books/${cloudId}/share`);
+        const token = res.data?.share_token;
+        if (token) {
+          const fullUrl = `${window.location.origin}/share?type=book&id=${cloudId}&token=${token}&title=${encodeURIComponent(book.title)}${authorParam}`;
+          setShareUrl(fullUrl);
+          setShowShareModal(true);
+          return;
+        }
+      } catch (err) {
+        console.warn('Failed to obtain share token from backend:', err);
+      }
+    }
+
+    // Fallback
+    const fallbackUrl = `${window.location.origin}/share?type=book&title=${encodeURIComponent(book.title)}${authorParam}${cloudId ? `&id=${cloudId}` : ''}`;
+    setShareUrl(fallbackUrl);
+    setShowShareModal(true);
+  };
 
  return (
  <>
@@ -195,21 +267,25 @@ export default function BookCard({ book, onClick }) {
  <h3 className="font-semibold text-base sm:text-lg md:text-xl font-display text-text-primary truncate mb-1 group-hover:text-accent-primary transition-colors">
  {book.title}
  </h3>
- <p className="text-sm text-text-tertiary mb-3 text-left">by {book.author || "N/A"}</p>
-
- {/* Progress Bar */}
- <div className="w-full bg-black/5 dark:bg-white/5 rounded-full h-1">
- <div
- className="bg-accent-primary h-1 rounded-full transition-all duration-500"
- style={{ width: `${book.progress}%` }}
- />
- </div>
- <p className="text-xs text-text-tertiary mt-1 text-left">Page {book.currentPage || 0} of {book.totalPages || 0}</p>
- {book.lastAccessed && (
- <p className="text-[10px] text-text-placeholder mt-0.5 text-left">
- Last read: {new Date(book.lastAccessed).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
- </p>
+ {isValidAuthor(book.author) && (
+   <p className="text-sm text-text-tertiary mb-1 text-left">by {book.author}</p>
  )}
+
+ {/* Progress Bar with vertical padding */}
+ <div className="w-full mt-3.5 sm:mt-4">
+   <div className="w-full bg-black/5 dark:bg-white/5 rounded-full h-1">
+     <div
+       className="bg-accent-primary h-1 rounded-full transition-all duration-500"
+       style={{ width: `${book.progress}%` }}
+     />
+   </div>
+   <p className="text-xs text-text-tertiary mt-1.5 text-left">Page {book.currentPage || 0} of {book.totalPages || 0}</p>
+   {book.lastAccessed && (
+     <p className="text-[10px] text-text-placeholder mt-0.5 text-left">
+       Last read: {new Date(book.lastAccessed).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+     </p>
+   )}
+ </div>
  </div>
 
         <div className="flex justify-end gap-3 pt-2 mt-auto text-gray-400 items-center">
@@ -346,8 +422,8 @@ export default function BookCard({ book, onClick }) {
     isOpen={showShareModal}
     onClose={() => setShowShareModal(false)}
     shareTitle="Check out this book on Apex"
-    shareText={`I'm reading "${book.title}" by ${book.author || "Unknown Author"} on Apex!`}
-    shareUrl={`${window.location.origin}/share?type=book&title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author || "")}`}
+    shareText={isValidAuthor(book?.author) ? `I'm reading "${book.title}" by ${book.author} on Apex!` : `I'm reading "${book.title}" on Apex!`}
+    shareUrl={shareUrl || `${window.location.origin}/share?type=book&title=${encodeURIComponent(book.title)}${isValidAuthor(book?.author) ? `&author=${encodeURIComponent(book.author)}` : ''}`}
   />
  </>
  );

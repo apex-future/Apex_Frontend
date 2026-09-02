@@ -1,7 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Book, Highlighter, Note, DownloadSimple, ArrowRight, Quotes } from '@phosphor-icons/react';
+import { 
+    Book, 
+    BookOpen, 
+    Highlighter, 
+    Note, 
+    DownloadSimple, 
+    ArrowRight, 
+    Quotes, 
+    Check, 
+    Spinner, 
+    WarningCircle, 
+    ShieldCheck, 
+    FileText,
+    Sparkle,
+    Lightning,
+    Brain,
+    House
+} from '@phosphor-icons/react';
 import useThemeStore from '../store/themeStore';
+import db from '../db/apex.db';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Label from '../components/ui/Label';
+import EmptyState from '../components/ui/EmptyState';
+import BookCover from '../components/books/BookCover';
+import { isValidAuthor, cleanAuthor } from '../utils/documentMetadata';
+
+import logoLight from '../../assets/logo/logo-light-removebg-preview.png';
+import logoDark from '../../assets/logo/logo-dark-removebg-preview.png';
 
 const SharePage = () => {
     const [searchParams] = useSearchParams();
@@ -9,18 +36,175 @@ const SharePage = () => {
     const { resolvedTheme } = useThemeStore();
 
     const type = searchParams.get('type'); // 'book', 'highlight', 'note'
-    const title = searchParams.get('title');
-    const author = searchParams.get('author');
+    const bookId = searchParams.get('id') || searchParams.get('bookId');
+    const token = searchParams.get('token');
+    const paramTitle = searchParams.get('title');
+    const paramAuthor = searchParams.get('author');
     const text = searchParams.get('text');
     const note = searchParams.get('note');
 
-    // Default values if no params
+    // State for book sharing
+    const [bookMeta, setBookMeta] = useState(null);
+    const [isLoadingMeta, setIsLoadingMeta] = useState(false);
+    const [metaError, setMetaError] = useState(null);
+    const [downloadState, setDownloadState] = useState('idle'); // idle | downloading | downloaded | error
+    const [importState, setImportState] = useState('idle'); // idle | importing | error
+    const [statusText, setStatusText] = useState('');
+
+    const isLoggedIn = Boolean(localStorage.getItem('apex_token'));
+    const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+
+    // Fetch shared book details when bookId and token are provided
+    useEffect(() => {
+        if (type === 'book' && bookId && token) {
+            setIsLoadingMeta(true);
+            setMetaError(null);
+            const fetchUrl = `${apiBase}/api/books/shared/${bookId}?token=${encodeURIComponent(token)}`;
+            
+            fetch(fetchUrl)
+                .then(async (res) => {
+                    if (!res.ok) {
+                        const data = await res.json().catch(() => ({}));
+                        throw new Error(data.detail || `Server responded with ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then((data) => {
+                    setBookMeta(data);
+                    setIsLoadingMeta(false);
+                })
+                .catch((err) => {
+                    console.warn('[Apex Share] Failed to fetch shared metadata:', err.message);
+                    setMetaError(err.message);
+                    setIsLoadingMeta(false);
+                });
+        }
+    }, [type, bookId, token, apiBase]);
+
+    // Handle physical file download
+    const handleDownloadBook = async () => {
+        if (!bookId || !token) return;
+        try {
+            setDownloadState('downloading');
+            setStatusText('Connecting to secure file storage...');
+
+            const fileApiUrl = `${apiBase}/api/books/shared/${bookId}/file?token=${encodeURIComponent(token)}`;
+            const res = await fetch(fileApiUrl);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.detail || 'Download request rejected');
+            }
+
+            const data = await res.json();
+            if (!data.url) throw new Error('No download URL returned');
+
+            setStatusText('Downloading book file...');
+            const fileRes = await fetch(data.url);
+            if (!fileRes.ok) throw new Error('Failed to retrieve file content');
+
+            const blob = await fileRes.blob();
+            const ext = (data.file_type === 'application/epub+zip' || (data.title || '').endsWith('.epub')) ? '.epub' : '.pdf';
+            const rawTitle = data.title || paramTitle || 'Shared Book';
+            const safeName = rawTitle.toLowerCase().endsWith(ext) ? rawTitle : `${rawTitle}${ext}`;
+
+            // Trigger direct browser download
+            const blobUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = safeName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(blobUrl);
+            document.body.removeChild(a);
+
+            setDownloadState('downloaded');
+            setStatusText('Download completed successfully!');
+            setTimeout(() => {
+                setDownloadState('idle');
+                setStatusText('');
+            }, 4000);
+        } catch (err) {
+            console.error('[Apex Share] Download failed:', err);
+            setDownloadState('error');
+            setStatusText(err.message || 'Download failed. Please try again.');
+            setTimeout(() => {
+                setDownloadState('idle');
+                setStatusText('');
+            }, 4000);
+        }
+    };
+
+    // Handle importing book directly into recipient's Apex library
+    const handleImportToApex = async () => {
+        if (!bookId || !token) return;
+        try {
+            setImportState('importing');
+            setStatusText('Downloading and saving to library...');
+
+            const fileApiUrl = `${apiBase}/api/books/shared/${bookId}/file?token=${encodeURIComponent(token)}`;
+            const res = await fetch(fileApiUrl);
+            if (!res.ok) throw new Error('Failed to retrieve download link');
+
+            const data = await res.json();
+            const fileRes = await fetch(data.url);
+            if (!fileRes.ok) throw new Error('Failed to download book content');
+
+            const blob = await fileRes.blob();
+            const arrayBuffer = await blob.arrayBuffer();
+
+            const title = data.title || paramTitle || 'Shared Document';
+            const fileType = data.file_type || blob.type || 'application/pdf';
+
+            // Add to Dexie books
+            const newLocalId = await db.books.add({
+                title,
+                author: data.author || paramAuthor || 'Unknown',
+                fileType,
+                fileSize: blob.size,
+                fileBlob: arrayBuffer,
+                coverImage: data.cover_image_url || null,
+                totalPages: data.total_pages || 0,
+                uploadedAt: new Date().toISOString(),
+                lastReadAt: new Date().toISOString(),
+                progress: 0,
+                currentPage: 0,
+                status: 'new',
+                isLocal: true,
+                metadata: { bookmarks: [], highlights: [], tabs: [] },
+            });
+
+            await db.books.update(newLocalId, { local_id: newLocalId.toString() });
+
+            // Trigger sync if available
+            import('../services/syncService').then(m => m.default.triggerSync?.()).catch(() => {});
+
+            // Direct recipient to reader
+            navigate(`/reader/${newLocalId}`);
+        } catch (err) {
+            console.error('[Apex Share] Import failed:', err);
+            setImportState('error');
+            setStatusText(err.message || 'Failed to import book to Apex.');
+            setTimeout(() => {
+                setImportState('idle');
+                setStatusText('');
+            }, 3500);
+        }
+    };
+
+    // Missing type fallback
     if (!type) {
         return (
-            <div className={`min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-900 ${resolvedTheme}`}>
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Invalid Share Link</h1>
-                    <button onClick={() => navigate('/')} className="text-blue-600 hover:underline">Go Home</button>
+            <div className={`min-h-screen flex items-center justify-center p-4 bg-bg-primary text-text-primary ${resolvedTheme}`}>
+                <div className="w-full max-w-md">
+                    <EmptyState
+                        icon={WarningCircle}
+                        title="Invalid Share Link"
+                        description="This share link is missing required parameters. Please check the URL or request a new link."
+                        action={{
+                            label: 'Go to Home',
+                            onClick: () => navigate('/')
+                        }}
+                    />
                 </div>
             </div>
         );
@@ -28,17 +212,234 @@ const SharePage = () => {
 
     const renderContent = () => {
         if (type === 'book') {
-            return (
-                <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl border border-gray-100 dark:border-neutral-700 p-8 max-w-lg w-full text-center mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="w-16 h-16 bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                        <Book size={32} weight="fill" />
+            const displayTitle = bookMeta?.title || paramTitle || 'Untitled Book';
+            const candidateAuthor = bookMeta?.author || paramAuthor;
+            const validAuthor = isValidAuthor(candidateAuthor) ? cleanAuthor(candidateAuthor) : null;
+            const fileType = bookMeta?.file_type || ((displayTitle.endsWith('.epub')) ? 'application/epub+zip' : 'application/pdf');
+            const isEpub = fileType.includes('epub');
+            const formatBadge = isEpub ? 'EPUB' : 'PDF';
+            const fileSizeFormatted = bookMeta?.file_size 
+                ? `${(bookMeta.file_size / (1024 * 1024)).toFixed(1)} MB` 
+                : null;
+            const pagesFormatted = bookMeta?.total_pages && bookMeta.total_pages > 0
+                ? `${bookMeta.total_pages} pages`
+                : null;
+
+            const hasDownloadCapability = Boolean(bookId && token && !metaError);
+
+            if (metaError) {
+                return (
+                    <div className="w-full max-w-lg mt-6">
+                        <EmptyState
+                            icon={WarningCircle}
+                            title="Unable to Access Shared Book"
+                            description="This share link has expired or the token is invalid. Please request an updated share link from the sender."
+                            action={{
+                                label: 'Go to Apex Home',
+                                onClick: () => navigate('/')
+                            }}
+                        />
                     </div>
-                    <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Book Recommendation</h2>
-                    <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-2">{title}</h1>
-                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">by {author}</p>
-                    
-                    <div className="p-4 bg-gray-50 dark:bg-neutral-900 rounded-xl mb-8">
-                        <p className="text-gray-600 dark:text-gray-400 italic">"I'm reading this on Apex right now, you should check it out!"</p>
+                );
+            }
+
+            return (
+                <div className="w-full flex flex-col items-center gap-12 sm:gap-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* Hero Book Presentation (Directly on background) */}
+                    <div className="w-full flex flex-col md:flex-row gap-8 lg:gap-14 items-center md:items-start pt-2 sm:pt-6">
+                            
+                            {/* Left: 3D Physical Book Mockup */}
+                            <div className="flex flex-col items-center flex-shrink-0">
+                                <div className="w-48 h-72 sm:w-52 sm:h-80 md:w-56 md:h-88 rounded-xl sm:rounded-2xl overflow-hidden shadow-md sm:shadow-lg shadow-black/10 dark:shadow-black/40 border border-black/10 dark:border-white/15 relative transform hover:scale-[1.02] transition-transform duration-500 bg-white">
+                                    {/* Spine Shadow Effect */}
+                                    <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/15 to-transparent pointer-events-none z-20" />
+                                    
+                                    {/* Floating Format Pill */}
+                                    <div className="absolute top-3 right-3 z-20">
+                                        <Label variant="accent" color="purple" size="sm" content={formatBadge} />
+                                    </div>
+
+                                    {bookMeta?.cover_image_url ? (
+                                        <img 
+                                            src={bookMeta.cover_image_url} 
+                                            alt={displayTitle} 
+                                            className="w-full h-full object-cover" 
+                                        />
+                                    ) : (
+                                        <BookCover title={displayTitle} author={validAuthor} className="w-full h-full" />
+                                    )}
+                                </div>
+
+                                {/* Security Badge */}
+                                {hasDownloadCapability && (
+                                    <div className="mt-3.5 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                                        <ShieldCheck size={16} weight="fill" />
+                                        <span>Verified Digital Copy</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right: Book Details & Action Hub */}
+                            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left min-w-0 w-full">
+                                {/* Kicker */}
+                                <div className="mb-2">
+                                    <Label variant="neutral" size="sm" content="Shared Book Copy" />
+                                </div>
+
+                                {/* Title */}
+                                <h1 className="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-text-primary tracking-tight leading-tight mb-2 break-words max-w-full">
+                                    {displayTitle}
+                                </h1>
+
+                                {/* Author - Only rendered when a genuine author is known */}
+                                {validAuthor && (
+                                    <p className="text-base text-text-secondary mb-5">
+                                        by <span className="font-semibold text-text-primary">{validAuthor}</span>
+                                    </p>
+                                )}
+
+                                {/* Metadata Badges */}
+                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-6">
+                                    <Label variant="neutral" size="sm" content={`${formatBadge} Document`} />
+                                    {pagesFormatted && <Label variant="neutral" size="sm" content={pagesFormatted} />}
+                                    {fileSizeFormatted && <Label variant="neutral" size="sm" content={fileSizeFormatted} />}
+                                </div>
+
+                                {/* Recommendation Quote Box */}
+                                <div className="w-full p-4 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5 mb-6 text-left relative">
+                                    <Quotes size={22} weight="fill" className="text-purple-500/40 mb-1" />
+                                    <p className="text-sm text-text-secondary italic leading-relaxed">
+                                        "I'm reading this book on Apex right now. Open it directly in Apex to read with AI study tools, or download a local copy!"
+                                    </p>
+                                </div>
+
+                                {/* Action Controls */}
+                                {hasDownloadCapability ? (
+                                    <div className="w-full flex flex-col gap-3">
+                                        <div className="w-full flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                                            {/* Primary: Open in Apex (Promoted focus) */}
+                                            <div className="flex-1 w-full">
+                                                {isLoggedIn ? (
+                                                    <Button 
+                                                        variant="primary" 
+                                                        onClick={handleImportToApex}
+                                                        disabled={importState === 'importing'}
+                                                        className="!py-3.5 !text-sm !rounded-2xl shadow-lg shadow-purple-900/25"
+                                                    >
+                                                        {importState === 'importing' ? (
+                                                            <>
+                                                                <Spinner size={18} className="animate-spin" />
+                                                                <span>Adding to Library...</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <BookOpen size={18} weight="bold" />
+                                                                <span>Open in Apex Library</span>
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                ) : (
+                                                    <Button 
+                                                        variant="primary" 
+                                                        onClick={() => navigate('/signup')}
+                                                        className="!py-3.5 !text-sm !rounded-2xl shadow-lg shadow-purple-900/25"
+                                                    >
+                                                        <Sparkle size={18} weight="fill" />
+                                                        <span>Read with AI on Apex</span>
+                                                    </Button>
+                                                )}
+                                            </div>
+
+                                            {/* Secondary: Download Physical Copy */}
+                                            <div className="flex-1 w-full">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    onClick={handleDownloadBook}
+                                                    disabled={downloadState === 'downloading'}
+                                                    className="!py-3.5 !text-sm !rounded-2xl"
+                                                >
+                                                    {downloadState === 'downloading' ? (
+                                                        <>
+                                                            <Spinner size={18} className="animate-spin" />
+                                                            <span>Downloading Book...</span>
+                                                        </>
+                                                    ) : downloadState === 'downloaded' ? (
+                                                        <>
+                                                            <Check size={18} weight="bold" className="text-emerald-500" />
+                                                            <span>Download Complete!</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <DownloadSimple size={18} weight="bold" />
+                                                            <span>Download Copy ({formatBadge})</span>
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        {statusText && (
+                                            <p className={`text-xs text-center md:text-left font-medium mt-1 ${downloadState === 'error' || importState === 'error' ? 'text-red-500' : 'text-text-tertiary'}`}>
+                                                {statusText}
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="w-full flex flex-col gap-3">
+                                        <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
+                                            Direct file download is enabled for links shared via Apex v2.2+. Ask the sender to re-share.
+                                        </p>
+                                        <Button variant="primary" onClick={() => navigate('/signup')} className="!py-3.5 !text-sm !rounded-2xl">
+                                            <span>Get Apex Free</span>
+                                            <ArrowRight size={16} weight="bold" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                    {/* Feature Strip (Why Apex) */}
+                    <div className="w-full flex flex-col gap-4">
+                        <div className="text-center">
+                            <h3 className="font-display font-bold text-lg sm:text-xl text-text-primary">
+                                Read Smarter with Apex
+                            </h3>
+                            <p className="text-xs sm:text-sm text-text-tertiary mt-1">
+                                An intelligent reader built for deep focus, comprehension, and active recall.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <Card className="p-5 flex flex-col items-start gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                                    <Sparkle size={20} weight="fill" />
+                                </div>
+                                <h4 className="font-bold text-sm text-text-primary">AI Copilot & Explanations</h4>
+                                <p className="text-xs text-text-tertiary leading-relaxed">
+                                    Ask questions, explain complex ideas simply, and translate unfamiliar phrases right on the page.
+                                </p>
+                            </Card>
+
+                            <Card className="p-5 flex flex-col items-start gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                    <Lightning size={20} weight="fill" />
+                                </div>
+                                <h4 className="font-bold text-sm text-text-primary">Active Recall & Flashcards</h4>
+                                <p className="text-xs text-text-tertiary leading-relaxed">
+                                    Turn your quotes and notes into spaced-repetition flashcards to remember what you read long-term.
+                                </p>
+                            </Card>
+
+                            <Card className="p-5 flex flex-col items-start gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                    <Brain size={20} weight="fill" />
+                                </div>
+                                <h4 className="font-bold text-sm text-text-primary">Study Quests & Streaks</h4>
+                                <p className="text-xs text-text-tertiary leading-relaxed">
+                                    Stay motivated with daily reading streaks, XP rewards, exam countdowns, and progress tracking.
+                                </p>
+                            </Card>
+                        </div>
                     </div>
                 </div>
             );
@@ -46,46 +447,60 @@ const SharePage = () => {
 
         if (type === 'highlight') {
             return (
-                <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl border border-gray-100 dark:border-neutral-700 p-8 max-w-lg w-full mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-300 to-orange-400" />
-                    <div className="w-12 h-12 bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 rounded-xl flex items-center justify-center mb-6">
-                        <Highlighter size={24} weight="fill" />
+                <Card className="p-8 max-w-lg w-full mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500" />
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 rounded-xl flex items-center justify-center">
+                            <Highlighter size={20} weight="fill" />
+                        </div>
+                        <div>
+                            <Label variant="warning" size="sm" content="Highlighted Quote" />
+                        </div>
                     </div>
-                    <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Highlighted Quote</h2>
                     
-                    <div className="relative pl-6">
+                    <div className="relative pl-6 mb-6">
                         <Quotes size={32} weight="fill" className="absolute -top-2 -left-2 text-amber-200 dark:text-amber-500/20" />
-                        <p className="text-xl md:text-2xl font-serif text-gray-800 dark:text-gray-200 leading-relaxed relative z-10">
+                        <p className="text-xl font-serif text-text-primary leading-relaxed relative z-10">
                             {text}
                         </p>
                     </div>
-                </div>
+
+                    <Button variant="primary" onClick={() => navigate('/signup')}>
+                        <span>Read on Apex</span>
+                        <ArrowRight size={14} weight="bold" />
+                    </Button>
+                </Card>
             );
         }
 
         if (type === 'note') {
             return (
-                <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl border border-gray-100 dark:border-neutral-700 max-w-xl w-full mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col overflow-hidden">
-                    <div className="p-6 md:p-8 bg-gray-50 dark:bg-neutral-900/50 border-b border-gray-100 dark:border-neutral-800">
-                        <div className="flex items-center gap-3 mb-4">
-                            <Highlighter size={20} className="text-gray-400" />
-                            <h2 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Source Quote</h2>
+                <Card className="max-w-xl w-full mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+                    <div className="p-6 bg-black/[0.02] dark:bg-white/[0.02] border-b border-black/5 dark:border-white/5">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Highlighter size={18} className="text-text-tertiary" />
+                            <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider">Source Quote</span>
                         </div>
-                        <p className="text-lg font-serif text-gray-600 dark:text-gray-400 italic border-l-4 border-gray-300 dark:border-gray-600 pl-4">
+                        <p className="text-base font-serif text-text-secondary italic border-l-2 border-purple-500/40 pl-3">
                             "{text}"
                         </p>
                     </div>
                     
-                    <div className="p-6 md:p-8 relative">
-                        <div className="absolute top-0 right-8 -mt-5 w-10 h-10 bg-accent-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-accent-primary/30">
-                            <Note size={20} weight="fill" />
+                    <div className="p-6">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Note size={18} weight="fill" className="text-purple-500" />
+                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Personal Note</span>
                         </div>
-                        <h2 className="text-xs font-bold text-accent-primary uppercase tracking-widest mb-4 mt-2">Personal Note</h2>
-                        <p className="text-lg md:text-xl text-gray-900 dark:text-white leading-relaxed">
+                        <p className="text-lg text-text-primary leading-relaxed mb-6">
                             {note}
                         </p>
+
+                        <Button variant="primary" onClick={() => navigate('/signup')}>
+                            <span>Take Notes on Apex</span>
+                            <ArrowRight size={14} weight="bold" />
+                        </Button>
                     </div>
-                </div>
+                </Card>
             );
         }
 
@@ -93,50 +508,42 @@ const SharePage = () => {
     };
 
     return (
-        <div className={`min-h-screen bg-gray-50 dark:bg-neutral-900 flex flex-col items-center p-4 md:p-8 font-sans ${resolvedTheme}`}>
-            {/* Header */}
-            <div className="w-full max-w-5xl flex justify-between items-center py-4">
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L2 22H22L12 2Z" fill="white"/>
-                        </svg>
+        <div className={`min-h-screen flex flex-col bg-bg-primary text-text-primary font-sans transition-colors duration-300 ${resolvedTheme}`}>
+            {/* Top Navigation Bar */}
+            <header className="w-full border-b border-black/5 dark:border-white/5 bg-bg-primary/80 backdrop-blur-md sticky top-0 z-50">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+                    {/* Brand / Logo */}
+                    <div className="flex items-center gap-2.5 cursor-pointer select-none" onClick={() => navigate('/')}>
+                        <img src={logoLight} alt="Apex Logo" className="h-7 w-auto object-contain dark:hidden" />
+                        <img src={logoDark} alt="Apex Logo" className="h-7 w-auto object-contain hidden dark:block" />
+                        <span className="font-display font-black text-xl tracking-tight text-text-primary">Apex</span>
                     </div>
-                    <span className="font-display font-black text-xl tracking-tight text-gray-900 dark:text-white">Apex</span>
+
+                    {/* Right CTA */}
+                    {!isLoggedIn && (
+                        <div className="flex items-center gap-2.5">
+                            <Button variant="ghost" fullWidth={false} onClick={() => navigate('/login')}>
+                                Sign In
+                            </Button>
+                            <Button variant="primary" fullWidth={false} onClick={() => navigate('/signup')}>
+                                Get Apex
+                            </Button>
+                        </div>
+                    )}
                 </div>
-                
-                <button 
-                    onClick={() => navigate('/signup')}
-                    className="px-4 py-2 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white text-sm font-bold rounded-full transition-colors flex items-center gap-2 shadow-sm"
-                >
-                    Get Apex <ArrowRight size={14} weight="bold" />
-                </button>
-            </div>
+            </header>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col items-center justify-center w-full max-w-5xl">
+            <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col items-center justify-center">
                 {renderContent()}
+            </main>
 
-                {/* Call to action */}
-                <div className="mt-16 text-center max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Read better with Apex</h3>
-                    <p className="text-gray-500 dark:text-gray-400 mb-6">
-                        Apex is a modern reader that helps you focus, understand, and remember what you read.
-                    </p>
-                    <button 
-                        onClick={() => navigate('/signup')}
-                        className="px-8 py-3.5 bg-accent-primary hover:bg-indigo-600 text-white font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-xl shadow-accent-primary/20 flex items-center justify-center gap-2 mx-auto"
-                    >
-                        <DownloadSimple size={20} weight="bold" />
-                        Start reading for free
-                    </button>
-                </div>
-            </div>
-            
             {/* Footer */}
-            <div className="w-full text-center py-8 mt-auto">
-                <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">Shared via Apex Reader</p>
-            </div>
+            <footer className="w-full border-t border-black/5 dark:border-white/5 py-6 text-center mt-auto">
+                <p className="text-xs text-text-tertiary">
+                    Shared via <span className="font-semibold text-text-secondary">Apex</span> &bull; Reach Your Apex
+                </p>
+            </footer>
         </div>
     );
 };
