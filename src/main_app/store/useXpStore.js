@@ -33,10 +33,9 @@ const useXpStore = create(
       lastMultiplierApplied: 1.0,
 
       // ─── Game profile extras (synced from server) ───────────────────────────
-      streakFreezeHeld: false,
+      streakFreezesHeld: 0,
       refreshTokens: 0,
       lifetimeQuestsCompleted: 0,
-      unclaimedRewards: [],
 
       // ─── Last sync timestamp (server-provided, never client clock) ──────────
       lastSyncedAt: null,
@@ -49,6 +48,9 @@ const useXpStore = create(
 
       // ─── Flush Lock ─────────────────────────────────────────────────────────
       isFlushingXp: false,
+
+      // ─── Audio ──────────────────────────────────────────────────────────────
+      soundEnabled: true,
 
       // ═══════════════════════════════════════════════════════════════════════
       // ACTIONS
@@ -110,7 +112,15 @@ const useXpStore = create(
             actions: actionsToFlush,
           });
 
-          const { xp_awarded, multiplier_applied, total_xp, multiplier_expires_at, streak_freeze_held, refresh_tokens, lifetime_quests_completed, unclaimed_rewards } = response.data;
+          const {
+            xp_awarded,
+            multiplier_applied,
+            total_xp,
+            multiplier_expires_at,
+            streak_freezes_held,
+            refresh_tokens,
+            lifetime_quests_completed,
+          } = response.data;
           
           if (import.meta.env.DEV) console.log(`[XP Sync] Flushed to server. Awarded: ${xp_awarded}, Multiplier: ${multiplier_applied}x, Total: ${total_xp}`);
 
@@ -130,10 +140,9 @@ const useXpStore = create(
             isFlushingXp: false,
             multiplierExpiresAt: multiplier_expires_at ?? state.multiplierExpiresAt,
             lastMultiplierApplied: multiplier_applied ?? state.lastMultiplierApplied,
-            streakFreezeHeld: streak_freeze_held ?? state.streakFreezeHeld,
+            streakFreezesHeld: streak_freezes_held ?? state.streakFreezesHeld,
             refreshTokens: refresh_tokens ?? state.refreshTokens,
             lifetimeQuestsCompleted: lifetime_quests_completed ?? state.lifetimeQuestsCompleted,
-            unclaimedRewards: unclaimed_rewards ?? state.unclaimedRewards,
           }));
 
           localStorage.removeItem('apex_xp_sync_pending');
@@ -189,14 +198,14 @@ const useXpStore = create(
             : cloudUpdatedAt !== null; // first sync ever → cloud wins
 
         // ── streak_freeze_held, refresh_tokens: cloud wins when newer ─────────
-        const resolvedStreakFreezeHeld = cloudIsNewer
-          ? (profileData.streak_freezes_held ?? profileData.streak_freeze_held ?? state.streakFreezeHeld)
-          : state.streakFreezeHeld;
+        const resolvedStreakFreezesHeld = cloudIsNewer
+          ? (profileData.streak_freezes_held ?? state.streakFreezesHeld)
+          : state.streakFreezesHeld;
 
         if (profileData.streak_freezes_held !== undefined && profileData.streak_freezes_held !== null) {
           try {
             const useStudyStore = (await import('./studyStore')).default;
-            useStudyStore.getState().seedFromSupabase({ streak_freezes_held: profileData.streak_freezes_held });
+            useStudyStore.getState().updateFreezesHeld(profileData.streak_freezes_held);
           } catch (e) {
             // ignore async import failure
           }
@@ -242,12 +251,9 @@ const useXpStore = create(
           lastUpdatedAt:            resolvedUpdatedAt,
           multiplierExpiresAt:      resolvedExpiry,
           lastMultiplierApplied:    profileData.last_multiplier_applied ?? state.lastMultiplierApplied,
-          streakFreezeHeld:         resolvedStreakFreezeHeld,
+          streakFreezesHeld:        resolvedStreakFreezesHeld,
           refreshTokens:            resolvedRefreshTokens,
           lifetimeQuestsCompleted:  profileData.lifetime_quests_completed ?? state.lifetimeQuestsCompleted,
-          unclaimedRewards:         cloudIsNewer
-                                      ? (profileData.unclaimed_rewards ?? state.unclaimedRewards)
-                                      : state.unclaimedRewards,
           lastSyncedAt:             profileData.synced_at ?? state.lastSyncedAt,
         });
       },
@@ -269,6 +275,21 @@ const useXpStore = create(
       },
 
       /**
+       * setSoundEnabled — persisted mute preference.
+       * Also calls soundManager.setEnabled so the singleton
+       * stays in sync with the store immediately.
+       */
+      setSoundEnabled: (val) => {
+        set({ soundEnabled: Boolean(val) });
+        import('../utils/soundManager').then(({ default: sm }) => {
+          sm.setEnabled(Boolean(val));
+        });
+        if (import.meta.env.DEV) {
+          console.log('[XP Store] soundEnabled set to:', val);
+        }
+      },
+
+      /**
        * resetXpStore — resets all state to initial values.
        * Called on logout.
        */
@@ -282,13 +303,56 @@ const useXpStore = create(
           isFlushingXp: false,
           multiplierExpiresAt: null,
           lastMultiplierApplied: 1.0,
-          streakFreezeHeld: false,
+          streakFreezesHeld: 0,
           refreshTokens: 0,
           lifetimeQuestsCompleted: 0,
-          unclaimedRewards: [],
+          soundEnabled: true,
           lastSyncedAt: null,
           lastUpdatedAt: null,
           xpLog: [],
+        });
+      },
+
+      /**
+       * applyInventoryUpdate — called after POST /claim returns.
+       * Updates streakFreezesHeld and refreshTokens from the
+       * server-authoritative inventory object in the claim response.
+       * Also updates multiplierExpiresAt if the claim triggered an
+       * overflow multiplier.
+       */
+      applyInventoryUpdate: (inventory) => {
+        if (!inventory) return;
+        set((state) => {
+          const updates = {};
+
+          if (inventory.streak_freezes_held !== undefined
+              && inventory.streak_freezes_held !== null) {
+            updates.streakFreezesHeld = Math.min(
+              Math.max(0, inventory.streak_freezes_held), 2);
+          }
+
+          if (inventory.refresh_tokens !== undefined
+              && inventory.refresh_tokens !== null) {
+            updates.refreshTokens = Math.min(
+              Math.max(0, inventory.refresh_tokens), 5);
+          }
+
+          if (inventory.multiplier_expires_at) {
+            // Take whichever expiry is further in the future
+            const incoming = new Date(inventory.multiplier_expires_at);
+            const existing = state.multiplierExpiresAt
+              ? new Date(state.multiplierExpiresAt)
+              : new Date(0);
+            updates.multiplierExpiresAt = incoming > existing
+              ? inventory.multiplier_expires_at
+              : state.multiplierExpiresAt;
+          }
+
+          if (import.meta.env.DEV) {
+            console.log('[XP Store] applyInventoryUpdate:', updates);
+          }
+
+          return updates;
         });
       },
     }),

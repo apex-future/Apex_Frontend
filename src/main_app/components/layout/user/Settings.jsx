@@ -3,7 +3,7 @@ import { showToastGlobal } from '../../../hooks/useToast';
 import {
   ArrowLeft, Moon, Sun, Monitor, Bell, HardDrives, DownloadSimple, Trash, Question,
   FileText, ArrowSquareOut, BookOpen, Robot, SignOut, User, UserMinus, SlidersHorizontal, Bug,
-  ArrowCounterClockwise
+  ArrowCounterClockwise, SpeakerHigh, SpeakerSlash
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +11,7 @@ import { AnimatePresence } from 'framer-motion';
 import useThemeStore from '../../../store/themeStore';
 import useSettingsStore from '../../../store/settingsStore';
 import useOnboardingStore from '../../../store/useOnboardingStore';
+import useXpStore from '../../../store/useXpStore';
 import { APP_VERSION } from '../../../constants/version';
 import Modal from '../../ui/Modal';
 import db from '../../../db/apex.db';
@@ -25,6 +26,8 @@ function Settings({ onLogout }) {
     // Global state for theme
     const { theme, setTheme } = useThemeStore();
     const { resetTours } = useOnboardingStore();
+    const soundEnabled = useXpStore((s) => s.soundEnabled);
+    const setSoundEnabled = useXpStore((s) => s.setSoundEnabled);
 
     // Settings from store
     const {
@@ -451,6 +454,13 @@ function Settings({ onLogout }) {
                         checked={notifications.studyTips}
                         onChange={(e) => updateNotification('studyTips', e.target.checked)}
                     />
+                    <ToggleRow
+                        icon={soundEnabled ? <SpeakerHigh size={18} weight="bold" /> : <SpeakerSlash size={18} weight="bold" />}
+                        label="Sound Effects"
+                        desc="Play sounds for quest completion, chest opening, and level up moments."
+                        checked={soundEnabled}
+                        onChange={(e) => setSoundEnabled(e.target.checked)}
+                    />
                 </SettingSection>
 
                 {/* Data & Storage */}
@@ -593,11 +603,18 @@ const SettingSection = ({ title, icon, children }) => (
     </div>
 );
 
-const ToggleRow = ({ label, desc, checked, onChange }) => (
+const ToggleRow = ({ label, desc, checked, onChange, icon }) => (
     <div className="flex items-center justify-between p-4 border-b border-black/10 dark:border-white/10 last:border-0 hover:bg-bg-subtle/50 transition-colors">
-        <div className="pr-4">
-            <p className="text-sm font-medium text-text-primary">{label}</p>
-            {desc && <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">{desc}</p>}
+        <div className="flex items-center gap-3 pr-4">
+            {icon && (
+                <div className="p-2 rounded-lg bg-bg-subtle text-text-secondary shrink-0">
+                    {icon}
+                </div>
+            )}
+            <div>
+                <p className="text-sm font-medium text-text-primary">{label}</p>
+                {desc && <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">{desc}</p>}
+            </div>
         </div>
         <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
             <input type="checkbox" className="sr-only peer" checked={checked} onChange={onChange} />

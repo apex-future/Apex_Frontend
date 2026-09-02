@@ -393,6 +393,22 @@ const useStudyStore = create(
         }
       },
 
+      /**
+       * updateFreezesHeld — updates the streak freeze count
+       * directly from the game profile (sourced via useXpStore
+       * seedFromServer). Bypasses the streak guard in
+       * seedFromSupabase, which is only meant to protect
+       * streak count data, not inventory data.
+       */
+      updateFreezesHeld: (count) => {
+        const clamped = Math.min(Math.max(0, count), 2);
+        set({ streakFreezesHeld: clamped });
+        if (import.meta.env.DEV) {
+          console.log(
+            '[Study Store] streakFreezesHeld updated to:', clamped);
+        }
+      },
+
       setExamDate: (date) => set({ examDate: date }),
       setExamName: (name) => set({ examName: name }),
       resetStudyData: () => set({

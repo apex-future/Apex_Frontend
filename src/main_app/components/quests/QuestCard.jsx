@@ -16,6 +16,7 @@ import {
   ArrowsClockwise,
 } from '@phosphor-icons/react';
 import ListItem from '../ui/ListItem';
+import soundManager from '../../utils/soundManager';
 
 // ─── Subcategory icon map ─────────────────────────────────────────────────────
 const SUBCATEGORY_ICONS = {
@@ -64,6 +65,32 @@ if (!document.getElementById(SHIMMER_STYLE_ID)) {
     .quest-strikethrough.striking::after {
       --strike-width: 100%;
     }
+    @keyframes quest-bar-flash {
+      0%   { opacity: 0; }
+      20%  { opacity: 0.6; }
+      100% { opacity: 0; }
+    }
+    .quest-bar-flash-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255,255,255,0.8) 50%,
+        transparent 100%
+      );
+      border-radius: 9999px;
+      pointer-events: none;
+      animation: quest-bar-flash 0.45s ease-out forwards;
+    }
+    @keyframes quest-complete-text-in {
+      0%   { transform: scale(0.6); opacity: 0; }
+      70%  { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1.0); opacity: 1; }
+    }
+    .quest-complete-text {
+      animation: quest-complete-text-in 0.25s ease-out forwards;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -109,11 +136,29 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
   const particleContainerRef = useRef(null);
   const [justCompleted, setJustCompleted] = useState(false);
   const [localQuest, setLocalQuest] = useState(quest);
+  const prevCompletedRef = useRef(false);
+  const [showBarFlash, setShowBarFlash] = useState(false);
 
   // Sync external prop changes
   useEffect(() => {
     setLocalQuest(quest);
   }, [quest]);
+
+  // Detect quest completion transition — fires animation + sound
+  useEffect(() => {
+    const isNowCompleted = quest?.completed ?? false;
+    const wasCompleted = prevCompletedRef.current;
+
+    if (!wasCompleted && isNowCompleted) {
+      // Sound fires immediately — no delay
+      soundManager.play('quest_complete');
+      // Animation sequence
+      runCompletionAnimation();
+    }
+
+    prevCompletedRef.current = isNowCompleted;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quest?.completed]);
 
   const { id, copy, action, target, unit, subcategory } = localQuest;
   const progress = localQuest.progress ?? 0;
@@ -125,37 +170,53 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
 
   // ─── Completion animation sequence ─────────────────────────────────────────
   const runCompletionAnimation = () => {
-    console.log('[Quest Card] Completion animation started:', id);
+    if (import.meta.env.DEV) {
+      console.log('[Quest Card] Completion animation started:', id);
+    }
 
-    setTimeout(() => {
-      setJustCompleted(true);
-    }, 10);
+    // t=0ms — strikethrough + bar flash
+    setJustCompleted(true);
+    setShowBarFlash(true);
 
+    // Clear bar flash after animation completes
+    setTimeout(() => setShowBarFlash(false), 500);
+
+    // t=350ms — particle burst (12 particles, 360°, purple + gold)
     setTimeout(() => {
       if (!particleContainerRef.current) return;
       const container = particleContainerRef.current;
       const rect = container.getBoundingClientRect();
 
-      const COLORS = ['#A855F7', '#7C3AED', '#C084FC', '#DDD6FE'];
-      const PARTICLE_COUNT = 8;
+      const COLORS = [
+        '#A855F7', '#7C3AED', '#C084FC', '#DDD6FE',
+        '#F59E0B', '#FCD34D', '#E9D5FF', '#8B5CF6',
+        '#F59E0B', '#A855F7', '#7C3AED', '#FCD34D',
+      ];
+      const PARTICLE_COUNT = 12;
+      const originX = rect.right - 20;
+      const originY = rect.top + rect.height / 2;
 
       for (let i = 0; i < PARTICLE_COUNT; i++) {
         const dot = document.createElement('div');
+        const size = i % 3 === 0 ? 5 : 3;
         dot.style.cssText = `
           position: fixed;
-          width: 4px;
-          height: 4px;
+          width: ${size}px;
+          height: ${size}px;
           border-radius: 50%;
-          background: ${COLORS[i % COLORS.length]};
+          background: ${COLORS[i]};
           pointer-events: none;
           z-index: 9999;
-          left: ${rect.right - 16}px;
-          top: ${rect.top + rect.height / 2}px;
+          left: ${originX}px;
+          top: ${originY}px;
         `;
         document.body.appendChild(dot);
 
         const angle = (Math.PI * 2 * i) / PARTICLE_COUNT;
-        const distance = 30 + Math.random() * 25;
+        // Varied distances — inner and outer ring
+        const distance = i % 2 === 0
+          ? 28 + Math.random() * 20
+          : 45 + Math.random() * 30;
         const tx = Math.cos(angle) * distance;
         const ty = Math.sin(angle) * distance;
 
@@ -163,12 +224,13 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
           x: tx,
           y: ty,
           opacity: 0,
-          duration: 0.6,
+          duration: 0.7,
           ease: 'power2.out',
+          delay: Math.random() * 0.08,
           onComplete: () => dot.remove(),
         });
       }
-    }, 650);
+    }, 350);
   };
 
   return (
@@ -196,21 +258,37 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
 
             {/* Progress bar */}
             <div className="flex-1 h-4 rounded-full bg-black/5 dark:bg-white/10 relative overflow-hidden shadow-inner">
-              {/* Base grey text */}
-              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-text-tertiary">
-                {progress} / {target}{unit ? ` ${unit}` : ''}
-              </div>
-
-              {/* Clipped Fill Layer */}
-              <div 
-                className="absolute inset-0 transition-all [transition-duration:400ms] ease-out"
-                style={{ clipPath: `inset(0 ${100 - fillPercent}% 0 0 round 9999px)` }}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] ${inProgress ? 'quest-shimmer' : ''}`} />
-                
-                {/* White text */}
-                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow-sm">
+              {/* Base grey text — hidden when completed */}
+              {!completed && (
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-text-tertiary">
                   {progress} / {target}{unit ? ` ${unit}` : ''}
+                </div>
+              )}
+
+              {/* Clipped fill layer */}
+              <div
+                className="absolute inset-0 transition-all [transition-duration:400ms] ease-out"
+                style={{
+                  clipPath: `inset(0 ${100 - fillPercent}% 0 0 round 9999px)`,
+                }}
+              >
+                {/* Gradient fill */}
+                <div className={`absolute inset-0 bg-gradient-to-r from-purple-900 via-purple-600 to-[#c084fc] ${inProgress && !completed ? 'quest-shimmer' : ''}`} />
+
+                {/* Completion flash overlay */}
+                {showBarFlash && (
+                  <div className="quest-bar-flash-overlay" />
+                )}
+
+                {/* Progress text — or completion label */}
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow-sm">
+                  {completed ? (
+                    <span className="quest-complete-text flex items-center gap-0.5">
+                      Complete ✓
+                    </span>
+                  ) : (
+                    `${progress} / ${target}${unit ? ` ${unit}` : ''}`
+                  )}
                 </div>
               </div>
             </div>
@@ -221,10 +299,36 @@ export default function QuestCard({ quest, chestClaimed, onChestClick, onProgres
                 <motion.div
                   className="cursor-pointer"
                   onClick={onChestClick}
-                  animate={{ rotate: [0, -8, 8, -8, 8, -4, 4, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 1.5 }}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{
+                    scale: [0, 1.25, 0.9, 1.05, 1],
+                    opacity: 1,
+                    rotate: justCompleted
+                      ? [0, 0, 0, 0, 0]
+                      : [0, -8, 8, -8, 8, -4, 4, 0],
+                  }}
+                  transition={justCompleted ? {
+                    scale: {
+                      duration: 0.5,
+                      ease: 'easeOut',
+                      times: [0, 0.4, 0.6, 0.8, 1],
+                    },
+                    opacity: { duration: 0.15 },
+                    rotate: { duration: 0 },
+                  } : {
+                    scale: { duration: 0 },
+                    opacity: { duration: 0 },
+                    rotate: {
+                      duration: 0.6,
+                      repeat: Infinity,
+                      repeatDelay: 1.5,
+                    },
+                  }}
                 >
-                  <ChestClosed className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" color="#7C3AED" />
+                  <ChestClosed
+                    className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8"
+                    color="#7C3AED"
+                  />
                 </motion.div>
               )}
               {completed && chestClaimed && (

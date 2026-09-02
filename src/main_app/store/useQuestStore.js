@@ -14,9 +14,10 @@ const useQuestStore = create(
       chest_1_claimed: false,
       chest_2_claimed: false,
       chest_3_claimed: false,
-      refreshTokens: 2,
+      refreshTokens: 0,
       refreshedToday: false,
       lastFetchedAt: null,
+      pendingClaimReward: null,
 
       seedQuests: (questData) => {
         set((state) => {
@@ -183,14 +184,54 @@ const useQuestStore = create(
         });
       },
 
-      claimChest: (questKey) => {
+      /**
+       * claimChest — marks a chest as claimed and applies
+       * the inventory update returned by POST /claim.
+       * inventory is the { streak_freezes_held, refresh_tokens }
+       * object from the claim response. Pass null if unavailable.
+       */
+      claimChest: (questKey, inventory) => {
         set((state) => {
-          const chestKey = questKey.replace('quest_', 'chest_') + '_claimed';
-          console.log('[Quest Store] Chest claimed:', questKey);
-          return {
-            [chestKey]: true,
-          };
+          const chestKey =
+            questKey.replace('quest_', 'chest_') + '_claimed';
+          const updates = { [chestKey]: true };
+
+          if (inventory?.refresh_tokens !== undefined
+              && inventory.refresh_tokens !== null) {
+            updates.refreshTokens = Math.min(
+              Math.max(0, inventory.refresh_tokens), 5);
+          }
+
+          if (import.meta.env.DEV) {
+            console.log(
+              '[Quest Store] Chest claimed:', questKey,
+              'inventory:', inventory,
+            );
+          }
+
+          return updates;
         });
+      },
+
+      /**
+       * setPendingClaimReward — stores the reward payload from
+       * POST /claim so the slider modal can render the correct
+       * cards. Called as soon as the claim response arrives.
+       */
+      setPendingClaimReward: (reward) => {
+        set({ pendingClaimReward: reward });
+        if (import.meta.env.DEV) {
+          console.log('[Quest Store] Pending claim reward set:', reward);
+        }
+      },
+
+      /**
+       * clearPendingClaimReward — called when the modal is
+       * fully dismissed. Clears the reward so stale data does
+       * not persist into the next chest open.
+       */
+      clearPendingClaimReward: () => {
+        set({ pendingClaimReward: null });
       },
 
       setRefreshTokens: (tokens) => set({ refreshTokens: tokens }),
@@ -215,6 +256,7 @@ const useQuestStore = create(
             chest_3_claimed: false,
             refreshedToday: false,
             lastFetchedAt: null,
+            pendingClaimReward: null,
           });
         }
       },

@@ -23,6 +23,7 @@ import AccessibilityPage from './landing_page/AccessibilityPage';
 import useQuestStore from './main_app/store/useQuestStore';
 import NotFoundPage from './main_app/pages/NotFoundPage';
 import SharePage from './main_app/pages/SharePage';
+import soundManager from './utils/soundManager';
 
 function App() {
   const navigate = useNavigate();
@@ -262,6 +263,27 @@ function App() {
   const handleOnboardingComplete = () => {
     setNeedsOnboarding(false);
   };
+
+  useEffect(() => {
+    const handleFirstGesture = () => {
+      soundManager.init();
+      window.removeEventListener('pointerdown', handleFirstGesture);
+      window.removeEventListener('keydown', handleFirstGesture);
+    };
+    window.addEventListener('pointerdown', handleFirstGesture,
+      { once: true, passive: true });
+    window.addEventListener('keydown', handleFirstGesture,
+      { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstGesture);
+      window.removeEventListener('keydown', handleFirstGesture);
+    };
+  }, []);
+
+  useEffect(() => {
+    const { soundEnabled } = useXpStore.getState();
+    soundManager.setEnabled(soundEnabled);
+  }, []);
 
   // Show loading screen only during initial auth token check
   if (loading) {
