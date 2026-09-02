@@ -79,39 +79,48 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
             className="fixed top-0 right-0 h-full w-full max-w-md bg-bg-primary shadow-2xl z-[101] flex flex-col border-l border-border-default overflow-hidden"
           >
             {/* Header */}
-            <div className="flex flex-col gap-4 p-6 border-b border-border-default bg-bg-elevated">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-accent-primary/10 text-accent-primary rounded-xl">
-                    <Bell size={24} weight="fill" />
-                  </div>
-                  <h2 className="text-xl font-display font-bold text-text-primary">Notifications</h2>
+            <div className="flex flex-col gap-4 p-5 sm:p-6 border-b border-black/10 dark:border-white/10 bg-bg-primary">
+              {/* Top Row: Glassmorphic Pill Header */}
+              <div className="flex items-center justify-between relative w-full min-h-[44px]">
+                {/* Left placeholder spacer to keep center title balanced */}
+                <div className="w-10 h-10 opacity-0 pointer-events-none shrink-0" />
+
+                {/* Center Glassmorphic Title Pill */}
+                <div className="px-5 py-2 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center gap-2">
+                  <h3 className="text-sm sm:text-base font-bold font-display text-text-primary">
+                    Notifications
+                  </h3>
                   {unreadCount > 0 && (
-                    <span className="px-2 py-0.5 bg-accent-primary text-white text-xs font-bold rounded-full">
+                    <span className="px-1.5 py-0.5 bg-accent-primary text-white text-[10px] font-bold rounded-full min-w-[18px] text-center leading-none">
                       {unreadCount}
                     </span>
                   )}
                 </div>
-                <button
-                  onClick={onClose}
-                  className="p-2 text-text-tertiary hover:bg-bg-subtle hover:text-text-primary rounded-full transition-colors"
-                >
-                  <X size={20} weight="bold" />
-                </button>
+
+                {/* Right Close Glassmorphic Pill */}
+                <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] shrink-0">
+                  <button
+                    onClick={onClose}
+                    className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary hover:text-text-primary rounded-full transition-all flex items-center justify-center"
+                    aria-label="Close notifications"
+                  >
+                    <X size={18} weight="bold" />
+                  </button>
+                </div>
               </div>
 
               {/* Tabs / Actions */}
-              <div className="flex items-center justify-between">
-                <div className="flex bg-bg-subtle p-1 rounded-lg">
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex p-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                   <button
                     onClick={() => setFilter('all')}
-                    className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${filter === 'all' ? 'bg-bg-primary text-text-primary shadow-sm' : 'text-text-tertiary hover:text-text-secondary'}`}
+                    className={`px-4 py-1 rounded-full text-xs font-semibold transition-all ${filter === 'all' ? 'bg-bg-primary text-text-primary shadow-xs' : 'text-text-tertiary hover:text-text-secondary'}`}
                   >
                     All
                   </button>
                   <button
                     onClick={() => setFilter('unread')}
-                    className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${filter === 'unread' ? 'bg-bg-primary text-text-primary shadow-sm' : 'text-text-tertiary hover:text-text-secondary'}`}
+                    className={`px-4 py-1 rounded-full text-xs font-semibold transition-all ${filter === 'unread' ? 'bg-bg-primary text-text-primary shadow-xs' : 'text-text-tertiary hover:text-text-secondary'}`}
                   >
                     Unread
                   </button>

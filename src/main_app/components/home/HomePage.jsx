@@ -13,7 +13,6 @@ import useOnboardingStore from "../../store/useOnboardingStore";
 function HomePage({ setIsMobileOpen, isAsideExpanded }) {
   const { books = [], booksLoading, addBookToShelf, handleBookClick } = useContext(BookContext) || {};
   const { setActiveSpace } = useSpaceStore();
-  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   const user = useAuthStore(state => state.user);
@@ -59,16 +58,6 @@ function HomePage({ setIsMobileOpen, isAsideExpanded }) {
     }
   };
 
-  // Filter books based on search query
-  const filteredBooks = useMemo(() => {
-    if (!searchQuery.trim()) return books;
-    const query = searchQuery.toLowerCase();
-    return books.filter(book =>
-      book.title?.toLowerCase().includes(query) ||
-      book.author?.toLowerCase().includes(query)
-    );
-  }, [books, searchQuery]);
-
   return (
     <div className="min-h-screen flex flex-col gap-6 lg:gap-8 pt-20">
       <TopNavBar
@@ -77,20 +66,14 @@ function HomePage({ setIsMobileOpen, isAsideExpanded }) {
         isAsideExpanded={isAsideExpanded}
       />
 
-      {/* Only show Header and Slider when not searching */}
-      {!searchQuery && (
-        <div className="flex flex-col gap-2">
-          <Header />
-          <FeaturedSlider lastReadBook={lastReadBook} isLoading={booksLoading} />
-        </div>
-      )}
+      <div className="flex flex-col gap-2">
+        <Header />
+        <FeaturedSlider lastReadBook={lastReadBook} isLoading={booksLoading} />
+      </div>
 
       <AllBooks
-        books={filteredBooks}
+        books={books}
         onBookClick={handleBookNavigate}
-        isSearching={!!searchQuery}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
       />
 
       <DashboardTour

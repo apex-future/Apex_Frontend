@@ -327,6 +327,7 @@ function App() {
             <Route path="/notes/*" element={<Navigate to="/" replace />} />
             <Route path="/quest" element={<Navigate to="/" replace />} />
             <Route path="/discover" element={<Navigate to="/" replace />} />
+            <Route path="/search" element={<Navigate to="/" replace />} />
             <Route path="/flashcards" element={<Navigate to="/" replace />} />
 
             {/* Show 404 page for any unauthenticated non-existent route */}

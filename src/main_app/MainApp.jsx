@@ -29,9 +29,11 @@ import NotebooksPage from './pages/NotebooksPage';
 import NotebookDetailPage from './pages/NotebookDetailPage';
 import NoteEditorPage from './pages/NoteEditorPage';
 import NotificationDrawer from './components/notifications/NotificationDrawer';
+import SearchDrawer from './components/search/SearchDrawer';
 import QuestPage from './pages/QuestPage';
 import FlashcardsPage from './pages/FlashcardsPage';
 import DiscoverPage from './pages/DiscoverPage';
+import SearchPage from './pages/SearchPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
@@ -48,6 +50,7 @@ function MainApp({ onLogout }) {
   const [isAsideExpanded, setIsAsideExpanded] = useState(true);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { toasts, removeToast } = useToast();
   const asideToggle = {
     closeAside: () => setAsideIsOpen(false),
@@ -55,8 +58,22 @@ function MainApp({ onLogout }) {
     isNotificationOpen,
     setIsNotificationOpen,
     unreadNotificationCount,
-    setUnreadNotificationCount
+    setUnreadNotificationCount,
+    isSearchOpen,
+    setIsSearchOpen,
   };
+
+  // Keyboard shortcut: Cmd+K or Ctrl+K to toggle Search Drawer
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const location = useLocation();
   const { showDuplicateModal, setShowDuplicateModal } = useContext(BookContext) || {};
@@ -150,6 +167,7 @@ function MainApp({ onLogout }) {
                 <Route path="/notes/:bookId/:noteId" element={<NoteEditorPage />} />
                 <Route path="/quest" element={<QuestPage />} />
                 <Route path="/discover" element={<DiscoverPage />} />
+                <Route path="/search" element={<SearchPage />} />
                 <Route path="/flashcards" element={<FlashcardsPage />} />
                 <Route path="/login" element={<Navigate to="/" replace />} />
                 <Route path="/signup" element={<Navigate to="/" replace />} />
@@ -172,6 +190,10 @@ function MainApp({ onLogout }) {
             isOpen={isNotificationOpen} 
             onClose={() => setIsNotificationOpen(false)} 
             onUnreadCountChange={setUnreadNotificationCount}
+          />
+          <SearchDrawer
+            isOpen={isSearchOpen}
+            onClose={() => setIsSearchOpen(false)}
           />
           <ToastContainer toasts={toasts} removeToast={removeToast} />
         </NavBarProvider>
