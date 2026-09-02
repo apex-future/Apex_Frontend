@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // Import Lucide icons for visual representation in the navigation
-import { Sparkle, House, X, Book, Notebook, Gear, TextAa, List, Sun, Moon, Monitor, User, TrendUp, Scroll, DownloadSimple } from '@phosphor-icons/react';
+import { Sparkle, House, X, Book, Notebook, Gear, TextAa, List, Sun, Moon, Monitor, User, TrendUp, Scroll, DownloadSimple, Binoculars } from '@phosphor-icons/react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
 import { NavBarContext } from './NavBarContextInstance';
@@ -33,6 +33,7 @@ function AsideNavBar({ isMobileOpen, setIsMobileOpen, isExpanded, setIsExpanded,
   const navItems = [
     { icon: House, label: 'Home', path: '/' },
     { icon: Book, label: 'Book Spaces', path: '/spaces' },
+    { icon: Binoculars, label: 'Discover', path: '/discover' },
     { icon: TextAa, label: 'Dictionary', path: '/dictionary' }, // migrated from lucide: WholeWord
     { icon: Scroll, label: 'Quests', path: '/quest' },
     { icon: Sparkle, label: 'Cleo', path: '/ai' },

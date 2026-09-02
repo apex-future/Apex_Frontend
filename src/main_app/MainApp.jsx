@@ -31,6 +31,7 @@ import NoteEditorPage from './pages/NoteEditorPage';
 import NotificationDrawer from './components/notifications/NotificationDrawer';
 import QuestPage from './pages/QuestPage';
 import FlashcardsPage from './pages/FlashcardsPage';
+import DiscoverPage from './pages/DiscoverPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
@@ -148,6 +149,7 @@ function MainApp({ onLogout }) {
                 <Route path="/notes/:bookId/new" element={<NoteEditorPage />} />
                 <Route path="/notes/:bookId/:noteId" element={<NoteEditorPage />} />
                 <Route path="/quest" element={<QuestPage />} />
+                <Route path="/discover" element={<DiscoverPage />} />
                 <Route path="/flashcards" element={<FlashcardsPage />} />
                 <Route path="/login" element={<Navigate to="/" replace />} />
                 <Route path="/signup" element={<Navigate to="/" replace />} />
