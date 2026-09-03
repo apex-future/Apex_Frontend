@@ -230,9 +230,10 @@ function ReaderNoteEditor({ bookId, noteId, onClose }) {
   const handleAutoSave = useCallback(async () => {
     if (!localId) return;
     try {
+      const cleanBookId = !isNaN(Number(bookId)) && Number(bookId) !== 0 ? Number(bookId) : bookId;
       const noteData = {
         local_id: localId,
-        bookId: Number(bookId),
+        bookId: cleanBookId,
         title: titleRef.current,
         content: contentRef.current || (editor ? editor.getJSON() : null),
         word_count: editor ? editor.storage.characterCount.words() : wordCount,

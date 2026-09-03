@@ -62,19 +62,34 @@ function NotebooksPage() {
   const [loadingSummaries, setLoadingSummaries] = useState(true);
 
   // Load summaries
-  useEffect(() => {
-    const load = async () => {
-      if (!books?.length) {
-        setLoadingSummaries(false);
-        return;
-      }
-      const ids = books.map(b => b.id);
-      const summaries = await getNotebooksSummary(ids);
-      setNotebookSummaries(summaries);
+  const loadSummaries = useCallback(async () => {
+    if (!books?.length) {
       setLoadingSummaries(false);
-    };
-    load();
+      return;
+    }
+    const ids = books.map(b => b.id);
+    const summaries = await getNotebooksSummary(ids);
+    setNotebookSummaries(summaries);
+    setLoadingSummaries(false);
   }, [books, getNotebooksSummary]);
+
+  useEffect(() => {
+    loadSummaries();
+
+    const handleSync = () => {
+      loadSummaries();
+    };
+
+    window.addEventListener('apex:sync-complete', handleSync);
+    window.addEventListener('apex:books-updated', handleSync);
+    window.addEventListener('focus', handleSync);
+
+    return () => {
+      window.removeEventListener('apex:sync-complete', handleSync);
+      window.removeEventListener('apex:books-updated', handleSync);
+      window.removeEventListener('focus', handleSync);
+    };
+  }, [loadSummaries]);
 
   // Seed starred state
   useEffect(() => {
@@ -258,37 +273,60 @@ function NotebooksPage() {
                   </div>
                 </div>
 
-                {/* Stacked Notes Area */}
-                <div className="flex-1 px-6 py-4 flex flex-col items-center justify-center relative">
-                  {nb.recentNotes.length > 0 ? (
-                    <div className="relative w-full h-full flex items-center justify-center">
-                      {nb.recentNotes.slice(0, 3).map((note, idx) => {
-                        const offsets = [
-                          'translate-y-0 scale-100 z-30 opacity-100',
-                          'translate-y-4 scale-95 z-20 opacity-60',
-                          'translate-y-8 scale-90 z-10 opacity-30',
-                        ];
-                        const hoverOffsets = [
-                          'group-hover:-translate-y-6',
-                          'group-hover:-translate-y-0',
-                          'group-hover:translate-y-6',
-                        ];
-                        
-                        return (
-                          <div
-                            key={note.local_id}
-                            className={`absolute inset-x-0 h-32 bg-bg-subtle dark:bg-bg-elevated border-t border-black/10 dark:border-white/10 rounded-2xl p-4 shadow-sm transition-all duration-300 ease-out flex flex-col gap-2 ${offsets[idx]} ${hoverOffsets[idx]}`}
-                          >
-                            <h5 className="text-xs font-bold text-text-primary truncate">{note.title || 'Untitled'}</h5>
-                            <p className="text-[10px] text-text-secondary line-clamp-2 leading-relaxed">
-                              {getContentPreview(note.content) || 'No content...'}
-                            </p>
-                          </div>
-                        );
-                      })}
+                {/* Center Content Preview Area */}
+                <div className="flex-1 px-8 py-4 flex flex-col justify-center relative">
+                  {(nb.notesCount > 0 || nb.tabsCount > 0) ? (
+                    <div className="w-full flex flex-col justify-center gap-3.5">
+                      {/* Line 1 — stretches end-to-end with 4 word breaks */}
+                      <div className="w-full">
+                        <svg className="w-full h-2 text-black/25 dark:text-white/25 group-hover:text-accent-primary/60 transition-colors duration-300" viewBox="0 0 300 12" fill="none" preserveAspectRatio="none">
+                          <path
+                            d="M 4 6 C 18 4, 30 8, 44 5 S 62 7, 72 6 M 84 6 C 98 8, 112 5, 126 7 S 142 5, 154 6 M 166 6 C 180 5, 194 7, 208 5 S 224 7, 236 6 M 248 6 C 260 8, 274 5, 286 7 S 294 5, 296 6"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+
+                      {/* Line 2 — stretches end-to-end with varied spacing */}
+                      <div className="w-full">
+                        <svg className="w-full h-2 text-black/20 dark:text-white/20 group-hover:text-accent-primary/50 transition-colors duration-300" viewBox="0 0 300 12" fill="none" preserveAspectRatio="none">
+                          <path
+                            d="M 4 6 C 22 7, 40 5, 58 7 S 78 5, 92 6 M 106 6 C 122 5, 138 8, 154 5 S 168 7, 178 6 M 190 6 C 206 7, 222 5, 238 7 S 252 5, 262 6 M 274 6 C 282 5, 290 7, 296 6"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+
+                      {/* Line 3 — stretches end-to-end with 4 words */}
+                      <div className="w-full">
+                        <svg className="w-full h-2 text-black/25 dark:text-white/25 group-hover:text-accent-primary/60 transition-colors duration-300" viewBox="0 0 300 12" fill="none" preserveAspectRatio="none">
+                          <path
+                            d="M 4 6 C 16 5, 28 7, 40 5 S 52 7, 62 6 M 76 6 C 94 8, 112 5, 130 7 S 146 5, 158 6 M 172 6 C 188 5, 204 7, 220 5 S 234 7, 244 6 M 256 6 C 268 7, 280 5, 290 7 S 294 5, 296 6"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+
+                      {/* Line 4 — natural paragraph ending (~65% width) */}
+                      <div className="w-[65%]">
+                        <svg className="w-full h-2 text-black/20 dark:text-white/20 group-hover:text-accent-primary/50 transition-colors duration-300" viewBox="0 0 195 12" fill="none" preserveAspectRatio="none">
+                          <path
+                            d="M 4 6 C 20 7, 36 5, 52 7 S 68 5, 78 6 M 92 6 C 108 5, 122 8, 134 5 S 144 7, 150 6 M 162 6 C 174 7, 184 5, 192 7 L 195 6"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center text-text-placeholder opacity-40">
+                    <div className="flex flex-col items-center justify-center text-text-placeholder opacity-40">
                       <FileText size={40} strokeWidth={1} weight="fill" />
                       <p className="text-xs mt-3 font-medium">Empty notebook</p>
                     </div>

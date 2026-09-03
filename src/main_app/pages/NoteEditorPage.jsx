@@ -61,7 +61,7 @@ function ToolbarBtn({ onClick, active, title, children, disabled }) {
       className={`p-1.5 rounded-lg transition-all duration-150 ${
         active
           ? 'bg-accent-primary text-white shadow-sm'
-          : 'text-text-secondary hover:text-text-primary hover:bg-bg-subtle'
+          : 'text-text-secondary hover:text-text-primary hover:bg-gray-100 dark:hover:bg-white/10'
       } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
     >
       {children}
@@ -105,7 +105,7 @@ function HeadingDropdown({ editor }) {
     <div className="relative" ref={ref}>
       <button
         onMouseDown={(e) => { e.preventDefault(); setOpen((p) => !p); }}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-all"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-gray-100 dark:hover:bg-white/10 transition-all"
       >
         <current.icon size={14} />
         <span className="hidden sm:inline">{current.label}</span>
@@ -113,7 +113,7 @@ function HeadingDropdown({ editor }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-bg-elevated border border-border-default rounded-xl shadow-xl overflow-hidden min-w-[160px]">
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-bg-elevated border border-black/10 dark:border-white/10 rounded-xl shadow-xl overflow-hidden min-w-[160px]">
           {HEADING_OPTIONS.map((opt) => {
             const Icon = opt.icon;
             const isActive = opt.level === 0
@@ -131,10 +131,10 @@ function HeadingDropdown({ editor }) {
                   }
                   setOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-all ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs transition-all ${
                   isActive
-                    ? 'bg-accent-primary/10 text-accent-primary'
-                    : 'text-text-primary hover:bg-bg-subtle'
+                    ? 'bg-accent-primary/10 text-accent-primary font-bold'
+                    : 'text-text-primary hover:bg-gray-50 dark:hover:bg-white/10'
                 }`}
               >
                 <Icon size={16} />
@@ -261,9 +261,10 @@ function NoteEditorPage() {
     if (!localId) return;
     
     try {
+      const cleanBookId = !isNaN(Number(bookId)) && Number(bookId) !== 0 ? Number(bookId) : bookId;
       const noteData = {
         local_id: localId,
-        bookId: Number(bookId),
+        bookId: cleanBookId,
         title: titleRef.current,
         content: contentRef.current || (editor ? editor.getJSON() : null),
         word_count: editor ? editor.storage.characterCount.words() : wordCount,
@@ -306,26 +307,26 @@ function NoteEditorPage() {
   if (!editor) return null;
 
   return (
-    <div className="min-h-screen bg-surface-base flex flex-col">
+    <div className="min-h-screen bg-bg-primary flex flex-col">
 
       {/* ── Top bar ───────────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-50 w-full px-4 md:px-8 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
           {/* Back */}
-          <div className="px-1 py-1 rounded-full bg-surface-overlay border border-border-default shadow-aura-sm flex-shrink-0">
+          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] shrink-0">
             <button
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-white/20 dark:hover:bg-white/10 text-text-secondary rounded-full transition-all group flex items-center justify-center"
             >
-              <ArrowLeft size={18} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
+              <ArrowLeft size={20} weight="bold" className="group-hover:-translate-x-1 transition-transform text-text-primary" />
             </button>
           </div>
 
           {/* Save status */}
-          <div className="px-4 py-2 rounded-full bg-surface-overlay border border-border-default shadow-aura-sm flex items-center gap-2 text-xs text-text-tertiary font-bold">
+          <div className="px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center gap-2 text-xs font-bold">
             {saved ? (
               <span className="flex items-center gap-1.5 text-text-primary">
-                <Check size={12} weight="bold" className="text-emerald-500 font-extrabold" /> Saved
+                <Check size={13} weight="bold" className="text-emerald-500 font-extrabold" /> Saved
               </span>
             ) : (
               <span className="flex items-center gap-1.5 animate-pulse text-text-primary">
@@ -336,7 +337,7 @@ function NoteEditorPage() {
           </div>
 
           {/* Spacer */}
-          <div className="w-[38px]" />
+          <div className="w-[42px] shrink-0" />
         </div>
       </div>
 
@@ -387,7 +388,7 @@ function NoteEditorPage() {
 
         {/* ── Floating Toolbar ─────────────────────────────────────────── */}
         <div className="sticky top-[61px] z-40 mb-4 -mx-2">
-          <div className="aura-card-raised rounded-2xl px-3 py-2 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
+          <div className="bg-white dark:bg-bg-elevated border border-black/5 dark:border-white/10 rounded-2xl shadow-lg px-3 py-2 flex items-center gap-0.5 flex-nowrap overflow-x-auto no-scrollbar">
 
             <HeadingDropdown editor={editor} />
             <ToolbarDivider />

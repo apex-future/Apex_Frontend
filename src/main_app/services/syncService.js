@@ -115,12 +115,21 @@ const syncService = {
   _tableNeedsSync: async function(tableName, cloudUpdatedAt, lastSyncedAt) {
     const hasPending = await this._hasLocalChanges(tableName);
 
-    // Cloud has data newer than our last sync
-    const cloudIsAhead = cloudUpdatedAt && lastSyncedAt
-      ? new Date(cloudUpdatedAt) > new Date(lastSyncedAt)
-      : cloudUpdatedAt !== null; // If never synced, cloud always wins
+    // If local table is completely empty, we should pull if cloud has any data or timestamp
+    let localEmpty = false;
+    try {
+      if (db[tableName]) {
+        const count = await db[tableName].count();
+        if (count === 0) localEmpty = true;
+      }
+    } catch (_) {}
 
-    if (import.meta.env.DEV) console.log(`[Apex Sync] "${tableName}": cloudUpdatedAt=${cloudUpdatedAt} lastSyncedAt=${lastSyncedAt} cloudIsAhead=${cloudIsAhead} hasPending=${hasPending}`);
+    // Cloud has data newer than our last sync or local table is empty
+    const cloudIsAhead = cloudUpdatedAt && lastSyncedAt
+      ? (new Date(cloudUpdatedAt) > new Date(lastSyncedAt) || localEmpty)
+      : cloudUpdatedAt !== null; // If never synced or local empty, cloud always wins
+
+    if (import.meta.env.DEV) console.log(`[Apex Sync] "${tableName}": cloudUpdatedAt=${cloudUpdatedAt} lastSyncedAt=${lastSyncedAt} cloudIsAhead=${cloudIsAhead} hasPending=${hasPending} localEmpty=${localEmpty}`);
 
     if (cloudIsAhead && hasPending) return 'both';
     if (cloudIsAhead) return 'pull';
@@ -398,11 +407,13 @@ const syncService = {
               const orphanIds = records
                 .filter(r => {
                   const bid = r.bookId;
-                  // If bookId is an integer, check if it exists in local books
-                  if (typeof bid === 'number') return !localBookIds.has(bid);
-                  // If bookId is a UUID string, check if it exists in pulled books
-                  if (typeof bid === 'string' && bid.includes('-')) return !pulledSupabaseIds.has(bid);
-                  return false;
+                  if (!bid) return false;
+                  const matchesAnyBook =
+                    localBookIds.has(bid) ||
+                    (!isNaN(Number(bid)) && localBookIds.has(Number(bid))) ||
+                    localSupabaseIds.has(bid) ||
+                    pulledSupabaseIds.has(bid);
+                  return !matchesAnyBook;
                 })
                 .map(r => r.id);
               if (orphanIds.length > 0) {
@@ -496,44 +507,76 @@ const syncService = {
           await db.bookmarks.bulkAdd(mapped);
         }
 
-        // ── NOTES ──
-        if (tablesToPull.includes('tabs') && pulledData.tabs?.length > 0) {
+        // ── TABS ──
+        if (pulledData.tabs?.length > 0) {
           if (import.meta.env.DEV) console.log('[Apex Sync] Pulling tabs:', pulledData.tabs.length);
+          const unsyncedTabs = await db.tabs.filter(t => !t.synced).toArray().catch(() => []);
           await db.tabs.clear();
           const mapped = pulledData.tabs.map(n => {
             const camel = mapSnakeToCamel(n);
-            const localBookId = uuidToDexieId[n.book_id];
+            let localBookId = uuidToDexieId[n.book_id];
+            if (localBookId === undefined) {
+              const b = localBooks.find(book =>
+                book.supabaseId === n.book_id ||
+                book.id === n.book_id ||
+                String(book.id) === String(n.book_id) ||
+                book.local_id === String(n.book_id)
+              );
+              if (b) localBookId = b.id;
+            }
             if (localBookId !== undefined) {
-              camel.bookId = localBookId;
+              camel.bookId = Number(localBookId);
+            } else {
+              camel.bookId = !isNaN(Number(n.book_id)) ? Number(n.book_id) : n.book_id;
             }
             return {
               ...camel,
+              local_id: n.local_id || camel.localId || n.id,
               supabaseId: n.id,
+              text: n.text || camel.text || '',
+              noteType: n.note_type || camel.noteType || 'manual_note',
               synced: true,
             };
           });
           for (const m of mapped) { delete m.id; }
-          await db.tabs.bulkAdd(mapped);
+          const pulledLocalIds = new Set(mapped.map(m => m.local_id));
+          const tabsToKeep = unsyncedTabs.filter(u => !pulledLocalIds.has(u.local_id));
+          await db.tabs.bulkAdd([...mapped, ...tabsToKeep]);
         }
 
         // ── BOOK NOTES ──
-        if (tablesToPull.includes('book_notes') && pulledData.book_notes?.length > 0) {
+        if (pulledData.book_notes?.length > 0) {
           if (import.meta.env.DEV) console.log('[Apex Sync] Pulling book_notes:', pulledData.book_notes.length);
+          const unsyncedNotes = await db.book_notes.filter(note => !note.synced).toArray().catch(() => []);
           await db.book_notes.clear();
           const mapped = pulledData.book_notes.map(n => {
             const camel = mapSnakeToCamel(n);
-            const localBookId = uuidToDexieId[n.book_id];
+            let localBookId = uuidToDexieId[n.book_id];
+            if (localBookId === undefined) {
+              const b = localBooks.find(book =>
+                book.supabaseId === n.book_id ||
+                book.id === n.book_id ||
+                String(book.id) === String(n.book_id) ||
+                book.local_id === String(n.book_id)
+              );
+              if (b) localBookId = b.id;
+            }
             if (localBookId !== undefined) {
-              camel.bookId = localBookId;
+              camel.bookId = Number(localBookId);
+            } else {
+              camel.bookId = !isNaN(Number(n.book_id)) ? Number(n.book_id) : n.book_id;
             }
             return {
               ...camel,
+              local_id: n.local_id || camel.localId || n.id,
               supabaseId: n.id,
               synced: true,
             };
           });
           for (const m of mapped) { delete m.id; }
-          await db.book_notes.bulkAdd(mapped);
+          const pulledLocalIds = new Set(mapped.map(m => m.local_id));
+          const notesToKeep = unsyncedNotes.filter(u => !pulledLocalIds.has(u.local_id));
+          await db.book_notes.bulkAdd([...mapped, ...notesToKeep]);
         }
 
         // ── BOOK SPACES ──
@@ -1246,7 +1289,8 @@ const syncService = {
     };
 
     // Step 1: Upsert in Dexie
-    const existing = await db.book_notes.where('local_id').equals(localId).first();
+    const existing = await db.book_notes.where('local_id').equals(localId).first()
+      || await db.book_notes.filter(n => (n.local_id || n.localId) === localId).first();
     let dexieId;
     if (existing) {
       dexieId = existing.id;

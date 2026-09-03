@@ -185,7 +185,7 @@ export const BookProvider = ({ children }) => {
           const mergedBookmarks = [...tableBookmarks, ...uniqueMetaBookmarks].sort((a, c) => a.page - c.page);
 
           // Merge tabs from Dexie tabs table
-          const tableTabs = tabsByBook[b.id] || (b.supabaseId && tabsByBook[b.supabaseId]) || [];
+          const tableTabs = tabsByBook[b.id] || (b.supabaseId && tabsByBook[b.supabaseId]) || (b.local_id && tabsByBook[b.local_id]) || (tabsByBook[String(b.id)]) || [];
 
           // Compute progress from currentPage / totalPages — single source of truth
           // Never trust stored progress_percentage — it gets corrupted
@@ -992,7 +992,7 @@ export const BookProvider = ({ children }) => {
   }, []);
 
   const addTab = useCallback(async (bookId, tabData) => {
-    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+    const targetId = !isNaN(Number(bookId)) && Number(bookId) !== 0 ? Number(bookId) : bookId;
     const tabObj = typeof tabData === 'string'
       ? { text: tabData, type: 'manual_note' }
       : tabData;
@@ -1022,7 +1022,8 @@ export const BookProvider = ({ children }) => {
     setShelves(prev => prev.map(shelf => ({
       ...shelf,
       books: shelf.books.map(book => {
-        if (book.id !== targetId) return book;
+        const matchesBook = book.id === targetId || String(book.id) === String(targetId) || book.supabaseId === targetId || book.local_id === String(targetId);
+        if (!matchesBook) return book;
         bookSupabaseId = book.supabaseId || null;
         const existingTabs = book.metadata?.tabs || [];
         // Deduplicate: don't add a second tab for the same exact text position

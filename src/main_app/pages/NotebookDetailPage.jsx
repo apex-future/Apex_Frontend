@@ -2,6 +2,7 @@ import { useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BookContext } from '../context/BookContextInstance';
 import useBookNotesStore from '../store/bookNotesStore';
+import db from '../db/apex.db';
 import {
   ArrowLeft, Plus, FileText, BookmarkSimple, TextAlignLeft,
   Highlighter, PencilSimple, MagnifyingGlass, Trash, Warning
@@ -165,10 +166,43 @@ function NotebookDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId]);
 
-  // Tabs from book metadata
+  // Direct Dexie tabs fallback
+  const [dbTabs, setDbTabs] = useState([]);
+  const loadDbTabs = useCallback(async () => {
+    if (!bookId) return;
+    try {
+      const allBooks = await db.books.toArray().catch(() => []);
+      const matchedBook = allBooks.find(b =>
+        b.id === parsedBookId || String(b.id) === String(bookId) || b.supabaseId === bookId || b.local_id === String(bookId)
+      );
+      const candidateKeys = new Set([
+        bookId,
+        parsedBookId,
+        String(bookId),
+        matchedBook?.id,
+        matchedBook?.id != null ? String(matchedBook.id) : null,
+        matchedBook?.supabaseId,
+        matchedBook?.local_id,
+      ].filter(k => k !== null && k !== undefined));
+
+      const allTabs = await db.tabs.toArray().catch(() => []);
+      const matched = allTabs.filter(t => candidateKeys.has(t.bookId) || (t.book_id && candidateKeys.has(t.book_id)));
+      setDbTabs(matched);
+    } catch (_) {}
+  }, [bookId, parsedBookId]);
+
+  useEffect(() => {
+    loadDbTabs();
+    window.addEventListener('apex:sync-complete', loadDbTabs);
+    return () => window.removeEventListener('apex:sync-complete', loadDbTabs);
+  }, [loadDbTabs]);
+
+  // Tabs from book metadata or fallback to direct Dexie query
   const tabs = useMemo(() => {
-    return book?.metadata?.tabs || [];
-  }, [book]);
+    const metaTabs = book?.metadata?.tabs || [];
+    if (metaTabs.length > 0) return metaTabs;
+    return dbTabs;
+  }, [book, dbTabs]);
 
   const bookTitle = book?.title || 'Unknown Book';
   const notesCount = notes.length;
