@@ -194,9 +194,10 @@ const syncService = {
       } catch (_) {}
 
       const formData = new FormData();
-      formData.append('title', title);
-      formData.append('author', isValidAuthor(author) ? author : '');
-      formData.append('local_id', dexieBookId.toString());
+      formData.append('title', title || 'Untitled');
+      const cleanAuthor = (author && isValidAuthor(author) && author.trim()) ? author.trim() : 'Unknown';
+      formData.append('author', cleanAuthor);
+      formData.append('local_id', (dexieBookId || '').toString());
       if (totalPages > 1) formData.append('total_pages', totalPages.toString());
       formData.append('file', fileObject);
 
@@ -1630,8 +1631,10 @@ const syncService = {
       // Persist the incremented count BEFORE the attempt
       await db.books.update(dexieBookId, { sync_retry_count: currentRetry });
 
-      const file = new File([freshBook.fileBlob], freshBook.title, { type: freshBook.fileType || 'application/pdf' });
-      const validAuthor = isValidAuthor(freshBook.author) ? freshBook.author : '';
+      const ext = (freshBook.fileType?.includes('epub') || freshBook.title?.toLowerCase().endsWith('.epub')) ? '.epub' : '.pdf';
+      const fileName = freshBook.title?.toLowerCase().endsWith(ext) ? freshBook.title : `${freshBook.title}${ext}`;
+      const file = new File([freshBook.fileBlob], fileName, { type: freshBook.fileType || (ext === '.epub' ? 'application/epub+zip' : 'application/pdf') });
+      const validAuthor = isValidAuthor(freshBook.author) ? freshBook.author : 'Unknown';
       const result = await this.uploadBook(file, freshBook.title, validAuthor, dexieBookId);
 
       if (result) {
@@ -1683,8 +1686,10 @@ const syncService = {
       // Mark as pending during this attempt
       await db.books.update(book.id, { sync_status: 'pending', sync_retry_count: nextRetry });
 
-      const file = new File([book.fileBlob], book.title, { type: book.fileType || 'application/pdf' });
-      const validAuthor = isValidAuthor(book.author) ? book.author : '';
+      const ext = (book.fileType?.includes('epub') || book.title?.toLowerCase().endsWith('.epub')) ? '.epub' : '.pdf';
+      const fileName = book.title?.toLowerCase().endsWith(ext) ? book.title : `${book.title}${ext}`;
+      const file = new File([book.fileBlob], fileName, { type: book.fileType || (ext === '.epub' ? 'application/epub+zip' : 'application/pdf') });
+      const validAuthor = isValidAuthor(book.author) ? book.author : 'Unknown';
       const result = await this.uploadBook(file, book.title, validAuthor, book.id);
 
       if (result) {
@@ -1757,14 +1762,16 @@ const syncService = {
           continue;
         }
 
+        const ext = (localBook.fileType?.includes('epub') || localBook.title?.toLowerCase().endsWith('.epub')) ? '.epub' : '.pdf';
+        const fileName = localBook.title?.toLowerCase().endsWith(ext) ? localBook.title : `${localBook.title}${ext}`;
         const file = new File(
           [localBook.fileBlob],
-          localBook.title,
-          { type: localBook.fileType || 'application/pdf' }
+          fileName,
+          { type: localBook.fileType || (ext === '.epub' ? 'application/epub+zip' : 'application/pdf') }
         );
 
         if (import.meta.env.DEV) console.log('[Apex Sync] Uploading offline book to Supabase:', localBook.title);
-        const validAuthor = isValidAuthor(localBook.author) ? localBook.author : '';
+        const validAuthor = isValidAuthor(localBook.author) ? localBook.author : 'Unknown';
         const result = await this.uploadBook(file, localBook.title, validAuthor, localBook.id);
 
         if (import.meta.env.DEV) console.log('[Apex Sync] Book upload result:', {

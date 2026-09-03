@@ -399,7 +399,8 @@ export const BookProvider = ({ children }) => {
     if (navigator.onLine) {
       try {
         console.log('[Apex] Starting background upload for:', title);
-        const result = await syncService.uploadBook(freshFile, title, 'Unknown', id);
+        const authorToSync = newBookData.author || (isValidAuthor(extractedAuthor) ? extractedAuthor : 'Unknown');
+        const result = await syncService.uploadBook(freshFile, title, authorToSync, id);
 
         if (result) {
           console.log('[Apex] Upload successful for:', title, '| supabaseId:', result.id);
