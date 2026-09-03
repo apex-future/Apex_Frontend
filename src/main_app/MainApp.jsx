@@ -38,6 +38,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import { BookContext } from './context/BookContextInstance';
 import { useContext } from 'react';
 import useThemeStore from './store/themeStore';
+import LevelUpScreen from './components/gamification/LevelUpScreen';
 import Lenis from 'lenis';
 
 
@@ -195,6 +196,7 @@ function MainApp({ onLogout }) {
             isOpen={isSearchOpen}
             onClose={() => setIsSearchOpen(false)}
           />
+          <LevelUpScreen />
           <ToastContainer toasts={toasts} removeToast={removeToast} />
         </NavBarProvider>
       </BookProvider>

@@ -224,7 +224,20 @@ function StreakPage() {
                               : 'text-text-tertiary'
                     }`}
                   >
-                    {cell.day}
+                    {isFrozen ? (
+                      <div className="flex flex-col items-center justify-center leading-none gap-[1px]">
+                        <Snowflake
+                          size={10}
+                          weight="fill"
+                          className="text-white/80 shrink-0"
+                        />
+                        <span className="text-[9px] sm:text-[11px] font-bold leading-none">
+                          {cell.day}
+                        </span>
+                      </div>
+                    ) : (
+                      cell.day
+                    )}
                   </div>
                 );
               })}

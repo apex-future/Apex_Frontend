@@ -8,6 +8,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import apiClient from '../services/apiClient';
+import { computeLevel } from '../../config/xpConfig';
 
 
 const useXpStore = create(
@@ -51,6 +52,7 @@ const useXpStore = create(
 
       // ─── Audio ──────────────────────────────────────────────────────────────
       soundEnabled: true,
+      pendingLevelUp: null,
 
       // ═══════════════════════════════════════════════════════════════════════
       // ACTIONS
@@ -131,6 +133,20 @@ const useXpStore = create(
           // Add the delta to xpToday so the dashboard card reflects the real multiplied amount.
           const xpDelta = xp_awarded - estimatedTotal;
 
+          // Level-up detection — compare before and after
+          const prevLevel = computeLevel(get().confirmedXp ?? 0);
+          const nextLevel = computeLevel(total_xp ?? 0);
+
+          const didLevelUp = nextLevel.level > prevLevel.level;
+
+          if (import.meta.env.DEV && didLevelUp) {
+            console.log(
+              '[XP Store] Level up detected:',
+              prevLevel.level, '→', nextLevel.level,
+              nextLevel.displayTitle,
+            );
+          }
+
           set((state) => ({
             confirmedXp: total_xp,
             estimatedXp: total_xp,
@@ -143,6 +159,16 @@ const useXpStore = create(
             streakFreezesHeld: streak_freezes_held ?? state.streakFreezesHeld,
             refreshTokens: refresh_tokens ?? state.refreshTokens,
             lifetimeQuestsCompleted: lifetime_quests_completed ?? state.lifetimeQuestsCompleted,
+            pendingLevelUp: didLevelUp
+              ? {
+                  newLevel: nextLevel.level,
+                  newDisplayTitle: nextLevel.displayTitle,
+                  progressPercent: nextLevel.progressPercent,
+                  xpIntoLevel: nextLevel.xpIntoLevel,
+                  xpForCurrentLevel: nextLevel.xpForCurrentLevel,
+                  xpToNextLevel: nextLevel.xpToNextLevel,
+                }
+              : (get().pendingLevelUp ?? null),
           }));
 
           localStorage.removeItem('apex_xp_sync_pending');
@@ -290,6 +316,18 @@ const useXpStore = create(
       },
 
       /**
+       * clearLevelUp — called by LevelUpScreen after dismiss.
+       * Clears the pending level up so the screen does not
+       * re-appear on next render.
+       */
+      clearLevelUp: () => {
+        set({ pendingLevelUp: null });
+        if (import.meta.env.DEV) {
+          console.log('[XP Store] pendingLevelUp cleared');
+        }
+      },
+
+      /**
        * resetXpStore — resets all state to initial values.
        * Called on logout.
        */
@@ -310,6 +348,7 @@ const useXpStore = create(
           lastSyncedAt: null,
           lastUpdatedAt: null,
           xpLog: [],
+          pendingLevelUp: null,
         });
       },
 

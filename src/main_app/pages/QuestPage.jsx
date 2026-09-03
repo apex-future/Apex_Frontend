@@ -9,6 +9,8 @@ import db from '../db/apex.db';
 import WeeklyGoldenBar from '../components/quests/WeeklyGoldenBar';
 import QuestCard from '../components/quests/QuestCard';
 import QuestCompleteModal from '../components/quests/QuestCompleteModal';
+import ChestOpeningModal from '../components/quests/ChestOpeningModal';
+import useStudyStore from '../store/studyStore';
 import QuestTour from '../components/quests/QuestTour';
 import EmptyState from '../components/ui/EmptyState';
 import Card from '../components/ui/Card';
@@ -92,15 +94,8 @@ export default function QuestPage() {
   const [error, setError] = useState(null);
   const [refreshingKey, setRefreshingKey] = useState(null);
 
-  const [showModal, setShowModal] = useState(false);
-  const [modalData, setModalData] = useState({
-    questCopy: '',
-    xpAwarded: 20,
-    reward: null,
-    allCompleted: false,
-  });
-  
-  const lastCompletedData = useRef({});
+  const [showChestModal, setShowChestModal] = useState(false);
+  const [activeChestKey, setActiveChestKey] = useState(null);
   const questStore = useQuestStore();
   const { hasSeenQuestTour, tourTextSelected } = useOnboardingStore();
 
@@ -351,7 +346,6 @@ export default function QuestPage() {
         just_completed,
         all_completed,
         xp_awarded,
-        reward,
       } = res.data;
 
       // Update local quest state
@@ -372,7 +366,6 @@ export default function QuestPage() {
 
       // Trigger modal and XP update on completion
       if (just_completed) {
-        lastCompletedData.current[questId] = res.data;
         
         // Optimistic XP update in header
         if (xp_awarded > 0 && typeof awardXpOptimistic === 'function') {
@@ -440,115 +433,56 @@ export default function QuestPage() {
   }, [quests]);
 
   const handleChestClick = useCallback((questKey) => {
-    const targetQuest = activeQuests?.[questKey];
-    if (!targetQuest) return;
+    setActiveChestKey(questKey);
+    setShowChestModal(true);
+  }, []);
 
-    const questId = targetQuest.id;
-    const questCopy = targetQuest.copy || '';
-    const forcedItem = targetQuest.forced_reward;
-    const isReplay = !hasSeenQuestTour && !isRealOnboarding;
+  const handleChestClose = useCallback((inventory) => {
+    setShowChestModal(false);
 
-    const onboardingStore = useOnboardingStore.getState();
-    const isAlreadyClaimedTourReward =
-      isReplay ||
-      (forcedItem === 'streak_freeze' && onboardingStore.hasClaimedQuestTourStreakFreeze) ||
-      (forcedItem === 'refresh_token' && onboardingStore.hasClaimedQuestTourRefreshToken);
-
-    let reward = null;
-    if (forcedItem === 'streak_freeze') {
-      reward = {
-        item: 'streak_freeze',
-        label: isAlreadyClaimedTourReward ? 'Streak Freeze' : '1 Streak Freeze',
-        alreadyClaimed: isAlreadyClaimedTourReward,
-        tag: isAlreadyClaimedTourReward ? 'Tour Reward Already Claimed' : null,
-      };
-    } else if (forcedItem === 'refresh_token') {
-      reward = {
-        item: 'refresh_token',
-        label: isAlreadyClaimedTourReward ? 'Refresh Token' : '1 Refresh Token',
-        alreadyClaimed: isAlreadyClaimedTourReward,
-        tag: isAlreadyClaimedTourReward ? 'Tour Reward Already Claimed' : null,
-      };
-    } else {
-      const data = lastCompletedData.current[questId];
-      reward = data?.reward || null;
-    }
-
-    const xpAwarded = isReplay ? 0 : (lastCompletedData.current[questId]?.xp_awarded ?? 20);
-    const allCompleted = activeQuests?.all_completed ?? false;
-
-    setModalData({ questCopy, xpAwarded, reward, allCompleted });
-    setShowModal(true);
-
-    lastCompletedData.current.activeChestQuestKey = questKey;
-    lastCompletedData.current.activeForcedItem = forcedItem;
-    lastCompletedData.current.activeIsReplay = isReplay;
-    lastCompletedData.current.activeAlreadyClaimed = isAlreadyClaimedTourReward;
-  }, [activeQuests, hasSeenQuestTour, isRealOnboarding]);
-
-  const handleModalClose = useCallback(async () => {
-    setShowModal(false);
-    const activeKey = lastCompletedData.current.activeChestQuestKey;
-    const forcedItem = lastCompletedData.current.activeForcedItem;
-    const isReplay = lastCompletedData.current.activeIsReplay;
-    const alreadyClaimed = lastCompletedData.current.activeAlreadyClaimed;
-
-    lastCompletedData.current.activeChestQuestKey = null;
-    lastCompletedData.current.activeForcedItem = null;
-    lastCompletedData.current.activeIsReplay = null;
-    lastCompletedData.current.activeAlreadyClaimed = null;
-
-    if (!activeKey) return;
-
-    // If this was an onboarding reward claim and not already claimed, mark it claimed in store
-    if (forcedItem && !alreadyClaimed) {
-      useOnboardingStore.getState().markQuestTourRewardClaimed(forcedItem);
-    }
-
-    // If replaying tour, mark it claimed in the replay session so it opens in the preview, without touching real chest states
-    if (isReplay) {
-      setReplayChestsClaimed((prev) => ({ ...prev, [activeKey]: true }));
+    if (!activeChestKey) {
+      setActiveChestKey(null);
       return;
     }
 
-    useQuestStore.getState().claimChest(activeKey);
+    // Mark chest claimed in quest store with inventory
+    useQuestStore.getState().claimChest(
+      activeChestKey, inventory);
 
-    if (navigator.onLine) {
-      try {
-        await apiClient.post('/api/quests/claim', { quest_key: activeKey });
+    if (inventory) {
+      // Sync inventory to XP store
+      useXpStore.getState().applyInventoryUpdate(inventory);
 
-        // Update Dexie cache to reflect claim so other devices see it on next cache read
-        const userId = useAuthStore.getState().user?.id;
-        const store = useQuestStore.getState();
-        const cached = await store.loadQuestsFromCache(userId);
-        if (cached && cached[activeKey]) {
-          cached[activeKey] = { ...cached[activeKey], reward_claimed: true };
-          await store.saveQuestsToCache(userId, cached);
-        }
-        console.log('[Quest] Claim synced to server:', activeKey);
-      } catch (err) {
-        console.warn('[Quest] Claim sync failed — chest_X_claimed stays true in Zustand:', err);
-        // Zustand persist already holds chest_X_claimed: true.
-        // On next background sync, seedQuests CASA resolveChestClaimed will keep it true.
-      }
-    } else {
-      // Offline — queue the claim for flush when online
-      try {
-        await db.sync_queue.add({
-          action: 'quest_claim',
-          tableName: 'daily_quest_state',
-          local_id: `claim_${activeKey}_${Date.now()}`,
-          payload: { quest_key: activeKey },
-          status: 'pending',
-          attempts: 0,
-          createdAt: new Date().toISOString(),
-        });
-        console.log('[Quest] Offline claim queued:', activeKey);
-      } catch (err) {
-        console.warn('[Quest] Failed to queue offline claim:', err);
+      // Sync freeze count to study store
+      if (inventory.streak_freezes_held !== undefined
+          && inventory.streak_freezes_held !== null) {
+        useStudyStore.getState().updateFreezesHeld(
+          inventory.streak_freezes_held);
       }
     }
-  }, []);
+
+    // Update Dexie cache to reflect claim
+    const userId = useAuthStore.getState().user?.id;
+    if (userId) {
+      const store = useQuestStore.getState();
+      store.loadQuestsFromCache(userId).then(cached => {
+        if (cached && cached[activeChestKey]) {
+          cached[activeChestKey] = {
+            ...cached[activeChestKey],
+            reward_claimed: true,
+          };
+          store.saveQuestsToCache(userId, cached);
+        }
+      }).catch(() => {});
+    }
+
+    setActiveChestKey(null);
+
+    if (import.meta.env.DEV) {
+      console.log('[Quest Page] Chest closed, inventory:',
+        inventory);
+    }
+  }, [activeChestKey]);
 
   // ─── Date display ───────────────────────────────────────────────────────────
   const todayLabel = new Date().toLocaleDateString('en-GB', {
@@ -626,7 +560,7 @@ export default function QuestPage() {
           <div className="flex items-center gap-2">
             <div id="quest-refresh-token-badge" className="flex items-center gap-1.5 text-text-tertiary text-xs font-medium bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full border border-black/5 dark:border-white/5">
               <ArrowsClockwise size={13} weight="bold" className="text-purple-600 dark:text-purple-400" />
-              <span>Refresh Tokens: <strong className="text-text-primary font-bold">{questStore.refreshTokens ?? 2}</strong></span>
+              <span>Refresh Tokens: <strong className="text-text-primary font-bold">{questStore.refreshTokens ?? 0}</strong></span>
             </div>
             <div className="flex items-center gap-1.5 text-text-tertiary text-xs font-medium bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
               <Clock size={14} weight="fill" />
@@ -701,14 +635,16 @@ export default function QuestPage() {
 
       </div>
 
-      {/* SECTION 6 — Quest complete modal */}
-      <QuestCompleteModal
-        isOpen={showModal}
-        onClose={handleModalClose}
-        questCopy={modalData.questCopy}
-        xpAwarded={modalData.xpAwarded}
-        reward={modalData.reward}
-        allCompleted={modalData.allCompleted}
+      {/* SECTION 6 — Chest opening modal */}
+      <ChestOpeningModal
+        isOpen={showChestModal}
+        questKey={activeChestKey}
+        questCopy={
+          activeChestKey ? (quests?.[activeChestKey]?.copy ?? '')
+                         : ''
+        }
+        allCompleted={quests?.all_completed ?? false}
+        onClose={handleChestClose}
       />
 
       <QuestTour quests={activeQuests} />

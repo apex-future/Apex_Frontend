@@ -62,9 +62,46 @@ export default function Header() {
     const activeMultiplier = multiplierActive
         ? (timedActive ? lastMultiplierApplied : getDayMultiplier())
         : null;
-    const multiplierLabel = activeMultiplier ? `${activeMultiplier}x boost` : null;
+    const multiplierLabel = activeMultiplier
+        ? (timedActive && timedCountdown
+            ? `${activeMultiplier}× · ${timedCountdown} left`
+            : `${activeMultiplier}× boost active`)
+        : null;
     
     const questsCompletedCount = [quest_1, quest_2, quest_3].filter(q => q?.completed).length;
+
+    // ── Live countdown for timed overflow multiplier ──────────────────
+    const [timedCountdown, setTimedCountdown] = useState('');
+
+    useEffect(() => {
+      if (!timedActive) {
+        setTimedCountdown('');
+        return;
+      }
+
+      const computeLabel = () => {
+        const now = new Date();
+        const expires = new Date(multiplierExpiresAt);
+        const remainMs = expires - now;
+        if (remainMs <= 0) {
+          setTimedCountdown('');
+          return;
+        }
+        const totalSec = Math.ceil(remainMs / 1000);
+        const mins = Math.floor(totalSec / 60);
+        const secs = totalSec % 60;
+        setTimedCountdown(
+          `${mins}:${String(secs).padStart(2, '0')}`
+        );
+      };
+
+      computeLabel();
+      const interval = setInterval(computeLabel, 1000);
+      return () => clearInterval(interval);
+    }, [timedActive, multiplierExpiresAt]);
+
+    // When timed multiplier expires, isMultiplierActive() re-check
+    // happens on next render via the interval cleanup.
 
     // Check if the streak for today has been fired / earned
     const todayStr = (() => {
@@ -108,8 +145,8 @@ export default function Header() {
                     {multiplierActive ? (
                         <ElectricBorder
                             color="#7C3AED"
-                            speed={0.8}
-                            chaos={0.10}
+                            speed={timedActive ? 1.2 : 0.8}
+                            chaos={timedActive ? 0.18 : 0.10}
                             borderRadius={14}
                             style={{ borderRadius: 14 }}
                         >
