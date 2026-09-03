@@ -9,7 +9,7 @@ function ReaderNavBar({ navigate, navState, setNavState, aiModal, setAiModal, qu
   };
 
   return (
-    <div className={`reading-nav-bar absolute inset-0 ${navState !== 'none' ? 'z-[9985]' : 'z-50'} pointer-events-none h-full`}>
+    <div className={`reading-nav-bar absolute inset-0 ${navState !== 'none' ? 'z-40' : 'z-10'} pointer-events-none h-full`}>
       <FirstLayerNavBar
         visible={navState === 'first'}
         navigate={navigate}
