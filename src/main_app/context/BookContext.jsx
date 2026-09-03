@@ -75,12 +75,43 @@ export const BookProvider = ({ children }) => {
         // Reconstruct File objects from stored ArrayBuffers
         const hydratedBooks = storedBooks.map(b => {
           if (b.fileBlob && !b.file) {
-            const fileExt = b.fileType === 'application/epub+zip' ? '.epub' :
-              b.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' :
-                b.fileType === 'application/msword' ? '.doc' :
-                  '.pdf';
-            const file = new File([b.fileBlob], b.title + fileExt, { type: b.fileType || 'application/pdf' });
-            return { ...b, file };
+            let fileType = b.fileType;
+            const titleLower = b.title?.toLowerCase() || '';
+
+            // Check magic bytes directly on ArrayBuffer if available
+            let isZipMagic = false;
+            let isPdfMagic = false;
+            if (b.fileBlob instanceof ArrayBuffer && b.fileBlob.byteLength >= 4) {
+              const bytes = new Uint8Array(b.fileBlob, 0, 4);
+              isZipMagic = bytes[0] === 0x50 && bytes[1] === 0x4B;
+              isPdfMagic = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+            }
+
+            if (titleLower.endsWith('.epub') || fileType?.includes('epub') || (isZipMagic && !titleLower.endsWith('.docx'))) {
+              fileType = 'application/epub+zip';
+            } else if (titleLower.endsWith('.docx') || fileType?.includes('wordprocessingml') || (isZipMagic && titleLower.endsWith('.docx'))) {
+              fileType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            } else if (titleLower.endsWith('.doc') || fileType === 'application/msword') {
+              fileType = 'application/msword';
+            } else if (titleLower.endsWith('.txt') || fileType === 'text/plain') {
+              fileType = 'text/plain';
+            } else if (isPdfMagic || titleLower.endsWith('.pdf')) {
+              fileType = 'application/pdf';
+            }
+
+            // If Dexie had misclassified this as a PDF, correct it asynchronously
+            if (fileType && b.id && b.fileType !== fileType) {
+              db.books.update(b.id, { fileType }).catch(() => {});
+            }
+
+            const fileExt = fileType === 'application/epub+zip' ? '.epub' :
+              fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx' :
+                fileType === 'application/msword' ? '.doc' :
+                  fileType === 'text/plain' ? '.txt' :
+                    '.pdf';
+            const cleanTitle = b.title ? b.title.replace(/\.(epub|pdf|docx|doc|txt)$/i, '') : 'Untitled';
+            const file = new File([b.fileBlob], cleanTitle + fileExt, { type: fileType || 'application/pdf' });
+            return { ...b, fileType, file };
           }
           return b;
         });
@@ -252,12 +283,36 @@ export const BookProvider = ({ children }) => {
 
     // Read file as ArrayBuffer for IndexedDB storage
     const arrayBuffer = await fileObject.arrayBuffer();
-    const fileType = fileObject.type || 'application/pdf';
+    const fileNameLower = fileObject.name?.toLowerCase() || '';
+
+    // Detect format from extension and magic bytes
+    let fileType = fileObject.type;
+    let isZipMagic = false;
+    let isPdfMagic = false;
+    if (arrayBuffer && arrayBuffer.byteLength >= 4) {
+      const bytes = new Uint8Array(arrayBuffer, 0, 4);
+      isZipMagic = bytes[0] === 0x50 && bytes[1] === 0x4B;
+      isPdfMagic = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+    }
+
+    if (fileNameLower.endsWith('.epub') || fileType?.includes('epub') || (isZipMagic && !fileNameLower.endsWith('.docx'))) {
+      fileType = 'application/epub+zip';
+    } else if (fileNameLower.endsWith('.docx') || fileType?.includes('wordprocessingml') || (isZipMagic && fileNameLower.endsWith('.docx'))) {
+      fileType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else if (fileNameLower.endsWith('.doc') || fileType === 'application/msword') {
+      fileType = 'application/msword';
+    } else if (fileNameLower.endsWith('.txt') || fileType === 'text/plain') {
+      fileType = 'text/plain';
+    } else if (isPdfMagic || fileNameLower.endsWith('.pdf') || fileType === 'application/pdf') {
+      fileType = 'application/pdf';
+    } else {
+      fileType = fileType || 'application/pdf';
+    }
 
     // Extract total page count and author from PDF at upload time
     let extractedPageCount = 0;
     let extractedAuthor = null;
-    const isPdf = fileType === 'application/pdf' || fileObject.name?.toLowerCase().endsWith('.pdf');
+    const isPdf = fileType === 'application/pdf' && !fileNameLower.endsWith('.epub');
     if (isPdf) {
       try {
         const pdfDoc = await pdfjs.getDocument({ data: arrayBuffer.slice(0) }).promise;

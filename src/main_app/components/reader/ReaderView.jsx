@@ -38,6 +38,7 @@ import ReaderNoteEditor from './reading_navigations/reading_layout/ReaderNoteEdi
 import FlashcardPanel from './reading_navigations/reading_layout/FlashcardPanel';
 import ReaderTour from './ReaderTour';
 import useOnboardingStore from '../../store/useOnboardingStore';
+import EPUBReader from './EPUBReader';
 
 const ScrollOrientationOverlay = ({ visible, orientation }) => {
     if (!visible) return null;
@@ -99,8 +100,57 @@ function ReaderView() {
 
     // Find the book and determine type
     const book = useMemo(() => books.find(b => b.id.toString() === bookId), [books, bookId]);
-    const isPdf = useMemo(() => book?.file?.type === 'application/pdf' || book?.file?.name?.toLowerCase()?.endsWith('.pdf'), [book]);
-    const isDocx = useMemo(() => book?.file?.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || book?.file?.name?.toLowerCase()?.endsWith('.docx'), [book]);
+    const [detectedFormat, setDetectedFormat] = useState(null);
+
+    // Magic byte detection: guarantees whether file is PDF (%PDF) or ZIP/EPUB (PK)
+    useEffect(() => {
+        const file = book?.file || (book?.fileBlob ? new Blob([book.fileBlob]) : null);
+        if (!file) return;
+
+        let active = true;
+        const inspect = async () => {
+            try {
+                const slice = await file.slice(0, 4).arrayBuffer();
+                const bytes = new Uint8Array(slice);
+                if (!active) return;
+                if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
+                    setDetectedFormat('pdf');
+                } else if (bytes[0] === 0x50 && bytes[1] === 0x4B) {
+                    const isDocxName = book?.file?.name?.toLowerCase()?.endsWith('.docx') || book?.title?.toLowerCase()?.endsWith('.docx');
+                    if (isDocxName) {
+                        setDetectedFormat('docx');
+                    } else {
+                        setDetectedFormat('epub');
+                    }
+                }
+            } catch (err) {
+                console.warn('[Apex Reader] Magic byte detection failed:', err);
+            }
+        };
+        inspect();
+        return () => { active = false; };
+    }, [book?.file, book?.fileBlob, book?.title]);
+
+    const isEpub = useMemo(() => {
+        if (detectedFormat === 'epub') return true;
+        if (detectedFormat === 'pdf') return false;
+        const type = book?.file?.type || book?.fileType;
+        const name = book?.file?.name || book?.title || '';
+        return type === 'application/epub+zip' || type?.includes('epub') || name.toLowerCase().endsWith('.epub');
+    }, [book, detectedFormat]);
+
+    const isPdf = useMemo(() => {
+        if (isEpub) return false;
+        if (detectedFormat === 'pdf') return true;
+        if (detectedFormat === 'epub' || detectedFormat === 'docx') return false;
+        return book?.file?.type === 'application/pdf' || book?.file?.name?.toLowerCase()?.endsWith('.pdf');
+    }, [book, isEpub, detectedFormat]);
+
+    const isImage = useMemo(() => book?.file?.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(book?.file?.name || ''), [book]);
+    const isDocx = useMemo(() => {
+        if (detectedFormat === 'docx') return true;
+        return book?.file?.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || book?.file?.name?.toLowerCase()?.endsWith('.docx');
+    }, [book, detectedFormat]);
     const isDoc = useMemo(() => book?.file?.type === 'application/msword' || book?.file?.name?.toLowerCase()?.endsWith('.doc'), [book]);
 
     // --- Lifted PDF Controls State ---
@@ -487,6 +537,7 @@ function ReaderView() {
             color,
             page: pageNumber,
             startOffset: selectionRef.current.startOffset,
+            cfiRange: selectionRef.current.cfiRange || null,
             addedAt: new Date().toISOString()
         });
         setShowHighlightMenu(false);
@@ -616,10 +667,10 @@ function ReaderView() {
 
     async function handleDocumentLoad(pdf) {
         pdfDocumentRef.current = pdf;
-        const total = pdf.numPages;
+        const total = pdf?.numPages || pdf?.totalPages || 1;
         setNumPages(total);
 
-        if (book?.id && total > 1) {
+        if (book?.id && total > 1 && book.totalPages !== total) {
             db.books.update(book.id, { totalPages: total })
                 .catch(err => console.error('[Apex TOC] Failed to persist totalPages:', err));
 
@@ -638,6 +689,11 @@ function ReaderView() {
             setLocalPages(prev => ({ ...prev, current: effectivePage }));
         }
         Promise.resolve().then(() => syncProgress(effectivePage, total));
+
+        // Outline for EPUB/DOCX is handled by their respective reader components
+        if (isEpub || typeof pdf?.getOutline !== 'function') {
+            return;
+        }
 
         // --- Outline extraction ---
         // Check Dexie cache first
@@ -833,7 +889,7 @@ function ReaderView() {
     }, []);
 
     // Expose pdfControls object
-    const pdfControls = isPdf
+    const pdfControls = (isPdf || isEpub)
         ? { pageNumber, numPages, scale, rotation, nextPage, previousPage, zoomIn, zoomOut, rotate, goToPage }
         : null;
 
@@ -1243,8 +1299,21 @@ function ReaderView() {
     // Refs for stability
     const updateProgressRef = useRef(updateBookProgress);
     const currentBookRef = useRef(book);
+    const activeFileKeyRef = useRef('');
+    const activeUrlRef = useRef(null);
+
     useEffect(() => { updateProgressRef.current = updateBookProgress; }, [updateBookProgress]);
     useEffect(() => { currentBookRef.current = book; }, [book]);
+
+    // Revoke blob URL only when unmounting
+    useEffect(() => {
+        return () => {
+            if (activeUrlRef.current) {
+                URL.revokeObjectURL(activeUrlRef.current);
+                activeUrlRef.current = null;
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (!book && bookId) {
@@ -1269,18 +1338,29 @@ function ReaderView() {
 
         const file = book?.file;
         if (file) {
+            const fileKey = `${bookId}-${file.name}-${file.size}-${file.lastModified}`;
+            if (activeFileKeyRef.current === fileKey && activeUrlRef.current) {
+                // File content has not changed; preserve existing blob URL to prevent reloads
+                return;
+            }
+            activeFileKeyRef.current = fileKey;
+
             const isTypePdf = file.type === 'application/pdf' || file.name?.toLowerCase()?.endsWith('.pdf');
+            const isTypeEpub = file.type === 'application/epub+zip' || file.type?.includes('epub') || file.name?.toLowerCase()?.endsWith('.epub') || book?.title?.toLowerCase()?.endsWith('.epub');
             const isTypeImage = file.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(file.name || '');
             const isTypeText = file.type === 'text/plain' || file.name?.toLowerCase()?.endsWith('.txt');
 
-            if (isTypePdf || isTypeImage) {
+            if (isTypePdf || isTypeImage || isTypeEpub) {
+                if (activeUrlRef.current) {
+                    URL.revokeObjectURL(activeUrlRef.current);
+                }
                 const url = URL.createObjectURL(file);
+                activeUrlRef.current = url;
                 Promise.resolve().then(() => {
                     setFileUrl(url);
                     setTextContent("");
                     setHtmlContent("");
                 });
-                return () => URL.revokeObjectURL(url);
             } else if (isTypeText) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -1658,8 +1738,41 @@ function ReaderView() {
                         </div>
                     )}
 
+                    {/* EPUB Content */}
+                    {fileUrl && isEpub && (
+                        <EPUBReader
+                            fileUrl={fileUrl}
+                            book={book}
+                            pageNumber={pageNumber}
+                            onDocumentLoad={handleDocumentLoad}
+                            onPageChange={stableOnPageChange}
+                            scrollOrientation={scrollOrientation}
+                            scale={scale}
+                            locked={locked}
+                            onNextPage={nextPage}
+                            onPrevPage={previousPage}
+                            goToPage={goToPage}
+                            highlights={stableHighlights}
+                            tocOutline={tocOutline}
+                            setTocOutline={setTocOutline}
+                            onCloseNav={closeNav}
+                            onTextSelected={(selData) => {
+                                selectionRef.current = selData;
+                                setSelectionData(selData);
+                                useOnboardingStore.getState().setTourTextSelected(true);
+                                useQuestStore.getState().reportAction('text_selected', 1);
+                                setShowHighlightMenu(true);
+                            }}
+                            onClearSelection={() => {
+                                if (!isDictOpen) {
+                                    setShowHighlightMenu(false);
+                                }
+                            }}
+                        />
+                    )}
+
                     {/* Image content */}
-                    {fileUrl && !isPdf && (
+                    {fileUrl && isImage && (
                         <div className="flex-1 flex flex-col items-center justify-center lg:justify-start overflow-auto p-4 sm:p-8">
                             <img src={fileUrl} alt="content" className="max-w-full max-h-[90vh] object-contain rounded-sm bg-bg-elevated" />
                         </div>
@@ -1902,7 +2015,7 @@ function ReaderView() {
                 showHighlightMenu={showHighlightMenu}
                 navState={navState}
                 setNavState={setNavState}
-                isLoading={!Boolean(book && ((isPdf && numPages !== null) || (!isPdf && (textContent || htmlContent))))}
+                isLoading={!Boolean(book && ((isPdf && numPages !== null) || (isEpub && fileUrl) || (isImage && fileUrl) || (!isPdf && !isEpub && (textContent || htmlContent))))}
             />
         </div>
     );

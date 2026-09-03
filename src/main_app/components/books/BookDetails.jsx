@@ -161,9 +161,10 @@ function BookDetails() {
             try {
                 let file = book.file;
                 if (!file && book.fileBlob) {
-                    const fileExt = book.fileType === 'application/epub+zip' ? '.epub' : '.pdf';
+                    const isEpub = book.fileType === 'application/epub+zip' || book.fileType?.includes('epub') || book.title?.toLowerCase().endsWith('.epub');
+                    const fileExt = isEpub ? '.epub' : '.pdf';
                     const fileName = book.title.endsWith(fileExt) ? book.title : book.title + fileExt;
-                    file = new File([book.fileBlob], fileName, { type: book.fileType || 'application/pdf' });
+                    file = new File([book.fileBlob], fileName, { type: isEpub ? 'application/epub+zip' : (book.fileType || 'application/pdf') });
                 }
                 if (file) {
                     const uploaded = await syncService.uploadBook(file, book.title, book.author || 'Unknown', book.id);
