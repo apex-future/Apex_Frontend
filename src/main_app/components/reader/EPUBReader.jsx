@@ -203,6 +203,23 @@ function EPUBReader({
       });
       renditionRef.current = rendition;
 
+      // In vertical continuous mode:
+      // 1. Disable epubjs aggressive trimming so previously rendered chapters stay in the DOM.
+      //    This prevents destructive prepend/counter cycles that snap upward scrolling back down.
+      // 2. Guard counter() against unwanted scroll pushes when already near top.
+      if (isVertical && rendition.manager) {
+        rendition.manager.trim = () => Promise.resolve();
+        const origCounter = rendition.manager.counter?.bind(rendition.manager);
+        if (origCounter) {
+          rendition.manager.counter = function (bounds) {
+            const scroller = rendition.manager.container;
+            if (scroller && bounds && bounds.heightDelta > 0 && scroller.scrollTop > 50) {
+              origCounter(bounds);
+            }
+          };
+        }
+      }
+
       // Theme styling matching Apex reader aesthetics
       const applyTheme = () => {
         const isDark = document.documentElement.classList.contains('dark');
@@ -300,13 +317,12 @@ function EPUBReader({
           }
         }, { passive: true });
 
-        // Forward mouse wheel in vertical mode to ensure scroll never gets trapped on short/cover pages
+        // In vertical mode, only trigger manager.check near bottom when scrolling down
         win.addEventListener('wheel', (e) => {
           if (isVertical) {
-            const container = viewerRef.current?.querySelector('.epub-container');
-            if (container) {
-              container.scrollBy({ top: e.deltaY, left: e.deltaX, behavior: 'auto' });
-              if (e.deltaY > 0 && container.scrollTop + container.clientHeight >= container.scrollHeight - 350) {
+            if (e.deltaY > 0) {
+              const container = viewerRef.current?.querySelector('.epub-container');
+              if (container && container.scrollTop + container.clientHeight >= container.scrollHeight - 350) {
                 const manager = renditionRef.current?.manager;
                 if (manager && typeof manager.check === 'function') {
                   manager.check(0, 500);
@@ -689,8 +705,13 @@ function EPUBReader({
       className="flex-1 flex flex-col items-center h-full max-h-full w-full relative overflow-hidden select-text epub-container"
       id="epub-container"
     >
-      {/* Scoped CSS ensuring epub.js container handles scrolling seamlessly */}
+      {/* Scoped CSS ensuring epub.js container handles scrolling seamlessly without anchor jumps */}
       <style>{`
+        #epub-container,
+        #epub-container .epub-container,
+        #epub-container .epub-view {
+          overflow-anchor: none !important;
+        }
         #epub-container .epub-container {
           width: 100% !important;
           height: 100% !important;

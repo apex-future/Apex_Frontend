@@ -1424,10 +1424,10 @@ function ReaderView() {
             lastBookIdRef.current = bookId;
             lastPageRef.current = targetPage;
 
-            // For non-PDF books, restore saved scroll position; for PDFs, page number handles it
-            if (!isPdf && book.scrollPosition > 0) {
+            // For non-PDF/non-EPUB books (e.g. TXT/HTML), restore saved window scroll position
+            if (!isPdf && !isEpub && book.scrollPosition > 0) {
                 setTimeout(() => window.scrollTo(0, book.scrollPosition), 300);
-            } else if (isNewBook) {
+            } else if (isNewBook && !isPdf && !isEpub) {
                 window.scrollTo(0, 0);
             }
 
@@ -1437,11 +1437,12 @@ function ReaderView() {
                 setPageNumber(prev => (isNewBook || prev === 1) ? targetPage : prev);
             });
         }
-    }, [bookId, book, isPdf]);
+    }, [bookId, book, isPdf, isEpub]);
 
     const lastUpdateRef = useRef(0);
     useEffect(() => {
-        if (isPdf) return;
+        // Only track window scroll for text/HTML documents; PDF and EPUB have dedicated readers
+        if (isPdf || isEpub) return;
 
         const handleScroll = () => {
             const b = currentBookRef.current;
