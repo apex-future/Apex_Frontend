@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Fire, Sparkle, Calendar, Bell, CheckCircle, Spinner, Megaphone, ArrowRight } from '@phosphor-icons/react';
+import { X, Fire, Sparkle, Calendar, Bell, CheckCircle, Spinner, Megaphone, ArrowSquareOut } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import notificationService from '../../services/notificationService';
+import Button from '../ui/Button';
+import Label from '../ui/Label';
 
 function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
   const [notifications, setNotifications] = useState([]);
@@ -52,6 +54,35 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
 
   const filteredBroadcasts = broadcasts.filter(n => filter === 'all' || !n.read);
   const filteredPersonal = personal.filter(n => filter === 'all' || !n.read);
+
+  const formatNotificationDate = (dateInput) => {
+    if (!dateInput) return 'Today';
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) return dateInput;
+
+    const now = new Date();
+    const targetMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const diffDays = Math.round((nowMidnight.getTime() - targetMidnight.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return 'Today';
+    }
+    if (diffDays === 1) {
+      return 'Yesterday';
+    }
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+
+    if (date.getFullYear() === now.getFullYear()) {
+      return `${day} ${month}`;
+    } else {
+      return `${day} ${month} ${date.getFullYear()}`;
+    }
+  };
 
   const getIcon = (type) => {
     switch (type) {
@@ -134,13 +165,13 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                 <div className="flex p-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                   <button
                     onClick={() => setFilter('all')}
-                    className={`px-4 py-1 rounded-full text-xs font-semibold transition-all ${filter === 'all' ? 'bg-bg-primary text-text-primary shadow-xs' : 'text-text-tertiary hover:text-text-secondary'}`}
+                    className={`px-4 py-1 rounded-full text-xs font-semibold transition-all ${filter === 'all' ? 'bg-purple-600 text-white shadow-xs shadow-purple-500/25' : 'text-text-tertiary hover:text-text-secondary'}`}
                   >
                     All
                   </button>
                   <button
                     onClick={() => setFilter('unread')}
-                    className={`px-4 py-1 rounded-full text-xs font-semibold transition-all ${filter === 'unread' ? 'bg-bg-primary text-text-primary shadow-xs' : 'text-text-tertiary hover:text-text-secondary'}`}
+                    className={`px-4 py-1 rounded-full text-xs font-semibold transition-all ${filter === 'unread' ? 'bg-purple-600 text-white shadow-xs shadow-purple-500/25' : 'text-text-tertiary hover:text-text-secondary'}`}
                   >
                     Unread
                   </button>
@@ -148,7 +179,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllAsRead}
-                    className="text-xs font-semibold text-accent-primary hover:text-accent-hover transition-colors flex items-center gap-1"
+                    className="text-xs font-semibold text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
                     <CheckCircle size={14} weight="fill" />
                     Mark all read
@@ -158,23 +189,23 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
-              <div className="flex flex-col gap-3">
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <div className="flex flex-col">
                 <AnimatePresence>
                   {loading ? (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="flex flex-col items-center justify-center h-40 text-text-tertiary"
+                      className="flex flex-col items-center justify-center h-40 text-text-tertiary p-6"
                     >
-                      <Spinner size={32} className="animate-spin mb-3 text-accent-primary" />
+                      <Spinner size={32} className="animate-spin mb-3 text-purple-600" />
                       <p className="text-sm font-medium">Loading notifications...</p>
                     </motion.div>
                   ) : !hasContent ? (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="flex flex-col items-center justify-center h-40 text-text-tertiary"
+                      className="flex flex-col items-center justify-center h-40 text-text-tertiary p-6"
                     >
                       <Bell size={40} weight="fill" className="mb-3 opacity-20" />
                       <p className="text-sm font-medium">No new notifications</p>
@@ -183,118 +214,133 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                     <>
                       {/* ─── What's New (Broadcasts) ─── */}
                       {filteredBroadcasts.length > 0 && (
-                        <>
-                          <div className="flex items-center gap-2 px-1 pt-1 pb-0.5">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2 px-6 pt-3 pb-2">
                             <Megaphone size={14} weight="fill" className="text-purple-500" />
                             <span className="text-xs font-bold text-purple-500 uppercase tracking-wider">What's New</span>
                           </div>
-                          {filteredBroadcasts.map((broadcast) => (
-                            <motion.div
-                              layout
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.95 }}
-                              key={`broadcast-${broadcast.id}`}
-                              className={`group relative flex gap-4 p-4 rounded-2xl border transition-all ${
-                                broadcast.read
-                                  ? 'bg-bg-primary border-transparent'
-                                  : 'bg-gradient-to-r from-purple-500/5 to-violet-500/5 border-purple-500/20 shadow-sm'
-                              }`}
-                            >
-                              {/* Unread dot */}
-                              {!broadcast.read && (
-                                <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                          {filteredBroadcasts.map((broadcast, index) => (
+                            <React.Fragment key={`broadcast-${broadcast.id}`}>
+                              {index > 0 && (
+                                <div className="h-px bg-black/10 dark:bg-white/10 w-full" />
                               )}
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className={`group relative flex gap-4 px-6 py-4 w-full transition-all ${
+                                  broadcast.read
+                                    ? 'bg-transparent hover:bg-black/5 dark:hover:bg-white/5'
+                                    : 'bg-purple-100 dark:bg-purple-900/40 hover:bg-purple-200/60 dark:hover:bg-purple-900/60'
+                                }`}
+                              >
+                                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-sm">
+                                  <Megaphone size={18} weight="fill" className="text-white" />
+                                </div>
 
-                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-sm">
-                                <Megaphone size={18} weight="fill" className="text-white" />
-                              </div>
+                                <div className="flex-1 min-w-0 pr-2">
+                                  <div className="flex items-baseline justify-between gap-2 mb-1">
+                                    <h4 className={`text-[15px] sm:text-base font-bold leading-snug truncate ${broadcast.read ? 'text-text-secondary' : 'text-text-primary'}`}>
+                                      {broadcast.title}
+                                    </h4>
+                                    <span className="text-xs font-medium text-text-tertiary shrink-0 whitespace-nowrap">
+                                      {formatNotificationDate(broadcast.created_at)}
+                                    </span>
+                                  </div>
 
-                              <div className="flex-1 pr-4">
-                                <h4 className={`text-sm font-bold ${broadcast.read ? 'text-text-secondary' : 'text-text-primary'}`}>
-                                  {broadcast.title}
-                                </h4>
-                                <p className={`text-sm leading-relaxed mb-2 ${broadcast.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
-                                  {broadcast.body}
-                                </p>
-                                {broadcast.cta_label && broadcast.cta_route && (
-                                  <button
-                                    onClick={() => handleCtaClick(broadcast.cta_route)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition-colors mb-2"
-                                  >
-                                    {broadcast.cta_label}
-                                    <ArrowRight size={12} weight="bold" />
-                                  </button>
-                                )}
-                                <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider block">
-                                  {broadcast.created_at ? new Date(broadcast.created_at).toLocaleString() : 'Just now'}
-                                </span>
-                              </div>
-                            </motion.div>
+                                  {broadcast.version && (
+                                    <div className="mb-2">
+                                      <Label color="purple" size="sm" className="!px-2.5 !py-0.5 !text-[10px] font-bold">
+                                        Version: {broadcast.version.replace(/^version:\s*/i, '')}
+                                      </Label>
+                                    </div>
+                                  )}
+
+                                  <p className={`text-sm leading-relaxed mb-1 ${broadcast.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+                                    {broadcast.body}
+                                  </p>
+
+                                  {broadcast.cta_label && broadcast.cta_route && (
+                                    <div className="mt-3.5 mb-1">
+                                      <Button
+                                        variant="primary"
+                                        fullWidth={false}
+                                        onClick={() => handleCtaClick(broadcast.cta_route)}
+                                        className="!py-1.5 !px-4 !text-xs !rounded-xl"
+                                      >
+                                        <span>{broadcast.cta_label}</span>
+                                        <ArrowSquareOut size={14} weight="bold" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            </React.Fragment>
                           ))}
-                        </>
+                        </div>
                       )}
 
                       {/* ─── Personal Notifications ─── */}
                       {filteredPersonal.length > 0 && (
-                        <>
+                        <div className="flex flex-col">
                           {filteredBroadcasts.length > 0 && (
-                            <div className="flex items-center gap-2 px-1 pt-3 pb-0.5">
-                              <Bell size={14} weight="fill" className="text-text-tertiary" />
-                              <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider">Activity</span>
-                            </div>
+                            <div className="h-px bg-black/10 dark:bg-white/10 w-full" />
                           )}
-                          {filteredPersonal.map((notification) => (
-                            <motion.div
-                              layout
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.95 }}
-                              key={notification.id}
-                              className={`group relative flex gap-4 p-4 rounded-2xl border transition-all ${
-                                notification.read 
-                                  ? 'bg-bg-primary border-transparent' 
-                                  : 'bg-bg-elevated border-accent-primary/20 shadow-sm'
-                              }`}
-                            >
-                              {/* Unread dot */}
-                              {!notification.read && (
-                                <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-accent-primary" />
+                          <div className="flex items-center gap-2 px-6 pt-3 pb-2">
+                            <Bell size={14} weight="fill" className="text-text-tertiary" />
+                            <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider">Activity</span>
+                          </div>
+                          {filteredPersonal.map((notification, index) => (
+                            <React.Fragment key={notification.id}>
+                              {index > 0 && (
+                                <div className="h-px bg-black/10 dark:bg-white/10 w-full" />
                               )}
-
-                              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${getIconBg(notification.type)}`}>
-                                {getIcon(notification.type)}
-                              </div>
-
-                              <div className="flex-1 pr-4">
-                                <div className="flex justify-between items-start mb-1">
-                                  <h4 className={`text-sm font-bold ${notification.read ? 'text-text-secondary' : 'text-text-primary'}`}>
-                                    {notification.title}
-                                  </h4>
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className={`group relative flex gap-4 px-6 py-4 w-full transition-all ${
+                                  notification.read 
+                                    ? 'bg-transparent hover:bg-black/5 dark:hover:bg-white/5' 
+                                    : 'bg-purple-100 dark:bg-purple-900/40 hover:bg-purple-200/60 dark:hover:bg-purple-900/60'
+                                }`}
+                              >
+                                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${getIconBg(notification.type)}`}>
+                                  {getIcon(notification.type)}
                                 </div>
-                                <p className={`text-sm leading-relaxed mb-2 ${notification.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
-                                  {notification.body || notification.message}
-                                </p>
-                                <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
-                                  {notification.created_at ? new Date(notification.created_at).toLocaleString() : notification.time || 'Just now'}
-                                </span>
-                              </div>
 
-                              {/* Actions menu (hover) */}
-                              {!notification.read && (
-                                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button
-                                    onClick={() => handleMarkAsRead(notification.id)}
-                                    className="p-1.5 bg-bg-subtle hover:bg-border-default rounded-md text-text-secondary transition-colors"
-                                    title="Mark as read"
-                                  >
-                                    <CheckCircle size={16} weight="fill" />
-                                  </button>
+                                <div className="flex-1 min-w-0 pr-2">
+                                  <div className="flex items-baseline justify-between gap-2 mb-1">
+                                    <h4 className={`text-[15px] sm:text-base font-bold leading-snug truncate ${notification.read ? 'text-text-secondary' : 'text-text-primary'}`}>
+                                      {notification.title}
+                                    </h4>
+                                    <span className="text-xs font-medium text-text-tertiary shrink-0 whitespace-nowrap">
+                                      {formatNotificationDate(notification.created_at || notification.time)}
+                                    </span>
+                                  </div>
+                                  <p className={`text-sm leading-relaxed mb-1 ${notification.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+                                    {notification.body || notification.message}
+                                  </p>
                                 </div>
-                              )}
-                            </motion.div>
+
+                                {/* Actions menu (hover) */}
+                                {!notification.read && (
+                                  <div className="absolute bottom-4 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                      onClick={() => handleMarkAsRead(notification.id)}
+                                      className="p-1.5 bg-bg-subtle hover:bg-border-default rounded-md text-text-secondary transition-colors"
+                                      title="Mark as read"
+                                    >
+                                      <CheckCircle size={16} weight="fill" />
+                                    </button>
+                                  </div>
+                                )}
+                              </motion.div>
+                            </React.Fragment>
                           ))}
-                        </>
+                        </div>
                       )}
                     </>
                   )}
