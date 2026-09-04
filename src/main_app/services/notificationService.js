@@ -21,10 +21,10 @@ const notificationService = {
 
   checkAndNotify: async () => {
     try {
-      const response = await apiClient.get('/api/notifications');
-      const unreadCount = response.data?.filter?.(n => !n.read)?.length || 0;
-      if (import.meta.env.DEV) console.log(`[Apex Notifications] Polled unread count: ${unreadCount}`);
-      return unreadCount;
+      const response = await apiClient.get('/api/notifications/unread-count');
+      const count = response.data?.unread_count || 0;
+      if (import.meta.env.DEV) console.log(`[Apex Notifications] Polled unread count: ${count}`);
+      return count;
     } catch (err) {
       if (import.meta.env.DEV) console.error('[Apex Notifications] Failed to poll notifications:', err);
       return 0;

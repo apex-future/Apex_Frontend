@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Fire, Sparkle, Calendar, Bell, CheckCircle, DotsThreeVertical, Spinner } from '@phosphor-icons/react';
+import { X, Fire, Sparkle, Calendar, Bell, CheckCircle, Spinner, Megaphone, ArrowRight } from '@phosphor-icons/react';
+import { useNavigate } from 'react-router-dom';
 import notificationService from '../../services/notificationService';
 
 function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all'); // 'all', 'unread'
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen) {
@@ -37,25 +39,43 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
     await notificationService.markAllAsRead();
   };
 
-  const filteredNotifications = notifications.filter(n => filter === 'all' || !n.read);
+  const handleCtaClick = (route) => {
+    if (route) {
+      navigate(route);
+      onClose();
+    }
+  };
+
+  // Split into broadcasts and personal
+  const broadcasts = notifications.filter(n => n.source === 'broadcast');
+  const personal = notifications.filter(n => n.source !== 'broadcast');
+
+  const filteredBroadcasts = broadcasts.filter(n => filter === 'all' || !n.read);
+  const filteredPersonal = personal.filter(n => filter === 'all' || !n.read);
 
   const getIcon = (type) => {
     switch (type) {
-      case 'streak': return <Fire size={18} weight="fill" className="text-orange-500" />;
+      case 'streak': case 'streak_milestone': return <Fire size={18} weight="fill" className="text-orange-500" />;
       case 'cleo': return <Sparkle size={18} weight="fill" className="text-purple-500" />;
-      case 'exam': return <Calendar size={18} weight="fill" className="text-blue-500" />;
+      case 'exam': case 'exam_countdown': return <Calendar size={18} weight="fill" className="text-blue-500" />;
+      case 'daily_quest_ready': return <Sparkle size={18} weight="fill" className="text-emerald-500" />;
+      case 'study_wrap': return <Fire size={18} weight="fill" className="text-amber-500" />;
       default: return <Bell size={18} weight="fill" className="text-accent-primary" />;
     }
   };
 
   const getIconBg = (type) => {
     switch (type) {
-      case 'streak': return 'bg-orange-500/10 border-orange-500/20';
+      case 'streak': case 'streak_milestone': return 'bg-orange-500/10 border-orange-500/20';
       case 'cleo': return 'bg-purple-500/10 border-purple-500/20';
-      case 'exam': return 'bg-blue-500/10 border-blue-500/20';
+      case 'exam': case 'exam_countdown': return 'bg-blue-500/10 border-blue-500/20';
+      case 'daily_quest_ready': return 'bg-emerald-500/10 border-emerald-500/20';
+      case 'study_wrap': return 'bg-amber-500/10 border-amber-500/20';
       default: return 'bg-accent-primary/10 border-accent-primary/20';
     }
   };
+
+  const hasContent = filteredBroadcasts.length > 0 || filteredPersonal.length > 0;
 
   return (
     <AnimatePresence>
@@ -150,7 +170,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                       <Spinner size={32} className="animate-spin mb-3 text-accent-primary" />
                       <p className="text-sm font-medium">Loading notifications...</p>
                     </motion.div>
-                  ) : filteredNotifications.length === 0 ? (
+                  ) : !hasContent ? (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -160,56 +180,123 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                       <p className="text-sm font-medium">No new notifications</p>
                     </motion.div>
                   ) : (
-                    filteredNotifications.map((notification) => (
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        key={notification.id}
-                        className={`group relative flex gap-4 p-4 rounded-2xl border transition-all ${
-                          notification.read 
-                            ? 'bg-bg-primary border-transparent' 
-                            : 'bg-bg-elevated border-accent-primary/20 shadow-sm'
-                        }`}
-                      >
-                        {/* Unread dot */}
-                        {!notification.read && (
-                          <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-accent-primary" />
-                        )}
-
-                        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${getIconBg(notification.type)}`}>
-                          {getIcon(notification.type)}
-                        </div>
-
-                        <div className="flex-1 pr-4">
-                          <div className="flex justify-between items-start mb-1">
-                            <h4 className={`text-sm font-bold ${notification.read ? 'text-text-secondary' : 'text-text-primary'}`}>
-                              {notification.title}
-                            </h4>
+                    <>
+                      {/* ─── What's New (Broadcasts) ─── */}
+                      {filteredBroadcasts.length > 0 && (
+                        <>
+                          <div className="flex items-center gap-2 px-1 pt-1 pb-0.5">
+                            <Megaphone size={14} weight="fill" className="text-purple-500" />
+                            <span className="text-xs font-bold text-purple-500 uppercase tracking-wider">What's New</span>
                           </div>
-                          <p className={`text-sm leading-relaxed mb-2 ${notification.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
-                            {notification.message}
-                          </p>
-                          <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
-                            {notification.created_at ? new Date(notification.created_at).toLocaleString() : notification.time || 'Just now'}
-                          </span>
-                        </div>
-
-                        {/* Actions menu (hover) */}
-                        {!notification.read && (
-                          <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => handleMarkAsRead(notification.id)}
-                              className="p-1.5 bg-bg-subtle hover:bg-border-default rounded-md text-text-secondary transition-colors"
-                              title="Mark as read"
+                          {filteredBroadcasts.map((broadcast) => (
+                            <motion.div
+                              layout
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              key={`broadcast-${broadcast.id}`}
+                              className={`group relative flex gap-4 p-4 rounded-2xl border transition-all ${
+                                broadcast.read
+                                  ? 'bg-bg-primary border-transparent'
+                                  : 'bg-gradient-to-r from-purple-500/5 to-violet-500/5 border-purple-500/20 shadow-sm'
+                              }`}
                             >
-                              <CheckCircle size={16} weight="fill" />
-                            </button>
-                          </div>
-                        )}
-                      </motion.div>
-                    ))
+                              {/* Unread dot */}
+                              {!broadcast.read && (
+                                <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                              )}
+
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-sm">
+                                <Megaphone size={18} weight="fill" className="text-white" />
+                              </div>
+
+                              <div className="flex-1 pr-4">
+                                <h4 className={`text-sm font-bold ${broadcast.read ? 'text-text-secondary' : 'text-text-primary'}`}>
+                                  {broadcast.title}
+                                </h4>
+                                <p className={`text-sm leading-relaxed mb-2 ${broadcast.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+                                  {broadcast.body}
+                                </p>
+                                {broadcast.cta_label && broadcast.cta_route && (
+                                  <button
+                                    onClick={() => handleCtaClick(broadcast.cta_route)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition-colors mb-2"
+                                  >
+                                    {broadcast.cta_label}
+                                    <ArrowRight size={12} weight="bold" />
+                                  </button>
+                                )}
+                                <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider block">
+                                  {broadcast.created_at ? new Date(broadcast.created_at).toLocaleString() : 'Just now'}
+                                </span>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </>
+                      )}
+
+                      {/* ─── Personal Notifications ─── */}
+                      {filteredPersonal.length > 0 && (
+                        <>
+                          {filteredBroadcasts.length > 0 && (
+                            <div className="flex items-center gap-2 px-1 pt-3 pb-0.5">
+                              <Bell size={14} weight="fill" className="text-text-tertiary" />
+                              <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider">Activity</span>
+                            </div>
+                          )}
+                          {filteredPersonal.map((notification) => (
+                            <motion.div
+                              layout
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              key={notification.id}
+                              className={`group relative flex gap-4 p-4 rounded-2xl border transition-all ${
+                                notification.read 
+                                  ? 'bg-bg-primary border-transparent' 
+                                  : 'bg-bg-elevated border-accent-primary/20 shadow-sm'
+                              }`}
+                            >
+                              {/* Unread dot */}
+                              {!notification.read && (
+                                <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-accent-primary" />
+                              )}
+
+                              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${getIconBg(notification.type)}`}>
+                                {getIcon(notification.type)}
+                              </div>
+
+                              <div className="flex-1 pr-4">
+                                <div className="flex justify-between items-start mb-1">
+                                  <h4 className={`text-sm font-bold ${notification.read ? 'text-text-secondary' : 'text-text-primary'}`}>
+                                    {notification.title}
+                                  </h4>
+                                </div>
+                                <p className={`text-sm leading-relaxed mb-2 ${notification.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+                                  {notification.body || notification.message}
+                                </p>
+                                <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
+                                  {notification.created_at ? new Date(notification.created_at).toLocaleString() : notification.time || 'Just now'}
+                                </span>
+                              </div>
+
+                              {/* Actions menu (hover) */}
+                              {!notification.read && (
+                                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={() => handleMarkAsRead(notification.id)}
+                                    className="p-1.5 bg-bg-subtle hover:bg-border-default rounded-md text-text-secondary transition-colors"
+                                    title="Mark as read"
+                                  >
+                                    <CheckCircle size={16} weight="fill" />
+                                  </button>
+                                </div>
+                              )}
+                            </motion.div>
+                          ))}
+                        </>
+                      )}
+                    </>
                   )}
                 </AnimatePresence>
               </div>
