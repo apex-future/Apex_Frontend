@@ -94,6 +94,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
     onRemoveBookmark,
     highlights = [],
     removeHighlight,
+    updateHighlightColor,
     onJumpToHighlight,
     simplifications = [],
     removeSimplification,
@@ -212,6 +213,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
               setLeftPanel(false);
             }}
             onRemove={removeHighlight}
+            onUpdateColor={updateHighlightColor}
           />
         )}
 

@@ -257,15 +257,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleShareHighlight = () => {
-        setShareModalData({
-            title: 'Shared Highlight from Apex',
-            text: `"${selection}"`,
-            url: `${window.location.origin}/share?type=highlight&text=${encodeURIComponent(selection)}`
-        });
-        setShowShareModal(true);
-    };
-
     const handleShareTab = () => {
         setShareModalData({
             title: 'Shared Note from Apex',
@@ -410,16 +401,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                             >
                                 <MagicWand size={20} weight="fill" className="text-text-secondary group-hover:text-emerald-600 transition-colors" />
                                 <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Simplify</span>
-                            </button>
-
-                            <div className="w-[1px] h-8 bg-border-default/50 dark:bg-white/10" />
-
-                            <button
-                                onClick={handleShareHighlight}
-                                className="flex flex-col items-center justify-center p-3 hover:bg-bg-subtle rounded-xl transition-all group flex-1"
-                            >
-                                <ShareNetwork size={20} weight="fill" className="text-text-secondary group-hover:text-blue-500 transition-colors" />
-                                <span className="text-[10px] font-bold text-text-tertiary mt-1 uppercase tracking-tighter font-sans">Share</span>
                             </button>
                         </div>
 

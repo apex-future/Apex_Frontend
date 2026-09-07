@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { HighlighterCircle, CaretRight, Trash, Funnel, SortAscending } from '@phosphor-icons/react';
+import { HighlighterCircle, Trash, Funnel, SortAscending, ShareNetwork, PencilSimple, X } from '@phosphor-icons/react';
 import EmptyState from '../../../ui/EmptyState';
+import ShareModal from '../../../ui/ShareModal';
 
 /**
  * HighlightsView
@@ -9,8 +10,23 @@ import EmptyState from '../../../ui/EmptyState';
  *   highlights    – [{ id, text, highlightedText, color, page, pageNumber, addedAt }]
  *   onJumpTo      – (page) => void
  *   onRemove      – (highlightId) => void
+ *   onUpdateColor – (highlightId, newColor) => void
  */
-function HighlightsView({ highlights = [], onJumpTo, onRemove }) {
+function HighlightsView({ highlights = [], onJumpTo, onRemove, onUpdateColor }) {
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareModalData, setShareModalData] = useState({ title: '', text: '', url: '' });
+  const [editingHighlightId, setEditingHighlightId] = useState(null);
+
+  const handleShare = (h) => {
+    const textToShare = h.text || h.highlightedText || '';
+    setShareModalData({
+      title: 'Shared Highlight from Apex',
+      text: `"${textToShare}"`,
+      url: `${window.location.origin}/share?type=highlight&text=${encodeURIComponent(textToShare)}`
+    });
+    setShowShareModal(true);
+  };
+
   if (highlights.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -129,6 +145,8 @@ function HighlightsView({ highlights = [], onJumpTo, onRemove }) {
         const text = h.text || h.highlightedText || '';
         const displayText = text.length > 80 ? text.slice(0, 80) + '…' : text;
         const color = h.color || '#fef08a';
+        const highlightKey = h.id || h.dexieId || h.supabaseId;
+        const isEditing = editingHighlightId === highlightKey;
 
         return (
           <div
@@ -146,41 +164,118 @@ function HighlightsView({ highlights = [], onJumpTo, onRemove }) {
               />
             </div>
 
-            {/* Text snippet + meta */}
+            {/* Text snippet + bottom row */}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-text-primary line-clamp-2 leading-snug">
                 "{displayText}"
               </p>
-              <div className="flex items-center gap-2 mt-1">
-                {page > 0 && (
-                  <span className="text-[10px] font-bold text-text-tertiary bg-bg-subtle px-1.5 py-0.5 rounded">
-                    Page {page}
-                  </span>
-                )}
-                <span className="text-[10px] text-text-tertiary font-medium">
-                  {formatDate(h.addedAt)}
-                </span>
-              </div>
-            </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-1 shrink-0">
-              {onRemove && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onRemove?.(h.id || h.dexieId); }}
-                  className="p-1 rounded-lg hover:bg-bg-subtle text-text-placeholder hover:text-red-500 transition-all"
-                  title="Remove highlight"
+              {/* Bottom row: Edit Pen, Share & Delete directly underneath text on left, Page & Date tags on right */}
+              <div className="flex items-center justify-between gap-2 mt-2 pt-0.5">
+                <div className="flex items-center gap-1">
+                  {onUpdateColor && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingHighlightId(prev => (prev === highlightKey ? null : highlightKey));
+                      }}
+                      className={`p-1 -ml-1 rounded-lg transition-all ${
+                        isEditing
+                          ? 'bg-accent-primary/15 text-accent-primary'
+                          : 'hover:bg-bg-subtle text-text-placeholder hover:text-accent-primary'
+                      }`}
+                      title="Edit highlight colour"
+                    >
+                      <PencilSimple size={14} weight={isEditing ? "fill" : "bold"} />
+                    </button>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShare(h);
+                    }}
+                    className={`p-1 ${!onUpdateColor ? '-ml-1' : ''} rounded-lg hover:bg-bg-subtle text-text-placeholder hover:text-accent-primary transition-all`}
+                    title="Share highlight"
+                  >
+                    <ShareNetwork size={14} weight="bold" />
+                  </button>
+                  {onRemove && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemove?.(h.id || h.dexieId);
+                      }}
+                      className="p-1 rounded-lg hover:bg-bg-subtle text-text-placeholder hover:text-red-500 transition-all"
+                      title="Remove highlight"
+                    >
+                      <Trash size={14} weight="bold" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {page > 0 && (
+                    <span className="text-[10px] font-bold text-text-tertiary bg-bg-subtle px-1.5 py-0.5 rounded">
+                      Page {page}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-text-tertiary font-medium">
+                    {formatDate(h.addedAt)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Inline color picker */}
+              {isEditing && (
+                <div
+                  className="flex items-center gap-1.5 mt-2.5 p-1.5 bg-bg-subtle rounded-xl border border-border-default/80 shadow-sm w-fit animate-in fade-in zoom-in-95 duration-150"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <Trash size={13} weight="bold" />
-                </button>
+                  <span className="text-[10px] font-semibold text-text-secondary pl-1 pr-0.5">
+                    Colour:
+                  </span>
+                  {ALL_COLORS.map(c => (
+                    <button
+                      key={c}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpdateColor?.(highlightKey, c);
+                        setEditingHighlightId(null);
+                      }}
+                      className={`w-5 h-5 rounded-full border border-black/10 transition-all hover:scale-125 ${
+                        color === c ? 'ring-2 ring-accent-primary ring-offset-1 scale-110' : 'opacity-70 hover:opacity-100'
+                      }`}
+                      style={{ backgroundColor: c }}
+                      title={`Change colour to ${c}`}
+                    />
+                  ))}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingHighlightId(null);
+                    }}
+                    className="p-1 text-text-tertiary hover:text-text-primary rounded-md hover:bg-bg-elevated transition-colors"
+                    title="Cancel"
+                  >
+                    <X size={12} weight="bold" />
+                  </button>
+                </div>
               )}
-              <CaretRight size={14} weight="bold" className="text-text-placeholder shrink-0" />
             </div>
           </div>
         );
       })
     )}
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        shareTitle={shareModalData.title}
+        shareText={shareModalData.text}
+        shareUrl={shareModalData.url}
+      />
 
       <style dangerouslySetInnerHTML={{
         __html: `

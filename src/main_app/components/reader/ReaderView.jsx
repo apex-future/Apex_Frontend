@@ -90,7 +90,7 @@ const getSessionXpBreakdown = (actions, readingXp) => {
 };
 
 function ReaderView() {
-    const { books = [], updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, downloadMissingFile, addTab, updateTab, deleteTab, toggleFavorite, toggleBookmarkedBook, addSimplification, removeSimplification } = useContext(BookContext) || {};
+    const { books = [], updateBookProgress, toggleBookmark, addSavedWord, addHighlight, removeHighlight, updateHighlightColor, downloadMissingFile, addTab, updateTab, deleteTab, toggleFavorite, toggleBookmarkedBook, addSimplification, removeSimplification } = useContext(BookContext) || {};
     const { bookId } = useParams();
     const navigate = useNavigate();
 
@@ -909,6 +909,7 @@ function ReaderView() {
         // Highlights
         highlights,
         removeHighlight: (highlightId) => removeHighlight(book.id, highlightId),
+        updateHighlightColor: (highlightId, newColor) => updateHighlightColor?.(book.id, highlightId, newColor),
         onJumpToHighlight: goToPage,
         onJumpToPage: goToPage,
         // Notes

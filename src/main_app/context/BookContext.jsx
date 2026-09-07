@@ -1047,6 +1047,69 @@ export const BookProvider = ({ children }) => {
     });
   }, []);
 
+  const updateHighlightColor = useCallback(async (bookId, highlightId, newColor) => {
+    const targetId = typeof bookId === 'string' ? parseInt(bookId) : bookId;
+
+    // Get highlight record from Dexie db.highlights
+    let highlightRecord = null;
+    if (typeof highlightId === 'number') {
+      highlightRecord = await db.highlights.get(highlightId).catch(() => null);
+    }
+    if (!highlightRecord) {
+      if (typeof highlightId === 'string' && highlightId.includes('-')) {
+        highlightRecord = await db.highlights.where('supabaseId').equals(highlightId).first().catch(() => null);
+      } else if (highlightId != null) {
+        highlightRecord = await db.highlights.where('local_id').equals(highlightId.toString()).first().catch(() => null);
+      }
+    }
+
+    if (highlightRecord) {
+      await db.highlights.update(highlightRecord.id, { color: newColor }).catch(err => console.error('Failed to update dexie highlight color:', err));
+    }
+
+    setShelves((prevShelves) => {
+      let updatedBook = null;
+      const newShelves = prevShelves.map((shelf) => ({
+        ...shelf,
+        books: shelf.books.map((book) => {
+          if (book.id !== targetId) return book;
+          const existingHighlights = book.metadata?.highlights || [];
+          updatedBook = {
+            ...book,
+            metadata: {
+              ...(book.metadata || {}),
+              highlights: existingHighlights.map(h => {
+                const isMatch = h.id === highlightId || 
+                  h.dexieId === highlightId || 
+                  (h.supabaseId && h.supabaseId === highlightId) ||
+                  (highlightRecord && (h.id === highlightRecord.id || h.dexieId === highlightRecord.id));
+                return isMatch ? { ...h, color: newColor } : h;
+              }),
+            },
+          };
+          return updatedBook;
+        }),
+      }));
+
+      if (updatedBook) {
+        db.books.update(targetId, { metadata: updatedBook.metadata })
+          .catch(err => console.error('Failed to update book highlight metadata:', err));
+
+        // Sync to Supabase if we have a supabaseId
+        const matchedHighlight = (updatedBook.metadata?.highlights || []).find(h =>
+          h.id === highlightId ||
+          h.dexieId === highlightId ||
+          (h.supabaseId && h.supabaseId === highlightId)
+        );
+        const supabaseId = highlightRecord?.supabaseId || matchedHighlight?.supabaseId || (typeof highlightId === 'string' && highlightId.includes('-') ? highlightId : null);
+        if (supabaseId) {
+          syncService.updateHighlight(supabaseId, { color: newColor });
+        }
+      }
+      return newShelves;
+    });
+  }, []);
+
   const addTab = useCallback(async (bookId, tabData) => {
     const targetId = !isNaN(Number(bookId)) && Number(bookId) !== 0 ? Number(bookId) : bookId;
     const tabObj = typeof tabData === 'string'
@@ -1282,6 +1345,7 @@ export const BookProvider = ({ children }) => {
       removeSavedWord,
       addHighlight,
       removeHighlight,
+      updateHighlightColor,
       addTab,
       updateTab,
       deleteTab,
