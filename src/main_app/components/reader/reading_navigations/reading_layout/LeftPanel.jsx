@@ -90,6 +90,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
   const [activeSection, setActiveSection] = useState(null);
 
   const {
+    book,
     bookmarks = [],
     onRemoveBookmark,
     highlights = [],
@@ -207,6 +208,7 @@ function LeftPanel({ setLeftPanel, readerControls, pdfControls, tocOutline }) {
         {activeSection === 'highlights' && (
           <HighlightsView
             highlights={highlights}
+            book={book}
             onJumpTo={(page) => {
               onJumpToHighlight?.(page);
               pdfControls?.goToPage?.(page);

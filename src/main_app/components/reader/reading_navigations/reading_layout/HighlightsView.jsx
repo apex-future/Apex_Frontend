@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { HighlighterCircle, Trash, Funnel, SortAscending, ShareNetwork, PencilSimple, X } from '@phosphor-icons/react';
 import EmptyState from '../../../ui/EmptyState';
-import ShareModal from '../../../ui/ShareModal';
+import HighlightShareModal from './HighlightShareModal';
 
 /**
  * HighlightsView
@@ -11,19 +11,15 @@ import ShareModal from '../../../ui/ShareModal';
  *   onJumpTo      – (page) => void
  *   onRemove      – (highlightId) => void
  *   onUpdateColor – (highlightId, newColor) => void
+ *   book          – { id, title, author, supabaseId }
  */
-function HighlightsView({ highlights = [], onJumpTo, onRemove, onUpdateColor }) {
+function HighlightsView({ highlights = [], onJumpTo, onRemove, onUpdateColor, book }) {
   const [showShareModal, setShowShareModal] = useState(false);
-  const [shareModalData, setShareModalData] = useState({ title: '', text: '', url: '' });
+  const [selectedHighlightForShare, setSelectedHighlightForShare] = useState(null);
   const [editingHighlightId, setEditingHighlightId] = useState(null);
 
   const handleShare = (h) => {
-    const textToShare = h.text || h.highlightedText || '';
-    setShareModalData({
-      title: 'Shared Highlight from Apex',
-      text: `"${textToShare}"`,
-      url: `${window.location.origin}/share?type=highlight&text=${encodeURIComponent(textToShare)}`
-    });
+    setSelectedHighlightForShare(h);
     setShowShareModal(true);
   };
 
@@ -268,13 +264,15 @@ function HighlightsView({ highlights = [], onJumpTo, onRemove, onUpdateColor }) 
     )}
       </div>
 
-      {/* Share Modal */}
-      <ShareModal
+      {/* Highlight Share Modal */}
+      <HighlightShareModal
         isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-        shareTitle={shareModalData.title}
-        shareText={shareModalData.text}
-        shareUrl={shareModalData.url}
+        onClose={() => {
+          setShowShareModal(false);
+          setSelectedHighlightForShare(null);
+        }}
+        highlight={selectedHighlightForShare}
+        book={book}
       />
 
       <style dangerouslySetInnerHTML={{

@@ -895,6 +895,7 @@ function ReaderView() {
 
     // Reader UI controls passed to FirstLayerNavBar
     const readerControls = {
+        book,
         locked,
         onToggleLock: () => setLocked(prev => !prev),
         onResetZoom: resetZoom,
