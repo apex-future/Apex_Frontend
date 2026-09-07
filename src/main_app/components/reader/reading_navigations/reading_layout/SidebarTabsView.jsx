@@ -2,13 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { FileText, Plus, Trash, PencilSimple, FloppyDisk, X, CalendarBlank, MagnifyingGlass, Note, Quotes, ShareNetwork } from '@phosphor-icons/react';
 import { useXpStore } from '../../../../store/useXpStore';
 import { useQuestStore } from '../../../../store/useQuestStore';
-import ShareModal from '../../../../components/ui/ShareModal';
+import TabShareModal from './TabShareModal';
 
 /**
  * SidebarTabsView
  * Enhanced tab-taking interface with search and context support.
  */
-function SidebarTabsView({ tabs = [], addTab, updateTab, deleteTab }) {
+function SidebarTabsView({ tabs = [], addTab, updateTab, deleteTab, book }) {
     const [newTab, setNewTab] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -189,12 +189,11 @@ function SidebarTabsView({ tabs = [], addTab, updateTab, deleteTab }) {
             </div>
             
             {/* Share Modal */}
-            <ShareModal
+            <TabShareModal
                 isOpen={!!shareTab}
                 onClose={() => setShareTab(null)}
-                shareTitle="Apex Note"
-                shareText={shareTab?.text || ''}
-                shareUrl={`${window.location.origin}/share?type=note&note=${encodeURIComponent(shareTab?.text || '')}`}
+                tab={shareTab}
+                book={book}
             />
         </div>
     );

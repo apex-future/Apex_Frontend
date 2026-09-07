@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   X, Plus, FileText, BookmarkSimple, TextAlignLeft, HighlighterCircle, Pencil,
-  Trash, Warning, PencilSimple, FloppyDisk, MagnifyingGlass, Note, Quotes, CalendarBlank
+  Trash, Warning, PencilSimple, FloppyDisk, MagnifyingGlass, Note, Quotes, CalendarBlank,
+  ShareNetwork
 } from '@phosphor-icons/react';
+import TabShareModal from './TabShareModal';
 import useBookNotesStore from '../../../../store/bookNotesStore';
 import useXpStore from '../../../../store/useXpStore';
 
@@ -182,11 +184,12 @@ function NotesSection({ bookId, onAddNote }) {
 
 // ─── Tabs Section ─────────────────────────────────────────────────────────────
 
-function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding }) {
+function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding, book }) {
   const [newTab, setNewTab] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [shareTab, setShareTab] = useState(null);
 
   const filteredTabs = useMemo(() => {
     if (!searchQuery.trim()) return tabs;
@@ -306,26 +309,47 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
               ) : (
                 <>
                   {tab.context && (
-                    <div className="bg-white shadow-sm p-2.5 rounded-xl">
+                    <div className="bg-bg-subtle/80 dark:bg-bg-subtle/40 border border-border-default/40 p-2.5 rounded-xl">
                       <p className="text-[9px] text-accent-primary font-black uppercase tracking-widest mb-1 opacity-60">Context</p>
                       <p className="text-[12px] text-text-secondary italic line-clamp-2">&ldquo;{tab.context}&rdquo;</p>
                     </div>
                   )}
-                  <div className="flex justify-between items-start gap-3">
-                    <p className="text-[13px] text-text-primary leading-relaxed font-medium flex-1">{tab.text}</p>
-                    <div className="flex flex-col gap-1 transition-all duration-300">
-                      <button onClick={() => { setEditingId(tab.id); setEditText(tab.text); }} className="p-1.5 rounded-lg bg-white shadow-sm text-text-tertiary hover:text-accent-primary transition-all"><PencilSimple size={12} weight="bold" /></button>
-                      <button onClick={() => deleteTab(tab.id)} className="p-1.5 rounded-lg bg-white shadow-sm text-text-tertiary hover:text-red-500 transition-all"><Trash size={12} weight="bold" /></button>
-                    </div>
+                  <div className="w-full">
+                    <p className="text-[13px] text-text-primary leading-relaxed font-medium">{tab.text}</p>
                   </div>
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-text-tertiary uppercase tracking-wider">
-                      <CalendarBlank size={10} weight="bold" className="opacity-40" />
-                      {tab.updatedAt ? new Date(tab.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
+                  <div className="flex items-center justify-between pt-2.5 border-t border-border-default/40 mt-1">
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => { setEditingId(tab.id); setEditText(tab.text); }} 
+                        className="p-1.5 rounded-lg bg-bg-subtle dark:bg-bg-subtle hover:bg-white shadow-sm text-text-tertiary hover:text-accent-primary transition-all"
+                        title="Edit Tab"
+                      >
+                        <PencilSimple size={12} weight="bold" />
+                      </button>
+                      <button 
+                        onClick={() => setShareTab(tab)} 
+                        className="p-1.5 rounded-lg bg-bg-subtle dark:bg-bg-subtle hover:bg-white shadow-sm text-text-tertiary hover:text-accent-primary transition-all"
+                        title="Share Tab"
+                      >
+                        <ShareNetwork size={12} weight="bold" />
+                      </button>
+                      <button 
+                        onClick={() => deleteTab(tab.id)} 
+                        className="p-1.5 rounded-lg bg-bg-subtle dark:bg-bg-subtle hover:bg-white shadow-sm text-text-tertiary hover:text-red-500 transition-all"
+                        title="Delete Tab"
+                      >
+                        <Trash size={12} weight="bold" />
+                      </button>
                     </div>
-                    <span className="text-[9px] font-black text-text-placeholder uppercase tracking-tighter">
-                      {tab.type === 'highlight_note' ? 'Highlight' : 'Manual'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 text-[9px] font-bold text-text-tertiary uppercase tracking-wider">
+                        <CalendarBlank size={10} weight="bold" className="opacity-40" />
+                        {tab.updatedAt ? new Date(tab.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
+                      </div>
+                      <span className="text-[9px] font-black text-text-placeholder uppercase tracking-tighter">
+                        {tab.type === 'highlight_note' ? 'Highlight' : 'Manual'}
+                      </span>
+                    </div>
                   </div>
                 </>
               )}
@@ -333,6 +357,14 @@ function TabsSection({ tabs, addTab, updateTab, deleteTab, isAdding, setIsAdding
           ))
         )}
       </div>
+
+      {/* Tab Share Modal */}
+      <TabShareModal
+        isOpen={Boolean(shareTab)}
+        onClose={() => setShareTab(null)}
+        tab={shareTab}
+        book={book}
+      />
     </div>
   );
 }
@@ -349,6 +381,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
     addTab,
     updateTab,
     deleteTab,
+    book,
   } = readerControls || {};
 
   useEffect(() => {
@@ -443,6 +476,7 @@ function ReaderNotebookPanel({ setNotebookPanel, onAddNote, readerControls, book
             deleteTab={deleteTab} 
             isAdding={isAddingTab}
             setIsAdding={setIsAddingTab}
+            book={book}
           />
         )}
       </div>

@@ -1,12 +1,11 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, Note, MagicWand, Trash, Quotes, Copy, ShareNetwork } from '@phosphor-icons/react';
+import { Sparkle, Book, Highlighter, X, Spinner, SpeakerHigh, Check, WifiSlash, Note, MagicWand, Trash, Quotes, Copy } from '@phosphor-icons/react';
 import dictionaryService from '../../services/dictionaryService';
 import useThemeStore from '../../store/themeStore';
 import useXpStore from '../../store/useXpStore';
 import useQuestStore from '../../store/useQuestStore';
 import useOnboardingStore from '../../store/useOnboardingStore';
 import Card from '../ui/Card';
-import ShareModal from '../ui/ShareModal';
 import Label from '../ui/Label';
 
 function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSaveWord, onHighlight, onDictToggle, onAddNote, onUpdateNote, onDeleteNote, onClose, onGenerateFlashcards, cachedDefinition, cachedTab }) {
@@ -33,8 +32,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
     const savedTabIdRef = useRef(cachedTab ? (cachedTab.id || cachedTab.dexieId || cachedTab.supabaseId) : null);
 
     const [copied, setCopied] = useState(false);
-    const [showShareModal, setShowShareModal] = useState(false);
-    const [shareModalData, setShareModalData] = useState({ title: '', text: '', url: '' });
     const draftKey = bookId && (position?.startOffset || position?.startOffset === 0) ? `draft_tab_${bookId}_${position.startOffset}` : null;
 
     // Refs for auto-save cleanup — always hold the latest values
@@ -255,15 +252,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
         navigator.clipboard.writeText(tabText);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-    };
-
-    const handleShareTab = () => {
-        setShareModalData({
-            title: 'Shared Note from Apex',
-            text: `"${selection}"\n\nMy Note: ${tabText}`,
-            url: `${window.location.origin}/share?type=note&text=${encodeURIComponent(selection)}&note=${encodeURIComponent(tabText)}`
-        });
-        setShowShareModal(true);
     };
 
     const playAudio = (url) => {
@@ -551,16 +539,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                                     {copied ? <Check size={16} weight="bold" /> : <Copy size={16} weight="bold" />}
                                 </button>
 
-                                {/* Share Button */}
-                                <button
-                                    onClick={handleShareTab}
-                                    disabled={!tabText.trim()}
-                                    className={`p-1.5 rounded-lg transition-all hover:bg-blue-500/10 ${!tabText.trim() ? 'text-text-placeholder' : 'text-blue-500'}`}
-                                    title="Share"
-                                >
-                                    <ShareNetwork size={16} weight="bold" />
-                                </button>
-
                                 {/* Bin - Close without saving */}
                                 <button
                                     onClick={handleCancelTab}
@@ -594,15 +572,6 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                 }
             `}} />
         </div>
-
-        {/* Share Modal */}
-        <ShareModal
-            isOpen={showShareModal}
-            onClose={() => setShowShareModal(false)}
-            shareTitle={shareModalData.title}
-            shareText={shareModalData.text}
-            shareUrl={shareModalData.url}
-        />
         </>
     );
 }
