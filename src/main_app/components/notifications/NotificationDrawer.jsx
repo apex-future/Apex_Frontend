@@ -87,9 +87,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
   const getIcon = (type) => {
     switch (type) {
       case 'streak': case 'streak_milestone': return <Fire size={18} weight="fill" className="text-orange-500" />;
-      case 'cleo': return <Sparkle size={18} weight="fill" className="text-purple-500" />;
       case 'exam': case 'exam_countdown': return <Calendar size={18} weight="fill" className="text-blue-500" />;
-      case 'daily_quest_ready': return <Sparkle size={18} weight="fill" className="text-emerald-500" />;
       case 'study_wrap': return <Fire size={18} weight="fill" className="text-amber-500" />;
       default: return <Bell size={18} weight="fill" className="text-accent-primary" />;
     }
@@ -98,9 +96,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
   const getIconBg = (type) => {
     switch (type) {
       case 'streak': case 'streak_milestone': return 'bg-orange-500/10 border-orange-500/20';
-      case 'cleo': return 'bg-purple-500/10 border-purple-500/20';
       case 'exam': case 'exam_countdown': return 'bg-blue-500/10 border-blue-500/20';
-      case 'daily_quest_ready': return 'bg-emerald-500/10 border-emerald-500/20';
       case 'study_wrap': return 'bg-amber-500/10 border-amber-500/20';
       default: return 'bg-accent-primary/10 border-accent-primary/20';
     }
@@ -323,6 +319,20 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                                   <p className={`text-sm leading-relaxed mb-1 ${notification.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
                                     {notification.body || notification.message}
                                   </p>
+
+                                  {(notification.metadata?.cta_label || notification.cta_label) && (notification.metadata?.cta_route || notification.cta_route) && (
+                                    <div className="mt-3 mb-1">
+                                      <Button
+                                        variant="primary"
+                                        fullWidth={false}
+                                        onClick={() => handleCtaClick(notification.metadata?.cta_route || notification.cta_route)}
+                                        className="!py-1.5 !px-4 !text-xs !rounded-xl"
+                                      >
+                                        <span>{notification.metadata?.cta_label || notification.cta_label}</span>
+                                        <ArrowSquareOut size={14} weight="bold" />
+                                      </Button>
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* Actions menu (hover) */}
