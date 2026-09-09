@@ -29,12 +29,25 @@ function VerifyEmailPage({ onLogin, userEmail }) {
   const [verificationStatus, setVerificationStatus] = useState('verifying');
   const hasVerifiedRef = useRef(false);
 
-  // Redirect verified users to / if they arrive at holding screen (/verify-email)
+  // Redirect if user enters without data (offline) or is already verified
   useEffect(() => {
-    if (!token && currentUser?.is_verified) {
-      navigate('/', { replace: true });
+    if (!token) {
+      if (!navigator.onLine || currentUser?.is_verified) {
+        navigate('/', { replace: true });
+      }
     }
   }, [token, currentUser, navigate]);
+
+  // Listen to offline event while on verify-email holding screen
+  useEffect(() => {
+    const handleOffline = () => {
+      if (!token) {
+        navigate('/', { replace: true });
+      }
+    };
+    window.addEventListener('offline', handleOffline);
+    return () => window.removeEventListener('offline', handleOffline);
+  }, [token, navigate]);
 
   // STATE B: Token verification on mount
   useEffect(() => {
@@ -46,6 +59,9 @@ function VerifyEmailPage({ onLogin, userEmail }) {
       setVerificationStatus('verifying');
       try {
         const response = await authService.verifyEmail(token);
+        if (response?.user) {
+          useAuthStore.getState().setUser(response.user);
+        }
         if (onLogin) {
           onLogin(response);
         }

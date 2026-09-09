@@ -22,7 +22,11 @@ function LoginPage({ onLogin }) {
     try {
       const response = await authService.login(email, password);
       onLogin(response);
-      navigate('/');
+      if (response?.user && (response.user.is_verified === false || response.user.is_verified === null || !response.user.is_verified)) {
+        navigate('/verify-email');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       console.error('Login error:', err);
       const detail = err.response?.data?.detail;

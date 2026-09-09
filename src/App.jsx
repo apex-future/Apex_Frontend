@@ -25,14 +25,20 @@ import useQuestStore from './main_app/store/useQuestStore';
 import NotFoundPage from './main_app/pages/NotFoundPage';
 import SharePage from './main_app/pages/SharePage';
 import soundManager from './utils/soundManager';
+import useOnlineStatus from './main_app/hooks/useOnlineStatus';
 
 function App() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const { isOnline } = useOnlineStatus();
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+
+  // Unverified check: requires data (online) to show/redirect to /verify-email
+  const isUnverified = user && (user.is_verified === false || user.is_verified === null);
+  const shouldRequireVerification = isOnline && isUnverified;
 
   // Determine if we should show the landing-specific loader
   const isLandingPath = window.location.pathname === '/' || window.location.pathname === '';
@@ -246,7 +252,7 @@ function App() {
     }
     setIsLoggedIn(true);
 
-    if (userData?.user?.is_verified === false) {
+    if (isOnline && (userData?.user?.is_verified === false || userData?.user?.is_verified === null)) {
       navigate('/verify-email', { replace: true });
     } else {
       navigate('/', { replace: true });
@@ -270,6 +276,28 @@ function App() {
   const handleOnboardingComplete = () => {
     setNeedsOnboarding(false);
   };
+
+  // When coming back online, re-verify status for unverified users and redirect to /verify-email
+  useEffect(() => {
+    const handleOnlineVerifyCheck = async () => {
+      if (authService.isAuthenticated()) {
+        try {
+          const freshUser = await authService.me();
+          if (freshUser) {
+            useAuthStore.getState().setUser(freshUser);
+            if (freshUser.is_verified === false || freshUser.is_verified === null) {
+              navigate('/verify-email', { replace: true });
+            }
+          }
+        } catch (err) {
+          console.error('[Apex Auth] Online verify check failed:', err);
+        }
+      }
+    };
+
+    window.addEventListener('online', handleOnlineVerifyCheck);
+    return () => window.removeEventListener('online', handleOnlineVerifyCheck);
+  }, [navigate]);
 
   useEffect(() => {
     const handleFirstGesture = () => {
@@ -298,7 +326,7 @@ function App() {
   }
 
   // Show onboarding for existing users who haven't personalized yet
-  if (isLoggedIn && needsOnboarding && user?.is_verified !== false) {
+  if (isLoggedIn && needsOnboarding && !shouldRequireVerification) {
     return <OnboardingPage onComplete={handleOnboardingComplete} />;
   }
 
@@ -345,21 +373,21 @@ function App() {
           <>
             {/* When logged in, handle verify-email and protected routes */}
             <Route path="/verify-email" element={
-              user?.is_verified && !window.location.search.includes('token=') ? (
+              (!isOnline && !window.location.search.includes('token=')) || (user?.is_verified && !window.location.search.includes('token=')) ? (
                 <Navigate to="/" replace />
               ) : (
                 <VerifyEmailPage onLogin={handleLogin} userEmail={user?.email} />
               )
             } />
             <Route path="/onboarding" element={
-              user && user.is_verified === false ? (
+              shouldRequireVerification ? (
                 <Navigate to="/verify-email" replace />
               ) : (
                 <OnboardingPage onComplete={() => navigate('/')} />
               )
             } />
             <Route path="/*" element={
-              user && user.is_verified === false ? (
+              shouldRequireVerification ? (
                 <Navigate to="/verify-email" replace />
               ) : (
                 <MainApp onLogout={handleLogout} />
