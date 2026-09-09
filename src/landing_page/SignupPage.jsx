@@ -67,7 +67,7 @@ function SignupPage({ onLogin }) {
         fullName, email, password, onboardingData
       );
       onLogin(response);
-      navigate('/');
+      navigate('/verify-email');
     } catch (err) {
       setError(err.response?.data?.detail || 'Registration failed. Please try again.');
       setStep(1);

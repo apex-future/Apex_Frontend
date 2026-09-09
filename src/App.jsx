@@ -7,6 +7,7 @@ import LoginPage from './landing_page/LoginPage'
 import ForgotPasswordPage from './landing_page/ForgotPasswordPage'
 import ResetPasswordPage from './landing_page/ResetPasswordPage'
 import PrivacyPolicy from './landing_page/PrivacyPolicy'
+import VerifyEmailPage from './auth/VerifyEmailPage'
 import authService from './main_app/services/authService'
 import syncService from './main_app/services/syncService'
 import db from './main_app/db/apex.db'
@@ -27,6 +28,7 @@ import soundManager from './utils/soundManager';
 
 function App() {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -242,8 +244,13 @@ function App() {
         setNeedsOnboarding(true);
       }
     }
-    navigate('/', { replace: true });
     setIsLoggedIn(true);
+
+    if (userData?.user?.is_verified === false) {
+      navigate('/verify-email', { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
 
     // Pull all data from Supabase for this user (non-blocking — app already rendered)
     if (navigator.onLine) {
@@ -291,7 +298,7 @@ function App() {
   }
 
   // Show onboarding for existing users who haven't personalized yet
-  if (isLoggedIn && needsOnboarding) {
+  if (isLoggedIn && needsOnboarding && user?.is_verified !== false) {
     return <OnboardingPage onComplete={handleOnboardingComplete} />;
   }
 
@@ -308,6 +315,7 @@ function App() {
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage onLogin={handleLogin} userEmail={user?.email} />} />
 
             {/* Redirect protected app routes to landing page when unauthenticated */}
             <Route path="/profile" element={<Navigate to="/" replace />} />
@@ -335,9 +343,28 @@ function App() {
           </>
         ) : (
           <>
-            {/* When logged in, MainApp takes over root and handles all sub-routes */}
-            <Route path="/onboarding" element={<OnboardingPage onComplete={() => navigate('/')} />} />
-            <Route path="/*" element={<MainApp onLogout={handleLogout} />} />
+            {/* When logged in, handle verify-email and protected routes */}
+            <Route path="/verify-email" element={
+              user?.is_verified && !window.location.search.includes('token=') ? (
+                <Navigate to="/" replace />
+              ) : (
+                <VerifyEmailPage onLogin={handleLogin} userEmail={user?.email} />
+              )
+            } />
+            <Route path="/onboarding" element={
+              user && user.is_verified === false ? (
+                <Navigate to="/verify-email" replace />
+              ) : (
+                <OnboardingPage onComplete={() => navigate('/')} />
+              )
+            } />
+            <Route path="/*" element={
+              user && user.is_verified === false ? (
+                <Navigate to="/verify-email" replace />
+              ) : (
+                <MainApp onLogout={handleLogout} />
+              )
+            } />
           </>
         )}
       </Routes>

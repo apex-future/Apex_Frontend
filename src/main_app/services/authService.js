@@ -71,6 +71,24 @@ const authService = {
     return response.data;
   },
 
+  async verifyEmail(token) {
+    const response = await apiClient.post('/api/auth/verify-email', {
+      token
+    });
+    // If verification returns a fresh access token, store it
+    if (response.data.access_token) {
+      localStorage.setItem('apex_token', response.data.access_token);
+    }
+    return response.data;
+  },
+
+  async resendVerification() {
+    const response = await apiClient.post(
+      '/api/auth/resend-verification'
+    );
+    return response.data;
+  },
+
   getToken() {
     return localStorage.getItem('apex_token');
   },
