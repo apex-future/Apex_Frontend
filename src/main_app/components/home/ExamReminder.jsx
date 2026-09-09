@@ -105,8 +105,7 @@ const ExamReminder = () => {
         return Math.ceil(diff / (1000 * 60 * 60 * 24));
     };
 
-    // TEMP: hardcoded for Study Wrap testing — remove when live
-    const daysLeft = 0;
+    const daysLeft = calculateDaysLeft();
     const isPaused = activeExam?.isPaused;
 
     // Resolve the best bookSpaceId for Study Wrap

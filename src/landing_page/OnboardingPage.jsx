@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -25,12 +25,31 @@ import useAuthStore from '../main_app/store/authStore';
 import useSound from '../main_app/hooks/useSound';
 import logoLight from "../assets/logo/logo-light.jpg";
 import Particles from '../main_app/components/ui/Particles';
+import useSpaceStore from '../main_app/store/spaceStore';
+import useStudyStore from '../main_app/store/studyStore';
+
+const MONTH_MAP = {
+  January: '01',
+  February: '02',
+  March: '03',
+  April: '04',
+  May: '05',
+  June: '06',
+  July: '07',
+  August: '08',
+  September: '09',
+  October: '10',
+  November: '11',
+  December: '12',
+};
 
 const CLEO_START_VOICE = '/cleo_voice/start_screen.mp3';
 const CLEO_FINAL_VOICE = '/cleo_voice/final_screen.mp3';
 
 function OnboardingPage({ onComplete }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isReplayMode = location.search.includes('replay=true') || Boolean(location.state?.replay);
   const currentUser = useAuthStore((state) => state.user);
 
   // Screen step: 1 through 8
@@ -43,7 +62,7 @@ function OnboardingPage({ onComplete }) {
   const [examDate, setExamDate] = useState({ month: '', year: '' });
   const [studyStage, setStudyStage] = useState(''); // 'Just starting serious prep' | 'Been studying for a while' | 'In final revision mode'
   const [dailyHours, setDailyHours] = useState('30 mins'); // '30 mins' | '1 hr' | '2 hrs' | '3+ hrs'
-  const [reminderTime, setReminderTime] = useState('18:00');
+  const [reminderTime, setReminderTime] = useState('17:00');
   const [northStar, setNorthStar] = useState('');
   const [referralSource, setReferralSource] = useState('');
 
@@ -78,14 +97,15 @@ function OnboardingPage({ onComplete }) {
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Redirect if user enters without data (offline) or is already onboarded
+  // Redirect if user enters without data (offline) or is already onboarded (unless in replay mode)
   useEffect(() => {
+    if (isReplayMode) return;
     const hasDone = currentUser?.has_done_onboarding || 
                     localStorage.getItem('apex_has_done_onboarding') === 'true';
     if (!navigator.onLine || hasDone) {
       navigate('/', { replace: true });
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, navigate, isReplayMode]);
 
   // Listen to offline event: if connection drops while on onboarding screen, allow offline reading
   useEffect(() => {
@@ -240,20 +260,117 @@ function OnboardingPage({ onComplete }) {
       ? (customExamName.trim() || 'Others') 
       : (examType === 'None' ? null : examType);
 
+    const hasNoExam = userType === 'casual_reader' || examType === 'None' || !examType;
+
+    const MINUTE_MAP = {
+      '30 mins': 30,
+      '1 hr': 60,
+      '2 hrs': 120,
+      '3+ hrs': 180,
+    };
+    const dailyMin = MINUTE_MAP[dailyHours] || 30;
+
     const payload = {
       user_type: userType || 'student',
-      studying_for: resolvedExamType ? [resolvedExamType] : [],
-      exam_date: examType === 'None' ? null : formattedExamDate,
-      study_stage: examType === 'None' ? null : (studyStage || null),
-      daily_goal_hours: dailyHours,
+      daily_min_goal: dailyMin,
       study_reminder_time: reminderTime,
       north_star: northStar ? `I AM ${northStar.replace(/^I AM\s*/i, '').trim()}` : null,
       referral_source: referralSource || null,
+      how_did_you_hear: referralSource || null,
       has_done_onboarding: true,
     };
 
     // Save to localStorage immediately so app is always offline-safe
     localStorage.setItem('apex_has_done_onboarding', 'true');
+
+    // Auto-create Book Space & Exam Reminder if user selected an exam
+    if (!hasNoExam && examType && examType !== 'None') {
+      let examTitle = examType;
+      if (examType.startsWith('SSCE')) {
+        examTitle = 'SSCE';
+      } else if (examType === 'Others') {
+        examTitle = customExamName.trim() || 'Custom Exam';
+      }
+
+      // Compute target deadline date: default to 1st of chosen month
+      let targetDateStr = null;
+      if (examDate.year && examDate.month) {
+        const monthNum = MONTH_MAP[examDate.month] || '01';
+        targetDateStr = `${examDate.year}-${monthNum}-01`;
+      } else if (examDate.year) {
+        targetDateStr = `${examDate.year}-06-01`;
+      } else if (examDate.month) {
+        const currentYear = new Date().getFullYear();
+        const monthNum = MONTH_MAP[examDate.month] || '01';
+        targetDateStr = `${currentYear}-${monthNum}-01`;
+      } else {
+        const d = new Date();
+        d.setMonth(d.getMonth() + 3);
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        targetDateStr = `${d.getFullYear()}-${m}-01`;
+      }
+
+      try {
+        // 1. Create or find Book Space named after the exam
+        const existingSpaces = useSpaceStore.getState().spaces || [];
+        let space = existingSpaces.find(
+          s => !s.isSystem && s.name?.trim().toLowerCase() === examTitle.trim().toLowerCase()
+        );
+        let spaceLocalId = space?.id || space?.local_id || null;
+
+        if (!space) {
+          spaceLocalId = await useSpaceStore.getState().createSpace(examTitle);
+          if (spaceLocalId) {
+            await useSpaceStore.getState().updateSpace(spaceLocalId, {
+              examDate: targetDateStr,
+              isLinkedToExam: true,
+            });
+            space = useSpaceStore.getState().spaces.find(
+              s => s.id === spaceLocalId || s.local_id === spaceLocalId
+            );
+          }
+        } else if (!space.examDate) {
+          await useSpaceStore.getState().updateSpace(spaceLocalId, {
+            examDate: targetDateStr,
+            isLinkedToExam: true,
+          });
+        }
+
+        const linkedSpaceSupabaseId = space?.supabaseId || null;
+
+        // 2. Create or update Exam Reminder
+        const existingExams = useStudyStore.getState().exams || [];
+        const existingExam = existingExams.find(
+          e => e.name?.trim().toLowerCase() === examTitle.trim().toLowerCase()
+        );
+
+        if (existingExam) {
+          await useStudyStore.getState().updateExam(existingExam.id, {
+            name: examTitle,
+            date: targetDateStr,
+            current_stage: studyStage || null,
+            bookSpaceSupabaseId: linkedSpaceSupabaseId,
+            bookSpaceId: spaceLocalId,
+            isPaused: false,
+          });
+        } else {
+          await useStudyStore.getState().addExam({
+            name: examTitle,
+            date: targetDateStr,
+            current_stage: studyStage || null,
+            bookSpaceSupabaseId: linkedSpaceSupabaseId,
+            bookSpaceId: spaceLocalId,
+          });
+        }
+        useStudyStore.getState().setExamDate(targetDateStr);
+        useStudyStore.getState().setExamName(examTitle);
+      } catch (autoSetupErr) {
+        console.error('[Onboarding] Failed to auto-create exam reminder & space:', autoSetupErr);
+      }
+    } else {
+      useStudyStore.getState().setExamDate(null);
+      useStudyStore.getState().setExamName('');
+    }
 
     try {
       await authService.saveOnboarding(payload);
@@ -268,10 +385,12 @@ function OnboardingPage({ onComplete }) {
       console.error('[Onboarding] Cloud save error, offline-first cached locally:', err);
     } finally {
       setSaving(false);
-      if (onComplete) {
+      if (isReplayMode) {
+        navigate('/', { replace: true });
+      } else if (onComplete) {
         onComplete();
       } else {
-        navigate('/import', { replace: true });
+        navigate('/', { replace: true });
       }
     }
   };
@@ -317,7 +436,23 @@ function OnboardingPage({ onComplete }) {
             className="w-7 h-7 rounded-xl object-cover shadow-sm border border-white/10" 
           />
           <span className="font-bold text-base tracking-tight text-white/90">Apex</span>
+          {isReplayMode && (
+            <span className="ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 border border-purple-500/30 text-purple-300">
+              Testing Mode
+            </span>
+          )}
         </div>
+
+        {isReplayMode && (
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs text-white/80 transition-colors flex items-center gap-1.5 cursor-pointer ml-auto mr-2"
+          >
+            <ArrowLeft size={13} weight="bold" />
+            <span>Exit to Settings</span>
+          </button>
+        )}
 
         {/* Step indicator (Screens 2 - 7) */}
         {screen > 1 && screen < 8 && (
@@ -957,16 +1092,36 @@ function OnboardingPage({ onComplete }) {
 
               <div className="space-y-2.5 text-sm sm:text-base text-white/90 leading-relaxed font-normal">
                 <p>
-                  You're a <span className="font-bold text-purple-300 capitalize">{userType === 'casual_reader' ? 'Casual Reader' : userType}</span>.
+                  {userType === 'both' ? (
+                    <>You're both a <span className="font-bold text-purple-300">Student</span> and a <span className="font-bold text-purple-300">Casual Reader</span>.</>
+                  ) : userType === 'casual_reader' ? (
+                    <>You're a <span className="font-bold text-purple-300">Casual Reader</span>.</>
+                  ) : (
+                    <>You're a <span className="font-bold text-purple-300">Student</span>.</>
+                  )}
                 </p>
 
                 {userType !== 'casual_reader' && examType && (
                   <p>
-                    Preparing for <span className="font-bold text-purple-300">{examType}</span>
-                    {examDate.month && examDate.year ? ` on ` : ''}
-                    {examDate.month && examDate.year && (
-                      <span className="font-bold text-purple-300">{examDate.month} {examDate.year}</span>
-                    )}.
+                    {examType === 'None' ? (
+                      <>You aren't preparing for any exams right now.</>
+                    ) : (
+                      <>
+                        Preparing for{' '}
+                        <span className="font-bold text-purple-300">
+                          {examType === 'Others' ? (customExamName.trim() || 'your upcoming exam') : examType}
+                        </span>
+                        {examDate.month && examDate.year && (
+                          <>
+                            {' '}in{' '}
+                            <span className="font-bold text-purple-300">
+                              {examDate.month} {examDate.year}
+                            </span>
+                          </>
+                        )}
+                        .
+                      </>
+                    )}
                   </p>
                 )}
 
@@ -993,7 +1148,7 @@ function OnboardingPage({ onComplete }) {
                 <span>Cleo</span>
               </div>
               <p className="text-white/80 text-xs sm:text-sm leading-relaxed">
-                "All set, Scholar. I've seen what you're here for. Let's build something you'll actually be proud of."
+                All set, Scholar. I've seen what you're here for. Let's build something you'll actually be proud of.
               </p>
             </div>
 

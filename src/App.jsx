@@ -22,6 +22,7 @@ import LandingLoadingScreen from './landing_page/components/LandingLoadingScreen
 import OnboardingPage from './landing_page/OnboardingPage';
 import AccessibilityPage from './landing_page/AccessibilityPage';
 import useQuestStore from './main_app/store/useQuestStore';
+import useSpaceStore from './main_app/store/spaceStore';
 import NotFoundPage from './main_app/pages/NotFoundPage';
 import SharePage from './main_app/pages/SharePage';
 import soundManager from './utils/soundManager';
@@ -140,6 +141,7 @@ function App() {
         useStudyStore.getState().seedFromSupabase(user);
         console.log('[Apex Streak] Store seeded from Supabase');
         useStudyStore.getState().checkStreakIntegrity();
+        useSpaceStore.getState().syncExamReminders();
 
         // Seed XP store from server (non-blocking, runs in background)
         apiClient.get('/api/xp/profile')
@@ -172,12 +174,15 @@ function App() {
           }
         }
 
-        const isDoneOnboarding = !!user.has_done_onboarding;
+        const hasDoneLocal = localStorage.getItem('apex_has_done_onboarding') === 'true';
+        const isDoneOnboarding = !!user.has_done_onboarding || hasDoneLocal;
         if (isDoneOnboarding) {
           localStorage.setItem('apex_has_done_onboarding', 'true');
           setNeedsOnboarding(false);
+          if (!user.has_done_onboarding && navigator.onLine) {
+            authService.saveOnboarding({ has_done_onboarding: true, user_type: user.user_type || 'student' }).catch(() => {});
+          }
         } else {
-          localStorage.removeItem('apex_has_done_onboarding');
           setNeedsOnboarding(true);
         }
 
@@ -326,7 +331,7 @@ function App() {
             useAuthStore.getState().setUser(freshUser);
             if (freshUser.is_verified === false || freshUser.is_verified === null) {
               navigate('/verify-email', { replace: true });
-            } else if (!freshUser.has_done_onboarding) {
+            } else if (!freshUser.has_done_onboarding && localStorage.getItem('apex_has_done_onboarding') !== 'true') {
               setNeedsOnboarding(true);
               navigate('/onboarding', { replace: true });
             }

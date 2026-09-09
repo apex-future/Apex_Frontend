@@ -96,8 +96,8 @@ const useSpaceStore = create(
             if (navigator.onLine && dexieRecord.supabaseId) {
               try {
                 await apiClient.put(`/api/spaces/${dexieRecord.supabaseId}`, {
-                  name: updates.name,
-                  cover_color: updates.cover_color,
+                  name: updates.name !== undefined ? updates.name : dexieRecord.name,
+                  cover_color: updates.cover_color !== undefined ? updates.cover_color : dexieRecord.cover_color,
                 });
                 await db.book_spaces.update(dexieRecord.id, { synced: true });
               } catch (err) {
@@ -323,6 +323,7 @@ const useSpaceStore = create(
             supabaseId: record.supabaseId,
             name: record.examName,
             date: record.examDate,
+            current_stage: record.currentStage || null,
             isPaused: !record.isActive,
           }));
           setExams(mapped);

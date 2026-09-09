@@ -660,6 +660,7 @@ const syncService = {
             examName: r.exam_name,
             examDate: r.exam_date,
             isActive: r.is_active,
+            currentStage: r.current_stage || null,
             bookSpaceSupabaseId: r.book_space_id || null,
             synced: true,
             createdAt: r.created_at,
@@ -674,10 +675,30 @@ const syncService = {
             supabaseId: r.supabaseId,
             name: r.examName,
             date: r.examDate,
+            current_stage: r.currentStage,
             isPaused: !r.isActive,
           }));
           useStudyStore.getState().setExams(examsMapped);
           console.log('[Apex Sync] studyStore exams rehydrated:', examsMapped.length);
+        } else {
+          // Rehydrate from local Dexie exam reminders if cloud returned no reminders
+          try {
+            const localReminders = await db.exam_reminders.toArray();
+            if (localReminders.length > 0) {
+              const { default: useStudyStore } = await import('../store/studyStore');
+              const examsMapped = localReminders.map(r => ({
+                id: r.local_id,
+                supabaseId: r.supabaseId,
+                name: r.examName,
+                date: r.examDate,
+                isPaused: !r.isActive,
+              }));
+              useStudyStore.getState().setExams(examsMapped);
+              console.log('[Apex Sync] studyStore exams rehydrated from local Dexie:', examsMapped.length);
+            }
+          } catch (e) {
+            console.warn('[Apex Sync] Failed to rehydrate local exam reminders:', e);
+          }
         }
 
         // ── BOOK READING TIME ──
@@ -1435,6 +1456,7 @@ const syncService = {
       examName: examData.name,
       examDate: examData.date,
       isActive: !examData.isPaused,
+      currentStage: examData.currentStage || examData.current_stage || null,
       bookSpaceSupabaseId: examData.bookSpaceSupabaseId || null,
       synced: false,
       supabaseId: examData.supabaseId || null,
@@ -1458,6 +1480,7 @@ const syncService = {
           exam_name: examData.name,
           exam_date: examData.date,
           is_active: !examData.isPaused,
+          current_stage: examData.currentStage || examData.current_stage || null,
           book_space_id: examData.bookSpaceSupabaseId || null,
           local_id: localId,
         };
@@ -2010,6 +2033,40 @@ const syncService = {
         } catch (batchError) {
           if (import.meta.env.DEV) console.error(`Sync: Batch failed:`, batchError);
         }
+      }
+
+      // Sync any un-synced exam reminders directly
+      try {
+        const unsyncedExams = await db.exam_reminders
+          .filter(e => !e.synced)
+          .toArray();
+        for (const exam of unsyncedExams) {
+          try {
+            const payload = {
+              exam_name: exam.examName,
+              exam_date: exam.examDate,
+              is_active: exam.isActive !== false,
+              book_space_id: exam.bookSpaceSupabaseId || null,
+              local_id: exam.local_id,
+            };
+            let res;
+            if (exam.supabaseId) {
+              res = await apiClient.put(`/api/exam-reminders/${exam.supabaseId}`, payload);
+            } else {
+              res = await apiClient.post('/api/exam-reminders', payload);
+            }
+            if (res?.data?.id) {
+              await db.exam_reminders.update(exam.id, {
+                supabaseId: res.data.id,
+                synced: true,
+              });
+            }
+          } catch (examPushErr) {
+            if (import.meta.env.DEV) console.warn('[Apex Sync] Failed to push exam reminder:', examPushErr?.message);
+          }
+        }
+      } catch (examSyncErr) {
+        if (import.meta.env.DEV) console.warn('[Apex Sync] Exam reminders push failed:', examSyncErr?.message);
       }
 
       // Clean up: delete synced items older than 7 days

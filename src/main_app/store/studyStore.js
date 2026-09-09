@@ -19,10 +19,15 @@ const useStudyStore = create(
 
       // Multi-exam state
       exams: [],
+      setExams: (exams) => set({ exams }),
 
       addExam: async (exam) => {
         const newExam = { ...exam, id: exam.id || crypto.randomUUID(), createdAt: new Date().toISOString(), isPaused: false };
-        set((state) => ({ exams: [...state.exams, newExam] }));
+        set((state) => ({ 
+          exams: [...state.exams, newExam],
+          examDate: newExam.date,
+          examName: newExam.name
+        }));
         try {
           const syncService = (await import('../services/syncService')).default;
           await syncService.saveExamReminder(newExam);
@@ -31,7 +36,14 @@ const useStudyStore = create(
         }
       },
       updateExam: async (id, updates) => {
-        set((state) => ({ exams: state.exams.map(e => e.id === id ? { ...e, ...updates } : e) }));
+        set((state) => {
+          const updated = state.exams.map(e => e.id === id ? { ...e, ...updates } : e);
+          const active = updated.find(e => e.id === id);
+          return {
+            exams: updated,
+            ...(active ? { examDate: active.date, examName: active.name } : {})
+          };
+        });
         const updatedExam = get().exams.find(e => e.id === id);
         if (updatedExam) {
           try {
@@ -44,7 +56,14 @@ const useStudyStore = create(
       },
       deleteExam: async (id) => {
         const examToDelete = get().exams.find(e => e.id === id);
-        set((state) => ({ exams: state.exams.filter(e => e.id !== id) }));
+        set((state) => {
+          const remaining = state.exams.filter(e => e.id !== id);
+          return {
+            exams: remaining,
+            examDate: remaining.length > 0 ? remaining[0].date : null,
+            examName: remaining.length > 0 ? remaining[0].name : '',
+          };
+        });
         if (examToDelete) {
           try {
             const syncService = (await import('../services/syncService')).default;
@@ -55,7 +74,10 @@ const useStudyStore = create(
         }
       },
       togglePauseExam: (id) => set((state) => ({ exams: state.exams.map(e => e.id === id ? { ...e, isPaused: !e.isPaused } : e) })),
-      setExams: (exams) => set({ exams }),
+      setExams: (exams) => set({ 
+        exams,
+        ...(exams && exams.length > 0 ? { examDate: exams[0].date, examName: exams[0].name } : {})
+      }),
 
       /**
        * getTodayString — returns today as 'YYYY-MM-DD'

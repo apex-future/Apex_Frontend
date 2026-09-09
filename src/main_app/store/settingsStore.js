@@ -24,11 +24,12 @@ const useSettingsStore = create(
       autoExplain: false,       // If true, highlight opens AI automatically
 
       // ── Notifications ──
+      studyReminderEnabled: true,
       notifications: {
         readingReminders: true,
         studyTips: false,
       },
-      reminderTime: '18:00',  // HH:MM — default 6PM
+      reminderTime: '17:00',  // HH:MM — default 5PM WAT
 
       // ── Reader ──
       scrollOrientation: 'vertical',    // 'vertical' | 'horizontal'
@@ -76,6 +77,7 @@ const useSettingsStore = create(
             theme, autoSaveProgress, pageAnimations,
             saveChatHistory, autoExplain, notifications,
             scrollOrientation, scrollAnimation, reminderTime,
+            studyReminderEnabled,
             streakThresholdMinutes, streakCelebrationEnabled,
             streakCelebrationStyle,
           } = get();
@@ -93,6 +95,7 @@ const useSettingsStore = create(
             scroll_orientation: scrollOrientation,
             scroll_animation: scrollAnimation,
             reminder_time: reminderTime,
+            study_reminder_enabled: studyReminderEnabled,
             streak_threshold_minutes: streakThresholdMinutes,
             streak_celebration_enabled: streakCelebrationEnabled,
             streak_celebration_style: streakCelebrationStyle,
@@ -137,13 +140,14 @@ const useSettingsStore = create(
           pageAnimations: data.page_animations ?? true,
           saveChatHistory: data.save_chat_history ?? true,
           autoExplain: data.auto_explain ?? false,
+          studyReminderEnabled: data.study_reminder_enabled ?? (data.notifications?.readingReminders ?? true),
           notifications: data.notifications || {
             readingReminders: true,
             studyTips: false,
           },
           scrollOrientation: data.scroll_orientation || 'vertical',
           scrollAnimation: data.scroll_animation || 'none',
-          reminderTime: data.reminder_time ? data.reminder_time.slice(0, 5) : '18:00',
+          reminderTime: data.reminder_time ? data.reminder_time.slice(0, 5) : '17:00',
           streakThresholdMinutes: data.streak_threshold_minutes ?? 2,
           streakCelebrationEnabled: data.streak_celebration_enabled ?? true,
           streakCelebrationStyle: data.streak_celebration_style || 'subtle',

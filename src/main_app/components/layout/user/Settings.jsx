@@ -3,7 +3,7 @@ import { showToastGlobal } from '../../../hooks/useToast';
 import {
   ArrowLeft, Moon, Sun, Monitor, Bell, HardDrives, DownloadSimple, Trash, Question,
   FileText, ArrowSquareOut, BookOpen, Robot, SignOut, User, UserMinus, SlidersHorizontal, Bug,
-  ArrowCounterClockwise, SpeakerHigh, SpeakerSlash
+  ArrowCounterClockwise, SpeakerHigh, SpeakerSlash, Sparkle
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -39,6 +39,7 @@ function Settings({ onLogout }) {
       scrollOrientation,
       scrollAnimation,
       reminderTime,
+      studyReminderEnabled = true,
       streakThresholdMinutes,
       streakCelebrationEnabled = true,
       streakCelebrationStyle = 'full',
@@ -402,18 +403,19 @@ function Settings({ onLogout }) {
                     <div className="border-b border-black/10 dark:border-white/10 last:border-0">
                       <div className="flex items-center justify-between p-4 hover:bg-bg-subtle/50 transition-colors">
                         <div className="pr-4">
-                          <p className="text-sm font-medium text-text-primary">Reading Reminders</p>
+                          <p className="text-sm font-medium text-text-primary">Study Reminders</p>
                           <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">
-                            Daily nudge to read and keep your streak alive
+                            Daily reminder nudge to study and maintain your daily streak
                           </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                           <input
                             type="checkbox"
                             className="sr-only peer"
-                            checked={notifications.readingReminders}
+                            checked={Boolean(studyReminderEnabled && notifications?.readingReminders !== false)}
                             onChange={async (e) => {
                               const enabled = e.target.checked;
+                              updateSetting('studyReminderEnabled', enabled);
                               updateNotification('readingReminders', enabled);
                               const authToken = localStorage.getItem('apex_token');
                               if (enabled) {
@@ -431,12 +433,12 @@ function Settings({ onLogout }) {
                       </div>
 
                       {/* Time picker — only visible when reminders are enabled */}
-                      {notifications.readingReminders && (
+                      {Boolean(studyReminderEnabled && notifications?.readingReminders !== false) && (
                         <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-200">
                           <div className="flex items-center justify-between bg-bg-elevated/50 rounded-xl px-4 py-3 border border-black/10 dark:border-white/10">
                             <div>
                               <p className="text-xs font-medium text-text-primary">Remind me at</p>
-                              <p className="text-xs text-text-tertiary mt-0.5">Time is in your local timezone</p>
+                              <p className="text-xs text-text-tertiary mt-0.5">Local time (Default: 5:00 PM)</p>
                             </div>
                             <input
                               type="time"
@@ -518,6 +520,12 @@ function Settings({ onLogout }) {
                         label="Replay In-App Tour"
                         desc="Restart the interactive guided walkthrough across the app"
                         onClick={handleReplayTour}
+                    />
+                    <ActionRow
+                        icon={<Sparkle size={16} weight="bold" className="text-purple-400" />}
+                        label="Replay Onboarding (Testing)"
+                        desc="Run the 8-screen onboarding flow to test database sync & setup"
+                        onClick={() => navigate('/onboarding?replay=true', { state: { replay: true } })}
                     />
                     <ActionRow
                         icon={<FileText size={16} weight="bold" className="text-text-secondary" />}

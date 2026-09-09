@@ -60,8 +60,6 @@ const authService = {
     const response = await apiClient.get('/api/auth/me');
     if (response.data?.has_done_onboarding) {
       localStorage.setItem('apex_has_done_onboarding', 'true');
-    } else {
-      localStorage.removeItem('apex_has_done_onboarding');
     }
     return response.data;
   },
