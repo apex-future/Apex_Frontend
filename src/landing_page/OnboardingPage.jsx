@@ -38,11 +38,12 @@ function OnboardingPage({ onComplete }) {
 
   // Form states
   const [userType, setUserType] = useState(''); // 'student' | 'casual_reader' | 'both'
-  const [examType, setExamType] = useState(''); // 'JAMB 2026' | 'WAEC 2026' | 'Both' | 'Others' | 'None'
+  const [examType, setExamType] = useState(''); // 'University Exam' | 'JAMB' | 'SSCE (Waec, Neco etc)' | 'Others' | 'None'
+  const [customExamName, setCustomExamName] = useState('');
   const [examDate, setExamDate] = useState({ month: '', year: '' });
   const [studyStage, setStudyStage] = useState(''); // 'Just starting serious prep' | 'Been studying for a while' | 'In final revision mode'
-  const [dailyHours, setDailyHours] = useState('2 hrs'); // '1 hr' | '2 hrs' | '3+ hrs'
-  const [reminderTime, setReminderTime] = useState('19:00');
+  const [dailyHours, setDailyHours] = useState('30 mins'); // '30 mins' | '1 hr' | '2 hrs' | '3+ hrs'
+  const [reminderTime, setReminderTime] = useState('18:00');
   const [northStar, setNorthStar] = useState('');
   const [referralSource, setReferralSource] = useState('');
 
@@ -206,9 +207,20 @@ function OnboardingPage({ onComplete }) {
     }
   };
 
+  const handleScreen3Next = () => {
+    if (!examType) return;
+    if (examType === 'None') {
+      setScreen(5); // Skip Screen 4 (prep stage) if not preparing for an exam
+    } else {
+      setScreen(4);
+    }
+  };
+
   const handleScreen5Back = () => {
     if (userType === 'casual_reader') {
       setScreen(2);
+    } else if (examType === 'None') {
+      setScreen(3);
     } else {
       setScreen(4);
     }
@@ -224,11 +236,15 @@ function OnboardingPage({ onComplete }) {
       ? `${examDate.month} ${examDate.year}` 
       : null;
 
+    const resolvedExamType = examType === 'Others' 
+      ? (customExamName.trim() || 'Others') 
+      : (examType === 'None' ? null : examType);
+
     const payload = {
       user_type: userType || 'student',
-      studying_for: examType ? [examType] : [],
-      exam_date: formattedExamDate,
-      study_stage: studyStage || null,
+      studying_for: resolvedExamType ? [resolvedExamType] : [],
+      exam_date: examType === 'None' ? null : formattedExamDate,
+      study_stage: examType === 'None' ? null : (studyStage || null),
       daily_goal_hours: dailyHours,
       study_reminder_time: reminderTime,
       north_star: northStar ? `I AM ${northStar.replace(/^I AM\s*/i, '').trim()}` : null,
@@ -260,7 +276,7 @@ function OnboardingPage({ onComplete }) {
     }
   };
 
-  const showDatePicker = ['JAMB 2026', 'WAEC 2026', 'Both'].includes(examType);
+  const showDatePicker = Boolean(examType) && examType !== 'None';
 
   return (
     <div className="min-h-screen w-full bg-[#0f1017] text-white flex flex-col justify-between relative overflow-hidden font-sans select-none">
@@ -276,17 +292,18 @@ function OnboardingPage({ onComplete }) {
       {screen === 6 && (
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none animate-in fade-in duration-700">
           <Particles 
-            particleColors={['#ffffff', '#c084fc', '#818cf8', '#e879f9', '#a78bfa']}
+            particleColors={['#ffffff', '#fdf4ff', '#c084fc', '#a855f7', '#818cf8', '#e879f9']}
             particleCount={250}
-            particleSpread={12}
+            particleSpread={13}
             speed={0.12}
-            particleBaseSize={115}
+            particleBaseSize={140}
             sizeRandomness={1.2}
             moveParticlesOnHover={true}
             particleHoverFactor={1.2}
             alphaParticles={true}
             disableRotation={false}
             cameraDistance={22}
+            shape="star"
           />
         </div>
       )}
@@ -525,27 +542,48 @@ function OnboardingPage({ onComplete }) {
             </div>
 
             <div className="grid grid-cols-2 gap-2.5 pt-2">
-              {['JAMB 2026', 'WAEC 2026', 'Both', 'Others', 'None'].map((item) => {
+              {['University Exam', 'JAMB', 'SSCE (Waec, Neco etc)', 'Others', 'None'].map((item) => {
                 const isSelected = examType === item;
+                const isNone = item === 'None';
                 return (
                   <button
                     key={item}
                     type="button"
                     onClick={() => setExamType(item)}
-                    className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all cursor-pointer flex items-center justify-between ${
+                    className={`py-3 px-3.5 sm:px-4 rounded-xl border text-sm font-medium transition-all cursor-pointer flex items-center justify-between text-left ${
+                      isNone ? 'col-span-2' : ''
+                    } ${
                       isSelected
                         ? 'bg-purple-600/20 border-purple-500 text-white shadow-md shadow-purple-500/15'
                         : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <span>{item}</span>
-                    {isSelected && <Check size={16} weight="bold" className="text-purple-400" />}
+                    <span className="leading-snug">{item}</span>
+                    {isSelected && <Check size={16} weight="bold" className="text-purple-400 shrink-0 ml-2" />}
                   </button>
                 );
               })}
             </div>
 
-            {/* Conditional Date Picker shown only for JAMB, WAEC, or Both */}
+            {/* Custom exam name input when "Others" is selected */}
+            {examType === 'Others' && (
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-2 text-purple-300 text-xs font-semibold">
+                  <GraduationCap size={16} weight="fill" />
+                  <span>Specify your examination</span>
+                </div>
+                <input
+                  type="text"
+                  value={customExamName}
+                  onChange={(e) => setCustomExamName(e.target.value)}
+                  placeholder="e.g., SAT, GRE, MCAT, ICAN, Bar Exam..."
+                  className="w-full bg-[#161722] border border-white/15 text-white placeholder:text-white/35 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                  autoFocus
+                />
+              </div>
+            )}
+
+            {/* Conditional Date Picker shown for any selected exam */}
             {showDatePicker && (
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center gap-2 text-purple-300 text-xs font-semibold">
@@ -590,8 +628,8 @@ function OnboardingPage({ onComplete }) {
               <Button
                 variant="primary"
                 fullWidth={true}
-                disabled={!examType}
-                onClick={() => setScreen(4)}
+                disabled={!examType || (examType === 'Others' && !customExamName.trim())}
+                onClick={handleScreen3Next}
                 className="py-3 rounded-full text-sm font-bold shadow-md shadow-purple-600/25 cursor-pointer"
               >
                 <span>Continue</span>
@@ -697,21 +735,21 @@ function OnboardingPage({ onComplete }) {
             </div>
 
             <div className="space-y-5 pt-2">
-              {/* Question 1: Focused Hours */}
+              {/* Question 1: Focused Time */}
               <div className="space-y-2.5">
                 <label className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
                   <Target size={16} className="text-purple-400" />
-                  <span>How many focused hours per day feel realistic?</span>
+                  <span>How much focused time per day feels realistic?</span>
                 </label>
-                <div className="grid grid-cols-3 gap-2.5">
-                  {['1 hr', '2 hrs', '3+ hrs'].map((h) => {
+                <div className="grid grid-cols-4 gap-2 sm:gap-2.5">
+                  {['30 mins', '1 hr', '2 hrs', '3+ hrs'].map((h) => {
                     const isSelected = dailyHours === h;
                     return (
                       <button
                         key={h}
                         type="button"
                         onClick={() => setDailyHours(h)}
-                        className={`py-3 px-3 rounded-xl border text-sm font-bold transition-all cursor-pointer ${
+                        className={`py-3 px-1.5 sm:px-3 rounded-xl border text-xs sm:text-sm font-bold transition-all cursor-pointer text-center ${
                           isSelected
                             ? 'bg-purple-600/25 border-purple-500 text-white shadow-md shadow-purple-500/20'
                             : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
@@ -738,11 +776,6 @@ function OnboardingPage({ onComplete }) {
                     className="w-full bg-white/5 border border-white/15 text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-purple-500 cursor-pointer"
                   />
                 </div>
-              </div>
-
-              {/* Quiet info note */}
-              <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-200/80 text-xs leading-relaxed">
-                By default, your streak counts after 2 minutes of reading. You can set your own reading time goal in Settings anytime.
               </div>
             </div>
 
@@ -917,12 +950,9 @@ function OnboardingPage({ onComplete }) {
           <div className="w-full space-y-6 text-center animate-in fade-in zoom-in-95 duration-500">
             {/* Visual reflection card */}
             <div className="relative p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/15 text-left space-y-4 shadow-2xl shadow-purple-900/20">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <div className="flex items-center gap-2 text-purple-300 font-bold text-xs uppercase tracking-wider">
-                  <Compass size={16} weight="fill" />
-                  <span>Your Apex Journey Blueprint</span>
-                </div>
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="flex items-center gap-2 text-purple-300 font-bold text-xs uppercase tracking-wider border-b border-white/10 pb-3">
+                <Compass size={16} weight="fill" />
+                <span>Your Apex Journey Blueprint</span>
               </div>
 
               <div className="space-y-2.5 text-sm sm:text-base text-white/90 leading-relaxed font-normal">

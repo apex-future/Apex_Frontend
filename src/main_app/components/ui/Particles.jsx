@@ -65,24 +65,89 @@ const fragment = /* glsl */ `
   
   uniform float uTime;
   uniform float uAlphaParticles;
+  uniform float uShape; // 0.0 = circle, 1.0 = 4-pointed celestial star, 2.0 = 5-pointed star
   varying vec4 vRandom;
   varying vec3 vColor;
   
+  // 4-pointed celestial star signed distance function
+  float sdStar4(in vec2 p, in float r, in float m) {
+    p = abs(p);
+    if (p.y > p.x) p = p.yx;
+    vec2 a = vec2(r, 0.0);
+    vec2 b = vec2(m, m);
+    vec2 pa = p - a;
+    vec2 ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    vec2 d = pa - ba * h;
+    float s = sign(pa.x * ba.y - pa.y * ba.x);
+    return length(d) * s;
+  }
+
+  // 5-pointed star signed distance function
+  float sdStar5(in vec2 p, in float r, in float rf) {
+    const vec2 k1 = vec2(0.809016994375, -0.587785252292);
+    const vec2 k2 = vec2(-k1.x, k1.y);
+    p.x = abs(p.x);
+    p -= 2.0 * max(dot(k1, p), 0.0) * k1;
+    p -= 2.0 * max(dot(k2, p), 0.0) * k2;
+    p.x = abs(p.x);
+    p.y -= r;
+    vec2 ba = rf * vec2(-k1.y, k1.x) - vec2(0.0, 1.0);
+    float h = clamp(dot(p, ba) / dot(ba, ba), 0.0, 1.0);
+    vec2 d = p - ba * h;
+    return length(d) * sign(p.y * ba.x - p.x * ba.y);
+  }
+  
   void main() {
     vec2 uv = gl_PointCoord.xy;
-    float d = length(uv - vec2(0.5));
-    
-    if(uAlphaParticles < 0.5) {
-      if(d > 0.5) {
+    vec2 p = uv - vec2(0.5);
+
+    // Subtle per-particle star rotation
+    float angle = vRandom.z * 6.283185 + (uTime * 0.15 * (vRandom.w - 0.5));
+    float c = cos(angle);
+    float s = sin(angle);
+    mat2 rot = mat2(c, -s, s, c);
+    vec2 rotP = rot * p;
+
+    float d;
+    if (uShape > 1.5) {
+      // 5-pointed star
+      d = sdStar5(rotP, 0.46, 0.48);
+    } else if (uShape > 0.5) {
+      // 4-pointed celestial star sparkle
+      d = sdStar4(rotP, 0.48, 0.12);
+    } else {
+      // Classic circle
+      d = length(p) - 0.45;
+    }
+
+    vec3 col = vColor + 0.25 * sin(uv.yxx * 2.0 + uTime + vRandom.y * 6.28);
+
+    if (uAlphaParticles < 0.5) {
+      if (d > 0.0) {
         discard;
       }
-      gl_FragColor = vec4(vColor + 0.2 * sin(uv.yxx + uTime + vRandom.y * 6.28), 1.0);
+      gl_FragColor = vec4(col, 1.0);
     } else {
-      float circle = smoothstep(0.5, 0.4, d) * 0.8;
-      gl_FragColor = vec4(vColor + 0.2 * sin(uv.yxx + uTime + vRandom.y * 6.28), circle);
+      // Smooth anti-aliased edge + radiant stellar core glow
+      float core = smoothstep(0.02, -0.02, d);
+      float glow = exp(-length(p) * 5.5) * 0.45;
+      float alpha = clamp(core + glow, 0.0, 1.0);
+      
+      if (alpha <= 0.01) {
+        discard;
+      }
+      
+      gl_FragColor = vec4(col + glow * 0.35, alpha);
     }
   }
 `;
+
+const getShapeUniformValue = (shape) => {
+  if (shape === 'star5') return 2.0;
+  if (shape === 'star' || shape === 'star4') return 1.0;
+  return 0.0;
+};
 
 const Particles = ({
   particleCount = 200,
@@ -97,6 +162,7 @@ const Particles = ({
   cameraDistance = 20,
   disableRotation = false,
   pixelRatio = 1,
+  shape = 'star', // 'star' | 'star4' | 'star5' | 'circle'
   className = ''
 }) => {
   const containerRef = useRef(null);
@@ -175,7 +241,8 @@ const Particles = ({
         uSpread: { value: particleSpread },
         uBaseSize: { value: particleBaseSize * pixelRatio },
         uSizeRandomness: { value: sizeRandomness },
-        uAlphaParticles: { value: alphaParticles ? 1 : 0 }
+        uAlphaParticles: { value: alphaParticles ? 1 : 0 },
+        uShape: { value: getShapeUniformValue(shape) }
       },
       transparent: true,
       depthTest: false
@@ -237,7 +304,8 @@ const Particles = ({
     sizeRandomness,
     cameraDistance,
     disableRotation,
-    pixelRatio
+    pixelRatio,
+    shape
   ]);
 
   return <div ref={containerRef} className={`particles-container ${className}`} />;
