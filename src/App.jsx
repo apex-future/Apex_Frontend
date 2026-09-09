@@ -34,11 +34,20 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [loading, setLoading] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(() => {
+    if (localStorage.getItem('apex_has_done_onboarding') === 'true') {
+      return false;
+    }
+    return false; // will be determined on auth check
+  });
 
   // Unverified check: requires data (online) to show/redirect to /verify-email
   const isUnverified = user && (user.is_verified === false || user.is_verified === null);
   const shouldRequireVerification = isOnline && isUnverified;
+
+  // Onboarding check: requires data (online) to show/redirect to /onboarding
+  const isPendingOnboarding = user && !user.has_done_onboarding && localStorage.getItem('apex_has_done_onboarding') !== 'true';
+  const shouldRequireOnboarding = isOnline && !shouldRequireVerification && (needsOnboarding || isPendingOnboarding);
 
   // Determine if we should show the landing-specific loader
   const isLandingPath = window.location.pathname === '/' || window.location.pathname === '';
@@ -163,8 +172,24 @@ function App() {
           }
         }
 
-        if (!user.user_type) {
+        const isDoneOnboarding = !!user.has_done_onboarding;
+        if (isDoneOnboarding) {
+          localStorage.setItem('apex_has_done_onboarding', 'true');
+          setNeedsOnboarding(false);
+        } else {
+          localStorage.removeItem('apex_has_done_onboarding');
           setNeedsOnboarding(true);
+        }
+
+        if (navigator.onLine) {
+          const isVerifyingWithToken = window.location.pathname === '/verify-email' && window.location.search.includes('token=');
+          if (!isVerifyingWithToken) {
+            if (user.is_verified === false || user.is_verified === null) {
+              navigate('/verify-email', { replace: true });
+            } else if (!isDoneOnboarding) {
+              navigate('/onboarding', { replace: true });
+            }
+          }
         }
 
         if (navigator.onLine) {
@@ -205,7 +230,12 @@ function App() {
           // Network error — stay logged in, local data is already rendering
           console.log('[Apex Auth] Network error during background auth check — continuing with local session');
           const cachedUser = useAuthStore.getState().user;
-          if (cachedUser && !cachedUser.user_type) setNeedsOnboarding(true);
+          const hasDoneLocal = localStorage.getItem('apex_has_done_onboarding') === 'true';
+          if (!hasDoneLocal && cachedUser && !cachedUser.has_done_onboarding) {
+            setNeedsOnboarding(true);
+          } else {
+            setNeedsOnboarding(false);
+          }
         }
       }
     };
@@ -246,7 +276,11 @@ function App() {
     if (userData?.user) {
       useAuthStore.getState().setUser(userData.user);
 
-      if (!userData.user?.user_type) {
+      if (userData.user?.has_done_onboarding) {
+        localStorage.setItem('apex_has_done_onboarding', 'true');
+        setNeedsOnboarding(false);
+      } else {
+        localStorage.removeItem('apex_has_done_onboarding');
         setNeedsOnboarding(true);
       }
     }
@@ -254,6 +288,8 @@ function App() {
 
     if (isOnline && (userData?.user?.is_verified === false || userData?.user?.is_verified === null)) {
       navigate('/verify-email', { replace: true });
+    } else if (isOnline && !userData?.user?.has_done_onboarding) {
+      navigate('/onboarding', { replace: true });
     } else {
       navigate('/', { replace: true });
     }
@@ -269,15 +305,18 @@ function App() {
   const handleLogout = () => {
     authService.logout();
     useAuthStore.getState().clearUser();
+    localStorage.removeItem('apex_has_done_onboarding');
     navigate('/', { replace: true });
     setIsLoggedIn(false);
   };
 
   const handleOnboardingComplete = () => {
+    localStorage.setItem('apex_has_done_onboarding', 'true');
     setNeedsOnboarding(false);
+    navigate('/import', { replace: true });
   };
 
-  // When coming back online, re-verify status for unverified users and redirect to /verify-email
+  // When coming back online, re-verify status for unverified users and users needing onboarding
   useEffect(() => {
     const handleOnlineVerifyCheck = async () => {
       if (authService.isAuthenticated()) {
@@ -287,6 +326,9 @@ function App() {
             useAuthStore.getState().setUser(freshUser);
             if (freshUser.is_verified === false || freshUser.is_verified === null) {
               navigate('/verify-email', { replace: true });
+            } else if (!freshUser.has_done_onboarding) {
+              setNeedsOnboarding(true);
+              navigate('/onboarding', { replace: true });
             }
           }
         } catch (err) {
@@ -325,11 +367,6 @@ function App() {
     return showLandingLoader ? <LandingLoadingScreen /> : <ApexLoadingScreen />;
   }
 
-  // Show onboarding for existing users who haven't personalized yet
-  if (isLoggedIn && needsOnboarding && !shouldRequireVerification) {
-    return <OnboardingPage onComplete={handleOnboardingComplete} />;
-  }
-
   return (
     <div className="min-h-screen">
       <Routes>
@@ -348,7 +385,7 @@ function App() {
             {/* Redirect protected app routes to landing page when unauthenticated */}
             <Route path="/profile" element={<Navigate to="/" replace />} />
             <Route path="/settings" element={<Navigate to="/" replace />} />
-            <Route path="/onboarding" element={<OnboardingPage onComplete={() => navigate('/')} />} />
+            <Route path="/onboarding" element={<Navigate to="/" replace />} />
             <Route path="/reader/*" element={<Navigate to="/" replace />} />
             <Route path="/spaces" element={<Navigate to="/" replace />} />
             <Route path="/space/*" element={<Navigate to="/" replace />} />
@@ -371,7 +408,7 @@ function App() {
           </>
         ) : (
           <>
-            {/* When logged in, handle verify-email and protected routes */}
+            {/* When logged in, handle verify-email, onboarding, and protected routes */}
             <Route path="/verify-email" element={
               (!isOnline && !window.location.search.includes('token=')) || (user?.is_verified && !window.location.search.includes('token=')) ? (
                 <Navigate to="/" replace />
@@ -382,13 +419,17 @@ function App() {
             <Route path="/onboarding" element={
               shouldRequireVerification ? (
                 <Navigate to="/verify-email" replace />
+              ) : !isOnline ? (
+                <Navigate to="/" replace />
               ) : (
-                <OnboardingPage onComplete={() => navigate('/')} />
+                <OnboardingPage onComplete={handleOnboardingComplete} />
               )
             } />
             <Route path="/*" element={
               shouldRequireVerification ? (
                 <Navigate to="/verify-email" replace />
+              ) : shouldRequireOnboarding ? (
+                <Navigate to="/onboarding" replace />
               ) : (
                 <MainApp onLogout={handleLogout} />
               )

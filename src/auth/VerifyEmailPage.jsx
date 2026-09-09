@@ -67,7 +67,13 @@ function VerifyEmailPage({ onLogin, userEmail }) {
         }
         setVerificationStatus('success');
         setTimeout(() => {
-          navigate('/', { replace: true });
+          const needsOnboarding = !response?.user?.has_done_onboarding && 
+                                  localStorage.getItem('apex_has_done_onboarding') !== 'true';
+          if (navigator.onLine && needsOnboarding) {
+            navigate('/onboarding', { replace: true });
+          } else {
+            navigate('/', { replace: true });
+          }
         }, 2000);
       } catch (err) {
         const detail = err.response?.data?.detail;

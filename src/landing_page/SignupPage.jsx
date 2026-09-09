@@ -1,16 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { WarningCircle, Eye, EyeClosed, ArrowRight, Sparkle } from '@phosphor-icons/react';
+import { WarningCircle, Eye, EyeClosed, Star } from '@phosphor-icons/react';
 import { GoogleLogin } from '@react-oauth/google';
 import logoLight from "../assets/logo/logo-light.jpg";
 import authService from '../main_app/services/authService';
 import Grainient from './components/Grainient';
-import CardSwap, { Card } from './components/CardSwap';
-
-import guide1 from '../assets/signup_guide/1.png';
-import guide2 from '../assets/signup_guide/2.png';
-import guide3 from '../assets/signup_guide/3.png';
-import guide4 from '../assets/signup_guide/4.png';
+import Card from '../main_app/components/ui/Card';
 
 function SignupPage({ onLogin }) {
   const navigate = useNavigate();
@@ -21,17 +16,8 @@ function SignupPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Step system
-  const [step, setStep] = useState(1);
-
-  // Onboarding fields
-  const [userType, setUserType] = useState('');
-  const [studyingFor, setStudyingFor] = useState([]);
-  const [examDate, setExamDate] = useState({ month: '', year: '' });
-  const [studyDevice, setStudyDevice] = useState('');
-
-  const handleNext = (e) => {
-    e.preventDefault();
+  const handleSignup = async (e) => {
+    if (e) e.preventDefault();
     if (!fullName.trim()) {
       setError('Please enter your full name.');
       return;
@@ -44,33 +30,20 @@ function SignupPage({ onLogin }) {
       setError('Password must be at least 8 characters.');
       return;
     }
-    setError('');
-    setStep(2);
-  };
 
-  const handleSignup = async () => {
-    if (!userType) return; // Field 1 required
     setLoading(true);
     setError('');
 
-    const onboardingData = {
-      user_type: userType,
-      ...(studyingFor.length > 0 && { studying_for: studyingFor }),
-      ...(examDate.month && examDate.year && { 
-        exam_date: `${examDate.month} ${examDate.year}` 
-      }),
-      ...(studyDevice && { study_device: studyDevice }),
-    };
-
     try {
       const response = await authService.register(
-        fullName, email, password, onboardingData
+        fullName.trim(),
+        email.trim(),
+        password
       );
       onLogin(response);
       navigate('/verify-email');
     } catch (err) {
       setError(err.response?.data?.detail || 'Registration failed. Please try again.');
-      setStep(1);
     } finally {
       setLoading(false);
     }
@@ -82,46 +55,17 @@ function SignupPage({ onLogin }) {
       setError('');
       const response = await authService.googleAuth(credentialResponse.credential);
       onLogin(response);
-      navigate('/');
+      if (navigator.onLine && (!response?.user?.has_done_onboarding && localStorage.getItem('apex_has_done_onboarding') !== 'true')) {
+        navigate('/onboarding');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.detail || 'Google authentication failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
-  const toggleStudyingFor = (item) => {
-    if (item === 'Not studying for anything right now') {
-      setStudyingFor(['Not studying for anything right now']);
-    } else {
-      setStudyingFor((prev) => {
-        const filtered = prev.filter((s) => s !== 'Not studying for anything right now');
-        if (filtered.includes(item)) {
-          return filtered.filter((s) => s !== item);
-        }
-        return [...filtered, item];
-      });
-    }
-  };
-
-  const showStudyingFor = userType === 'student' || userType === 'both';
-  const showExamDate = studyingFor.includes('JAMB') || studyingFor.includes('WAEC') || studyingFor.includes('University Exams');
-
-  const Pill = ({ label, selected, onClick, ariaPressed }) => (
-    <button
-      type="button"
-      role="button"
-      aria-pressed={ariaPressed !== undefined ? ariaPressed : selected}
-      onClick={onClick}
-      className={`px-4 py-2 rounded-full border text-sm font-medium cursor-pointer transition-all ${
-        selected
-          ? 'bg-[#7C3AED]/10 text-[#7C3AED] border-[#7C3AED] shadow-sm'
-          : 'bg-white text-gray-700 border-[#D1D5DB] hover:bg-gray-50'
-      }`}
-    >
-      {label}
-    </button>
-  );
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col lg:flex-row font-sans text-gray-900 overflow-x-hidden">
@@ -134,20 +78,16 @@ function SignupPage({ onLogin }) {
             <img src={logoLight} alt="Apex Logo" className="w-10 h-10 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform" />
             <span className="font-bold text-xl tracking-tight text-[#1F2937]">Apex</span>
           </Link>
-          <div className="text-xs font-semibold px-3 py-1 bg-purple-50 text-[#7C3AED] rounded-full border border-purple-100 flex items-center gap-1.5">
-            <Sparkle size={13} weight="fill" />
-            <span>Step {step} of 2</span>
-          </div>
         </div>
 
         {/* Center Form Body */}
         <div className="w-full max-w-[400px] mx-auto my-auto py-8">
           <div className="mb-6">
             <h1 className="text-[32px] sm:text-[36px] font-bold text-gray-900 tracking-tight leading-tight">
-              {step === 1 ? 'Create your account' : 'Personalize your info'}
+              Create your account
             </h1>
             <p className="text-sm text-gray-500 mt-1.5">
-              {step === 1 ? 'Join thousands of students mastering their studies.' : 'Help us customize your learning journey.'}
+              Join thousands of students mastering their studies.
             </p>
           </div>
 
@@ -158,202 +98,95 @@ function SignupPage({ onLogin }) {
             </div>
           )}
 
-          {step === 1 ? (
-            <form className="w-full space-y-4" onSubmit={handleNext}>
-              <div>
-                <label htmlFor="fullName" className="sr-only">Full Name</label>
-                <input 
-                  id="fullName"
-                  type="text" 
-                  placeholder="Full Name"
-                  aria-label="Full Name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-all"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="email" className="sr-only">Email address</label>
-                <input 
-                  id="email"
-                  type="email" 
-                  placeholder="Email address"
-                  aria-label="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value.toLowerCase())}
-                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-all"
-                  required
-                />
-              </div>
+          <form className="w-full space-y-4" onSubmit={handleSignup}>
+            <div>
+              <label htmlFor="fullName" className="sr-only">Full Name</label>
+              <input 
+                id="fullName"
+                type="text" 
+                placeholder="Full Name"
+                aria-label="Full Name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-all"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="email" className="sr-only">Email address</label>
+              <input 
+                id="email"
+                type="email" 
+                placeholder="Email address"
+                aria-label="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-all"
+                required
+              />
+            </div>
 
-              <div className="relative">
-                <label htmlFor="password" className="sr-only">Password</label>
-                <input 
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Password (min 8 characters)"
-                  aria-label="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-5 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-all"
-                  required
-                />
-                <button
-                  type="button"
-                  aria-label="Toggle password visibility"
-                  aria-pressed={showPassword}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                >
-                  {showPassword ? <EyeClosed size={19} weight="regular" /> : <Eye size={19} weight="regular" />}
-                </button>
-              </div>
-
-              <button 
-                type="submit"
-                className="w-full bg-[#0F172A] hover:bg-black text-white py-3.5 rounded-full font-semibold text-[15px] transition-all shadow-md hover:shadow-lg active:scale-[0.99] mt-2 cursor-pointer"
-              >
-                Continue
-              </button>
-
-              <div className="w-full mt-4 text-center">
-                <p className="text-[14px] text-gray-600">
-                  Already have an account? <Link to="/login" className="text-[#7C3AED] font-semibold hover:underline">Log in</Link>
-                </p>
-              </div>
-
-              <div className="flex items-center w-full my-5">
-                <div className="flex-grow border-t border-gray-200"></div>
-                <span className="px-4 text-[11px] font-bold text-gray-400 tracking-wider uppercase">OR</span>
-                <div className="flex-grow border-t border-gray-200"></div>
-              </div>
-
-              <div className="w-full flex justify-center items-center">
-                <div className="w-[80%] max-w-[320px] mx-auto flex justify-center">
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={() => setError('Google authentication failed.')}
-                    shape="pill"
-                    size="large"
-                    text="continue_with"
-                    width="280"
-                  />
-                </div>
-              </div>
-            </form>
-          ) : (
-            <div className="w-full space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-              <button 
-                onClick={() => setStep(1)}
-                className="text-gray-500 text-sm font-medium hover:text-gray-800 transition-colors cursor-pointer flex items-center gap-1 mb-2"
-              >
-                ← Back to details
-              </button>
-
-              <div className="space-y-2.5">
-                <label id="userTypeLabel" className="text-sm font-semibold text-gray-800 block">
-                  What describes you best? <span className="text-red-500" aria-hidden="true">*</span>
-                </label>
-                <div className="flex flex-wrap gap-2" role="group" aria-labelledby="userTypeLabel">
-                  {[
-                    { value: 'student', label: 'Student' },
-                    { value: 'casual_reader', label: 'Casual Reader' },
-                    { value: 'both', label: 'Both' },
-                  ].map((type) => (
-                    <Pill
-                      key={type.value}
-                      label={type.label}
-                      selected={userType === type.value}
-                      onClick={() => setUserType(type.value)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {showStudyingFor && (
-                <div className="space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <label id="studyingForLabel" className="text-sm font-semibold text-gray-800 block">
-                    What are you studying for? <span className="text-gray-400 font-normal">(optional)</span>
-                  </label>
-                  <div className="flex flex-wrap gap-2" role="group" aria-labelledby="studyingForLabel">
-                    {['JAMB', 'WAEC', 'University Exams', 'Professional Cert', 'Not studying for anything right now'].map((item) => (
-                      <Pill
-                        key={item}
-                        label={item}
-                        selected={studyingFor.includes(item)}
-                        onClick={() => toggleStudyingFor(item)}
-                        ariaPressed={studyingFor.includes(item)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {showExamDate && (
-                <div className="space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <label className="text-sm font-semibold text-gray-800 block">
-                    When is your exam? <span className="text-gray-400 font-normal">(optional)</span>
-                  </label>
-                  <div className="flex gap-2">
-                    <select
-                      value={examDate.month}
-                      onChange={(e) => setExamDate({ ...examDate, month: e.target.value })}
-                      className="flex-1 bg-gray-50 border border-gray-200 text-gray-800 rounded-full px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] appearance-none cursor-pointer text-sm font-medium"
-                    >
-                      <option value="" className="text-gray-400">Month</option>
-                      {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={examDate.year}
-                      onChange={(e) => setExamDate({ ...examDate, year: e.target.value })}
-                      className="flex-1 bg-gray-50 border border-gray-200 text-gray-800 rounded-full px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] appearance-none cursor-pointer text-sm font-medium"
-                    >
-                      <option value="" className="text-gray-400">Year</option>
-                      {[2026, 2027, 2028, 2029].map(y => (
-                        <option key={y} value={y}>{y}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2.5">
-                <label className="text-sm font-semibold text-gray-800 block">
-                  How do you currently study? <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {['phone', 'laptop', 'both'].map((device) => (
-                    <Pill
-                      key={device}
-                      label={device.charAt(0).toUpperCase() + device.slice(1)}
-                      selected={studyDevice === device}
-                      onClick={() => setStudyDevice(studyDevice === device ? '' : device)}
-                    />
-                  ))}
-                </div>
-              </div>
-
+            <div className="relative">
+              <label htmlFor="password" className="sr-only">Password</label>
+              <input 
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password (min 8 characters)"
+                aria-label="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-5 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent text-base transition-all"
+                required
+              />
               <button
                 type="button"
-                onClick={handleSignup}
-                disabled={!userType || loading}
-                className={`group w-full h-13 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-full font-bold text-base transition-all duration-300 shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2.5 active:scale-95 mt-4 cursor-pointer ${(!userType || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                aria-label="Toggle password visibility"
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
               >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    Create Account
-                    <ArrowRight size={19} weight="bold" className="group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
+                {showPassword ? <EyeClosed size={19} weight="regular" /> : <Eye size={19} weight="regular" />}
               </button>
             </div>
-          )}
+
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#0F172A] hover:bg-black disabled:bg-[#0F172A]/50 disabled:cursor-not-allowed text-white py-3.5 rounded-full font-semibold text-[15px] transition-all shadow-md hover:shadow-lg active:scale-[0.99] mt-2 cursor-pointer flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                'Create Account'
+              )}
+            </button>
+
+            <div className="w-full mt-4 text-center">
+              <p className="text-[14px] text-gray-600">
+                Already have an account? <Link to="/login" className="text-[#7C3AED] font-semibold hover:underline">Log in</Link>
+              </p>
+            </div>
+
+            <div className="flex items-center w-full my-5">
+              <div className="flex-grow border-t border-gray-200"></div>
+              <span className="px-4 text-[11px] font-bold text-gray-400 tracking-wider uppercase">OR</span>
+              <div className="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <div className="w-full flex justify-center items-center">
+              <div className="w-[80%] max-w-[320px] mx-auto flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google authentication failed.')}
+                  shape="pill"
+                  size="large"
+                  text="continue_with"
+                  width="280"
+                />
+              </div>
+            </div>
+          </form>
         </div>
 
         {/* Footer Note */}
@@ -365,9 +198,9 @@ function SignupPage({ onLogin }) {
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Grainient Background Box Container with CardSwap Showcase */}
+      {/* RIGHT COLUMN: Grainient Background Box Container with 3 Testimonial Comments */}
       <div className="hidden lg:flex lg:w-1/2 p-4 lg:p-5 min-h-screen flex-col">
-        <div className="w-full h-full relative rounded-[32px] overflow-hidden flex flex-col justify-between p-10 text-white select-none shadow-xl min-h-[640px]">
+        <div className="w-full h-full relative rounded-[32px] overflow-hidden flex flex-col justify-between p-8 xl:p-10 text-white select-none shadow-xl min-h-[640px]">
           {/* WebGL Grainient Canvas Component */}
           <div className="absolute inset-0 z-0">
             <Grainient
@@ -397,43 +230,97 @@ function SignupPage({ onLogin }) {
           </div>
 
           {/* Subtle Dark Overlay for contrast */}
-          <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/10 via-transparent to-black/30 pointer-events-none" />
+          <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/15 via-black/5 to-black/35 pointer-events-none" />
 
           {/* Top Header Text */}
           <div className="relative z-20">
             <h2
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-              className="text-[40px] font-bold leading-[1.1] tracking-tight text-white"
+              className="text-[34px] xl:text-[38px] font-bold leading-[1.15] tracking-tight text-white"
             >
               The new era of studying,<br />
-              <span className="text-white/70">unlocked with Apex.</span>
+              <span className="text-white/75">unlocked with Apex.</span>
             </h2>
           </div>
 
-          {/* CardSwap Showcase at bottom */}
-          <div className="relative z-20 w-full flex justify-center items-end">
-            <CardSwap
-              width={560}
-              height={315}
-              cardDistance={55}
-              verticalDistance={0}
-              delay={3500}
-              pauseOnHover={true}
-              skewAmount={3}
-            >
-              <Card customClass="shadow-2xl rounded-2xl overflow-hidden border-none bg-transparent">
-                <img src={guide1} alt="Signup Guide 1" className="w-full h-full object-cover rounded-2xl drop-shadow-xl" />
-              </Card>
-              <Card customClass="shadow-2xl rounded-2xl overflow-hidden border-none bg-transparent">
-                <img src={guide2} alt="Signup Guide 2" className="w-full h-full object-cover rounded-2xl drop-shadow-xl" />
-              </Card>
-              <Card customClass="shadow-2xl rounded-2xl overflow-hidden border-none bg-transparent">
-                <img src={guide3} alt="Signup Guide 3" className="w-full h-full object-cover rounded-2xl drop-shadow-xl" />
-              </Card>
-              <Card customClass="shadow-2xl rounded-2xl overflow-hidden border-none bg-transparent">
-                <img src={guide4} alt="Signup Guide 4" className="w-full h-full object-cover rounded-2xl drop-shadow-xl" />
-              </Card>
-            </CardSwap>
+          {/* Three Testimonial Comment Boxes: 2 Left, 1 Right (Middle) */}
+          <div className="relative z-20 w-full flex flex-col gap-3.5 xl:gap-4 my-auto py-4">
+            {/* Comment 1: Left Aligned */}
+            <Card className="self-start w-full max-w-[370px] xl:max-w-[390px] !bg-white/10 hover:!bg-white/15 !backdrop-blur-xl !border !border-white/20 rounded-2xl p-4 xl:p-4.5 !shadow-xl text-white">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-400 flex items-center justify-center font-bold text-xs text-white shadow-md shrink-0">
+                  CO
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-[13.5px] text-white truncate">Chidinma O.</h4>
+                    <div className="flex items-center gap-0.5 text-amber-300">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={11} weight="fill" />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-white/70 truncate">300L Medicine · UI</p>
+                </div>
+              </div>
+              <p className="text-[12.5px] xl:text-[13px] text-white/90 leading-relaxed font-normal">
+                "The offline reader and instant flashcard recall are unmatched. Apex changed how I study completely."
+              </p>
+            </Card>
+
+            {/* Comment 2: Right Aligned (Middle) */}
+            <Card className="self-end w-full max-w-[370px] xl:max-w-[390px] !bg-white/10 hover:!bg-white/15 !backdrop-blur-xl !border !border-white/20 rounded-2xl p-4 xl:p-4.5 !shadow-xl text-white">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center font-bold text-xs text-white shadow-md shrink-0">
+                  DK
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-[13.5px] text-white truncate">David K.</h4>
+                    <div className="flex items-center gap-0.5 text-amber-300">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={11} weight="fill" />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-white/70 truncate">Law Scholar · UNILAG</p>
+                </div>
+              </div>
+              <p className="text-[12.5px] xl:text-[13px] text-white/90 leading-relaxed font-normal">
+                "The daily streak quests and distraction-free reader kept me locked in for 90+ days straight. Game changer."
+              </p>
+            </Card>
+
+            {/* Comment 3: Left Aligned */}
+            <Card className="self-start w-full max-w-[370px] xl:max-w-[390px] !bg-white/10 hover:!bg-white/15 !backdrop-blur-xl !border !border-white/20 rounded-2xl p-4 xl:p-4.5 !shadow-xl text-white">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 to-emerald-400 flex items-center justify-center font-bold text-xs text-white shadow-md shrink-0">
+                  AB
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-[13.5px] text-white truncate">Amina B.</h4>
+                    <div className="flex items-center gap-0.5 text-amber-300">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={11} weight="fill" />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-white/70 truncate">Software Engineering Student</p>
+                </div>
+              </div>
+              <p className="text-[12.5px] xl:text-[13px] text-white/90 leading-relaxed font-normal">
+                "Syncing seamlessly between my phone and laptop while reading offline on campus is a lifesaver."
+              </p>
+            </Card>
+          </div>
+
+          {/* Bottom Social Proof Bar */}
+          <div className="relative z-20 flex items-center justify-between text-xs text-white/65 pt-2 border-t border-white/10">
+            <span>Loved by thousands of students</span>
+            <span className="flex items-center gap-1">
+              <Star size={12} weight="fill" className="text-amber-300" /> 4.9/5 Rating
+            </span>
           </div>
         </div>
       </div>

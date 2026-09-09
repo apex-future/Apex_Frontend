@@ -24,6 +24,8 @@ function LoginPage({ onLogin }) {
       onLogin(response);
       if (response?.user && (response.user.is_verified === false || response.user.is_verified === null || !response.user.is_verified)) {
         navigate('/verify-email');
+      } else if (navigator.onLine && (!response?.user?.has_done_onboarding && localStorage.getItem('apex_has_done_onboarding') !== 'true')) {
+        navigate('/onboarding');
       } else {
         navigate('/');
       }
@@ -46,7 +48,11 @@ function LoginPage({ onLogin }) {
       setError('');
       const response = await authService.googleAuth(credentialResponse.credential);
       onLogin(response);
-      navigate('/');
+      if (navigator.onLine && (!response?.user?.has_done_onboarding && localStorage.getItem('apex_has_done_onboarding') !== 'true')) {
+        navigate('/onboarding');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.detail || 'Google authentication failed. Please try again.');
     } finally {

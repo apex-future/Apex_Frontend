@@ -11,6 +11,9 @@ const authService = {
     if (response.data.access_token) {
       localStorage.setItem('apex_token', response.data.access_token);
     }
+    if (response.data?.user?.has_done_onboarding || response.data?.user?.user_type) {
+      localStorage.setItem('apex_has_done_onboarding', 'true');
+    }
     return response.data;
   },
 
@@ -22,6 +25,9 @@ const authService = {
     if (response.data.access_token) {
       localStorage.setItem('apex_token', response.data.access_token);
     }
+    if (response.data?.user?.has_done_onboarding || response.data?.user?.user_type) {
+      localStorage.setItem('apex_has_done_onboarding', 'true');
+    }
     return response.data;
   },
 
@@ -31,6 +37,9 @@ const authService = {
     });
     if (response.data.access_token) {
       localStorage.setItem('apex_token', response.data.access_token);
+    }
+    if (response.data?.user?.has_done_onboarding || response.data?.user?.user_type) {
+      localStorage.setItem('apex_has_done_onboarding', 'true');
     }
     return response.data;
   },
@@ -43,17 +52,31 @@ const authService = {
       console.error('Logout API error:', e.message);
     } finally {
       localStorage.removeItem('apex_token');
+      localStorage.removeItem('apex_has_done_onboarding');
     }
   },
 
   async me() {
     const response = await apiClient.get('/api/auth/me');
+    if (response.data?.has_done_onboarding) {
+      localStorage.setItem('apex_has_done_onboarding', 'true');
+    } else {
+      localStorage.removeItem('apex_has_done_onboarding');
+    }
     return response.data;
   },
 
   async saveOnboarding(onboardingData) {
+    localStorage.setItem('apex_has_done_onboarding', 'true');
     const response = await apiClient.patch('/api/auth/onboarding', onboardingData);
+    if (response.data?.user) {
+      localStorage.setItem('apex_has_done_onboarding', 'true');
+    }
     return response.data;
+  },
+
+  hasDoneOnboarding() {
+    return localStorage.getItem('apex_has_done_onboarding') === 'true';
   },
 
   // Send forgot password request
@@ -78,6 +101,9 @@ const authService = {
     // If verification returns a fresh access token, store it
     if (response.data.access_token) {
       localStorage.setItem('apex_token', response.data.access_token);
+    }
+    if (response.data?.user?.has_done_onboarding || response.data?.user?.user_type) {
+      localStorage.setItem('apex_has_done_onboarding', 'true');
     }
     return response.data;
   },
