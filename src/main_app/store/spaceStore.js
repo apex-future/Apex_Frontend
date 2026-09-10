@@ -15,8 +15,8 @@ const useSpaceStore = create(
       spaces: [...SYSTEM_SPACES],
       activeSpaceId: null,
 
-      createSpace: async (name) => {
-        const local_id = Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+      createSpace: async (name, customId = null) => {
+        const local_id = customId || (Date.now().toString(36) + Math.random().toString(36).substr(2, 9));
 
         const newSpace = {
           id: local_id,
@@ -317,16 +317,26 @@ const useSpaceStore = create(
       syncExamReminders: async () => {
         try {
           const allReminders = await db.exam_reminders.toArray();
+          const currentExams = (await import('./studyStore')).default.getState().exams || [];
           const { setExams } = await import('./studyStore').then(m => m.default.getState());
-          const mapped = allReminders.map(record => ({
-            id: record.local_id,
-            supabaseId: record.supabaseId,
-            name: record.examName,
-            date: record.examDate,
-            current_stage: record.currentStage || null,
-            isPaused: !record.isActive,
-          }));
-          setExams(mapped);
+          const mapped = allReminders.map(record => {
+            const existing = currentExams.find(e => e.id === record.local_id || (e.supabaseId && e.supabaseId === record.supabaseId));
+            const resolvedSpaceId = record.book_space_id || record.bookSpaceSupabaseId || existing?.book_space_id || existing?.bookSpaceSupabaseId || existing?.bookSpaceId || null;
+            return {
+              id: record.local_id,
+              supabaseId: record.supabaseId,
+              name: record.examName,
+              date: record.examDate,
+              current_stage: record.currentStage || null,
+              isPaused: !record.isActive,
+              book_space_id: resolvedSpaceId,
+              bookSpaceSupabaseId: resolvedSpaceId,
+              bookSpaceId: resolvedSpaceId,
+            };
+          });
+          if (mapped.length > 0) {
+            setExams(mapped);
+          }
           console.log('[SpaceStore] syncExamReminders — rehydrated', mapped.length, 'exams');
         } catch (err) {
           console.error('[SpaceStore] syncExamReminders failed:', err);

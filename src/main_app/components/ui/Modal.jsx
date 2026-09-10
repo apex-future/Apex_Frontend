@@ -33,7 +33,7 @@ export default function Modal({
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-auto p-4 sm:p-6">
           {/* Backdrop Blur Overlay */}
           {!hideOverlay && (
             <motion.div
@@ -55,7 +55,7 @@ export default function Modal({
               duration: 0.28,
               ease: [0.16, 1, 0.3, 1], // Fluid cubic-bezier ease
             }}
-            className={`relative z-10 bg-bg-subtle dark:bg-bg-elevated border-t border-white/10 rounded-[20px] p-6 w-full ${maxWidth} mx-4 shadow-2xl shadow-black/30 dark:shadow-black/60 flex flex-col max-h-[90vh] ${className}`}
+            className={`relative z-10 bg-bg-subtle dark:bg-bg-elevated border-t border-white/10 rounded-[20px] p-5 sm:p-6 w-full ${maxWidth} mx-auto shadow-2xl shadow-black/30 dark:shadow-black/60 flex flex-col max-h-[90vh] ${className}`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Optional Close Button */}

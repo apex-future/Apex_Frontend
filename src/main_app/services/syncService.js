@@ -662,6 +662,7 @@ const syncService = {
             isActive: r.is_active,
             currentStage: r.current_stage || null,
             bookSpaceSupabaseId: r.book_space_id || null,
+            book_space_id: r.book_space_id || null,
             synced: true,
             createdAt: r.created_at,
             updatedAt: r.updated_at,
@@ -677,6 +678,9 @@ const syncService = {
             date: r.examDate,
             current_stage: r.currentStage,
             isPaused: !r.isActive,
+            book_space_id: r.book_space_id || r.bookSpaceSupabaseId || null,
+            bookSpaceSupabaseId: r.bookSpaceSupabaseId || r.book_space_id || null,
+            bookSpaceId: r.book_space_id || r.bookSpaceSupabaseId || null,
           }));
           useStudyStore.getState().setExams(examsMapped);
           console.log('[Apex Sync] studyStore exams rehydrated:', examsMapped.length);
@@ -692,6 +696,9 @@ const syncService = {
                 name: r.examName,
                 date: r.examDate,
                 isPaused: !r.isActive,
+                book_space_id: r.book_space_id || r.bookSpaceSupabaseId || null,
+                bookSpaceSupabaseId: r.bookSpaceSupabaseId || r.book_space_id || null,
+                bookSpaceId: r.book_space_id || r.bookSpaceSupabaseId || null,
               }));
               useStudyStore.getState().setExams(examsMapped);
               console.log('[Apex Sync] studyStore exams rehydrated from local Dexie:', examsMapped.length);
@@ -1451,13 +1458,15 @@ const syncService = {
     const localId = examData.id || generateLocalId();
     const now = new Date().toISOString();
 
+    const targetSpaceId = examData.book_space_id || examData.bookSpaceSupabaseId || examData.bookSpaceId || null;
     const dexieRecord = {
       local_id: localId,
       examName: examData.name,
       examDate: examData.date,
       isActive: !examData.isPaused,
       currentStage: examData.currentStage || examData.current_stage || null,
-      bookSpaceSupabaseId: examData.bookSpaceSupabaseId || null,
+      bookSpaceSupabaseId: targetSpaceId,
+      book_space_id: targetSpaceId,
       synced: false,
       supabaseId: examData.supabaseId || null,
       updatedAt: now,
@@ -1481,7 +1490,7 @@ const syncService = {
           exam_date: examData.date,
           is_active: !examData.isPaused,
           current_stage: examData.currentStage || examData.current_stage || null,
-          book_space_id: examData.bookSpaceSupabaseId || null,
+          book_space_id: targetSpaceId,
           local_id: localId,
         };
 
@@ -2046,7 +2055,7 @@ const syncService = {
               exam_name: exam.examName,
               exam_date: exam.examDate,
               is_active: exam.isActive !== false,
-              book_space_id: exam.bookSpaceSupabaseId || null,
+              book_space_id: exam.book_space_id || exam.bookSpaceSupabaseId || null,
               local_id: exam.local_id,
             };
             let res;

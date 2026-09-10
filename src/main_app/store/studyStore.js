@@ -19,7 +19,6 @@ const useStudyStore = create(
 
       // Multi-exam state
       exams: [],
-      setExams: (exams) => set({ exams }),
 
       addExam: async (exam) => {
         const newExam = { ...exam, id: exam.id || crypto.randomUUID(), createdAt: new Date().toISOString(), isPaused: false };
@@ -73,11 +72,48 @@ const useStudyStore = create(
           }
         }
       },
-      togglePauseExam: (id) => set((state) => ({ exams: state.exams.map(e => e.id === id ? { ...e, isPaused: !e.isPaused } : e) })),
-      setExams: (exams) => set({ 
-        exams,
+      togglePauseExam: async (id) => {
+        const exam = get().exams.find(e => e.id === id);
+        if (!exam) return false;
+
+        // An unlinked exam cannot be resumed/played back
+        const hasSpace = !!(exam.book_space_id || exam.bookSpaceSupabaseId || exam.bookSpaceId);
+        if (!hasSpace && exam.isPaused) {
+          return false; // Action rejected: must link a Book Space first
+        }
+
+        const nextPaused = !exam.isPaused;
+        set((state) => ({
+          exams: state.exams.map(e => e.id === id ? { ...e, isPaused: nextPaused } : e)
+        }));
+
+        try {
+          const updated = get().exams.find(e => e.id === id);
+          if (updated) {
+            const syncService = (await import('../services/syncService')).default;
+            await syncService.saveExamReminder(updated);
+          }
+        } catch (err) {
+          console.error('[StudyStore] Failed to sync pause state:', err);
+        }
+        return true;
+      },
+      setExams: (exams) => set((state) => ({ 
+        exams: (exams || []).map(e => {
+          const existing = (state.exams || []).find(prev => (prev.id && prev.id === e.id) || (prev.supabaseId && prev.supabaseId === e.supabaseId));
+          const spaceId = e.book_space_id || e.bookSpaceSupabaseId || e.bookSpaceId || existing?.book_space_id || existing?.bookSpaceSupabaseId || existing?.bookSpaceId || null;
+          const hasSpace = Boolean(spaceId);
+          return {
+            ...e,
+            book_space_id: spaceId,
+            bookSpaceSupabaseId: e.bookSpaceSupabaseId || spaceId,
+            bookSpaceId: e.bookSpaceId || spaceId,
+            // Automatically pause legacy exams without a book space
+            isPaused: !hasSpace ? true : (e.isPaused ?? existing?.isPaused ?? false),
+          };
+        }),
         ...(exams && exams.length > 0 ? { examDate: exams[0].date, examName: exams[0].name } : {})
-      }),
+      })),
 
       /**
        * getTodayString — returns today as 'YYYY-MM-DD'

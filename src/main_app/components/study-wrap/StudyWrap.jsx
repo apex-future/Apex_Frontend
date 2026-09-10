@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CaretLeft, CaretRight, Sparkle, ShareNetwork, WifiSlash, ArrowClockwise } from '@phosphor-icons/react';
+import { X, CaretLeft, CaretRight, Sparkle, ShareNetwork, WifiSlash, ArrowClockwise, WarningCircle } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as htmlToImage from 'html-to-image';
 import html2canvas from 'html2canvas';
@@ -80,6 +80,12 @@ export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
 
   // Fetch wrap data from backend
   const fetchWrapData = useCallback(async (spaceId) => {
+    if (!spaceId || spaceId === 'default' || spaceId === 'null') {
+      console.warn('[StudyWrap] No valid Book Space linked — cannot generate study wrap');
+      setWrapError(true);
+      return;
+    }
+
     if (!navigator.onLine) {
       console.warn('[StudyWrap] Offline detected — cannot generate study wrap');
       setWrapError(true);
@@ -87,9 +93,8 @@ export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
     }
 
     try {
-      const spaceTarget = spaceId || 'default';
-      console.log('[StudyWrap] Prefetching wrap data from /api/wrap/' + spaceTarget);
-      const promise = apiClient.get(`/api/wrap/${spaceTarget}`);
+      console.log('[StudyWrap] Prefetching wrap data from /api/wrap/' + spaceId);
+      const promise = apiClient.get(`/api/wrap/${spaceId}`);
       fetchPromiseRef.current = promise;
       const response = await promise;
       setWrapData(response.data);
@@ -571,12 +576,17 @@ export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
   // Render the correct card by index
   const renderCard = () => {
     if (!wrapData) {
+      const isMissingSpace = !bookSpaceId || bookSpaceId === 'default' || bookSpaceId === 'null';
       const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
 
       return (
         <div className="w-full min-h-full flex flex-col items-center justify-center text-center px-6 py-8 select-none relative z-10 gap-5">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shadow-[0_0_24px_rgba(239,68,68,0.25)]">
-            <WifiSlash size={32} weight="bold" />
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${
+            isMissingSpace 
+              ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400 shadow-[0_0_24px_rgba(245,158,11,0.25)]' 
+              : 'bg-red-500/10 border border-red-500/20 text-red-400 shadow-[0_0_24px_rgba(239,68,68,0.25)]'
+          }`}>
+            {isMissingSpace ? <WarningCircle size={32} weight="bold" /> : <WifiSlash size={32} weight="bold" />}
           </div>
 
           <div className="flex flex-col gap-2 max-w-[320px]">
@@ -584,39 +594,43 @@ export default function StudyWrap({ isOpen, onClose, daysLeft, bookSpaceId }) {
               className="text-lg font-bold text-white tracking-wide"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
-              {isOffline ? "You're Currently Offline" : "Unable to Generate Study Wrap"}
+              {isMissingSpace ? "No Book Space Linked" : (isOffline ? "You're Currently Offline" : "Unable to Generate Study Wrap")}
             </h3>
             <p
               className="text-xs text-white/60 leading-relaxed font-medium"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              {isOffline
-                ? "Study Wrap compiles your latest reading analytics and AI achievements, which requires an active internet connection."
-                : "We couldn't compile your Study Wrap analytics and AI achievements. Please check your connection and try again."}
+              {isMissingSpace
+                ? "This exam does not have a Book Space connected to it. Connect your study materials to compile your reading analytics and quiz performance."
+                : (isOffline
+                  ? "Study Wrap compiles your latest reading analytics and AI achievements, which requires an active internet connection."
+                  : "We couldn't compile your Study Wrap analytics and AI achievements. Please check your connection and try again.")}
             </p>
           </div>
 
           <div className="flex flex-col w-full max-w-[260px] gap-2.5 mt-2">
-            <Button
-              variant="primary"
-              fullWidth
-              onClick={() => {
-                setWrapError(false);
-                setIsLoading(true);
-                fetchWrapData(bookSpaceId);
-              }}
-              className="!py-2.5 !text-xs !font-bold"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              <ArrowClockwise size={16} weight="bold" />
-              <span>Try Again</span>
-            </Button>
+            {!isMissingSpace && (
+              <Button
+                variant="primary"
+                fullWidth
+                onClick={() => {
+                  setWrapError(false);
+                  setIsLoading(true);
+                  fetchWrapData(bookSpaceId);
+                }}
+                className="!py-2.5 !text-xs !font-bold"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                <ArrowClockwise size={16} weight="bold" />
+                <span>Try Again</span>
+              </Button>
+            )}
 
             <Button
-              variant="ghost"
+              variant={isMissingSpace ? "primary" : "ghost"}
               fullWidth
               onClick={handleFinalClose}
-              className="!py-2.5 !text-xs !font-bold !text-white/80 hover:!text-white !border-white/20 hover:!bg-white/10"
+              className={`!py-2.5 !text-xs !font-bold ${!isMissingSpace ? "!text-white/80 hover:!text-white !border-white/20 hover:!bg-white/10" : ""}`}
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               Close
