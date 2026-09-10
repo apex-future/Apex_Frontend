@@ -10,6 +10,11 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { showToastGlobal } from '../hooks/useToast';
 import { createPortal } from 'react-dom';
+import Modal from '../components/ui/Modal';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Label from '../components/ui/Label';
+import EmptyState from '../components/ui/EmptyState';
 
 const ExamPage = () => {
     const { exams, examDate, examName, addExam, updateExam, deleteExam, togglePauseExam } = useStudyStore();
@@ -95,10 +100,28 @@ const ExamPage = () => {
     const renderSection = (title, exams, type) => {
         if (filterStatus !== 'all' && filterStatus !== type) return null;
 
-        const emptyMessages = {
-            ongoing: "No active exams found. Ready to set a new goal?",
-            paused: "No paused exam timers. Keep up the momentum!",
-            completed: "No completed exams yet. Your milestones will appear here."
+        const emptyConfig = {
+            ongoing: {
+                title: "No ongoing exams",
+                description: "No active exams found. Ready to set a new goal?",
+                icon: Clock,
+            },
+            paused: {
+                title: "No paused exams",
+                description: "No paused exam timers. Keep up the momentum!",
+                icon: Pause,
+            },
+            completed: {
+                title: "No completed exams",
+                description: "No completed exams yet. Your milestones will appear here.",
+                icon: CheckCircle,
+            }
+        };
+
+        const config = emptyConfig[type] || {
+            title: `No ${type} exams`,
+            description: "No exams found in this category.",
+            icon: Alarm,
         };
 
         return (
@@ -134,9 +157,12 @@ const ExamPage = () => {
                         </AnimatePresence>
                     </div>
                 ) : (
-                    <div className="py-12 flex flex-col items-center justify-center text-center bg-bg-elevated/30 rounded-[2.5rem] border-2 border-dashed border-border-default/50">
-                        <p className="text-xs font-bold text-text-tertiary">{emptyMessages[type]}</p>
-                    </div>
+                    <EmptyState
+                        icon={config.icon}
+                        title={config.title}
+                        description={config.description}
+                        className="py-10"
+                    />
                 )}
             </div>
         );
@@ -175,65 +201,98 @@ const ExamPage = () => {
             <main className="max-w-7xl mx-auto px-4 md:px-8 mt-10">
                 {/* Responsive Controls Bar */}
                 <div className="flex flex-col gap-6 mb-12">
-                    {/* MagnifyingGlass Bar */}
+                    {/* Search Bar - Consistent with Dictionary page */}
                     <div className="relative group">
-                        <MagnifyingGlass className="absolute left-5 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-accent-primary transition-colors" size={20} weight="regular" />
+                        <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary group-focus-within:text-accent-primary transition-colors flex items-center">
+                            <MagnifyingGlass size={20} weight="regular" />
+                        </div>
                         <input 
                             type="text"
                             placeholder="Search your exams..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-14 pr-6 py-4 bg-bg-elevated border-2 border-border-default rounded-3xl outline-none focus:border-accent-primary/40 text-sm font-bold text-text-primary transition-all shadow-sm"
+                            className="w-full h-14 pl-14 pr-12 bg-surface-sunken border border-border-default rounded-2xl text-base font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/5 transition-all shadow-sm placeholder:text-sm placeholder:text-text-placeholder group-hover:border-accent-primary/30"
                         />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-text-tertiary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                                title="Clear search"
+                            >
+                                <X size={16} weight="bold" />
+                            </button>
+                        )}
                     </div>
                     
-                    {/* Funnel & Sort Bar */}
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex flex-wrap bg-bg-elevated p-1 rounded-[1.5rem] border-2 border-border-default shadow-sm min-w-max">
-                            {['all', 'ongoing', 'paused', 'completed'].map((status) => (
-                                <button
-                                    key={status}
-                                    onClick={() => setFilterStatus(status)}
-                                    className={`px-5 py-2.5 rounded-2xl text-xs font-black capitalize transition-all ${filterStatus === status ? 'bg-accent-primary text-white shadow-lg shadow-accent-primary/20' : 'text-text-tertiary hover:bg-bg-subtle'}`}
-                                >
-                                    {status}
-                                </button>
-                            ))}
+                    {/* Filter & Sort Bar - Styled similar to NotificationDrawer */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center p-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] min-w-max">
+                            {['all', 'ongoing', 'paused', 'completed'].map((status) => {
+                                const isActive = filterStatus === status;
+                                return (
+                                    <button
+                                        key={status}
+                                        onClick={() => setFilterStatus(status)}
+                                        className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all ${
+                                            isActive 
+                                                ? 'bg-purple-600 text-white shadow-xs shadow-purple-500/25' 
+                                                : 'text-text-tertiary hover:text-text-secondary'
+                                        }`}
+                                    >
+                                        {status}
+                                    </button>
+                                );
+                            })}
                         </div>
 
-                        <div className="flex flex-wrap bg-bg-elevated p-1 rounded-[1.5rem] border-2 border-border-default shadow-sm min-w-max">
+                        <div className="flex items-center p-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] min-w-max">
                             {[
                                 { id: 'urgency', label: 'Urgency', icon: WarningCircle },
-                                { id: 'newest', label: 'Newest Set', icon: Plus },
-                                { id: 'oldest', label: 'Oldest Set', icon: Clock },
+                                { id: 'newest', label: 'Newest', icon: Plus },
+                                { id: 'oldest', label: 'Oldest', icon: Clock },
                                 { id: 'name', label: 'A-Z', icon: MagnifyingGlass }
-                            ].map((sort) => (
-                                <button
-                                    key={sort.id}
-                                    onClick={() => setSortBy(sort.id)}
-                                    className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 ${sortBy === sort.id ? 'bg-bg-subtle text-accent-primary' : 'text-text-tertiary hover:bg-bg-subtle'}`}
-                                >
-                                    {sort.label}
-                                </button>
-                            ))}
+                            ].map((sort) => {
+                                const Icon = sort.icon;
+                                const isActive = sortBy === sort.id;
+                                return (
+                                    <button
+                                        key={sort.id}
+                                        onClick={() => setSortBy(sort.id)}
+                                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                                            isActive 
+                                                ? 'bg-purple-600 text-white shadow-xs shadow-purple-500/25' 
+                                                : 'text-text-tertiary hover:text-text-secondary'
+                                        }`}
+                                    >
+                                        <Icon size={14} weight={isActive ? "bold" : "regular"} />
+                                        <span>{sort.label}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
 
                 {/* Sectioned Content */}
                 <div className="space-y-12">
-                    {renderSection('Ongoing', sections.ongoing, 'ongoing')}
-                    {renderSection('Paused', sections.paused, 'paused')}
-                    {renderSection('Completed', sections.completed, 'completed')}
-
-                    {allExams.length === 0 && (
-                        <div className="py-20 flex flex-col items-center justify-center text-center bg-bg-elevated/50 rounded-[3rem] border-2 border-dashed border-border-default">
-                            <div className="size-20 bg-bg-subtle rounded-full flex items-center justify-center text-text-tertiary mb-6">
-                                <Alarm size={40} weight="thin" />
-                            </div>
-                            <h3 className="text-xl font-black text-text-primary mb-2">No exams found</h3>
-                            <p className="text-sm font-bold text-text-tertiary max-w-xs">Create your first exam reminder to start tracking.</p>
-                        </div>
+                    {allExams.length === 0 ? (
+                        <EmptyState
+                            icon={Alarm}
+                            title="No exams found"
+                            description={searchQuery ? `No exams match "${searchQuery}". Try a different search term.` : "Create your first exam reminder to start tracking your deadlines."}
+                            action={!searchQuery ? {
+                                label: 'Set Exam Reminder',
+                                onClick: () => { setSelectedExam(null); setIsEditModalOpen(true); }
+                            } : undefined}
+                            className="py-16"
+                        />
+                    ) : (
+                        <>
+                            {renderSection('Ongoing', sections.ongoing, 'ongoing')}
+                            {renderSection('Paused', sections.paused, 'paused')}
+                            {renderSection('Completed', sections.completed, 'completed')}
+                        </>
                     )}
                 </div>
             </main>
@@ -243,46 +302,27 @@ const ExamPage = () => {
                     isOpen={isEditModalOpen}
                     onClose={() => setIsEditModalOpen(false)}
                     exam={selectedExam}
-                    resolvedTheme={resolvedTheme}
                 />
             )}
 
-            {isDeleteModalOpen && (
-                <div className={`fixed inset-0 z-[1100] flex items-center justify-center p-4 sm:p-6 overflow-hidden ${resolvedTheme}`}>
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="absolute inset-0 bg-black/60 backdrop-blur-md"
-                        onClick={() => setIsDeleteModalOpen(false)}
-                    />
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className="relative w-full max-w-md bg-bg-elevated/95 backdrop-blur-2xl rounded-[2.5rem] border-2 border-border-default shadow-2xl p-8 flex flex-col items-center text-center"
-                    >
-                        <div className="size-16 bg-red-500/10 rounded-[2rem] flex items-center justify-center text-red-500 mb-6">
-                            <Trash size={32} weight="regular" />
-                        </div>
-                        <h2 className="text-2xl font-black text-text-primary tracking-tight mb-2">Delete Reminder?</h2>
-                        <p className="text-sm font-bold text-text-tertiary mb-8">This will permanently remove <span className="text-text-primary">"{examToDelete?.name}"</span> and unlink its study shelves.</p>
-                        
-                        <div className="flex flex-col w-full gap-3">
-                            <button 
-                                onClick={confirmDelete}
-                                className="w-full py-4 font-black text-white bg-red-500 rounded-3xl shadow-xl shadow-red-500/20 hover:brightness-110 active:scale-95 transition-all"
-                            >
-                                Yes, Delete
-                            </button>
-                            <button 
-                                onClick={() => setIsDeleteModalOpen(false)}
-                                className="w-full py-4 font-black text-text-secondary bg-bg-elevated hover:bg-bg-subtle transition-all active:scale-95 border-2 border-border-default rounded-3xl"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
+            <Modal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                title="Delete Reminder?"
+                message={`This will permanently remove "${examToDelete?.name || 'this exam'}" and unlink its study shelves.`}
+                actions={[
+                    {
+                        label: 'Yes, Delete',
+                        variant: 'danger',
+                        onClick: confirmDelete,
+                    },
+                    {
+                        label: 'Cancel',
+                        variant: 'ghost',
+                        onClick: () => setIsDeleteModalOpen(false),
+                    }
+                ]}
+            />
         </div>
     );
 };
@@ -361,79 +401,83 @@ const ExamCard = ({ exam, linkedSpaces, onEdit, onDelete, onTogglePause }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={`group bg-bg-subtle/80 dark:bg-bg-elevated/80 backdrop-blur-md border-t border-black/10 dark:border-white/10 rounded-[2.5rem] p-6 sm:p-8 flex flex-col transition-all shadow-sm hover:shadow-md relative overflow-hidden h-full ${isPaused ? 'opacity-80' : ''}`}
+            className="h-full"
         >
-            {/* Ambient Background Glow */}
-            <div className={`absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-16 blur-3xl opacity-30 transition-all duration-700 pointer-events-none bg-gradient-to-br ${moodAmbientBg}`} />
+            <Card
+                className={`group relative overflow-hidden h-full flex flex-col p-6 sm:p-7 transition-all ${isPaused ? 'opacity-80' : ''}`}
+            >
+                {/* Ambient Background Glow */}
+                <div className={`absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-16 blur-3xl opacity-30 transition-all duration-700 pointer-events-none bg-gradient-to-br ${moodAmbientBg}`} />
 
-            <div className="flex flex-col w-full h-full relative z-10 justify-between">
-                {/* Top Row: Status and Actions */}
-                <div className="flex justify-between items-center w-full mb-8">
-                    <div className={`px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] border flex items-center gap-1.5 transition-all duration-500 whitespace-nowrap ${moodBgColor} ${moodTextColor} ${moodBorderColor} ${moodGlow}`}>
-                        <div className={`size-1.5 rounded-full ${moodColor} ${!isPaused && daysLeft >= 0 ? 'animate-pulse' : ''}`} />
-                        {moodLabel}
-                    </div>
-                    
-                    <div className="flex gap-1 backdrop-blur-xl bg-white/50 dark:bg-black/20 rounded-xl p-0.5 shadow-sm transition-all">
-                        <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="p-1.5 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-lg transition-all" title="Edit"><PencilSimple size={14} weight="regular"/></button>
-                        <button onClick={(e) => { e.stopPropagation(); onTogglePause(); }} className="p-1.5 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-lg transition-all" title={isPaused ? "Resume" : "Pause"}>{isPaused ? <Play size={14} weight="fill" /> : <Pause size={14} weight="fill" />}</button>
-                        <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1.5 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-lg transition-all" title="Delete"><Trash size={14} weight="regular"/></button>
-                    </div>
-                </div>
-
-                {/* Middle Row: Content */}
-                <div className="flex flex-col flex-1 items-center justify-center w-full gap-2 mb-8">
-                    <div className="flex flex-col items-center justify-center">
-                        <span className={`text-7xl sm:text-8xl font-black tabular-nums tracking-tighter leading-none ${isPaused ? 'text-text-tertiary opacity-40' : 'text-text-primary'}`}>
-                            {daysLeft > 0 ? daysLeft : 0}
-                        </span>
-                        <span className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-2">Days Left</span>
-                    </div>
-                </div>
-
-                {/* Info Row: Title and Date */}
-                <div className="space-y-4 mb-6">
-                    <div>
-                        <h3 className="text-xl font-black text-text-primary tracking-tight leading-tight group-hover:text-accent-primary transition-colors line-clamp-1">{exam.name || 'Untitled Exam'}</h3>
-                        <p className="flex items-center gap-1.5 text-[10px] font-bold text-text-tertiary mt-1">
-                            <CalendarBlank size={12} weight="regular" className="text-accent-primary" />
-                            {new Date(exam.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
-                        </p>
-                    </div>
-
-                    {/* Bottom Row: Linked Shelves */}
-                    <div className="space-y-2.5">
-                        <div className="flex items-center justify-between px-1">
-                            <div className="flex items-center gap-2 text-[9px] font-black text-text-tertiary uppercase tracking-widest opacity-60">
-                                <Link size={10} weight="regular" />
-                                Connected Shelves
-                            </div>
-                            {linkedSpaces.length > 0 && (
-                                <span className="text-[9px] font-black text-accent-primary bg-accent-primary/10 px-2 py-0.5 rounded-full">
-                                    {linkedSpaces.length}
-                                </span>
-                            )}
+                <div className="flex flex-col w-full h-full relative z-10 justify-between">
+                    {/* Top Row: Status and Actions */}
+                    <div className="flex justify-between items-center w-full mb-6">
+                        <div className={`px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] border flex items-center gap-1.5 transition-all duration-500 whitespace-nowrap ${moodBgColor} ${moodTextColor} ${moodBorderColor} ${moodGlow}`}>
+                            <div className={`size-1.5 rounded-full ${moodColor} ${!isPaused && daysLeft >= 0 ? 'animate-pulse' : ''}`} />
+                            {moodLabel}
                         </div>
                         
-                        <div className="flex flex-wrap gap-1.5">
-                            {linkedSpaces.length > 0 ? (
-                                linkedSpaces.map(space => (
-                                    <span key={space.id} className="px-2.5 py-1.5 bg-bg-subtle/50 text-[10px] font-bold text-text-secondary rounded-xl border border-border-default/50 backdrop-blur-sm truncate max-w-[140px]">
-                                        {space.name}
-                                    </span>
-                                ))
-                            ) : (
-                                <p className="text-[10px] font-bold text-text-tertiary px-1">No shelves linked.</p>
-                            )}
+                        <div className="flex gap-1 backdrop-blur-xl bg-white/50 dark:bg-black/20 rounded-xl p-0.5 shadow-sm transition-all">
+                            <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="p-1.5 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-lg transition-all" title="Edit"><PencilSimple size={14} weight="regular"/></button>
+                            <button onClick={(e) => { e.stopPropagation(); onTogglePause(); }} className="p-1.5 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary rounded-lg transition-all" title={isPaused ? "Resume" : "Pause"}>{isPaused ? <Play size={14} weight="fill" /> : <Pause size={14} weight="fill" />}</button>
+                            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1.5 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-lg transition-all" title="Delete"><Trash size={14} weight="regular"/></button>
+                        </div>
+                    </div>
+
+                    {/* Middle Row: Content */}
+                    <div className="flex flex-col flex-1 items-center justify-center w-full gap-2 mb-6">
+                        <div className="flex flex-col items-center justify-center">
+                            <span className={`text-6xl sm:text-7xl font-black tabular-nums tracking-tighter leading-none ${isPaused ? 'text-text-tertiary opacity-40' : 'text-text-primary'}`}>
+                                {daysLeft > 0 ? daysLeft : 0}
+                            </span>
+                            <span className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-2">Days Left</span>
+                        </div>
+                    </div>
+
+                    {/* Info Row: Title and Date */}
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="text-lg font-black text-text-primary tracking-tight leading-tight group-hover:text-accent-primary transition-colors line-clamp-1">{exam.name || 'Untitled Exam'}</h3>
+                            <p className="flex items-center gap-1.5 text-[11px] font-bold text-text-tertiary mt-1">
+                                <CalendarBlank size={13} weight="regular" className="text-accent-primary" />
+                                {new Date(exam.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                            </p>
+                        </div>
+
+                        {/* Bottom Row: Linked Shelves */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between px-0.5">
+                                <div className="flex items-center gap-1.5 text-[9px] font-black text-text-tertiary uppercase tracking-widest opacity-70">
+                                    <Link size={10} weight="bold" />
+                                    Connected Shelves
+                                </div>
+                                {linkedSpaces.length > 0 && (
+                                    <Label variant="primary" size="sm" className="!py-0.5 !px-2 !text-[9px]">
+                                        {linkedSpaces.length}
+                                    </Label>
+                                )}
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-1.5">
+                                {linkedSpaces.length > 0 ? (
+                                    linkedSpaces.map(space => (
+                                        <span key={space.id} className="px-2.5 py-1 bg-surface-sunken text-[10px] font-semibold text-text-secondary rounded-lg border border-border-default/50 truncate max-w-[140px]">
+                                            {space.name}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <p className="text-[10px] font-bold text-text-tertiary px-0.5">No shelves linked.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </Card>
         </motion.div>
     );
 };
 
-const ExamEditModal = ({ isOpen, onClose, exam, resolvedTheme }) => {
+const ExamEditModal = ({ isOpen, onClose, exam }) => {
     const { updateExam, addExam } = useStudyStore();
     const { spaces, updateSpace } = useSpaceStore();
     
@@ -484,104 +528,126 @@ const ExamEditModal = ({ isOpen, onClose, exam, resolvedTheme }) => {
         );
     };
 
-    return createPortal(
-        <div className={`fixed inset-0 z-[1000] flex items-center justify-center p-0 sm:p-6 overflow-hidden ${resolvedTheme}`}>
-            <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                onClick={onClose}
-                className="absolute inset-0 bg-black/60 backdrop-blur-md"
-            />
-            
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="relative w-full h-full sm:h-auto sm:max-w-2xl sm:max-h-[90vh] bg-bg-elevated/95 sm:bg-bg-elevated/90 backdrop-blur-2xl sm:rounded-[2.5rem] border-0 sm:border-2 border-border-default shadow-2xl flex flex-col overflow-hidden"
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between px-8 py-6">
-                    <h2 className="text-xl font-black text-text-primary tracking-tight">{exam ? 'PencilSimple Exam' : 'New Exam'}</h2>
-                    <button onClick={onClose} className="p-2.5 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all">
-                        <X size={20} weight="bold" className="rotate-45" />
-                    </button>
-                </div>
-
-                {/* Explanation */}
-                <div className="px-8 pb-2">
-                    <p className="text-xs font-bold text-text-tertiary">Configure your countdown and study links to stay on track.</p>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-12 custom-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1">Exam Title</label>
-                            <div className="flex bg-bg-elevated border-2 border-border-default rounded-2xl px-5 py-4 items-center gap-4 focus-within:border-accent-primary/40 transition-all group shadow-sm">
-                                <PencilSimple size={20} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary" />
-                                <input 
-                                    type="text" 
-                                    value={tempName} 
-                                    onChange={e=>setTempName(e.target.value)} 
-                                    placeholder="e.g. Finals 2026" 
-                                    className="w-full bg-transparent outline-none text-sm font-bold text-text-primary" 
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1">Deadline Date</label>
-                            <div className="flex bg-bg-elevated border-2 border-border-default rounded-2xl px-5 py-4 items-center gap-4 focus-within:border-accent-primary/40 transition-all group shadow-sm">
-                                <CalendarBlank size={20} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary" />
-                                <input 
-                                    type="date" 
-                                    value={tempDate} 
-                                    onChange={e=>setTempDate(e.target.value)} 
-                                    className="w-full bg-transparent outline-none text-sm font-bold text-text-primary" 
-                                />
-                            </div>
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            showCloseButton={true}
+            maxWidth="max-w-lg"
+            title={exam ? "Edit Exam" : "Set Exam Reminder"}
+            message="Configure your countdown and study links to stay on track."
+            actions={[
+                {
+                    label: exam ? "Save Changes" : "Confirm Exam Date",
+                    variant: "primary",
+                    disabled: !tempDate,
+                    onClick: handleSave,
+                },
+                {
+                    label: "Discard Changes",
+                    variant: "ghost",
+                    onClick: onClose,
+                }
+            ]}
+        >
+            <div className="space-y-6 pt-1">
+                {/* Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider ml-0.5">
+                            Exam Title
+                        </label>
+                        <div className="flex bg-bg-subtle dark:bg-bg-dark-elevated border border-border-default rounded-xl px-3.5 py-2.5 items-center gap-2.5 focus-within:border-accent-primary focus-within:ring-1 focus-within:ring-accent-primary/20 transition-all group">
+                            <PencilSimple size={18} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary shrink-0" />
+                            <input 
+                                type="text" 
+                                value={tempName} 
+                                onChange={e => setTempName(e.target.value)} 
+                                placeholder="e.g. Finals 2026" 
+                                className="w-full bg-transparent outline-none text-sm font-semibold text-text-primary placeholder:text-text-tertiary/40" 
+                            />
                         </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest px-1">Link Study Shelves</label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider ml-0.5">
+                            Deadline Date
+                        </label>
+                        <div className="flex bg-bg-subtle dark:bg-bg-dark-elevated border border-border-default rounded-xl px-3.5 py-2.5 items-center gap-2.5 focus-within:border-accent-primary focus-within:ring-1 focus-within:ring-accent-primary/20 transition-all group">
+                            <CalendarBlank size={18} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary shrink-0" />
+                            <input 
+                                type="date" 
+                                value={tempDate} 
+                                onChange={e => setTempDate(e.target.value)} 
+                                className="w-full bg-transparent outline-none text-sm font-semibold text-text-primary" 
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Link Study Shelves */}
+                <div className="space-y-2.5">
+                    <div className="flex items-center justify-between px-0.5">
+                        <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
+                            Link Study Shelves
+                        </label>
+                        <Label variant="primary" size="sm">
+                            {selectedSpaceIds.length} Selected
+                        </Label>
+                    </div>
+
+                    {customSpaces.length === 0 ? (
+                        <EmptyState
+                            icon={SquaresFour}
+                            title="No custom study shelves"
+                            description="Create shelves to organize books and link them to this exam."
+                            className="py-6"
+                        />
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-48 overflow-y-auto custom-scrollbar p-0.5">
                             {customSpaces.map(sp => {
                                 const isSelected = selectedSpaceIds.includes(sp.id);
                                 return (
-                                    <div 
+                                    <Card 
                                         key={sp.id}
+                                        variant="interactive"
                                         onClick={() => toggleSpace(sp.id)}
-                                        className={`p-4 rounded-3xl border-2 transition-all cursor-pointer flex items-center gap-4 group/item ${isSelected ? 'border-accent-primary bg-accent-primary/10 shadow-lg shadow-accent-primary/10' : 'border-border-default bg-bg-elevated hover:border-accent-primary/30'}`}
+                                        className={`p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
+                                            isSelected 
+                                                ? 'border-accent-primary bg-accent-primary/10 shadow-sm shadow-accent-primary/10' 
+                                                : 'border-border-default hover:border-accent-primary/30'
+                                        }`}
                                     >
-                                        <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${isSelected ? 'bg-accent-primary/20 text-accent-primary scale-110' : 'bg-bg-subtle text-text-tertiary group-hover/item:text-accent-primary'}`}>
-                                            <SquaresFour size={20} weight="regular" />
+                                        <div className={`size-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
+                                            isSelected 
+                                                ? 'bg-accent-primary/20 text-accent-primary scale-105' 
+                                                : 'bg-bg-subtle text-text-tertiary'
+                                        }`}>
+                                            <SquaresFour size={16} weight="regular" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-sm font-black truncate ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>{sp.name}</p>
-                                            <p className="text-[10px] font-bold text-text-tertiary">{sp.bookIds?.length || 0} Books</p>
+                                            <p className={`text-xs font-bold truncate ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>
+                                                {sp.name}
+                                            </p>
+                                            <p className="text-[10px] font-medium text-text-tertiary truncate">
+                                                {sp.bookIds?.length || 0} {sp.bookIds?.length === 1 ? 'Book' : 'Books'}
+                                            </p>
                                         </div>
-                                        <div className={`size-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-accent-primary bg-accent-primary' : 'border-border-default'}`}>
-                                            {isSelected && <Plus size={14} weight="bold" className="text-white rotate-45" />}
+                                        <div className={`size-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
+                                            isSelected 
+                                                ? 'border-accent-primary bg-accent-primary text-white' 
+                                                : 'border-border-default'
+                                        }`}>
+                                            {isSelected && <Plus size={12} weight="bold" className="rotate-45" />}
                                         </div>
-                                    </div>
+                                    </Card>
                                 );
                             })}
                         </div>
-                    </div>
-
-                    {/* Actions in Flow */}
-                    <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                        <button 
-                            onClick={handleSave} 
-                            disabled={!tempDate} 
-                            className="w-full sm:flex-[1.5] py-4 font-black text-white bg-accent-primary rounded-3xl disabled:opacity-30 shadow-xl shadow-accent-primary/20 hover:brightness-110 active:scale-95 transition-all order-1 sm:order-2"
-                        >
-                            Save Reminder
-                        </button>
-                        <button onClick={onClose} className="w-full sm:flex-1 py-4 font-black text-text-secondary bg-bg-elevated hover:bg-bg-subtle transition-all active:scale-95 border-2 border-border-default rounded-3xl order-2 sm:order-1">Discard</button>
-                    </div>
+                    )}
                 </div>
-            </motion.div>
-        </div>,
-        document.body
+            </div>
+        </Modal>
     );
 };
 

@@ -9,6 +9,9 @@ import { showToastGlobal } from '../../hooks/useToast';
 import examBgPattern from '../../../assets/exam-bg-pattern.png';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
+import Modal from '../ui/Modal';
+import Label from '../ui/Label';
+import EmptyState from '../ui/EmptyState';
 import StudyWrap from '../study-wrap/StudyWrap';
 const CardContainer = ({ children, onClick, className = '', title = '', activeExam, isEditing, examsList, currentIndex, onAdd }) => (
     <div className="w-full h-full relative group/container flex flex-col">
@@ -300,163 +303,149 @@ const ExamReminder = () => {
     };
 
     const renderModal = () => {
-        if (!isEditing) return null;
-
-        return createPortal(
-            <div className={`fixed inset-0 z-[1000] flex items-center justify-center p-0 sm:p-6 overflow-hidden ${resolvedTheme}`}>
-                {/* Backdrop */}
-                <div 
-                    className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
-                    onClick={() => setIsEditing(false)}
-                />
-                
-                {/* Modal Container */}
-                <div className="relative w-full h-full sm:h-auto sm:max-w-2xl sm:max-h-[90vh] bg-bg-elevated/95 sm:bg-bg-elevated/90 backdrop-blur-2xl sm:rounded-[2.5rem] border-0 sm:border-2 border-border-default shadow-2xl flex flex-col overflow-hidden animate-in sm:zoom-in-95 fade-in duration-300">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-8 py-6">
-                        <h2 className="text-xl font-black text-text-primary tracking-tight">Exam Settings</h2>
-                        <button 
-                            onClick={() => setIsEditing(false)}
-                            className="p-2.5 hover:bg-red-500/10 hover:text-red-500 text-text-tertiary rounded-xl transition-all"
-                        >
-                            <X size={20} weight="bold" />
-                        </button>
-                    </div>
-
-                    {/* Explanation */}
-                    <div className="px-8 pb-2">
-                        <p className="text-xs font-bold text-text-tertiary">Configure your countdown and study links to stay on track.</p>
-                    </div>
-
-                    {/* Scrollable Content */}
-                    <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-12 custom-scrollbar">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1">Exam Title</label>
-                                <div className="flex bg-bg-elevated border-2 border-border-default rounded-2xl px-5 py-4 items-center gap-4 focus-within:border-accent-primary/40 transition-all group shadow-sm">
-                                    <TextT size={20} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary" />
-                                    <input 
-                                        type="text" 
-                                        value={tempName} 
-                                        onChange={e=>setTempName(e.target.value)} 
-                                        placeholder="e.g. Finals 2026" 
-                                        className="w-full bg-transparent outline-none text-sm font-bold text-text-primary" 
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1">Deadline Date</label>
-                                <div className="flex bg-bg-elevated border-2 border-border-default rounded-2xl px-5 py-4 items-center gap-4 focus-within:border-accent-primary/40 transition-all group shadow-sm">
-                                    <CalendarBlank size={20} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary" />
-                                    <input 
-                                        type="date" 
-                                        value={tempDate} 
-                                        onChange={e=>setTempDate(e.target.value)} 
-                                        className="w-full bg-transparent outline-none text-sm font-bold text-text-primary" 
-                                    />
-                                </div>
+        return (
+            <Modal
+                isOpen={isEditing}
+                onClose={() => setIsEditing(false)}
+                showCloseButton={true}
+                maxWidth="max-w-lg"
+                title={activeExam ? "Exam Settings" : "Set Exam Reminder"}
+                message="Configure your countdown and study links to stay on track."
+                actions={[
+                    {
+                        label: activeExam ? "Save Changes" : "Confirm Exam Date",
+                        variant: "primary",
+                        disabled: !tempDate,
+                        onClick: handleSave,
+                    },
+                    {
+                        label: "Discard Changes",
+                        variant: "ghost",
+                        onClick: () => setIsEditing(false),
+                    }
+                ]}
+            >
+                <div className="space-y-6 pt-1">
+                    {/* Inputs */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider ml-0.5">
+                                Exam Title
+                            </label>
+                            <div className="flex bg-bg-subtle dark:bg-bg-dark-elevated border border-border-default rounded-xl px-3.5 py-2.5 items-center gap-2.5 focus-within:border-accent-primary focus-within:ring-1 focus-within:ring-accent-primary/20 transition-all group">
+                                <TextT size={18} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary shrink-0" />
+                                <input 
+                                    type="text" 
+                                    value={tempName} 
+                                    onChange={e => setTempName(e.target.value)} 
+                                    placeholder="e.g. Finals 2026" 
+                                    className="w-full bg-transparent outline-none text-sm font-semibold text-text-primary placeholder:text-text-tertiary/40" 
+                                />
                             </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between px-1">
-                                <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">Link Study Spaces</label>
-                                <span className="text-[10px] font-black text-accent-primary bg-accent-primary/10 px-2 py-0.5 rounded-full">
-                                    {selectedSpaceIds.length} Selected
-                                </span>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider ml-0.5">
+                                Deadline Date
+                            </label>
+                            <div className="flex bg-bg-subtle dark:bg-bg-dark-elevated border border-border-default rounded-xl px-3.5 py-2.5 items-center gap-2.5 focus-within:border-accent-primary focus-within:ring-1 focus-within:ring-accent-primary/20 transition-all group">
+                                <CalendarBlank size={18} weight="bold" className="text-text-tertiary group-focus-within:text-accent-primary shrink-0" />
+                                <input 
+                                    type="date" 
+                                    value={tempDate} 
+                                    onChange={e => setTempDate(e.target.value)} 
+                                    className="w-full bg-transparent outline-none text-sm font-semibold text-text-primary" 
+                                />
                             </div>
-                            
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {customSpaces.length === 0 ? (
-                                    <div className="col-span-full py-8 text-center bg-bg-subtle/50 rounded-3xl border-2 border-dashed border-border-default">
-                                        <p className="text-sm font-bold text-text-tertiary">No custom book spaces found.</p>
-                                    </div>
-                                ) : (
-                                    customSpaces.map(sp => {
-                                        const isSelected = selectedSpaceIds.includes(sp.id);
-                                        return (
-                                            <div 
-                                                key={sp.id}
-                                                onClick={() => toggleSpace(sp.id)}
-                                                className={`p-4 rounded-3xl border-2 transition-all cursor-pointer flex items-center gap-4 group/item ${isSelected ? 'border-accent-primary bg-accent-primary/10 shadow-lg shadow-accent-primary/10' : 'border-border-default bg-bg-elevated hover:border-accent-primary/30'}`}
-                                            >
-                                                <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${isSelected ? 'bg-accent-primary/20 text-accent-primary scale-110' : 'bg-bg-subtle text-text-tertiary group-hover/item:text-accent-primary'}`}>
-                                                    <BookOpen size={20} weight="regular" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className={`text-sm font-black truncate ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>{sp.name}</p>
-                                                    <p className="text-[10px] font-bold text-text-tertiary truncate">
-                                                        {sp.bookIds?.length || 0} {sp.bookIds?.length === 1 ? 'Book' : 'Books'}
-                                                    </p>
-                                                </div>
-                                                <div className={`size-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-accent-primary bg-accent-primary' : 'border-border-default'}`}>
-                                                    {isSelected && <Check size={14} weight="bold" className="text-white" />}
-                                                </div>
+                        </div>
+                    </div>
+
+                    {/* Link Study Spaces */}
+                    <div className="space-y-2.5">
+                        <div className="flex items-center justify-between px-0.5">
+                            <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
+                                Link Study Spaces
+                            </label>
+                            <Label variant="primary" size="sm">
+                                {selectedSpaceIds.length} Selected
+                            </Label>
+                        </div>
+                        
+                        {customSpaces.length === 0 ? (
+                            <EmptyState
+                                icon={BookOpen}
+                                title="No custom study spaces"
+                                description="Create spaces to organize books and connect them with this exam."
+                                className="py-6"
+                            />
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-48 overflow-y-auto custom-scrollbar p-0.5">
+                                {customSpaces.map(sp => {
+                                    const isSelected = selectedSpaceIds.includes(sp.id);
+                                    return (
+                                        <Card
+                                            key={sp.id}
+                                            variant="interactive"
+                                            onClick={() => toggleSpace(sp.id)}
+                                            className={`p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
+                                                isSelected 
+                                                    ? 'border-accent-primary bg-accent-primary/10 shadow-sm shadow-accent-primary/10' 
+                                                    : 'border-border-default hover:border-accent-primary/30'
+                                            }`}
+                                        >
+                                            <div className={`size-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
+                                                isSelected 
+                                                    ? 'bg-accent-primary/20 text-accent-primary scale-105' 
+                                                    : 'bg-bg-subtle text-text-tertiary'
+                                            }`}>
+                                                <BookOpen size={16} weight="regular" />
                                             </div>
-                                        );
-                                    })
-                                )}
+                                            <div className="flex-1 min-w-0">
+                                                <p className={`text-xs font-bold truncate ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>
+                                                    {sp.name}
+                                                </p>
+                                                <p className="text-[10px] font-medium text-text-tertiary truncate">
+                                                    {sp.bookIds?.length || 0} {sp.bookIds?.length === 1 ? 'Book' : 'Books'}
+                                                </p>
+                                            </div>
+                                            <div className={`size-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
+                                                isSelected 
+                                                    ? 'border-accent-primary bg-accent-primary text-white' 
+                                                    : 'border-border-default'
+                                            }`}>
+                                                {isSelected && <Check size={12} weight="bold" />}
+                                            </div>
+                                        </Card>
+                                    );
+                                })}
                             </div>
-                        </div>
-
-                        {/* Actions in Flow */}
-                        <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                            <button 
-                                onClick={handleSave} 
-                                disabled={!tempDate} 
-                                className="w-full sm:flex-[1.5] py-4 font-black text-white bg-accent-primary rounded-3xl disabled:opacity-30 disabled:cursor-not-allowed shadow-2xl shadow-accent-primary/40 hover:brightness-110 active:scale-[0.98] transition-all order-1 sm:order-2"
-                            >
-                                Confirm Exam Date
-                            </button>
-                            <button 
-                                onClick={() => setIsEditing(false)} 
-                                className="w-full sm:flex-1 py-4 font-black text-text-secondary bg-bg-elevated hover:bg-bg-subtle transition-all active:scale-95 border-2 border-border-default rounded-3xl order-2 sm:order-1"
-                            >
-                                Discard Changes
-                            </button>
-                        </div>
+                        )}
                     </div>
                 </div>
-            </div>,
-            document.body
+            </Modal>
         );
     };
 
-
-
     const renderDeleteModal = () => {
-        if (!isDeleteModalOpen) return null;
-
-        return createPortal(
-            <div className={`fixed inset-0 z-[1100] flex items-center justify-center p-4 sm:p-6 overflow-hidden ${resolvedTheme}`}>
-                <div 
-                    className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
-                    onClick={() => setIsDeleteModalOpen(false)}
-                />
-                <div className="relative w-full max-w-md bg-bg-elevated/95 backdrop-blur-2xl rounded-[2.5rem] border-2 border-border-default shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 fade-in duration-300">
-                    <div className="size-16 bg-red-500/10 rounded-[2rem] flex items-center justify-center text-red-500 mb-6">
-                        <Trash size={32} weight="regular" />
-                    </div>
-                    <h2 className="text-2xl font-black text-text-primary tracking-tight mb-2">Delete Reminder?</h2>
-                    <p className="text-sm font-bold text-text-tertiary mb-8">This will permanently remove the reminder for <span className="text-text-primary">"{activeExam?.name}"</span> and unlink its study spaces.</p>
-                    
-                    <div className="flex flex-col w-full gap-3">
-                        <button 
-                            onClick={confirmDelete}
-                            className="w-full py-4 font-black text-white bg-red-500 rounded-3xl shadow-xl shadow-red-500/20 hover:brightness-110 active:scale-95 transition-all"
-                        >
-                            Yes, Delete
-                        </button>
-                        <button 
-                            onClick={() => setIsDeleteModalOpen(false)}
-                            className="w-full py-4 font-black text-text-secondary bg-bg-elevated hover:bg-bg-subtle transition-all active:scale-95 border-2 border-border-default rounded-3xl"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>,
-            document.body
+        return (
+            <Modal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                title="Delete Reminder?"
+                message={`This will permanently remove the reminder for "${activeExam?.name || 'this exam'}" and unlink its study spaces.`}
+                actions={[
+                    {
+                        label: 'Yes, Delete',
+                        variant: 'danger',
+                        onClick: confirmDelete,
+                    },
+                    {
+                        label: 'Cancel',
+                        variant: 'ghost',
+                        onClick: () => setIsDeleteModalOpen(false),
+                    }
+                ]}
+            />
         );
     };
 
