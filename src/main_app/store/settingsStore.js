@@ -36,7 +36,7 @@ const useSettingsStore = create(
       scrollAnimation: 'none',          // 'none' | 'slide' | 'fade'
       streakThresholdMinutes: 2,        // 2 | 5 | 10 | 15 | 20 | 30
       streakCelebrationEnabled: true,   // Toggle streak celebration modal on/off
-      streakCelebrationStyle: 'subtle', // 'subtle' (default less distracting) | 'full' (distracting)
+      streakCelebrationStyle: 'full',   // 'full' (default) | 'subtle'
 
       // ── Setters ──
 
@@ -150,7 +150,7 @@ const useSettingsStore = create(
           reminderTime: data.reminder_time ? data.reminder_time.slice(0, 5) : '17:00',
           streakThresholdMinutes: data.streak_threshold_minutes ?? 2,
           streakCelebrationEnabled: data.streak_celebration_enabled ?? true,
-          streakCelebrationStyle: data.streak_celebration_style || 'subtle',
+          streakCelebrationStyle: data.streak_celebration_style || 'full',
           settingsLastSyncedAt: cloudUpdatedAt,
         });
       },
