@@ -73,9 +73,24 @@ export default function AllBooks({ books = [], onBookClick, isSearching, searchQ
     // Sort logic
     result.sort((a, b) => {
       if (activeSort === 'recent') {
-        const dateA = a.lastAccessed ? new Date(a.lastAccessed) : new Date(0);
-        const dateB = b.lastAccessed ? new Date(b.lastAccessed) : new Date(0);
-        return dateB - dateA; // Newest first
+        const getBookRecentTime = (book) => {
+          if (!book) return 0;
+          const times = [
+            book.lastAccessed,
+            book.lastReadAt,
+            book.last_read_at,
+            book.uploadedAt,
+            book.uploaded_at
+          ]
+            .filter(Boolean)
+            .map(d => new Date(d).getTime())
+            .filter(t => !isNaN(t) && t > 0);
+          return times.length > 0 ? Math.max(...times) : 0;
+        };
+        const dateA = getBookRecentTime(a);
+        const dateB = getBookRecentTime(b);
+        if (dateB !== dateA) return dateB - dateA; // Newest first
+        return (b.id || 0) - (a.id || 0);
       }
       if (activeSort === 'title-asc') {
         return (a.title || '').localeCompare(b.title || '');

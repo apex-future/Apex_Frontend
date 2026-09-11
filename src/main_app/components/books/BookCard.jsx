@@ -269,11 +269,11 @@ export default function BookCard({ book, onClick }) {
      />
    </div>
    <p className="text-xs text-text-tertiary mt-1.5 text-left">Page {book.currentPage || 0} of {book.totalPages || 0}</p>
-   {book.lastAccessed && (
-     <p className="text-[10px] text-text-placeholder mt-0.5 text-left">
-       Last read: {new Date(book.lastAccessed).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-     </p>
-   )}
+    {(book.lastAccessed || book.lastReadAt) && (
+      <p className="text-[10px] text-text-placeholder mt-0.5 text-left">
+        Last read: {new Date(book.lastAccessed || book.lastReadAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+      </p>
+    )}
  </div>
  </div>
 

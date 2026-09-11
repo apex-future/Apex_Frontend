@@ -226,6 +226,28 @@ export const BookProvider = ({ children }) => {
             ? Math.min(Math.round((currentPage / totalPages) * 100), 100)
             : (progress?.progressPercentage || b.progress || 0);
 
+          // Reconcile and synchronize latest reading & access timestamp across all sources
+          const candidateTimestamps = [
+            progress?.lastReadAt,
+            progress?.last_read_at,
+            b.lastReadAt,
+            b.last_read_at,
+            b.lastAccessed,
+            b.uploadedAt,
+            b.uploaded_at,
+          ]
+            .filter(Boolean)
+            .map(t => new Date(t).getTime())
+            .filter(t => !isNaN(t) && t > 0);
+
+          const maxTimestamp = candidateTimestamps.length > 0 ? Math.max(...candidateTimestamps) : 0;
+          const effectiveDateIso = maxTimestamp > 0 ? new Date(maxTimestamp).toISOString() : (b.lastAccessed || b.lastReadAt || null);
+
+          // Self-heal local Dexie record if timestamps are missing or stale
+          if (effectiveDateIso && b.id && (b.lastAccessed !== effectiveDateIso || b.lastReadAt !== effectiveDateIso)) {
+            db.books.update(b.id, { lastAccessed: effectiveDateIso, lastReadAt: effectiveDateIso }).catch(() => {});
+          }
+
           return {
             ...b,
             isUploading: false,
@@ -233,6 +255,8 @@ export const BookProvider = ({ children }) => {
             currentPage: currentPage || 1,
             totalPages: totalPages,
             scrollPosition: progress?.scrollPosition || b.scrollPosition || 0,
+            lastAccessed: effectiveDateIso,
+            lastReadAt: effectiveDateIso,
             metadata: {
               ...(b.metadata || {}),
               highlights: mergedHighlights,
@@ -514,11 +538,12 @@ export const BookProvider = ({ children }) => {
   const updateBookProgress = useCallback(async (id, progress, currentPage, totalPages, scrollPosition = 0) => {
     setShelves((prevShelves) => {
       let updatedBook = null;
+      const now = new Date().toISOString();
       const newShelves = prevShelves.map((shelf) => ({
         ...shelf,
         books: shelf.books.map((book) => {
           if (book.id === id) {
-            updatedBook = { ...book, progress, currentPage, totalPages, scrollPosition };
+            updatedBook = { ...book, progress, currentPage, totalPages, scrollPosition, lastReadAt: now, lastAccessed: now };
             return updatedBook;
           }
           return book;
@@ -526,9 +551,8 @@ export const BookProvider = ({ children }) => {
       }));
 
       if (updatedBook) {
-        const now = new Date().toISOString();
         // Update in Dexie books table
-        db.books.update(id, { progress, currentPage, totalPages, scrollPosition, lastReadAt: now })
+        db.books.update(id, { progress, currentPage, totalPages, scrollPosition, lastReadAt: now, lastAccessed: now })
           .catch(err => console.error("Failed to update progress in Dexie:", err));
 
         // Use direct save via syncService (this is debounced inside syncService)
@@ -602,13 +626,14 @@ export const BookProvider = ({ children }) => {
     if (!id) return;
     const targetId = typeof id === 'string' ? parseInt(id) : id;
 
+    const now = new Date().toISOString();
     setShelves((prevShelves) => {
       let updatedBook = null;
       const newShelves = prevShelves.map((shelf) => ({
         ...shelf,
         books: shelf.books.map((book) => {
           if (book.id === targetId) {
-            updatedBook = { ...book, lastAccessed: new Date().toISOString() };
+            updatedBook = { ...book, lastAccessed: now, lastReadAt: now };
             return updatedBook;
           }
           return book;
@@ -616,7 +641,7 @@ export const BookProvider = ({ children }) => {
       }));
 
       if (updatedBook) {
-        db.books.update(targetId, { lastAccessed: new Date().toISOString(), lastReadAt: new Date().toISOString() })
+        db.books.update(targetId, { lastAccessed: now, lastReadAt: now })
           .catch(err => console.error("Failed to update lastAccessed in Dexie:", err));
       }
       return newShelves;

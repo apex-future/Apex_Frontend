@@ -93,9 +93,9 @@ const LastReadCard = ({ book, isLoading }) => {
                                         style={{ width: `${book.progress || 0}%` }}
                                     />
                                 </div>
-                                {book.lastAccessed && (
+                                {(book.lastAccessed || book.lastReadAt) && (
                                     <p className="text-[10px] text-text-placeholder mt-1 text-left">
-                                        Last read: {new Date(book.lastAccessed).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                        Last read: {new Date(book.lastAccessed || book.lastReadAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                     </p>
                                 )}
                             </div>

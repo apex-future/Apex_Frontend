@@ -369,10 +369,14 @@ const syncService = {
 
           await db.books.clear();
           const mappedBooks = pulledData.books.map(b => {
+            const camel = mapSnakeToCamel(b);
+            const latestTime = b.last_read_at || b.uploaded_at || new Date().toISOString();
             const mapped = {
-              ...mapSnakeToCamel(b),
+              ...camel,
               supabaseId: b.id,
               synced: true,
+              lastReadAt: b.last_read_at || b.uploaded_at || camel.lastReadAt || latestTime,
+              lastAccessed: b.last_read_at || b.uploaded_at || camel.lastAccessed || latestTime,
             };
             delete mapped.id;
             if (existingBlobMap[b.id]) mapped.fileBlob = existingBlobMap[b.id];
@@ -458,11 +462,13 @@ const syncService = {
           // Also update the local db.books records with the latest reading progress
           for (const item of mapped) {
             if (item.bookId && typeof item.bookId === 'number') {
+              const readTime = item.lastReadAt || new Date().toISOString();
               await db.books.update(item.bookId, {
                 currentPage: item.currentPage || 1,
                 progress: item.progressPercentage || 0,
                 scrollPosition: item.scrollPosition || 0,
-                lastReadAt: item.lastReadAt,
+                lastReadAt: readTime,
+                lastAccessed: readTime,
               }).catch(() => {});
             }
           }
@@ -1003,6 +1009,17 @@ const syncService = {
     } else {
       dexieData.local_id = localId;
       await db.reading_progress.add(dexieData);
+    }
+
+    // Also update Dexie db.books so local reading activity immediately reflects on the book
+    if (typeof bookId === 'number') {
+      await db.books.update(bookId, {
+        currentPage: progressData.current_page,
+        progress: computedProgress,
+        scrollPosition: progressData.scroll_position || 0,
+        lastReadAt: now,
+        lastAccessed: now,
+      }).catch(() => {});
     }
 
     // If online, resolve UUID and save to Supabase

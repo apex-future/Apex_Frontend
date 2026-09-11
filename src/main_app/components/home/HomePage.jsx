@@ -22,9 +22,24 @@ function HomePage({ setIsMobileOpen, isAsideExpanded }) {
 
   // Sort logic for "Last Read" — computed early because we also need firstBookId for the tour
   const sortedByDate = [...books].sort((a, b) => {
-    const dateA = a.lastAccessed ? new Date(a.lastAccessed) : new Date(0);
-    const dateB = b.lastAccessed ? new Date(b.lastAccessed) : new Date(0);
-    return dateB - dateA;
+    const getBookRecentTime = (book) => {
+      if (!book) return 0;
+      const times = [
+        book.lastAccessed,
+        book.lastReadAt,
+        book.last_read_at,
+        book.uploadedAt,
+        book.uploaded_at
+      ]
+        .filter(Boolean)
+        .map(d => new Date(d).getTime())
+        .filter(t => !isNaN(t) && t > 0);
+      return times.length > 0 ? Math.max(...times) : 0;
+    };
+    const dateA = getBookRecentTime(a);
+    const dateB = getBookRecentTime(b);
+    if (dateB !== dateA) return dateB - dateA;
+    return (b.id || 0) - (a.id || 0);
   });
   const lastReadBook = sortedByDate.length > 0 ? sortedByDate[0] : null;
   
