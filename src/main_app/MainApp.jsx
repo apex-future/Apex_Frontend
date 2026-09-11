@@ -161,6 +161,7 @@ function MainApp({ onLogout }) {
                 <Route path="/import" element={<ImportPage />} />
                 <Route path="/streak" element={<StreakPage />} />
                 <Route path="/exams" element={<ExamPage />} />
+                <Route path="/dashboard" element={<Navigate to="/exams" replace />} />
                 <Route path="/analytics" element={<GlobalAnalytics />} />
                 <Route path="/notes" element={<NotebooksPage />} />
                 <Route path="/notes/:bookId" element={<NotebookDetailPage />} />

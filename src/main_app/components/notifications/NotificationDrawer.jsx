@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Fire, Sparkle, Calendar, Bell, CheckCircle, Spinner, Megaphone, ArrowSquareOut } from '@phosphor-icons/react';
+import { X, Fire, Calendar, Bell, CheckCircle, Spinner, Megaphone, ArrowSquareOut } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import notificationService from '../../services/notificationService';
 import Button from '../ui/Button';
 import Label from '../ui/Label';
 
+const FILTER_TABS = [
+  { id: 'all', label: 'All' },
+  { id: 'activity', label: 'Activity' },
+  { id: 'whats_new', label: "What's New" },
+  { id: 'unread', label: 'Unread' },
+];
+
 function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState('all'); // 'all', 'unread'
+  const [filter, setFilter] = useState('all'); // 'all', 'activity', 'whats_new', 'unread'
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,19 +48,37 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
     await notificationService.markAllAsRead();
   };
 
-  const handleCtaClick = (route) => {
-    if (route) {
-      navigate(route);
+  const handleCtaClick = (route, type, label) => {
+    let target = route;
+    // Route exam notifications to /exams if route is /dashboard or exam-related
+    if (
+      target === '/dashboard' ||
+      type === 'exam' ||
+      type === 'exam_countdown' ||
+      (label && label.toLowerCase().includes('exam'))
+    ) {
+      target = '/exams';
+    }
+    if (target) {
+      navigate(target);
       onClose();
     }
   };
 
-  // Split into broadcasts and personal
-  const broadcasts = notifications.filter(n => n.source === 'broadcast');
-  const personal = notifications.filter(n => n.source !== 'broadcast');
+  // Filter notifications based on the active tab
+  const filteredNotifications = notifications.filter(n => {
+    if (filter === 'unread') return !n.read;
+    if (filter === 'activity') return n.source !== 'broadcast';
+    if (filter === 'whats_new') return n.source === 'broadcast';
+    return true; // 'all'
+  });
 
-  const filteredBroadcasts = broadcasts.filter(n => filter === 'all' || !n.read);
-  const filteredPersonal = personal.filter(n => filter === 'all' || !n.read);
+  // Sort chronologically (newest first)
+  const sortedNotifications = [...filteredNotifications].sort((a, b) => {
+    const timeA = new Date(a.created_at || a.time || 0).getTime();
+    const timeB = new Date(b.created_at || b.time || 0).getTime();
+    return timeB - timeA;
+  });
 
   const formatNotificationDate = (dateInput) => {
     if (!dateInput) return 'Today';
@@ -102,7 +127,7 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
     }
   };
 
-  const hasContent = filteredBroadcasts.length > 0 || filteredPersonal.length > 0;
+  const hasContent = sortedNotifications.length > 0;
 
   return (
     <AnimatePresence>
@@ -156,29 +181,33 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                 </div>
               </div>
 
-              {/* Tabs / Actions */}
-              <div className="flex items-center justify-between pt-1">
-                <div className="flex p-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-                  <button
-                    onClick={() => setFilter('all')}
-                    className={`px-4 py-1 rounded-full text-xs font-semibold transition-all ${filter === 'all' ? 'bg-purple-600 text-white shadow-xs shadow-purple-500/25' : 'text-text-tertiary hover:text-text-secondary'}`}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => setFilter('unread')}
-                    className={`px-4 py-1 rounded-full text-xs font-semibold transition-all ${filter === 'unread' ? 'bg-purple-600 text-white shadow-xs shadow-purple-500/25' : 'text-text-tertiary hover:text-text-secondary'}`}
-                  >
-                    Unread
-                  </button>
+              {/* Filter Tabs & Mark All Read */}
+              <div className="flex items-center justify-between gap-2 pt-1 flex-wrap sm:flex-nowrap">
+                <div className="flex p-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] overflow-x-auto no-scrollbar max-w-full">
+                  {FILTER_TABS.map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setFilter(tab.id)}
+                      className={`px-3 sm:px-3.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                        filter === tab.id
+                          ? 'bg-purple-600 text-white shadow-xs shadow-purple-500/25'
+                          : 'text-text-tertiary hover:text-text-secondary'
+                      }`}
+                    >
+                      {tab.label}
+                      {tab.id === 'unread' && unreadCount > 0 && (
+                        <span className="ml-1 text-[10px] opacity-80">({unreadCount})</span>
+                      )}
+                    </button>
+                  ))}
                 </div>
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllAsRead}
-                    className="text-xs font-semibold text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
+                    className="shrink-0 text-xs font-semibold text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
                     <CheckCircle size={14} weight="fill" />
-                    Mark all read
+                    <span>Mark all read</span>
                   </button>
                 )}
               </div>
@@ -187,11 +216,13 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
             {/* List */}
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               <div className="flex flex-col">
-                <AnimatePresence>
+                <AnimatePresence mode="wait">
                   {loading ? (
                     <motion.div
+                      key="loading"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
                       className="flex flex-col items-center justify-center h-40 text-text-tertiary p-6"
                     >
                       <Spinner size={32} className="animate-spin mb-3 text-purple-600" />
@@ -199,160 +230,103 @@ function NotificationDrawer({ isOpen, onClose, onUnreadCountChange }) {
                     </motion.div>
                   ) : !hasContent ? (
                     <motion.div
+                      key="empty"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
                       className="flex flex-col items-center justify-center h-40 text-text-tertiary p-6"
                     >
                       <Bell size={40} weight="fill" className="mb-3 opacity-20" />
-                      <p className="text-sm font-medium">No new notifications</p>
+                      <p className="text-sm font-medium">No notifications</p>
                     </motion.div>
                   ) : (
-                    <>
-                      {/* ─── What's New (Broadcasts) ─── */}
-                      {filteredBroadcasts.length > 0 && (
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2 px-6 pt-3 pb-2">
-                            <Megaphone size={14} weight="fill" className="text-purple-500" />
-                            <span className="text-xs font-bold text-purple-500 uppercase tracking-wider">What's New</span>
-                          </div>
-                          {filteredBroadcasts.map((broadcast, index) => (
-                            <React.Fragment key={`broadcast-${broadcast.id}`}>
-                              {index > 0 && (
-                                <div className="h-px bg-black/10 dark:bg-white/10 w-full" />
+                    <motion.div
+                      key={filter}
+                      initial={{ opacity: 0, y: -12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                      className="flex flex-col divide-y divide-black/10 dark:divide-white/10"
+                    >
+                      {sortedNotifications.map((notification) => {
+                        const isBroadcast = notification.source === 'broadcast';
+                        const ctaLabel = notification.metadata?.cta_label || notification.cta_label;
+                        const ctaRoute = notification.metadata?.cta_route || notification.cta_route;
+
+                        return (
+                          <div
+                            key={notification.id}
+                            className={`group relative flex gap-4 px-6 py-4 w-full transition-colors duration-200 ${
+                              notification.read
+                                ? 'bg-transparent hover:bg-black/5 dark:hover:bg-white/5'
+                                : 'bg-purple-100 dark:bg-purple-900/40 hover:bg-purple-200/60 dark:hover:bg-purple-900/60'
+                            }`}
+                          >
+                            {/* Icon */}
+                            {isBroadcast ? (
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-sm">
+                                <Megaphone size={18} weight="fill" className="text-white" />
+                              </div>
+                            ) : (
+                              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${getIconBg(notification.type)}`}>
+                                {getIcon(notification.type)}
+                              </div>
+                            )}
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 pr-2">
+                              <div className="flex items-baseline justify-between gap-2 mb-1">
+                                <h4 className={`text-[15px] sm:text-base font-bold leading-snug truncate ${notification.read ? 'text-text-secondary' : 'text-text-primary'}`}>
+                                  {notification.title}
+                                </h4>
+                                <span className="text-xs font-medium text-text-tertiary shrink-0 whitespace-nowrap">
+                                  {formatNotificationDate(notification.created_at || notification.time)}
+                                </span>
+                              </div>
+
+                              {isBroadcast && notification.version && (
+                                <div className="mb-2">
+                                  <Label color="purple" size="sm" className="!px-2.5 !py-0.5 !text-[10px] font-bold">
+                                    Version: {notification.version.replace(/^version:\s*/i, '')}
+                                  </Label>
+                                </div>
                               )}
-                              <motion.div
-                                layout
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                className={`group relative flex gap-4 px-6 py-4 w-full transition-all ${
-                                  broadcast.read
-                                    ? 'bg-transparent hover:bg-black/5 dark:hover:bg-white/5'
-                                    : 'bg-purple-100 dark:bg-purple-900/40 hover:bg-purple-200/60 dark:hover:bg-purple-900/60'
-                                }`}
-                              >
-                                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-sm">
-                                  <Megaphone size={18} weight="fill" className="text-white" />
+
+                              <p className={`text-sm leading-relaxed mb-1 ${notification.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+                                {notification.body || notification.message}
+                              </p>
+
+                              {ctaLabel && ctaRoute && (
+                                <div className="mt-3 mb-1">
+                                  <Button
+                                    variant="primary"
+                                    fullWidth={false}
+                                    onClick={() => handleCtaClick(ctaRoute, notification.type, ctaLabel)}
+                                    className="!py-1.5 !px-4 !text-xs !rounded-xl"
+                                  >
+                                    <span>{ctaLabel}</span>
+                                    <ArrowSquareOut size={14} weight="bold" />
+                                  </Button>
                                 </div>
-
-                                <div className="flex-1 min-w-0 pr-2">
-                                  <div className="flex items-baseline justify-between gap-2 mb-1">
-                                    <h4 className={`text-[15px] sm:text-base font-bold leading-snug truncate ${broadcast.read ? 'text-text-secondary' : 'text-text-primary'}`}>
-                                      {broadcast.title}
-                                    </h4>
-                                    <span className="text-xs font-medium text-text-tertiary shrink-0 whitespace-nowrap">
-                                      {formatNotificationDate(broadcast.created_at)}
-                                    </span>
-                                  </div>
-
-                                  {broadcast.version && (
-                                    <div className="mb-2">
-                                      <Label color="purple" size="sm" className="!px-2.5 !py-0.5 !text-[10px] font-bold">
-                                        Version: {broadcast.version.replace(/^version:\s*/i, '')}
-                                      </Label>
-                                    </div>
-                                  )}
-
-                                  <p className={`text-sm leading-relaxed mb-1 ${broadcast.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
-                                    {broadcast.body}
-                                  </p>
-
-                                  {broadcast.cta_label && broadcast.cta_route && (
-                                    <div className="mt-3.5 mb-1">
-                                      <Button
-                                        variant="primary"
-                                        fullWidth={false}
-                                        onClick={() => handleCtaClick(broadcast.cta_route)}
-                                        className="!py-1.5 !px-4 !text-xs !rounded-xl"
-                                      >
-                                        <span>{broadcast.cta_label}</span>
-                                        <ArrowSquareOut size={14} weight="bold" />
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              </motion.div>
-                            </React.Fragment>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* ─── Personal Notifications ─── */}
-                      {filteredPersonal.length > 0 && (
-                        <div className="flex flex-col">
-                          {filteredBroadcasts.length > 0 && (
-                            <div className="h-px bg-black/10 dark:bg-white/10 w-full" />
-                          )}
-                          <div className="flex items-center gap-2 px-6 pt-3 pb-2">
-                            <Bell size={14} weight="fill" className="text-text-tertiary" />
-                            <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider">Activity</span>
-                          </div>
-                          {filteredPersonal.map((notification, index) => (
-                            <React.Fragment key={notification.id}>
-                              {index > 0 && (
-                                <div className="h-px bg-black/10 dark:bg-white/10 w-full" />
                               )}
-                              <motion.div
-                                layout
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                className={`group relative flex gap-4 px-6 py-4 w-full transition-all ${
-                                  notification.read 
-                                    ? 'bg-transparent hover:bg-black/5 dark:hover:bg-white/5' 
-                                    : 'bg-purple-100 dark:bg-purple-900/40 hover:bg-purple-200/60 dark:hover:bg-purple-900/60'
-                                }`}
-                              >
-                                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${getIconBg(notification.type)}`}>
-                                  {getIcon(notification.type)}
-                                </div>
+                            </div>
 
-                                <div className="flex-1 min-w-0 pr-2">
-                                  <div className="flex items-baseline justify-between gap-2 mb-1">
-                                    <h4 className={`text-[15px] sm:text-base font-bold leading-snug truncate ${notification.read ? 'text-text-secondary' : 'text-text-primary'}`}>
-                                      {notification.title}
-                                    </h4>
-                                    <span className="text-xs font-medium text-text-tertiary shrink-0 whitespace-nowrap">
-                                      {formatNotificationDate(notification.created_at || notification.time)}
-                                    </span>
-                                  </div>
-                                  <p className={`text-sm leading-relaxed mb-1 ${notification.read ? 'text-text-tertiary' : 'text-text-secondary'}`}>
-                                    {notification.body || notification.message}
-                                  </p>
-
-                                  {(notification.metadata?.cta_label || notification.cta_label) && (notification.metadata?.cta_route || notification.cta_route) && (
-                                    <div className="mt-3 mb-1">
-                                      <Button
-                                        variant="primary"
-                                        fullWidth={false}
-                                        onClick={() => handleCtaClick(notification.metadata?.cta_route || notification.cta_route)}
-                                        className="!py-1.5 !px-4 !text-xs !rounded-xl"
-                                      >
-                                        <span>{notification.metadata?.cta_label || notification.cta_label}</span>
-                                        <ArrowSquareOut size={14} weight="bold" />
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Actions menu (hover) */}
-                                {!notification.read && (
-                                  <div className="absolute bottom-4 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                      onClick={() => handleMarkAsRead(notification.id)}
-                                      className="p-1.5 bg-bg-subtle hover:bg-border-default rounded-md text-text-secondary transition-colors"
-                                      title="Mark as read"
-                                    >
-                                      <CheckCircle size={16} weight="fill" />
-                                    </button>
-                                  </div>
-                                )}
-                              </motion.div>
-                            </React.Fragment>
-                          ))}
-                        </div>
-                      )}
-                    </>
+                            {/* Actions menu (hover) */}
+                            {!notification.read && (
+                              <div className="absolute bottom-4 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => handleMarkAsRead(notification.id)}
+                                  className="p-1.5 bg-bg-subtle hover:bg-border-default rounded-md text-text-secondary transition-colors"
+                                  title="Mark as read"
+                                >
+                                  <CheckCircle size={16} weight="fill" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </div>

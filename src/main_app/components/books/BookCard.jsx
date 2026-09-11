@@ -280,13 +280,15 @@ export default function BookCard({ book, onClick }) {
         <div className="flex justify-end gap-3 pt-2 mt-auto text-gray-400 items-center">
           <button
             onClick={handleFavoriteClick}
-            className={`transition-colors ${book.isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+            className={`transition-colors outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 border-none ${book.isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+            style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
           >
             <Heart size={20} weight={book.isFavorite ? 'fill' : 'regular'} />
           </button>
           <button
-            className="text-gray-400 hover:text-indigo-600 transition-colors"
+            className="text-gray-400 hover:text-indigo-600 transition-colors outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 border-none"
             onClick={handleDetailsClick}
+            style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
           >
             <Eye size={20} weight="bold" />
           </button>
@@ -296,29 +298,33 @@ export default function BookCard({ book, onClick }) {
             <div className={`flex items-center gap-2 overflow-hidden transition-all duration-300 ease-in-out ${showMenu ? 'max-w-[150px] opacity-100 mr-1' : 'max-w-0 opacity-0'}`}>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowMenu(false); handleBookmarkClick(e); }}
-                className="text-gray-400 hover:text-accent-primary transition-colors flex-shrink-0"
+                className="text-gray-400 hover:text-accent-primary transition-colors flex-shrink-0 outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 border-none"
                 title={isInAnySpace ? 'Update Space' : 'Add to Bookspace'}
+                style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
               >
                 <FolderSimplePlus size={18} weight={isInAnySpace ? 'fill' : 'regular'} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowMenu(false); handleShareClick(e); }}
-                className="text-gray-400 hover:text-accent-primary transition-colors flex-shrink-0"
+                className="text-gray-400 hover:text-accent-primary transition-colors flex-shrink-0 outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 border-none"
                 title="Share Book"
+                style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
               >
                 <ShareNetwork size={18} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowMenu(false); handleDeleteClick(e); }}
-                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 border-none"
                 title="Delete"
+                style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
               >
                 <Trash size={18} weight="bold" />
               </button>
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-              className={`text-gray-400 hover:text-text-primary transition-all duration-300 focus:outline-none ${showMenu ? 'rotate-180' : ''}`}
+              className={`text-gray-400 hover:text-text-primary transition-all duration-300 outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none border-none select-none ${showMenu ? 'rotate-180' : ''}`}
+              style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
             >
               <CaretDoubleLeft size={18} weight="bold" />
             </button>
