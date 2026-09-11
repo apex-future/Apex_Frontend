@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Fire, CaretLeft, CaretRight, Trophy, Calendar, Snowflake } from '@phosphor-icons/react';
+import { ArrowLeft, Fire, CaretLeft, CaretRight, Trophy, Calendar, Snowflake, ShareNetwork } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import useStudyStore from '../store/studyStore';
+import useAuthStore from '../store/authStore';
 import Card from '../components/ui/Card';
+import StreakShareModal from '../components/streak/StreakShareModal';
 
 function StreakPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const { streakCount, longestStreak, streakHistory, streakFreezesHeld = 0, frozenDays = [] } = useStudyStore();
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
 
@@ -66,7 +70,16 @@ function StreakPage() {
             <h1 className="text-base md:text-lg font-bold font-display text-text-primary">Streak</h1>
           </div>
 
-          <div className="w-[42px]" /> {/* Spacer to center title */}
+          <div className="px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <button
+              onClick={() => setIsShareModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/20 dark:hover:bg-white/10 text-text-primary rounded-full transition-all text-xs md:text-sm font-semibold group"
+              title="Share Streak"
+            >
+              <ShareNetwork size={18} weight="bold" className="text-orange-500 group-hover:scale-110 transition-transform" />
+              <span>Share</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -246,6 +259,14 @@ function StreakPage() {
         </div>
 
       </div>
+
+      {/* Streak Share Modal */}
+      <StreakShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        streakCount={streakCount}
+        user={user}
+      />
     </div>
   );
 }

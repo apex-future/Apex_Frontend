@@ -89,7 +89,6 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatingStatus, setGeneratingStatus] = useState('');
     const [bookShareUrl, setBookShareUrl] = useState('');
-    const [activeTargetFormat, setActiveTargetFormat] = useState('standard'); // 'standard' | 'whatsapp' | 'instagram'
 
     const highlightText = highlight?.text || highlight?.highlightedText || '';
     const highlightColor = highlight?.color || '#fef08a';
@@ -143,67 +142,30 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
     const finalShareUrl = bookShareUrl || window.location.origin;
     const shareMessage = `I learnt this from ${bookTitle}. Here is the book you can read on Apex: ${finalShareUrl}`;
 
-    // Dimensions config for off-screen export
-    // High-resolution full-bleed 1080px base (no corner clipping / no exposed white corner artifacts)
-    const formatConfigs = {
-        standard: {
-            width: 1080,
-            height: 1350, // 4:5
-            padding: '88px 80px',
-            logoHeight: '48px',
-            logoTextSize: '32px',
-            quotesIconSize: 84,
-            quoteMargin: '30px',
-            quoteFontSize: highlightText.length > 250 ? '38px' : highlightText.length > 120 ? '46px' : '56px',
-            footerPaddingTop: '32px',
-            titleFontSize: '36px',
-            metaFontSize: '24px',
-        },
-        whatsapp: {
-            width: 1080,
-            height: 1920, // 9:16
-            padding: '110px 84px',
-            logoHeight: '52px',
-            logoTextSize: '34px',
-            quotesIconSize: 96,
-            quoteMargin: '48px',
-            quoteFontSize: highlightText.length > 250 ? '42px' : highlightText.length > 120 ? '50px' : '62px',
-            footerPaddingTop: '36px',
-            titleFontSize: '38px',
-            metaFontSize: '26px',
-        },
-        instagram: {
-            width: 1080,
-            height: 1080, // 1:1
-            padding: '80px 76px',
-            logoHeight: '46px',
-            logoTextSize: '30px',
-            quotesIconSize: 76,
-            quoteMargin: '24px',
-            quoteFontSize: highlightText.length > 250 ? '36px' : highlightText.length > 120 ? '42px' : '50px',
-            footerPaddingTop: '28px',
-            titleFontSize: '34px',
-            metaFontSize: '23px',
-        },
+    // Dimensions config for off-screen export: Uniform 9:16 (1080 x 1920)
+    const cardConfig = {
+        width: 1080,
+        height: 1920, // 9:16
+        padding: '110px 84px',
+        logoHeight: '52px',
+        logoTextSize: '34px',
+        quotesIconSize: 96,
+        quoteMargin: '48px',
+        quoteFontSize: highlightText.length > 250 ? '42px' : highlightText.length > 120 ? '50px' : '62px',
+        footerPaddingTop: '36px',
+        titleFontSize: '38px',
+        metaFontSize: '26px',
     };
 
-    const currentConfig = formatConfigs[activeTargetFormat] || formatConfigs.standard;
-
     // Capture the off-screen high-res card element as a PNG blob
-    const generateCardBlob = async (targetFormat) => {
-        setActiveTargetFormat(targetFormat);
-        // Allow state to apply and DOM node to render
-        await new Promise((resolve) => setTimeout(resolve, 80));
-
+    const generateCardBlob = async () => {
         const el = offscreenContainerRef.current;
         if (!el) return null;
 
-        const config = formatConfigs[targetFormat] || formatConfigs.standard;
-
         try {
             const blob = await htmlToImage.toBlob(el, {
-                width: config.width,
-                height: config.height,
+                width: cardConfig.width,
+                height: cardConfig.height,
                 pixelRatio: 1, // Already sized to 1080px native dimensions
                 cacheBust: true,
                 backgroundColor: '#ffffff',
@@ -215,8 +177,8 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
 
         try {
             const canvas = await html2canvas(el, {
-                width: config.width,
-                height: config.height,
+                width: cardConfig.width,
+                height: cardConfig.height,
                 scale: 1,
                 useCORS: true,
                 backgroundColor: '#ffffff',
@@ -228,12 +190,12 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
         }
     };
 
-    // Download Card (Standard 4:5 or requested format)
-    const handleDownload = async (targetFormat = 'standard') => {
+    // Download Card (Uniform 9:16)
+    const handleDownload = async () => {
         setIsGenerating(true);
         setGeneratingStatus('Rendering card image...');
         try {
-            const blob = await generateCardBlob(targetFormat);
+            const blob = await generateCardBlob();
             if (!blob) throw new Error('Could not render card image');
 
             // Copy text and book link to clipboard
@@ -263,11 +225,10 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
     // Handle Quick Platform Share
     const handlePlatformShare = async (platform) => {
         setIsGenerating(true);
-        const format = platform === 'whatsapp' ? 'whatsapp' : platform === 'instagram' ? 'instagram' : 'standard';
         setGeneratingStatus(`Preparing ${platform === 'whatsapp' ? 'WhatsApp' : platform === 'instagram' ? 'Instagram' : 'share'} card...`);
 
         try {
-            const blob = await generateCardBlob(format);
+            const blob = await generateCardBlob();
             // Copy caption & book link to clipboard so it's guaranteed to be available
             await navigator.clipboard.writeText(shareMessage).catch(() => {});
 
@@ -361,12 +322,12 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
     };
 
     // Native Web Share API
-    const handleNativeShare = async (format = 'standard') => {
+    const handleNativeShare = async () => {
         if (!navigator.share) return;
         setIsGenerating(true);
         setGeneratingStatus('Preparing share card...');
         try {
-            const blob = await generateCardBlob(format);
+            const blob = await generateCardBlob();
             await navigator.clipboard.writeText(shareMessage).catch(() => {});
 
             const shareData = {
@@ -375,7 +336,7 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
             };
 
             if (blob && navigator.canShare) {
-                const file = new File([blob], `apex-quote-${format}.png`, { type: 'image/png' });
+                const file = new File([blob], `apex-quote.png`, { type: 'image/png' });
                 if (navigator.canShare({ files: [file] })) {
                     shareData.files = [file];
                 }
@@ -488,7 +449,7 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
                     {/* Bottom Action: Download Card Button */}
                     <div className="px-5 pb-5 flex flex-col gap-2">
                         <button
-                            onClick={() => handleDownload('standard')}
+                            onClick={handleDownload}
                             disabled={isGenerating}
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5 group"
                         >
@@ -497,14 +458,14 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
                             </div>
                             <div className="flex flex-col text-left">
                                 <span className="text-sm font-semibold text-text-primary">Download Card</span>
-                                <span className="text-[11px] text-text-tertiary">Save high-res quote image</span>
+                                <span className="text-[11px] text-text-tertiary">Save high-res quote card (9:16)</span>
                             </div>
                         </button>
 
                         {/* Native Share (mobile) */}
                         {typeof navigator !== 'undefined' && navigator.share && (
                             <button
-                                onClick={() => handleNativeShare('standard')}
+                                onClick={handleNativeShare}
                                 disabled={isGenerating}
                                 className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                             >
@@ -534,13 +495,13 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
                 <div
                     ref={offscreenContainerRef}
                     style={{
-                        width: `${currentConfig.width}px`,
-                        height: `${currentConfig.height}px`,
+                        width: `${cardConfig.width}px`,
+                        height: `${cardConfig.height}px`,
                         overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        padding: currentConfig.padding,
+                        padding: cardConfig.padding,
                         boxSizing: 'border-box',
                         ...getCardGradient(highlightColor),
                     }}
@@ -551,7 +512,7 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
                             src={logoLight}
                             alt="Apex"
                             style={{ 
-                                height: currentConfig.logoHeight, 
+                                height: cardConfig.logoHeight, 
                                 width: 'auto', 
                                 objectFit: 'contain',
                                 mixBlendMode: 'multiply',
@@ -559,7 +520,7 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
                         />
                         <span
                             style={{
-                                fontSize: currentConfig.logoTextSize,
+                                fontSize: cardConfig.logoTextSize,
                                 fontWeight: 600,
                                 color: '#334155',
                                 fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -577,12 +538,12 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
                             display: 'flex', 
                             flexDirection: 'column', 
                             justifyContent: 'center',
-                            margin: `${currentConfig.quoteMargin} 0`,
+                            margin: `${cardConfig.quoteMargin} 0`,
                             overflow: 'hidden',
                         }}
                     >
                         <Quotes 
-                            size={currentConfig.quotesIconSize} 
+                            size={cardConfig.quotesIconSize} 
                             weight="fill" 
                             style={{ 
                                 color: 'rgba(30, 41, 59, 0.22)', 
@@ -595,7 +556,7 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
                                 fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
                                 color: '#0f172a',
                                 lineHeight: 1.54,
-                                fontSize: currentConfig.quoteFontSize,
+                                fontSize: cardConfig.quoteFontSize,
                                 margin: 0,
                                 whiteSpace: 'pre-wrap',
                                 wordBreak: 'break-word',
@@ -612,12 +573,12 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
                             flexDirection: 'column',
                             textAlign: 'left',
                             borderTop: '1px solid rgba(15, 23, 42, 0.08)',
-                            paddingTop: currentConfig.footerPaddingTop,
+                            paddingTop: cardConfig.footerPaddingTop,
                         }}
                     >
                         <p
                             style={{
-                                fontSize: currentConfig.titleFontSize,
+                                fontSize: cardConfig.titleFontSize,
                                 fontWeight: 700,
                                 color: '#0f172a',
                                 margin: 0,
@@ -633,7 +594,7 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
                                 alignItems: 'center',
                                 gap: '10px',
                                 marginTop: '8px',
-                                fontSize: currentConfig.metaFontSize,
+                                fontSize: cardConfig.metaFontSize,
                                 color: '#64748b',
                                 fontWeight: 500,
                                 fontFamily: 'system-ui, -apple-system, sans-serif',

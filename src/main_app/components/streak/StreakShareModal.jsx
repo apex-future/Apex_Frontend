@@ -5,17 +5,13 @@ import {
     DownloadSimple, 
     Check, 
     Export, 
-    Quotes,
-    Sparkle,
     EnvelopeSimple
 } from '@phosphor-icons/react';
 import * as htmlToImage from 'html-to-image';
 import html2canvas from 'html2canvas';
-import useThemeStore from '../../../../store/themeStore';
-import apiClient from '../../../../services/apiClient';
-import { isValidAuthor } from '../../../../utils/documentMetadata';
-import { showToastGlobal } from '../../../../hooks/useToast';
-import logoLight from '../../../../../assets/logo/logo-light-removebg-preview.png';
+import useThemeStore from '../../store/themeStore';
+import { showToastGlobal } from '../../hooks/useToast';
+import logoLight from '../../../assets/logo/logo-light-removebg-preview.png';
 
 // Platform icons as inline SVGs for maximum reliability
 const TwitterXIcon = () => (
@@ -42,35 +38,120 @@ const TelegramIcon = () => (
     </svg>
 );
 
-// Gradient for Tab Share cards (elegant soft violet/slate tone to pure solid white)
-const tabCardGradient = {
-    background: 'linear-gradient(145deg, #ede9fe 0%, #f5f3ff 38%, #ffffff 100%)',
-    backgroundColor: '#ffffff',
+/**
+ * Custom vector Flame Icon matching the user reference graphic
+ */
+const StreakFlameSvg = ({ width = 180, height = 210, className = '' }) => {
+    const idSuffix = React.useId().replace(/:/g, '');
+    const gradId = `flameGrad_${idSuffix}`;
+
+    return (
+        <svg 
+            width={width} 
+            height={height} 
+            viewBox="0 0 240 260" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            className={className}
+        >
+            <defs>
+                <linearGradient id={gradId} x1="0.5" y1="0.05" x2="0.5" y2="0.95">
+                    <stop offset="0%" stopColor="#ff382e" />
+                    <stop offset="45%" stopColor="#ff5926" />
+                    <stop offset="100%" stopColor="#ffa000" />
+                </linearGradient>
+            </defs>
+            {/* Soft warm shadow pedestal */}
+            <ellipse cx="120" cy="235" rx="56" ry="16" fill="#fdeca6" />
+            
+            {/* Outer Yellow Flame Body */}
+            <path 
+                d="M120 226
+                   C75 226 50 190 48 150
+                   C46 122 56 100 58 72
+                   C58 67 63 65 67 68
+                   C78 78 88 84 100 80
+                   C110 76 121 34 128 24
+                   C131 20 137 23 137 28
+                   C141 55 160 84 178 108
+                   C192 126 194 152 192 165
+                   C188 202 165 226 120 226 Z" 
+                fill="#ffc700" 
+                stroke="#ffc700" 
+                strokeWidth="14" 
+                strokeLinejoin="round" 
+                strokeLinecap="round"
+            />
+
+            {/* Inner Red-Orange Gradient Flame Body */}
+            <path 
+                d="M120 216
+                   C82 216 62 184 60 152
+                   C58 128 66 110 68 86
+                   C78 95 87 100 99 96
+                   C108 92 118 52 126 42
+                   C132 66 148 93 164 116
+                   C176 132 178 154 176 165
+                   C172 196 154 216 120 216 Z" 
+                fill={`url(#${gradId})`} 
+                stroke={`url(#${gradId})`} 
+                strokeWidth="8" 
+                strokeLinejoin="round" 
+                strokeLinecap="round"
+            />
+
+            {/* Teardrop Cutout (White) */}
+            <path 
+                d="M120 134 
+                   C120 134 100 160 100 176 
+                   C100 188 109 198 120 198 
+                   C131 198 140 188 140 176 
+                   C140 160 120 134 120 134 Z" 
+                fill="#ffffff" 
+            />
+        </svg>
+    );
+};
+
+// Formatter to combine user full name with @ prefix, joining without underscores
+const formatUserHandle = (user) => {
+    if (user?.full_name && user.full_name.trim()) {
+        const cleaned = user.full_name.trim().replace(/\s+/g, '').toUpperCase();
+        return `@${cleaned}`;
+    }
+    if (user?.username && user.username.trim()) {
+        return `@${user.username.trim().replace(/\s+/g, '').toUpperCase()}`;
+    }
+    if (user?.email) {
+        const prefix = user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        return `@${prefix}`;
+    }
+    return '@APEXREADER';
 };
 
 /**
- * TabShareModal
+ * StreakShareModal
  * 
  * Props:
- *   isOpen – boolean
- *   onClose – () => void
- *   tab    – { id, text, context, type, pageNumber }
- *   book   – { id, title, author, supabaseId }
+ *   isOpen      – boolean
+ *   onClose     – () => void
+ *   streakCount – number
+ *   user        – { full_name, username, email, ... }
  */
-export default function TabShareModal({ isOpen, onClose, tab, book }) {
+export default function StreakShareModal({ isOpen, onClose, streakCount = 1, user = null }) {
     const { resolvedTheme } = useThemeStore();
     const backdropRef = useRef(null);
     const offscreenContainerRef = useRef(null);
 
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatingStatus, setGeneratingStatus] = useState('');
-    const [bookShareUrl, setBookShareUrl] = useState('');
 
-    const tabText = tab?.text || '';
-    const tabContext = tab?.context || '';
-    const pageNumber = tab?.pageNumber || null;
-    const bookTitle = book?.title || 'Unknown Title';
-    const bookAuthor = isValidAuthor(book?.author) ? book.author : '';
+    const userHandle = formatUserHandle(user);
+    const formattedDate = new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
 
     // Lock body scroll while open
     useEffect(() => {
@@ -78,63 +159,27 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
 
-    // Resolve book share URL with download token
-    useEffect(() => {
-        if (!isOpen || !book) return;
+    if (!isOpen) return null;
 
-        let active = true;
-        const resolveShareUrl = async () => {
-            let cloudId = book.supabaseId;
-            const validAuthor = isValidAuthor(book.author) ? book.author : '';
-            const authorParam = validAuthor ? `&author=${encodeURIComponent(validAuthor)}` : '';
+    // Follow-up share message inviting others to read on Apex
+    const apexUrl = window.location.origin;
+    const shareMessage = `I'm on a ${streakCount}-day reading streak on Apex! 🔥 Build your daily reading habit and read with me on Apex: ${apexUrl}`;
 
-            if (cloudId && navigator.onLine) {
-                try {
-                    const res = await apiClient.post(`/api/books/${cloudId}/share`);
-                    const token = res.data?.share_token;
-                    if (token && active) {
-                        setBookShareUrl(`${window.location.origin}/share?type=book&id=${cloudId}&token=${token}&title=${encodeURIComponent(book.title || '')}${authorParam}`);
-                        return;
-                    }
-                } catch (err) {
-                    console.warn('[Apex Share] Failed to get share token:', err);
-                }
-            }
-
-            if (active) {
-                const fallbackUrl = `${window.location.origin}/share?type=book&title=${encodeURIComponent(book.title || '')}${authorParam}${cloudId ? `&id=${cloudId}` : ''}`;
-                setBookShareUrl(fallbackUrl);
-            }
-        };
-
-        resolveShareUrl();
-        return () => { active = false; };
-    }, [isOpen, book]);
-
-    if (!isOpen || !tab) return null;
-
-    // Generated caption text without tab text:
-    // "My thoughts on this from {bookTitle}. Here is the book you can read on Apex: {bookShareUrl}"
-    const finalShareUrl = bookShareUrl || window.location.origin;
-    const shareMessage = bookTitle && bookTitle !== 'Unknown Title'
-        ? `My thoughts on this from "${bookTitle}". Here is the book you can read on Apex: ${finalShareUrl}`
-        : `My thoughts on this. Here is the book you can read on Apex: ${finalShareUrl}`;
-
-    // Dimensions config for off-screen export: Uniform 9:16 (1080 x 1920)
+    // Uniform 9:16 (1080 x 1920) configuration matching modern mobile standards & Duolingo reference
     const cardConfig = {
         width: 1080,
-        height: 1920, // 9:16
-        padding: '110px 84px',
-        logoHeight: '52px',
-        logoTextSize: '34px',
-        contextFontSize: '34px',
-        thoughtFontSize: tabText.length > 200 ? '40px' : tabText.length > 100 ? '46px' : '56px',
-        footerPaddingTop: '36px',
-        titleFontSize: '38px',
-        metaFontSize: '26px',
+        height: 1920, // 9:16 Fullscreen Vertical
+        padding: '120px 84px',
+        logoHeight: '56px',
+        logoTextSize: '36px',
+        flameWidth: 500,
+        flameHeight: 570,
+        numberFontSize: '270px',
+        labelFontSize: '72px',
+        footerFontSize: '32px',
     };
 
-    // Capture off-screen high-res card element as a PNG blob
+    // Capture the off-screen high-res card element as a PNG blob
     const generateCardBlob = async () => {
         const el = offscreenContainerRef.current;
         if (!el) return null;
@@ -143,7 +188,7 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
             const blob = await htmlToImage.toBlob(el, {
                 width: cardConfig.width,
                 height: cardConfig.height,
-                pixelRatio: 1,
+                pixelRatio: 1, // Already sized to 1080px native dimensions
                 cacheBust: true,
                 backgroundColor: '#ffffff',
             });
@@ -162,7 +207,7 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
             });
             return await new Promise((res) => canvas.toBlob(res, 'image/png'));
         } catch (err) {
-            console.error('[Apex Share] Card rendering failed:', err);
+            console.error('[Apex Share] Streak card rendering failed:', err);
             return null;
         }
     };
@@ -170,50 +215,52 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
     // Download Card (Uniform 9:16)
     const handleDownload = async () => {
         setIsGenerating(true);
-        setGeneratingStatus('Rendering card image...');
+        setGeneratingStatus('Rendering streak card...');
         try {
             const blob = await generateCardBlob();
-            if (!blob) throw new Error('Could not render card image');
+            if (!blob) throw new Error('Could not render streak card image');
 
+            // Copy invite text and link to clipboard
             await navigator.clipboard.writeText(shareMessage).catch(() => {});
 
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            const cleanTitle = bookTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            a.download = `apex-thought-${cleanTitle}.png`;
+            a.download = `apex-streak-${streakCount}-days.png`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            showToastGlobal('Card downloaded & book link copied!', 'success');
+            showToastGlobal('Card downloaded & invite link copied!', 'success');
             onClose();
         } catch (err) {
-            console.error('Download card failed:', err);
-            showToastGlobal('Failed to generate card image', 'error');
+            console.error('Download streak card failed:', err);
+            showToastGlobal('Failed to generate streak card image', 'error');
         } finally {
             setIsGenerating(false);
             setGeneratingStatus('');
         }
     };
 
-    // Quick Platform Share
+    // Handle Quick Platform Share
     const handlePlatformShare = async (platform) => {
         setIsGenerating(true);
         setGeneratingStatus(`Preparing ${platform === 'whatsapp' ? 'WhatsApp' : platform === 'instagram' ? 'Instagram' : 'share'} card...`);
 
         try {
             const blob = await generateCardBlob();
+            // Copy caption & invite link to clipboard so it's guaranteed to be available
             await navigator.clipboard.writeText(shareMessage).catch(() => {});
 
             if (platform === 'whatsapp') {
+                // Check if mobile native share with files is supported
                 if (navigator.share && blob) {
-                    const file = new File([blob], `apex-thought-whatsapp.png`, { type: 'image/png' });
+                    const file = new File([blob], `apex-streak-${streakCount}-days.png`, { type: 'image/png' });
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
-                                title: `Thought on ${bookTitle}`,
+                                title: `${streakCount} Day Streak on Apex`,
                                 text: shareMessage,
                                 files: [file],
                             });
@@ -226,12 +273,12 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
                     }
                 }
 
-                // Desktop / web fallback
+                // Fallback for desktop / web WhatsApp:
                 if (blob) {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `apex-thought-whatsapp.png`;
+                    a.download = `apex-streak-whatsapp.png`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
@@ -242,12 +289,13 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
                 showToastGlobal('Card downloaded & message copied to WhatsApp!', 'success');
                 onClose();
             } else if (platform === 'instagram') {
+                // On mobile: Web Share sheet lets user send image directly to Instagram Stories / Feed
                 if (navigator.share && blob) {
-                    const file = new File([blob], `apex-thought-instagram.png`, { type: 'image/png' });
+                    const file = new File([blob], `apex-streak-${streakCount}-days.png`, { type: 'image/png' });
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
-                                title: `Thought on ${bookTitle}`,
+                                title: `${streakCount} Day Streak on Apex`,
                                 text: shareMessage,
                                 files: [file],
                             });
@@ -260,11 +308,12 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
                     }
                 }
 
+                // Fallback: download Instagram Story (9:16) image and copy caption
                 if (blob) {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `apex-thought-instagram.png`;
+                    a.download = `apex-streak-instagram.png`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
@@ -277,15 +326,15 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
                 window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareMessage)}`, '_blank', 'width=550,height=420');
                 onClose();
             } else if (platform === 'telegram') {
-                window.open(`https://t.me/share/url?url=${encodeURIComponent(finalShareUrl)}&text=${encodeURIComponent(shareMessage)}`, '_blank');
+                window.open(`https://t.me/share/url?url=${encodeURIComponent(apexUrl)}&text=${encodeURIComponent(shareMessage)}`, '_blank');
                 onClose();
             } else if (platform === 'email') {
-                window.location.href = `mailto:?subject=${encodeURIComponent(`Thought on ${bookTitle}`)}&body=${encodeURIComponent(shareMessage)}`;
+                window.location.href = `mailto:?subject=${encodeURIComponent(`I'm on a ${streakCount}-day reading streak on Apex!`)}&body=${encodeURIComponent(shareMessage)}`;
                 onClose();
             }
         } catch (err) {
-            console.error('Platform share failed:', err);
-            showToastGlobal('Failed to prepare share card', 'error');
+            console.error('Platform streak share failed:', err);
+            showToastGlobal('Failed to prepare streak card', 'error');
         } finally {
             setIsGenerating(false);
             setGeneratingStatus('');
@@ -296,18 +345,18 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
     const handleNativeShare = async () => {
         if (!navigator.share) return;
         setIsGenerating(true);
-        setGeneratingStatus('Preparing share card...');
+        setGeneratingStatus('Preparing streak card...');
         try {
             const blob = await generateCardBlob();
             await navigator.clipboard.writeText(shareMessage).catch(() => {});
 
             const shareData = {
-                title: `Thought on ${bookTitle}`,
+                title: `${streakCount} Day Streak on Apex`,
                 text: shareMessage,
             };
 
             if (blob && navigator.canShare) {
-                const file = new File([blob], `apex-thought.png`, { type: 'image/png' });
+                const file = new File([blob], `apex-streak-${streakCount}-days.png`, { type: 'image/png' });
                 if (navigator.canShare({ files: [file] })) {
                     shareData.files = [file];
                 }
@@ -317,7 +366,7 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
             onClose();
         } catch (err) {
             if (err.name !== 'AbortError') {
-                console.error('Native share failed:', err);
+                console.error('Native streak share failed:', err);
             }
         } finally {
             setIsGenerating(false);
@@ -360,7 +409,7 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
 
     return createPortal(
         <div className={resolvedTheme}>
-            {/* ── THE SHARE MODAL UI ── */}
+            {/* ── SHARE MODAL UI ── */}
             <div
                 ref={backdropRef}
                 className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-150"
@@ -373,14 +422,14 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
                     {/* Spinner Overlay when rendering */}
                     {isGenerating && (
                         <div className="absolute inset-0 bg-black/30 backdrop-blur-sm z-20 flex flex-col items-center justify-center">
-                            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                            <span className="text-sm font-semibold text-white">{generatingStatus || 'Preparing card...'}</span>
+                            <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                            <span className="text-sm font-semibold text-white">{generatingStatus || 'Preparing streak card...'}</span>
                         </div>
                     )}
 
                     {/* Header */}
                     <div className="flex items-center justify-between px-5 pt-5 pb-3">
-                        <h2 className="text-base font-bold text-text-primary">Share Thought to…</h2>
+                        <h2 className="text-base font-bold text-text-primary">Share Streak to…</h2>
                         <button 
                             onClick={onClose} 
                             disabled={isGenerating} 
@@ -390,19 +439,28 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
                         </button>
                     </div>
 
-                    {/* Clean Thought Snippet */}
-                    <div className="mx-5 mb-4 p-3.5 rounded-xl bg-bg-subtle flex flex-col gap-1.5">
-                        {tabContext && (
-                            <p className="text-xs text-text-tertiary line-clamp-1 italic font-serif border-l-2 border-indigo-400 pl-2">
-                                "{tabContext}"
-                            </p>
-                        )}
-                        <p className="text-sm line-clamp-3 leading-relaxed text-text-primary font-medium">
-                            {tabText}
-                        </p>
+                    {/* Mini Streak Card Preview */}
+                    <div className="mx-5 mb-4 p-5 rounded-2xl bg-white dark:bg-white border border-border-default shadow-sm flex flex-col items-center justify-center text-center">
+                        <div className="w-full flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-1.5">
+                                <img src={logoLight} alt="Apex" className="h-4 w-auto object-contain mix-blend-multiply" />
+                                <span className="text-xs font-bold text-slate-700">Apex</span>
+                            </div>
+                        </div>
+                        <StreakFlameSvg width={88} height={100} className="my-1.5" />
+                        <span className="text-4xl sm:text-5xl font-black text-[#ff6438] leading-none my-1 tabular-nums tracking-tight">
+                            {streakCount}
+                        </span>
+                        <span className="text-sm font-black text-[#ff6438] tracking-tight">
+                            day streak
+                        </span>
+                        <div className="w-full flex items-center justify-between mt-4 pt-2.5 border-t border-slate-100 text-[11px] font-bold text-slate-500">
+                            <span>{userHandle}</span>
+                            <span>{formattedDate}</span>
+                        </div>
                     </div>
 
-                    {/* Platform Grid */}
+                    {/* Platform Grid (5 quick targets) */}
                     <div className="px-5 pb-2 grid grid-cols-5 gap-3">
                         {platforms.map((p) => (
                             <button
@@ -429,12 +487,12 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
                             disabled={isGenerating}
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5 group"
                         >
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-bg-subtle text-text-primary group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-bg-subtle text-text-primary group-hover:bg-orange-500 group-hover:text-white transition-colors">
                                 <DownloadSimple size={18} weight="bold" />
                             </div>
                             <div className="flex flex-col text-left">
                                 <span className="text-sm font-semibold text-text-primary">Download Card</span>
-                                <span className="text-[11px] text-text-tertiary">Save high-res thought card (9:16)</span>
+                                <span className="text-[11px] text-text-tertiary">Save high-res streak card (9:16)</span>
                             </div>
                         </button>
 
@@ -458,6 +516,7 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
             </div>
 
             {/* ── OFF-SCREEN HIGH-RES CARD RENDERER ── */}
+            {/* Renders the pristine, export-grade card in exact target dimensions without modal DOM artifacts */}
             <div
                 style={{
                     position: 'fixed',
@@ -478,11 +537,13 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
                         justifyContent: 'space-between',
                         padding: cardConfig.padding,
                         boxSizing: 'border-box',
-                        ...tabCardGradient,
+                        backgroundColor: '#ffffff',
+                        background: '#ffffff',
+                        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     }}
                 >
-                    {/* Top Row: Apex Logo + sleek "Apex" */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    {/* Top Left: Apex Logo + sleek "Apex" title */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <img
                             src={logoLight}
                             alt="Apex"
@@ -496,9 +557,8 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
                         <span
                             style={{
                                 fontSize: cardConfig.logoTextSize,
-                                fontWeight: 600,
+                                fontWeight: 700,
                                 color: '#334155',
-                                fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                                 letterSpacing: '-0.01em',
                             }}
                         >
@@ -506,147 +566,68 @@ export default function TabShareModal({ isOpen, onClose, tab, book }) {
                         </span>
                     </div>
 
-                    {/* Center Section: Linked Context (if any) + User's Thought underneath */}
+                    {/* Center Section: Flame + Number + "day streak" */}
                     <div 
                         style={{ 
                             flex: 1, 
                             display: 'flex', 
                             flexDirection: 'column', 
                             justifyContent: 'center',
-                            gap: '32px',
-                            margin: '36px 0',
-                            overflow: 'hidden',
+                            alignItems: 'center',
+                            textAlign: 'center',
                         }}
                     >
-                        {/* Linked highlighted text on a distinguished background */}
-                        {tabContext && (
-                            <div
-                                style={{
-                                    backgroundColor: 'rgba(255, 255, 255, 0.75)',
-                                    border: '1px solid rgba(99, 102, 241, 0.18)',
-                                    borderLeft: '6px solid #6366f1',
-                                    borderRadius: '24px',
-                                    padding: '28px 34px',
-                                    boxShadow: '0 4px 20px -2px rgba(99, 102, 241, 0.08)',
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                                    <Quotes size={24} weight="fill" style={{ color: '#6366f1', opacity: 0.6 }} />
-                                    <span style={{ 
-                                        fontSize: '20px', 
-                                        fontWeight: 800, 
-                                        textTransform: 'uppercase', 
-                                        letterSpacing: '0.12em', 
-                                        color: '#6366f1' 
-                                    }}>
-                                        Passage from Book
-                                    </span>
-                                </div>
-                                <p
-                                    style={{
-                                        fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
-                                        fontStyle: 'italic',
-                                        color: '#334155',
-                                        lineHeight: 1.5,
-                                        fontSize: cardConfig.contextFontSize,
-                                        margin: 0,
-                                    }}
-                                >
-                                    "{tabContext}"
-                                </p>
-                            </div>
-                        )}
+                        {/* Flame Icon */}
+                        <StreakFlameSvg 
+                            width={cardConfig.flameWidth} 
+                            height={cardConfig.flameHeight} 
+                        />
 
-                        {/* User's written thought */}
-                        <div 
-                            style={{ 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                gap: '14px',
-                                marginTop: tabContext ? '18px' : 0,
+                        {/* Huge Streak Number */}
+                        <div
+                            style={{
+                                fontSize: cardConfig.numberFontSize,
+                                fontWeight: 900,
+                                color: '#ff6438',
+                                lineHeight: 1.05,
+                                marginTop: '16px',
+                                letterSpacing: '-0.03em',
+                                fontVariantNumeric: 'tabular-nums',
                             }}
                         >
-                            {/* Context badge showing user wrote this */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <div
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        backgroundColor: '#6366f1',
-                                        color: '#ffffff',
-                                        padding: '8px 18px',
-                                        borderRadius: '9999px',
-                                        fontSize: '20px',
-                                        fontWeight: 800,
-                                        letterSpacing: '0.08em',
-                                        textTransform: 'uppercase',
-                                    }}
-                                >
-                                    <Sparkle size={18} weight="fill" />
-                                    <span>My Thought</span>
-                                </div>
-                            </div>
+                            {streakCount}
+                        </div>
 
-                            <p
-                                style={{
-                                    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                                    color: '#0f172a',
-                                    lineHeight: 1.48,
-                                    fontSize: cardConfig.thoughtFontSize,
-                                    fontWeight: 600,
-                                    margin: 0,
-                                    whiteSpace: 'pre-wrap',
-                                    wordBreak: 'break-word',
-                                }}
-                            >
-                                {tabText}
-                            </p>
+                        {/* "day streak" label */}
+                        <div
+                            style={{
+                                fontSize: cardConfig.labelFontSize,
+                                fontWeight: 800,
+                                color: '#ff6438',
+                                marginTop: '8px',
+                                letterSpacing: '-0.01em',
+                            }}
+                        >
+                            day streak
                         </div>
                     </div>
 
-                    {/* Bottom Left: Title, with Page and Author underneath */}
+                    {/* Bottom Row: User Handle (Left) and Date (Right) */}
                     <div
                         style={{
                             display: 'flex',
-                            flexDirection: 'column',
-                            textAlign: 'left',
-                            borderTop: '1px solid rgba(15, 23, 42, 0.08)',
-                            paddingTop: cardConfig.footerPaddingTop,
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            width: '100%',
+                            fontSize: cardConfig.footerFontSize,
+                            fontWeight: 800,
+                            color: '#475569',
+                            letterSpacing: '0.04em',
+                            paddingBottom: '8px',
                         }}
                     >
-                        <p
-                            style={{
-                                fontSize: cardConfig.titleFontSize,
-                                fontWeight: 700,
-                                color: '#0f172a',
-                                margin: 0,
-                                lineHeight: 1.3,
-                                fontFamily: 'system-ui, -apple-system, sans-serif',
-                            }}
-                        >
-                            {bookTitle}
-                        </p>
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                                marginTop: '8px',
-                                fontSize: cardConfig.metaFontSize,
-                                color: '#64748b',
-                                fontWeight: 500,
-                                fontFamily: 'system-ui, -apple-system, sans-serif',
-                            }}
-                        >
-                            {pageNumber > 0 && (
-                                <span>Page {pageNumber}</span>
-                            )}
-                            {pageNumber > 0 && bookAuthor && <span>•</span>}
-                            {bookAuthor && (
-                                <span>{bookAuthor}</span>
-                            )}
-                        </div>
+                        <span>{userHandle}</span>
+                        <span>{formattedDate}</span>
                     </div>
                 </div>
             </div>
