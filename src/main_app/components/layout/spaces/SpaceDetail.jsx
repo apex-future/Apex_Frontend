@@ -5,7 +5,7 @@ import { BookContext } from "../../../context/BookContextInstance"
 import useSpaceStore from '../../../store/spaceStore'
 import useStudyStore from '../../../store/studyStore'
 import BookCard from '../../books/BookCard'
-import BookCover from '../../books/BookCover'
+import BookCover from '../../ui/BookCover'
 import useQuizStore from '../../../store/quizStore'
 
 import SpaceAnalytics from './SpaceAnalytics'
@@ -160,13 +160,10 @@ function SpaceDetail() {
                                     setSelectedBooksToAdd(prev => isSelected ? prev.filter(id => id !== book.id) : [...prev, book.id]);
                                   }}
                                 >
-                                  <div className="w-full h-36 rounded-md shadow-sm border border-border-default overflow-hidden relative">
-                                     {book.cover ? (
-                                        <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
-                                     ) : (
-                                        <BookCover title={book.title} author={book.author} className="w-full h-full" />
-                                     )}
-                                  </div>
+                                  <BookCover
+                                    book={book}
+                                    className="w-full h-36"
+                                  />
                                   
                                   {isSelected && (
                                     <div className="absolute -top-2 -right-2 bg-accent-primary text-white rounded-full p-1 shadow-md scale-in-center z-10">

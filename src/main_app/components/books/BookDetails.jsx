@@ -11,7 +11,7 @@ import syncService from '../../services/syncService';
 import { showToastGlobal } from '../../hooks/useToast';
 import ShareModal from '../ui/ShareModal';
 
-import BookCover from './BookCover';
+import BookCover from '../ui/BookCover';
 import Label from '../ui/Label';
 import Modal from '../ui/Modal';
 import { isValidAuthor } from '../../utils/documentMetadata';
@@ -258,31 +258,13 @@ function BookDetails() {
             <div className="flex flex-col pt-8 items-start">
                 <div className="book-header flex md:flex-row gap-8 lg:gap-12 flex-col w-full mb-12">
                     <div className='img-wrapper flex flex-col items-center justify-start gap-5 flex-shrink-0'>
-                        {/* 3D Book Mockup matching SharePage */}
-                        <div className="w-48 h-72 sm:w-52 sm:h-80 md:w-56 md:h-88 rounded-xl sm:rounded-2xl overflow-hidden shadow-md sm:shadow-lg shadow-black/10 dark:shadow-black/40 border border-black/10 dark:border-white/15 relative transform hover:scale-[1.02] transition-transform duration-500 bg-white mx-auto md:mx-0">
-                            {/* Spine Shadow Effect */}
-                            <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/15 to-transparent pointer-events-none z-20" />
-
-                            {/* Floating Format Pill */}
-                            <div className="absolute top-3 right-3 z-20">
-                                <Label 
-                                    variant="accent" 
-                                    color="purple" 
-                                    size="sm" 
-                                    content={book.fileType?.includes('epub') || book.title?.toLowerCase().endsWith('.epub') ? 'EPUB' : 'PDF'} 
-                                />
-                            </div>
-
-                            {book.cover ? (
-                                <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
-                            ) : (
-                                <BookCover 
-                                    title={book.title} 
-                                    author={isValidAuthor(book.author) ? book.author : null} 
-                                    className="w-full h-full" 
-                                />
-                            )}
-                        </div>
+                        {/* 3D Book Mockup using Predefined UI Component */}
+                        <BookCover
+                            book={book}
+                            size="lg"
+                            interactive={true}
+                            className="mx-auto md:mx-0"
+                        />
 
                         <div className="flex flex-col items-center justify-center gap-2.5 w-full">
                             <Label variant="neutral" content={`${Math.round(book.progress || 0)}% Completed`} />

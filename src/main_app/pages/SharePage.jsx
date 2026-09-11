@@ -24,7 +24,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Label from '../components/ui/Label';
 import EmptyState from '../components/ui/EmptyState';
-import BookCover from '../components/books/BookCover';
+import BookCover from '../components/ui/BookCover';
 import { isValidAuthor, cleanAuthor } from '../utils/documentMetadata';
 
 import logoLight from '../../assets/logo/logo-light-removebg-preview.png';
@@ -250,25 +250,14 @@ const SharePage = () => {
                             
                             {/* Left: 3D Physical Book Mockup */}
                             <div className="flex flex-col items-center flex-shrink-0">
-                                <div className="w-48 h-72 sm:w-52 sm:h-80 md:w-56 md:h-88 rounded-xl sm:rounded-2xl overflow-hidden shadow-md sm:shadow-lg shadow-black/10 dark:shadow-black/40 border border-black/10 dark:border-white/15 relative transform hover:scale-[1.02] transition-transform duration-500 bg-white">
-                                    {/* Spine Shadow Effect */}
-                                    <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/15 to-transparent pointer-events-none z-20" />
-                                    
-                                    {/* Floating Format Pill */}
-                                    <div className="absolute top-3 right-3 z-20">
-                                        <Label variant="accent" color="purple" size="sm" content={formatBadge} />
-                                    </div>
-
-                                    {bookMeta?.cover_image_url ? (
-                                        <img 
-                                            src={bookMeta.cover_image_url} 
-                                            alt={displayTitle} 
-                                            className="w-full h-full object-cover" 
-                                        />
-                                    ) : (
-                                        <BookCover title={displayTitle} author={validAuthor} className="w-full h-full" />
-                                    )}
-                                </div>
+                                <BookCover
+                                    cover={bookMeta?.cover_image_url}
+                                    title={displayTitle}
+                                    author={validAuthor}
+                                    size="lg"
+                                    format={formatBadge}
+                                    interactive={true}
+                                />
 
                                 {/* Security Badge */}
                                 {hasDownloadCapability && (

@@ -143,11 +143,19 @@ const useStudyStore = create(
        * Adds today to streakHistory if not already present
        */
       updateStreak: () => {
-        const today = get()._getTodayString();
+        const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD', local date
+        const currentHistory = get().streakHistory || [];
+        if (currentHistory.includes(today)) {
+          console.log('[Streak Guard] Today already in streakHistory — skipping increment. Date:', today);
+          return;
+        }
+
+        console.log('[Streak] Crediting streak for today:', today, 'Previous streak:', get().streakCount);
+
         const lastActive = get().lastActiveDate;
         const currentStreak = get().streakCount;
         const currentLongest = get().longestStreak;
-        const history = get().streakHistory || [];
+        const history = currentHistory;
         let freezes = get().streakFreezesHeld || 0;
         let frozen = get().frozenDays || [];
 

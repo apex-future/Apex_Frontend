@@ -546,9 +546,8 @@ const ExamCard = ({ exam, linkedSpace, onEdit, onDelete, onTogglePause }) => {
         </motion.div>
     );
 };
-
 const ExamEditModal = ({ isOpen, onClose, exam }) => {
-    const { updateExam, addExam } = useStudyStore();
+    const { updateExam, addExam, exams, examDate, examName } = useStudyStore();
     const { spaces, updateSpace } = useSpaceStore();
     
     const [tempName, setTempName] = useState(exam?.name || '');
@@ -556,6 +555,50 @@ const ExamEditModal = ({ isOpen, onClose, exam }) => {
     const [isSaving, setIsSaving] = useState(false);
     
     const allCustomSpaces = spaces.filter(s => !s.isSystem);
+
+    const examsList = useMemo(() => {
+        if (exams && exams.length > 0) return exams;
+        if (examDate) return [{ id: 'legacy', name: examName, date: examDate, isPaused: false }];
+        return [];
+    }, [exams, examDate, examName]);
+
+    // Helper to find another exam already connected to a given space
+    const getOtherExamLinkedToSpace = (space, currentExamId) => {
+        if (!space) return null;
+        const spaceIdStr = String(space.id);
+        const localIdStr = space.local_id ? String(space.local_id) : null;
+        const supabaseIdStr = space.supabaseId ? String(space.supabaseId) : null;
+
+        return examsList.find(e => {
+            if (!e) return false;
+            // Exclude current active exam being edited
+            if (currentExamId && (String(e.id) === String(currentExamId) || (e.supabaseId && String(e.supabaseId) === String(currentExamId)))) {
+                return false;
+            }
+            const targetId = e.book_space_id || e.bookSpaceSupabaseId || e.bookSpaceId;
+            if (targetId) {
+                const strTarget = String(targetId);
+                if (strTarget === spaceIdStr || (localIdStr && strTarget === localIdStr) || (supabaseIdStr && strTarget === supabaseIdStr)) {
+                    return true;
+                }
+            }
+            if (space.examDate && e.date && space.examDate === e.date) {
+                return true;
+            }
+            return false;
+        });
+    };
+
+    // Sort custom spaces: available spaces first, spaces already linked to another exam at the bottom
+    const sortedCustomSpaces = useMemo(() => {
+        const list = spaces.filter(s => !s.isSystem);
+        return [...list].sort((a, b) => {
+            const aOther = Boolean(getOtherExamLinkedToSpace(a, exam?.id));
+            const bOther = Boolean(getOtherExamLinkedToSpace(b, exam?.id));
+            if (aOther === bOther) return 0;
+            return aOther ? 1 : -1;
+        });
+    }, [spaces, exam, examsList]);
 
     const initialSpaceId = useMemo(() => {
         if (!exam) return null;
@@ -584,7 +627,6 @@ const ExamEditModal = ({ isOpen, onClose, exam }) => {
     const [selectedSpaceId, setSelectedSpaceId] = useState(initialSpaceId);
 
     const isCreateSelected = selectedSpaceId === '__create_new__';
-    const customSpaces = spaces.filter(s => !s.isSystem);
 
     useEffect(() => {
         if (isOpen) {
@@ -622,14 +664,20 @@ const ExamEditModal = ({ isOpen, onClose, exam }) => {
                 showToastGlobal(`Created and linked "${spaceName}"!`, "success");
             } else {
                 const chosenSpace = spaces.find(s => s.id === selectedSpaceId || s.local_id === selectedSpaceId);
+                const conflictExam = getOtherExamLinkedToSpace(chosenSpace, exam?.id);
+                if (conflictExam) {
+                    showToastGlobal(`"${chosenSpace?.name}" is already linked to "${conflictExam.name}". Each exam must have its own Book Space.`, "error");
+                    setIsSaving(false);
+                    return;
+                }
                 finalSpaceSupabaseId = chosenSpace?.supabaseId || null;
             }
             
             let examId = exam?.id;
             if (examId === 'legacy') {
-                addExam({
-                    name: tempName,
-                    date: tempDate,
+                addExam({ 
+                    name: tempName, 
+                    date: tempDate, 
                     book_space_id: finalSpaceSupabaseId || finalSpaceId,
                     bookSpaceSupabaseId: finalSpaceSupabaseId,
                     bookSpaceId: finalSpaceId,
@@ -784,7 +832,7 @@ const ExamEditModal = ({ isOpen, onClose, exam }) => {
                         </div>
                     </Card>
 
-                    {customSpaces.length === 0 ? (
+                    {sortedCustomSpaces.length === 0 ? (
                         <EmptyState
                             icon={BookOpen}
                             title="No existing book spaces"
@@ -793,40 +841,63 @@ const ExamEditModal = ({ isOpen, onClose, exam }) => {
                         />
                     ) : (
                         <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar p-0.5">
-                            {customSpaces.map(sp => {
+                            {sortedCustomSpaces.map(sp => {
                                 const isSelected = selectedSpaceId === sp.id;
+                                const otherExam = getOtherExamLinkedToSpace(sp, exam?.id);
+                                const isLinkedToOther = Boolean(otherExam);
+
                                 return (
                                     <Card 
                                         key={sp.id}
-                                        variant="interactive"
-                                        onClick={() => setSelectedSpaceId(sp.id)}
-                                        className={`p-3 rounded-xl border flex items-center gap-3 transition-colors duration-150 cursor-pointer ${
-                                            isSelected 
-                                                ? 'border-accent-primary bg-accent-primary/10 shadow-sm shadow-accent-primary/10' 
-                                                : 'border-border-default hover:border-accent-primary/30'
+                                        variant={isLinkedToOther ? "default" : "interactive"}
+                                        onClick={!isLinkedToOther ? () => setSelectedSpaceId(sp.id) : undefined}
+                                        className={`p-3 rounded-xl border flex items-center gap-3 transition-colors duration-150 ${
+                                            isLinkedToOther
+                                                ? 'opacity-40 cursor-not-allowed bg-black/5 dark:bg-white/5 border-dashed border-border-default select-none'
+                                                : isSelected 
+                                                    ? 'border-accent-primary bg-accent-primary/10 shadow-sm shadow-accent-primary/10 cursor-pointer' 
+                                                    : 'border-border-default hover:border-accent-primary/30 cursor-pointer'
                                         }`}
                                     >
                                         <div className={`size-8 rounded-lg flex items-center justify-center transition-colors duration-150 shrink-0 ${
-                                            isSelected 
-                                                ? 'bg-accent-primary/20 text-accent-primary scale-105' 
-                                                : 'bg-bg-subtle text-text-tertiary'
+                                            isLinkedToOther
+                                                ? 'bg-transparent text-text-tertiary/60'
+                                                : isSelected 
+                                                    ? 'bg-accent-primary/20 text-accent-primary scale-105' 
+                                                    : 'bg-bg-subtle text-text-tertiary'
                                         }`}>
                                             <BookOpen size={16} weight="regular" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-xs font-bold truncate ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>
+                                            <p className={`text-xs font-bold truncate ${
+                                                isLinkedToOther
+                                                    ? 'text-text-tertiary'
+                                                    : isSelected 
+                                                        ? 'text-text-primary' 
+                                                        : 'text-text-secondary'
+                                            }`}>
                                                 {sp.name}
                                             </p>
                                             <p className="text-[10px] font-medium text-text-tertiary truncate">
-                                                {sp.bookIds?.length || 0} {sp.bookIds?.length === 1 ? 'Book' : 'Books'}
+                                                {isLinkedToOther
+                                                    ? `Linked to "${otherExam?.name || 'Another Exam'}"`
+                                                    : `${sp.bookIds?.length || 0} ${sp.bookIds?.length === 1 ? 'Book' : 'Books'}`}
                                             </p>
                                         </div>
-                                        <div className={`size-5 rounded-full border flex items-center justify-center transition-colors duration-150 shrink-0 ${
-                                            isSelected 
-                                                ? 'border-accent-primary bg-accent-primary text-white' 
-                                                : 'border-border-default'
-                                        }`}>
-                                            {isSelected && <div className="size-2 bg-white rounded-full" />}
+                                        <div className="shrink-0">
+                                            {isLinkedToOther ? (
+                                                <span className="text-[9px] font-bold uppercase tracking-wider text-text-tertiary bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded-md">
+                                                    In Use
+                                                </span>
+                                            ) : (
+                                                <div className={`size-5 rounded-full border flex items-center justify-center transition-colors duration-150 ${
+                                                    isSelected 
+                                                        ? 'border-accent-primary bg-accent-primary text-white' 
+                                                        : 'border-border-default'
+                                                }`}>
+                                                    {isSelected && <div className="size-2 bg-white rounded-full" />}
+                                                </div>
+                                            )}
                                         </div>
                                     </Card>
                                 );

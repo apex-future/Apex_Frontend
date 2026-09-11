@@ -11,7 +11,7 @@ import {
 import { BookContext } from '../../context/BookContextInstance';
 import Card from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
-import BookCover from '../books/BookCover';
+import BookCover from '../ui/BookCover';
 import { isValidAuthor } from '../../utils/documentMetadata';
 
 const SEARCH_HISTORY_KEY = 'apex_book_search_history';
@@ -342,17 +342,7 @@ export default function SearchDrawer({ isOpen, onClose }) {
                         onClick={() => handleBookSelect(book.id)}
                         className="p-3 flex items-center gap-3.5 group"
                       >
-                        <div className="w-12 h-16 rounded-md overflow-hidden shrink-0 bg-neutral-200 dark:bg-neutral-800 shadow-sm">
-                          {book.cover_url || book.cover ? (
-                            <img
-                              src={book.cover_url || book.cover}
-                              alt={book.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <BookCover title={book.title} author={book.author} className="w-full h-full" />
-                          )}
-                        </div>
+                        <BookCover book={book} size="xs" className="shrink-0" />
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">

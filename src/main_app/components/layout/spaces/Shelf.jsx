@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { Heart, Trash, X } from '@phosphor-icons/react';
-import BookCover from '../../books/BookCover'
+import { Heart, Trash } from '@phosphor-icons/react';
+import BookCover from '../../ui/BookCover'
+import Modal from '../../ui/Modal'
 import useSpaceStore from '../../../store/spaceStore'
-import useThemeStore from '../../../store/themeStore'
 import { showToastGlobal } from '../../../hooks/useToast'
 
 /**
@@ -15,7 +14,6 @@ import { showToastGlobal } from '../../../hooks/useToast'
 function Shelf({ shelves }) {
   const navigate = useNavigate();
   const { deleteSpace } = useSpaceStore();
-  const { resolvedTheme } = useThemeStore();
   
   // Modal State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -37,48 +35,32 @@ function Shelf({ shelves }) {
   const confirmDelete = () => {
     if (shelfToDelete) {
       deleteSpace(shelfToDelete.id);
-      showToastGlobal(`"${shelfToDelete.name}" space removed.`, "success");
+      showToastGlobal(`"${shelfToDelete.name || shelfToDelete.shelfName || 'Space'}" removed.`, "success");
       setIsDeleteModalOpen(false);
       setShelfToDelete(null);
     }
   };
 
   const renderDeleteModal = () => {
-    if (!isDeleteModalOpen || !shelfToDelete) return null;
-
-    return createPortal(
-      <div className={`fixed inset-0 z-[1100] flex items-center justify-center p-4 sm:p-6 overflow-hidden ${resolvedTheme}`}>
-        <div 
-          className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
-          onClick={() => setIsDeleteModalOpen(false)}
-        />
-        <div className="relative w-full max-w-md aura-card-raised p-8 flex flex-col items-center text-center animate-in zoom-in-95 fade-in duration-300">
-          <div className="size-16 bg-red-500/10 rounded-[2rem] flex items-center justify-center text-red-500 mb-6">
-            <Trash size={32} weight="fill" />
-          </div>
-          <h2 className="text-2xl font-black text-text-primary tracking-tight mb-2">Delete Space?</h2>
-          <p className="text-sm font-bold text-text-tertiary mb-8">
-            This will permanently remove the <span className="text-text-primary">"{shelfToDelete.name}"</span> space. 
-            Books within this space will not be deleted from your library.
-          </p>
-          
-          <div className="flex flex-col w-full gap-3">
-            <button 
-              onClick={confirmDelete}
-              className="w-full py-4 font-black text-white bg-red-500 rounded-3xl shadow-xl shadow-red-500/20 hover:brightness-110 active:scale-95 transition-all"
-            >
-              Yes, Delete
-            </button>
-            <button 
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="w-full py-4 font-black text-text-secondary bg-bg-subtle hover:bg-bg-elevated transition-all active:scale-95 border-t border-border-default rounded-3xl"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>,
-      document.body
+    return (
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Space?"
+        message={`This will permanently remove the "${shelfToDelete?.name || shelfToDelete?.shelfName || 'this'}" space. Books within this space will not be deleted from your library.`}
+        actions={[
+          {
+            label: 'Yes, Delete',
+            variant: 'danger',
+            onClick: confirmDelete,
+          },
+          {
+            label: 'Cancel',
+            variant: 'ghost',
+            onClick: () => setIsDeleteModalOpen(false),
+          }
+        ]}
+      />
     );
   };
 
@@ -110,28 +92,15 @@ function Shelf({ shelves }) {
 
                 return (
                   <div key={`book-${book.id}`} className={`relative transition-all duration-500 ${rotationClasses}`}>
-                    {book.cover ? (
-                      <img
-                        src={book.cover}
-                        alt={book.title}
-                        className="object-cover w-24 h-32 rounded-sm shadow-md border border-white/20"
-                      />
-                    ) : (
-                      <BookCover
-                        title={book.title}
-                        author={book.author}
-                        className="w-24 h-32 rounded-sm shadow-md border border-white/20"
-                      />
-                    )}
-
-                    {/* Status Indicators */}
-                    <div className="absolute top-1 right-1 flex flex-col gap-1">
-                      {book.isFavorite && (
+                    <BookCover
+                      book={book}
+                      className="w-24 h-32 rounded-sm shadow-md"
+                      badge={book.isFavorite && (
                         <div className="bg-red-500 text-white rounded-full p-0.5 shadow-sm">
                           <Heart size={8} weight="fill" />
                         </div>
                       )}
-                    </div>
+                    />
                   </div>
                 );
               })}

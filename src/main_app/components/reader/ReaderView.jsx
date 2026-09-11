@@ -24,7 +24,6 @@ import apiClient from '../../services/apiClient';
 import syncService from '../../services/syncService';
 import useToast from '../../hooks/useToast';
 import usePageVisitTracker from '../../hooks/usePageVisitTracker';
-import { useReadingTimeTracker } from '../../hooks/useReadingTimeTracker';
 import HighlightMenu from './HighlightMenu';
 import SimplifyModal from './SimplifyModal';
 import LeftPanel from './reading_navigations/reading_layout/LeftPanel';
@@ -190,37 +189,10 @@ function ReaderView() {
     const [sessionStats, setSessionStats] = useState({ xpGained: 0, pagesRead: 0, timeSpentSeconds: 0, totalXp: 0, breakdown: [], visitedPagesList: [] });
     const [showQuestSummary, setShowQuestSummary] = useState(false);
     const quizFromSessionRef = useRef(false);
-    const sessionActiveSeconds = useRef(0);
-    const sessionStartTime = useRef(Date.now()); // null when tab is hidden
+    const masterClockRef = useRef(null);
+    const masterActiveSecondsRef = useRef(0); // session wall-clock for SessionSummaryModal
+    const masterTodaySecondsRef = useRef(0);  // seeded from Dexie on mount
     const visitedPages = useRef(new Set());
-
-    // ── Visibility-aware session wall-clock tracker ──────────────────────────
-    // Mirrors how useReadingTimeTracker pauses on tab hide.
-    // When the tab is hidden: flush the current chunk into sessionActiveSeconds
-    // and null sessionStartTime so no wall-clock time leaks while backgrounded.
-    // When the tab becomes visible: restart sessionStartTime.
-    useEffect(() => {
-        const handleSessionVisibility = () => {
-            if (document.hidden) {
-                // Pause — accumulate elapsed seconds so far
-                if (sessionStartTime.current !== null) {
-                    sessionActiveSeconds.current += Math.floor((Date.now() - sessionStartTime.current) / 1000);
-                    sessionStartTime.current = null;
-                }
-                console.log('[Apex Session] Tab hidden — session timer paused, accumulated:', sessionActiveSeconds.current, 's');
-            } else {
-                // Resume — restart the chunk clock
-                sessionStartTime.current = Date.now();
-                console.log('[Apex Session] Tab visible — session timer resumed');
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleSessionVisibility);
-        return () => document.removeEventListener('visibilitychange', handleSessionVisibility);
-    }, []);
-    // ────────────────────────────────────────────────────────────────────────
-
-    // removed immediate page visit tracking
 
     useEffect(() => {
         // Start tracking XP actions for this session
@@ -230,20 +202,10 @@ function ReaderView() {
     }, [bookId]);
 
     const handleExitReader = async (fromPopState = false) => {
-        // 1. Stop the XP timer immediately — no more minutes accumulate
-        stopTick();
-
-        // 2. Flush the active chunk into sessionActiveSeconds (if tab is currently visible)
-        if (sessionStartTime.current !== null) {
-            sessionActiveSeconds.current += Math.floor((Date.now() - sessionStartTime.current) / 1000);
-            sessionStartTime.current = null; // closed
-        }
-
-        // 3. Compute XP from actual session minutes (does NOT flush or award yet)
-        const readingXp = await computeSessionXp();
-        const pagesRead = visitedPages.current.size;
-        const timeSpentSeconds = sessionActiveSeconds.current;
+        const timeSpentSeconds = masterActiveSecondsRef.current;
         const timeSpentMinutes = Math.floor(timeSpentSeconds / 60);
+        const readingXp = timeSpentMinutes * 2;
+        const pagesRead = visitedPages.current.size;
 
         // Fetch session XP actions
         const sessionXpActions = useXpStore.getState().sessionXpActions || [];
@@ -374,16 +336,7 @@ function ReaderView() {
     });
 
     // ============================================
-    // READING TIME TRACKER — minute-tick accumulation
-    // ============================================
-    const { flushSessionToQueue, stopTick, startTick, computeSessionXp } = useReadingTimeTracker({
-        bookId: book?.id,
-        supabaseBookId: book?.supabaseId,
-        isEnabled: !!book?.supabaseId,
-    });
-
-    // ============================================
-    // 1-MINUTE READING TIMER — Streak & Space Tracking
+    // MASTER READING CLOCK — Single author of active reading time
     // ============================================
     const { activeSpaceId, logSpaceActivity } = useSpaceStore();
     const { updateStreak } = useStudyStore();
@@ -396,15 +349,6 @@ function ReaderView() {
     const logSpaceActivityRef = useRef(logSpaceActivity);
     useEffect(() => { updateStreakRef.current = updateStreak; }, [updateStreak]);
     useEffect(() => { logSpaceActivityRef.current = logSpaceActivity; }, [logSpaceActivity]);
-    const streakTimerRef = useRef(null);
-    const streakFiredTodayRef = useRef(
-        localStorage.getItem('apex_streak_fired_today') === new Date().toLocaleDateString('en-CA')
-    );
-
-    // Track elapsed time so visibility changes don't reset the full 60s
-    const streakElapsedRef = useRef(0);
-    const streakStartTimeRef = useRef(null);
-    const dexieStreakLoadedRef = useRef(false);
 
     useEffect(() => {
         if (isLoading || !bookId) return;
@@ -412,108 +356,112 @@ function ReaderView() {
         const today = new Date().toLocaleDateString('en-CA');
         let isCancelled = false;
 
-        // Streak timer reads threshold from user settings — default 2 minutes
-        const STREAK_DURATION = Math.max(2, streakThresholdMinutes) * 60 * 1000;
-        const MINUTE_DURATION = 60 * 1000;
-        console.log(`[Apex Streak] Threshold set to ${streakThresholdMinutes} minutes (${STREAK_DURATION / 1000}s)`);
-
+        // Seed masterTodaySecondsRef from Dexie on mount
         db.user_daily_streak_progress
             .where('date').equals(today)
             .first()
             .then((todayProgress) => {
                 if (isCancelled) return;
-
-                const initialSeconds = todayProgress?.seconds_read || 0;
-                const wasFired = !!todayProgress?.streak_fired;
-
-                streakElapsedRef.current = initialSeconds * 1000;
-                if (wasFired || localStorage.getItem('apex_streak_fired_today') === today) {
-                    streakFiredTodayRef.current = true;
-                }
-
-                console.log(`[Apex Streak] Loaded accumulated today progress: ${initialSeconds}s (fired=${streakFiredTodayRef.current})`);
-
-                dexieStreakLoadedRef.current = true;
-                streakStartTimeRef.current = Date.now();
-                runInterval();
+                masterTodaySecondsRef.current = todayProgress?.seconds_read || 0;
+                console.log('[Master Clock] Seeded today seconds from Dexie:', masterTodaySecondsRef.current);
+                startMasterClock();
             })
             .catch((err) => {
-                console.error('[Apex Streak] Failed to load daily progress:', err);
-                dexieStreakLoadedRef.current = true;
-                if (!isCancelled) runInterval();
+                console.error('[Master Clock] Failed to seed daily progress from Dexie:', err);
+                if (!isCancelled) startMasterClock();
             });
 
-        const runInterval = () => {
-            if (streakTimerRef.current) clearInterval(streakTimerRef.current);
-            streakTimerRef.current = setInterval(() => {
-                if (showSessionSummaryRef.current) return; // skip if modal is open
-                // Pause streak counting while reader tour is active
-                if (!useOnboardingStore.getState().hasSeenReaderTour) {
-                    streakStartTimeRef.current = Date.now();
+        const startMasterClock = () => {
+            if (masterClockRef.current) clearInterval(masterClockRef.current);
+            masterClockRef.current = setInterval(() => {
+                // Pause conditions: tab hidden, reader tour active, or session summary modal open
+                if (document.hidden || !useOnboardingStore.getState().hasSeenReaderTour || showSessionSummaryRef.current) {
                     return;
                 }
 
-                streakElapsedRef.current += 1000;
-                const currentSeconds = Math.floor(streakElapsedRef.current / 1000);
+                // 1. Session wall-clock (for SessionSummaryModal)
+                masterActiveSecondsRef.current += 1;
 
-                // Log space activity every 60 seconds
-                if (streakElapsedRef.current % MINUTE_DURATION === 0) {
-                    console.log('[Apex Reader] 60 seconds passed - logging activity');
+                // 2. Cumulative today seconds
+                masterTodaySecondsRef.current += 1;
+
+                // 3. Every 60 seconds: write book reading time to Dexie
+                //    (this replaces what useReadingTimeTracker did)
+                if (masterTodaySecondsRef.current % 60 === 0) {
+                    if (typeof syncService.saveBookReadingTime === 'function') {
+                        syncService.saveBookReadingTime(bookId, book?.supabaseId, today, 1);
+                    } else {
+                        const currentBookId = bookId;
+                        const currentSupabaseId = book?.supabaseId;
+                        db.book_reading_time.where('[bookId+date]').equals([currentBookId, today]).first().then(existing => {
+                            if (existing) {
+                                db.book_reading_time.update(existing.id, { minutes: existing.minutes + 1, synced: 0 });
+                            } else {
+                                db.book_reading_time.add({ bookId: currentBookId, supabaseBookId: currentSupabaseId, date: today, minutes: 1, synced: 0 });
+                            }
+                        }).catch(err => console.error('[Master Clock] Failed to save book reading time:', err));
+
+                        if (currentSupabaseId) {
+                            db.sync_queue.add({
+                                action: 'increment',
+                                tableName: 'book_reading_time',
+                                local_id: crypto.randomUUID(),
+                                recordId: null,
+                                payload: { book_id: currentSupabaseId, date: today, minutes: 1 },
+                                createdAt: new Date().toISOString(),
+                                attempts: 0,
+                                status: 'pending',
+                            }).catch(err => console.error('[Master Clock] Failed to queue book reading time:', err));
+                        }
+                    }
+                    console.log('[Master Clock] Book reading minute logged. Total today seconds:', masterTodaySecondsRef.current);
+
+                    // Log space activity every 60 seconds if in an active space
                     if (activeSpaceId) {
                         logSpaceActivityRef.current(activeSpaceId, 'timeSpent', 1);
                     }
                 }
 
-                // Persist daily progress to Dexie & queue sync every 10 seconds
-                if (streakElapsedRef.current % 10000 === 0) {
-                    syncService.saveDailyStreakProgress(today, currentSeconds, streakFiredTodayRef.current);
+                // 4. Every 60 seconds: persist cumulative seconds to Dexie
+                if (masterTodaySecondsRef.current % 60 === 0) {
+                    const currentHistory = useStudyStore.getState().streakHistory || [];
+                    syncService.saveDailyStreakProgress(
+                        today,
+                        masterTodaySecondsRef.current,
+                        currentHistory.includes(today) // streak_fired = already in history
+                    );
                 }
 
-                // Streak triggers when accumulated time hits the threshold
-                if (streakElapsedRef.current >= STREAK_DURATION && !streakFiredTodayRef.current) {
-                    const lastFired = localStorage.getItem('apex_streak_fired_today');
-                    
-                    if (lastFired !== today) {
-                        // Triple-check: store might have been updated by a sync during reading
-                        if (useStudyStore.getState().isStreakFiredToday()) {
-                            streakFiredTodayRef.current = true;
-                            localStorage.setItem('apex_streak_fired_today', today);
-                            console.log('[Apex Streak] Store already has today — skipping duplicate fire');
-                        } else {
-                            updateStreakRef.current();
-                            streakFiredTodayRef.current = true;
-                            localStorage.setItem('apex_streak_fired_today', today);
+                // 5. Streak listener — fires once when threshold crossed
+                const thresholdSeconds = Math.max(2, streakThresholdMinutes) * 60;
+                const history = useStudyStore.getState().streakHistory || [];
+                if (
+                    masterTodaySecondsRef.current >= thresholdSeconds &&
+                    !history.includes(today)
+                ) {
+                    console.log('[Master Clock] Streak threshold reached. Calling updateStreak(). Today seconds:', masterTodaySecondsRef.current);
+                    updateStreakRef.current(); // The guard in updateStreak() prevents double-fire
 
-                            // Read AFTER the synchronous store mutation — authoritative snapshot
-                            const store = useStudyStore.getState();
-                            const { streakCelebrationEnabled = true } = useSettingsStore.getState();
-                            setCelebrationData({ streakCount: store.streakCount, streakHistory: store.streakHistory });
-                            if (streakCelebrationEnabled) {
-                                setShowStreakCelebration(true);
-                            }
-
-                            // Persist streak fired status
-                            syncService.saveDailyStreakProgress(today, currentSeconds, true);
-                        }
+                    // Read AFTER the synchronous store mutation for celebration snapshot
+                    const store = useStudyStore.getState();
+                    const { streakCelebrationEnabled = true } = useSettingsStore.getState();
+                    setCelebrationData({ streakCount: store.streakCount, streakHistory: store.streakHistory });
+                    if (streakCelebrationEnabled) {
+                        setShowStreakCelebration(true);
                     }
+
+                    // Persist streak fired status
+                    syncService.saveDailyStreakProgress(today, masterTodaySecondsRef.current, true);
                 }
-            }, 1000); // 1-second ticks for accurate pausing
+            }, 1000);
         };
 
         const handleVisibilityChange = () => {
-            const currentSeconds = Math.floor(streakElapsedRef.current / 1000);
             if (document.hidden) {
-                console.log('[Apex Reader] Tab hidden — pausing timer & saving progress');
-                clearInterval(streakTimerRef.current);
-                syncService.saveDailyStreakProgress(today, currentSeconds, streakFiredTodayRef.current);
-            } else {
-                // Only resume if Dexie has loaded — otherwise timer would track from 0
-                if (!dexieStreakLoadedRef.current) {
-                    console.log('[Apex Reader] Tab visible — but Dexie not loaded yet, skipping resume');
-                    return;
-                }
-                console.log('[Apex Reader] Tab visible — resuming timer');
-                runInterval();
+                const currentSeconds = masterTodaySecondsRef.current;
+                const currentHistory = useStudyStore.getState().streakHistory || [];
+                syncService.saveDailyStreakProgress(today, currentSeconds, currentHistory.includes(today));
+                console.log('[Master Clock] Tab hidden — saved progress:', currentSeconds, 's');
             }
         };
 
@@ -521,13 +469,17 @@ function ReaderView() {
 
         return () => {
             isCancelled = true;
-            clearInterval(streakTimerRef.current);
+            if (masterClockRef.current) {
+                clearInterval(masterClockRef.current);
+                masterClockRef.current = null;
+            }
             document.removeEventListener('visibilitychange', handleVisibilityChange);
-            const finalSeconds = Math.floor(streakElapsedRef.current / 1000);
-            syncService.saveDailyStreakProgress(today, finalSeconds, streakFiredTodayRef.current);
-            console.log(`[Apex Reader] Timer cleaned up — final saved progress: ${finalSeconds}s`);
+            const finalSeconds = masterTodaySecondsRef.current;
+            const finalHistory = useStudyStore.getState().streakHistory || [];
+            syncService.saveDailyStreakProgress(today, finalSeconds, finalHistory.includes(today));
+            console.log(`[Master Clock] Timer cleaned up — final saved progress: ${finalSeconds}s`);
         };
-    }, [isLoading, bookId, streakThresholdMinutes]);
+    }, [isLoading, bookId, streakThresholdMinutes, activeSpaceId]);
 
     const handleHighlight = (color) => {
         if (!book || !selectionRef.current.text) return;
@@ -1951,9 +1903,7 @@ function ReaderView() {
                         timeSpentSeconds={sessionStats.timeSpentSeconds}
                         breakdown={sessionStats.breakdown}
                         onClose={() => {
-                            // User confirmed exit — flush reading time + award XP now (fire and forget)
-                            flushSessionToQueue();
-
+                            // User confirmed exit — award XP now (fire and forget)
                             const minutesRead = Math.floor(sessionStats.timeSpentSeconds / 60);
                             if (minutesRead > 0) {
                                 useQuestStore.getState().reportAction('reading', minutesRead);
@@ -1969,10 +1919,8 @@ function ReaderView() {
                             setShowQuestSummary(true);
                         }}
                         onCancel={() => {
-                            // User clicked X — cancel exit, resume timer
+                            // User clicked X — cancel exit, resume master clock
                             setShowSessionSummary(false);
-                            sessionStartTime.current = Date.now();
-                            startTick();
                         }}
                         onStartQuiz={() => {
                             setShowSessionSummary(false);

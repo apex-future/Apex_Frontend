@@ -27,6 +27,7 @@ import NotFoundPage from './main_app/pages/NotFoundPage';
 import SharePage from './main_app/pages/SharePage';
 import soundManager from './utils/soundManager';
 import useOnlineStatus from './main_app/hooks/useOnlineStatus';
+import reconcileDailyStreak from './utils/streakReconciliation';
 
 function App() {
   const navigate = useNavigate();
@@ -141,6 +142,11 @@ function App() {
         useStudyStore.getState().seedFromSupabase(user);
         console.log('[Apex Streak] Store seeded from Supabase');
         useStudyStore.getState().checkStreakIntegrity();
+
+        const streakThresholdMinutes = useSettingsStore.getState().streakThresholdMinutes || 2;
+        console.log('[App Mount] Running streak reconciliation...');
+        reconcileDailyStreak(streakThresholdMinutes, useStudyStore);
+
         useSpaceStore.getState().syncExamReminders();
 
         // Seed XP store from server (non-blocking, runs in background)
@@ -207,6 +213,9 @@ function App() {
                 useStudyStore.getState().seedFromSupabase(freshUser);
                 useStudyStore.getState().checkStreakIntegrity();
                 console.log('[Apex Streak] Re-seeded from full pull data');
+                const freshThreshold = useSettingsStore.getState().streakThresholdMinutes || 2;
+                console.log('[App Mount] Running streak reconciliation...');
+                reconcileDailyStreak(freshThreshold, useStudyStore);
               }
 
               // Streak safety net — server reconciles streak from history

@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import BookCover from '../../books/BookCover';
+import BookCover from '../../ui/BookCover';
 import apiClient from '../../../services/apiClient';
 import { CoverageCard, StudyTimeCard, QuizCard, CalendarActivityCard } from './SpaceAnalyticsParts';
 

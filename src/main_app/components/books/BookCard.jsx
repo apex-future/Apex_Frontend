@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Heart, Eye, FolderSimplePlus, Trash, X, Info, PencilSimple, CaretDoubleLeft, ShareNetwork } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
-import BookCover from './BookCover';
+import BookCover from '../ui/BookCover';
 import Modal from '../ui/Modal';
 import ShareModal from '../ui/ShareModal';
 import { BookContext } from '../../context/BookContextInstance';
@@ -173,28 +173,16 @@ export default function BookCard({ book, onClick }) {
  >
  <div className="flex flex-row gap-4">
  {/* Cover - Left Side */}
- <div className="relative w-28 h-40 flex-shrink-0">
- {/* Inner image container — overflow-hidden clips the hover rotation */}
- <div className="w-full h-full rounded-lg overflow-hidden shadow-sm bg-white">
- {book.cover ? (
- <img
- src={book.cover}
- alt={book.title}
- className="w-full h-full object-cover"
- />
- ) : (
- <BookCover
- title={book.title}
- author={book.author}
- className="w-full h-full"
- />
- )}
-
- {/* Status Badge */}
- <span className={`absolute top-1 left-1 text-[8px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${statusStyles[book.status] || 'bg-gray-100'}`}>
- {book.status}
- </span>
- </div>
+ <div className="relative flex-shrink-0">
+   <BookCover
+     book={book}
+     size="md"
+     badge={
+       <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${statusStyles[book.status] || 'bg-gray-100'}`}>
+         {book.status}
+       </span>
+     }
+   />
 
  {/* Sync status indicator — outside the clipping wrapper so it's never hidden */}
  {(book.sync_status === 'pending' || book.sync_status === 'failed') && (

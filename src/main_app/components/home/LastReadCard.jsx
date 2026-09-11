@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import BookCover from '../books/BookCover';
+import BookCover from '../ui/BookCover';
 import Card from '../ui/Card';
 import WeeklyGoldenBar from '../quests/WeeklyGoldenBar';
 import useOnboardingStore from '../../store/useOnboardingStore';
@@ -64,15 +64,7 @@ const LastReadCard = ({ book, isLoading }) => {
                 >
                     <div className="flex flex-row gap-4">
                         {/* Cover - Left Side */}
-                        <div className="relative w-28 h-40 flex-shrink-0">
-                            <div className="w-full h-full rounded-lg overflow-hidden shadow-sm bg-white">
-                                {book.cover ? (
-                                    <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
-                                ) : (
-                                    <BookCover title={book.title} author={book.author} className="w-full h-full" />
-                                )}
-                            </div>
-                        </div>
+                        <BookCover book={book} size="md" className="flex-shrink-0" />
 
                         {/* Info - Right Side */}
                         <div className="flex-1 flex flex-col justify-between min-w-0">
