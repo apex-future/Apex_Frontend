@@ -1,12 +1,14 @@
 import { List, Plus, Bell, Crown } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { NavBarContext } from './NavBarContextInstance';
 import CharacterImg from '../../../../assets/Characters/Character1.png';
 import Button from '../../ui/Button';
+import PricingModal from '../../modals/PricingModal';
 
 function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery, isAsideExpanded }) {
   const { setIsNotificationOpen, unreadNotificationCount } = useContext(NavBarContext) || {};
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleFileChange = (e) => {
@@ -35,16 +37,17 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery, isA
             <List size={20} weight="regular" />
           </button>
 
-          {/* Go Pro Premium Badge */}
+          {/* Upgrade Premium Badge */}
           <div className="flex items-center px-1 py-1 rounded-full bg-white/15 dark:bg-white/5 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             <button 
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-amber-400 hover:text-amber-300 transition-all duration-300 group"
-              aria-label="Go Pro"
-              title="Go Pro"
+              aria-label="Upgrade"
+              title="Upgrade"
+              onClick={() => setIsPricingOpen(true)}
             >
               <Crown size={15} weight="fill" className="text-amber-500 group-hover:scale-110 transition-transform duration-300" />
               <span className="text-xs font-semibold tracking-wide uppercase">
-                Go Pro
+                Upgrade
               </span>
             </button>
           </div>
@@ -107,6 +110,8 @@ function TopNavBar({ setIsMobileOpen, onUpload, searchQuery, setSearchQuery, isA
         </div>
 
       </div>
+
+      <PricingModal isOpen={isPricingOpen} onClose={() => setIsPricingOpen(false)} />
     </nav>
   )
 }
