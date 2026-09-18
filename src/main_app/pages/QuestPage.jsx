@@ -500,7 +500,8 @@ export default function QuestPage() {
         <EmptyState
           icon={Scroll}
           title="Couldn't load quests"
-          message={error}
+          description={`${error} (If you're on desktop, an adblocker might be blocking the request.)`}
+          action={{ label: "Retry", onClick: () => { setError(null); fetchQuests(); } }}
         />
       </div>
     );

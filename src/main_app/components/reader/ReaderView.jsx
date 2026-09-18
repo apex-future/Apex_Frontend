@@ -493,8 +493,10 @@ function ReaderView() {
             addedAt: new Date().toISOString()
         });
         setShowHighlightMenu(false);
-        // Clear browser selection
-        window.getSelection().removeAllRanges();
+        // Clear browser selection smoothly after React renders the highlight
+        setTimeout(() => {
+            window.getSelection()?.removeAllRanges();
+        }, 150);
     };
 
     const simplifications = book?.metadata?.simplifications || [];

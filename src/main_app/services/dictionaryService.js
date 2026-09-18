@@ -93,14 +93,13 @@ const dictionaryService = {
       }
     }
 
-    // Step 4: If word was not found in standard dictionary (404, rate-limited, or timed out), route to AI (Groq/Gemini) fallback
     if (!definition) {
       try {
         if (import.meta.env.DEV) console.log(`Routing word "${cleanWord}" to AI dictionary definition fallback...`);
         const aiResponse = await apiClient.post('/api/ai/define', {
           word: cleanWord,
           book_id: bookId || null,
-        });
+        }, { timeout: 8000 });
 
         if (aiResponse.data) {
           definition = Array.isArray(aiResponse.data) ? aiResponse.data : [aiResponse.data];

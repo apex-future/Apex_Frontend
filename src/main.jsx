@@ -38,7 +38,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!refreshing) {
       refreshing = true;
-      window.location.reload();
+      // window.location.reload(); // Disabled to prevent sudden refreshes during active sessions
     }
   });
 }
