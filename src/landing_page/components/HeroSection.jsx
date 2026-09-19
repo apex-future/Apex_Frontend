@@ -1,91 +1,90 @@
-import React from 'react'
-import { TextB } from '@phosphor-icons/react'
-import { Link } from 'react-router-dom'
+import React, { useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { TextPlugin } from 'gsap/TextPlugin';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import heroImg from "../../assets/e-book-dashboard.jpg"
+import heroImg from "../../assets/apex_dashbaord.png";
 
-gsap.registerPlugin(TextPlugin, ScrollTrigger);
-
+gsap.registerPlugin(ScrollTrigger);
 
 function HeroSection() {
-    useGSAP(() => {
-        gsap.to(".apex", {
-            text: "Apex",
-            duration: 2
-        })
-    }, [])
-    useGSAP(() => {
-        // Text and buttons slide from left
-        gsap.from(".hero-header, .CTA-buttons", {
-            x: -100,
-            opacity: 0,
-            duration: 1.2,
-            ease: "back.out(1.2)",
-            stagger: 0.2
-        });
+    const sectionRef = useRef(null);
 
-        // Image slides from right
-        gsap.fromTo(".hero-img-wrapper",
-            {
-                x: 100,
-                opacity: 0
-            },
-            {
-                x: 0,
-                opacity: 1,
-                duration: 1.2,
-                ease: "back.out(1.2)"
-            }
-        )
-    }, [])
+    useGSAP(() => {
+        const tl = gsap.timeline({ defaults: { ease: "apple", duration: 1 } });
+        
+        // Text reveals
+        tl.fromTo(".hero-tag", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.6 })
+          .fromTo(".hero-headline", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.4")
+          .fromTo(".hero-subhead", { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.6")
+          .fromTo(".hero-ctas", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.6")
+          .fromTo(".hero-image", { opacity: 0, scale: 0.96, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 1.2, ease: "spring" }, "-=0.4");
+    }, { scope: sectionRef });
+
     return (
-        <section className=' w-full relative pt-24 md:pt-32 overflow-hidden' id='hero' aria-labelledby="hero-heading">
-
-            <div className="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:16px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" aria-hidden="true"></div>
-
-            <div className='hero-section-content p-4 gap-4 flex flex-col md:gap-6 relative z-[50]'>
-                <div className='hero-header flex flex-col gap-2'>
-                    <div className='tagline-wrapper flex justify-center'>
-                        <span className='inline-flex items-center gap-2 bg-accent-primary/10 text-accent-primary font-semibold border border-accent-primary/20 py-1.5 px-4 rounded-full text-xs sm:text-sm tracking-wider backdrop-blur-sm'>
-                            <span className='relative flex h-2 w-2' aria-hidden="true">
-                                <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-primary opacity-75'></span>
-                                <span className='relative inline-flex rounded-full h-2 w-2 bg-accent-primary'></span>
-                            </span>
-                            MVP Live
-                        </span>
-                    </div>
-                    <div className='text-content max-w-[800px] mx-auto'>
-                        <h1 id="hero-heading" className='text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight sm:leading-snug md:leading-snug text-center font-display'>Stop Studying In Tabs
-                            <br></br>
-                            Enter Your <span className='inline-flex items-center'>
-                                <span className='apex italic px-2 inline-block h-[1.3em] py-0 bg-accent-primary/30' aria-label="Apex"> </span>
-                                <span className='inline-block sm:w-1 w-[0.1em] h-[1em] sm:h-[1.2em] bg-accent-primary ml-1 animate-blink' aria-hidden="true"></span>
-                            </span>
-                        </h1>
-                        <p className='text-center p-4 text-text-primary sm:text-lg text-secondary md:text-xl max-w-2xl mx-auto leading-relaxed'>One space to read, understand, and retain — without the noise.</p>
-                    </div>
-                </div>
+        <section ref={sectionRef} className='w-full relative pt-28 md:pt-40 pb-16 md:pb-32 overflow-hidden' id='hero' aria-labelledby="hero-heading">
+            {/* Subtle background ambient glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-brand-subtle rounded-full blur-[120px] opacity-50 pointer-events-none" aria-hidden="true" />
+            
+            <div className='max-w-[1200px] mx-auto px-6 relative z-10 flex flex-col items-center text-center'>
                 
-                <div className="flex flex-col items-center gap-2">
-                    <div className="CTA-buttons flex flex-col mx-auto w-full sm:flex-row justify-center items-center gap-4">
-                        <Link to="/signup" className='p-4 rounded-full w-full sm:w-1/2 max-w-[272px] border-2 px-6 text-center hover:bg-black hover:text-white text-white border-subtle bg-accent-primary font-medium md:text-lg cursor-pointer transition-all duration-200 '>Get Started</Link>
-                        <a className=" p-4 px-6  w-full text-center rounded-full max-w-[272px] shadow-md md:text-lg sm:w-1/2 font-medium border-2   border-subtle bg-bg-elevated  hover:bg-black hover:text-white cursor-pointer transition-all duration-200 " href="#features" onClick={(e) => {
-                            e.preventDefault();
-                            document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                        }}>Learn More</a>
-                    </div>
+                {/* Tag */}
+                <div className='hero-tag mb-8'>
+                    <span className='inline-flex items-center gap-2 bg-surface-raised/50 text-text-secondary font-medium border border-border-default/10 py-1.5 px-4 rounded-full text-xs sm:text-sm tracking-wide'>
+                        <span className='relative flex h-2 w-2' aria-hidden="true">
+                            <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75'></span>
+                            <span className='relative inline-flex rounded-full h-2 w-2 bg-brand'></span>
+                        </span>
+                        Apex is currently in Beta
+                    </span>
                 </div>
-                <div className="img-content overflow-hidden relative z-[50] p-4">
-                    <div className="hero-img-wrapper">
-                        <img src={heroImg} alt="Apex dashboard showing E-book reader interface" className="hero-img z-[50] rounded-2xl mx-auto hover:rotate-2 duration-300 transition-all  shadow-lg" loading="eager" />
-                    </div>
+
+                {/* Typography Focus */}
+                <h1 id="hero-heading" className='hero-headline text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] font-bold text-text-primary leading-[1.05] tracking-tight font-display max-w-[900px]'>
+                    Turn reading into <br className="hidden sm:block" />
+                    <span className="text-transparent bg-clip-text bg-brand-gradient">real understanding.</span>
+                </h1>
+                
+                <p className='hero-subhead mt-6 text-text-secondary text-lg md:text-xl max-w-[600px] leading-relaxed font-sans'>
+                    Read, understand, practice, and track your progress — all in one focused learning environment.
+                </p>
+
+                {/* CTAs */}
+                <div className="hero-ctas mt-10 flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+                    <Link to="/signup" className='aura-btn-primary px-8 py-4 w-full sm:w-auto text-center text-lg shadow-aura-sm'>
+                        Start learning
+                    </Link>
+                    <a href="#problem-section" onClick={(e) => {
+                            e.preventDefault();
+                            document.getElementById('problem-section')?.scrollIntoView({ behavior: 'smooth' });
+                        }} className="aura-btn-secondary px-8 py-4 w-full sm:w-auto text-center text-lg">
+                        See how Apex works
+                    </a>
                 </div>
             </div>
+
+            {/* Product Visual - Asymmetric / Bleeding edge */}
+            <div className="hero-image relative mt-20 md:mt-32 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 perspective-1000">
+                <div className="relative rounded-2xl md:rounded-[2rem] overflow-hidden border border-border-default/10 shadow-aura-lg bg-surface-card">
+                    {/* Simulated Mac OS window top bar for UI realism */}
+                    <div className="h-10 w-full bg-surface-raised flex items-center px-4 gap-2 border-b border-border-default/10">
+                        <div className="w-3 h-3 rounded-full bg-text-placeholder/30"></div>
+                        <div className="w-3 h-3 rounded-full bg-text-placeholder/30"></div>
+                        <div className="w-3 h-3 rounded-full bg-text-placeholder/30"></div>
+                    </div>
+                    <img 
+                        src={heroImg} 
+                        alt="Apex Reader Interface showing highlights and AI companion" 
+                        className="w-full object-cover object-top"
+                        loading="eager" 
+                    />
+                    {/* Subtle inner overlay for blending */}
+                    <div className="absolute inset-0 ring-1 ring-inset ring-white/5 rounded-[inherit] pointer-events-none" />
+                </div>
+            </div>
+            
         </section>
-    )
+    );
 }
 
-export default HeroSection
+export default HeroSection;

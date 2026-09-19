@@ -1,107 +1,101 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { TwitterLogo, LinkedinLogo, InstagramLogo } from '@phosphor-icons/react'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { TwitterLogo, LinkedinLogo, InstagramLogo } from '@phosphor-icons/react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TextPlugin } from 'gsap/TextPlugin';
+import logoLight from "../../assets/logo/logo-dark-removebg-preview.png";
 
 gsap.registerPlugin(TextPlugin, ScrollTrigger);
 
 function Footer() {
   useGSAP(() => {
     gsap.to(".brand-name", {
-      text: "APEX", // <-- This is what the text will animate to
+      text: "APEX", 
       duration: 2,
       scrollTrigger: {
-        trigger: ".brand-name", // Animate when this element enters the viewport
-        start: "top 80%",       // When the top of the element hits 80% of viewport
-        end: "top 60%",         // Optional: end scroll position
-        toggleActions: "play none none none", // Only play once
+        trigger: ".brand-name", 
+        start: "top 80%",       
+        end: "top 60%",         
+        toggleActions: "play none none none", 
       },
     });
   }, []);
 
   return (
-    <footer className='bg-black pt-8 p-4 overflow-hidden relative' aria-label="Site Footer">
+    <footer className='bg-surface-base pt-16 pb-8 px-6 overflow-hidden relative border-t border-border-default/5' aria-label="Site Footer">
 
-
-
-      <div className=" pointer-events-none absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:16px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" aria-hidden="true"></div>
-      <div className="main-footer relative  z-[10]">
-        <div className="brand-name pointer-events-none  absolute top-0 text-[12rem] sm:text-[17rem] text-transparent italic [-webkit-text-stroke:1px_rgba(192,192,192,0.4)]
-  [mask-image:linear-gradient(to_bottom,black_50%,transparent_100%)]
-  blur-[1px] font-display" aria-hidden="true">
-          
+      <div className="main-footer relative z-[10]">
+        <div className="brand-name pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 text-[8rem] sm:text-[12rem] lg:text-[16rem] text-transparent italic [-webkit-text-stroke:1px_rgba(255,255,255,0.03)] font-display select-none" aria-hidden="true">
         </div>
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid sm:grid-cols-4 gap-10">
+
+        <div className="max-w-[1200px] mx-auto relative z-20 pt-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 lg:gap-24">
       
-      {/* Column 1: Brand */}
-      <div>
-        <div className="flex items-center gap-2 mb-6">
-          {/* Logo */}
-          <span className="font-display text-2xl font-bold text-white">Apex</span>
-        </div>
-        <p className="text-text-dark-secondary text-sm md:text-base mb-6">
-          Study smarter. <span className="text-purple-500">  Reach your apex. </span>
-        </p>
-        {/* Social Links */}
-        <nav className="flex gap-4" aria-label="Social Media Links">
-          <a href="https://x.com/apex_future_" className="text-text-dark-secondary hover:text-accent-primary transition-colors" aria-label="Follow Apex on Twitter">
-           
-            <TwitterLogo className="w-5 h-5" aria-hidden="true" weight="fill" />
-          </a>
-          <a href="#" className="text-text-dark-secondary hover:text-accent-primary transition-colors" aria-label="Follow Apex on Instagram">
-            <InstagramLogo className="w-5 h-5" aria-hidden="true" weight="fill" />
-          </a>
-          <a href="#" className="text-text-dark-secondary hover:text-accent-primary transition-colors" aria-label="Follow Apex on LinkedIn">
-            <LinkedinLogo className="w-5 h-5" aria-hidden="true" weight="fill" />
-          </a>
-        </nav>
-      </div>
+            {/* Column 1: Brand */}
+            <div className="flex flex-col gap-6">
+              <a href="#hero" className="inline-block">
+                <img src={logoLight} alt="Apex Logo" className="h-8 object-contain" />
+              </a>
+              <p className="text-text-secondary text-sm md:text-base leading-relaxed font-sans">
+                Stop jumping between tools. <br/>Start understanding.
+              </p>
+              {/* Social Links */}
+              <nav className="flex gap-4 mt-2" aria-label="Social Media Links">
+                <a href="https://x.com/apex_future_" className="text-text-tertiary hover:text-text-primary transition-colors p-2 -ml-2 rounded-full hover:bg-surface-raised" aria-label="Follow Apex on Twitter">
+                  <TwitterLogo className="w-5 h-5" aria-hidden="true" weight="fill" />
+                </a>
+                <a href="#" className="text-text-tertiary hover:text-text-primary transition-colors p-2 rounded-full hover:bg-surface-raised" aria-label="Follow Apex on Instagram">
+                  <InstagramLogo className="w-5 h-5" aria-hidden="true" weight="fill" />
+                </a>
+                <a href="#" className="text-text-tertiary hover:text-text-primary transition-colors p-2 rounded-full hover:bg-surface-raised" aria-label="Follow Apex on LinkedIn">
+                  <LinkedinLogo className="w-5 h-5" aria-hidden="true" weight="fill" />
+                </a>
+              </nav>
+            </div>
 
-      {/* Column 2: Product */}
+            {/* Column 2: Product */}
             <div>
-              <h3 className="font-display text-white font-semibold mb-4 text-lg">Product</h3>
-              <ul className="space-y-2 text-sm md:text-base text-text-dark-secondary">
-                <li><a href="#features" className="hover:text-accent-primary transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="hover:text-accent-primary transition-colors">How It Works</a></li>
-                <li><a href="#pricing" className="hover:text-accent-primary transition-colors">Pricing</a></li>
-                <li><a href="#roadmap" className="hover:text-accent-primary transition-colors">Roadmap</a></li>
-                <li><a href="#changelog" className="hover:text-accent-primary transition-colors">Changelog</a></li>
+              <h3 className="font-display text-text-primary font-semibold mb-6 uppercase tracking-wider text-sm">Product</h3>
+              <ul className="flex flex-col gap-4 text-sm md:text-base text-text-secondary font-sans">
+                <li><a href="#reading-experience" className="hover:text-brand transition-colors">Features</a></li>
+                <li><a href="#problem-section" className="hover:text-brand transition-colors">Why Apex</a></li>
+                <li><Link to="/login" className="hover:text-brand transition-colors">Sign In</Link></li>
+                <li><Link to="/signup" className="hover:text-brand transition-colors">Get Started</Link></li>
               </ul>
             </div>
 
             {/* Column 3: Company */}
             <div>
-              <h3 className="font-display text-white font-semibold mb-4 text-lg">Company</h3>
-              <ul className="space-y-2 text-sm  md:text-base text-text-dark-secondary">
-                <li><a href="#about" className="hover:text-accent-primary transition-colors">About Us</a></li>
-                <li><a href="#mission" className="hover:text-accent-primary transition-colors">Mission & Vision</a></li>
-                <li><a href="#blog" className="hover:text-accent-primary transition-colors">Blog</a></li>
-                <li><a href="#contact" className="hover:text-accent-primary transition-colors">Contact</a></li>
+              <h3 className="font-display text-text-primary font-semibold mb-6 uppercase tracking-wider text-sm">Company</h3>
+              <ul className="flex flex-col gap-4 text-sm md:text-base text-text-secondary font-sans">
+                <li><a href="#about" className="hover:text-brand transition-colors">About Us</a></li>
+                <li><a href="#" className="hover:text-brand transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-brand transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-brand transition-colors">Contact</a></li>
               </ul>
             </div>
 
             {/* Column 4: Support & Legal */}
             <div>
-              <h3 className="font-display text-white font-semibold mb-6 text-lg">Support</h3>
-              <ul className="space-y-2 text-sm md:text-base text-text-dark-secondary">
-                <li><a href="#faq" className="hover:text-accent-primary transition-colors">FAQ</a></li>
-                <li><a href="#help" className="hover:text-accent-primary transition-colors">Help Center</a></li>
-                <li><a href="#contact" className="hover:text-accent-primary transition-colors">Contact Support</a></li>
-                <li><Link to="/privacy" className="hover:text-accent-primary transition-colors">Privacy Policy</Link></li>
-                <li><a href="#terms" className="hover:text-accent-primary transition-colors">Terms of Service</a></li>
-                <li><Link to="/accessibility" className="hover:text-accent-primary transition-colors">Accessibility</Link></li>
+              <h3 className="font-display text-text-primary font-semibold mb-6 uppercase tracking-wider text-sm">Support</h3>
+              <ul className="flex flex-col gap-4 text-sm md:text-base text-text-secondary font-sans">
+                <li><a href="#faq" className="hover:text-brand transition-colors">FAQ</a></li>
+                <li><a href="#" className="hover:text-brand transition-colors">Help Center</a></li>
+                <li><Link to="/privacy" className="hover:text-brand transition-colors">Privacy Policy</Link></li>
+                <li><a href="#" className="hover:text-brand transition-colors">Terms of Service</a></li>
               </ul>
             </div>
 
           </div>
 
           {/* Bottom Bar */}
-          <div className="border-t border-border-default/20 mt-16 pt-8 text-center text-sm text-text-dark-tertiary">
-            <p>&copy; 2026 Apex. All rights reserved.</p>
+          <div className="border-t border-border-default/10 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-text-tertiary font-sans">
+            <p>&copy; {new Date().getFullYear()} Apex Education. All rights reserved.</p>
+            <div className="flex gap-6">
+              <span>Made for ambitious students.</span>
+            </div>
           </div>
         </div>
       </div>
@@ -109,4 +103,4 @@ function Footer() {
   )
 }
 
-export default Footer
+export default Footer;

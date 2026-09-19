@@ -1,7 +1,6 @@
-import React, { useState, useRef } from 'react'
-import logoLight from "../../assets/logo/logo-light.jpg"
+import React, { useState, useRef } from 'react';
+import logoLight from "../../assets/logo/logo-dark-removebg-preview.png"; // Using the dark theme logo
 import { List, X } from '@phosphor-icons/react';
-
 import { Link } from 'react-router-dom';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -21,8 +20,8 @@ function NavBar() {
             }, {
                 x: 0,
                 opacity: 1,
-                duration: 0.8,
-                ease: "power3.out"
+                duration: 0.6,
+                ease: "apple"
             })
         }
     }, [asideIsOpen])
@@ -31,18 +30,21 @@ function NavBar() {
     const closeAside = () => setAsideIsOpen(false)
 
     return (
-        <div className='w-full nav-div p-4 py-4 fixed z-[100]'>
-            <nav className='sm:w-[80%] w-[90%] justify-between p-4 mx-auto flex items-center backdrop-blur-md shadow-sm h-full bg-white/50 rounded-full border-2 border-default' aria-label="Main Navigation">
+        <div className='w-full nav-div p-4 py-6 fixed z-[100] top-0'>
+            <nav className='max-w-[1200px] w-[90%] justify-between px-6 py-4 mx-auto flex items-center backdrop-blur-2xl shadow-aura-sm h-full bg-surface-overlay/80 rounded-full border-t border-border-default/10' aria-label="Main Navigation">
+                
+                {/* Logo */}
                 <div>
                     <a href="#hero" aria-label="Apex Home">
-                        <img className="size-8 rounded-full" alt="Apex Logo" src={logoLight} />
+                        <img className="h-8 object-contain" alt="Apex Logo" src={logoLight} />
                     </a>
                 </div>
 
+                {/* Mobile Hamburger */}
                 <div className="nav-icon md:hidden">
                     <button 
                         onClick={openAside} 
-                        className="cursor-pointer p-2 hover:bg-neutral-100 rounded-full transition-colors"
+                        className="cursor-pointer p-2 hover:bg-surface-raised rounded-full transition-colors text-text-primary"
                         aria-label="Open navigation menu"
                         aria-expanded={asideIsOpen}
                         aria-controls="mobile-menu"
@@ -51,30 +53,31 @@ function NavBar() {
                     </button>
                 </div>
 
-                <ul className='md:flex hidden items-center gap-8 px-5 '>
-                    <li className='font-medium relative group cursor-pointer'>
-                        <a href="#features" className='group-hover:text-accent-primary transition-colors duration-300'>Features</a>
-                        <span className="absolute bottom-[-4px] left-0 w-0 h-0.5 bg-accent-primary transition-all duration-300 group-hover:w-full" aria-hidden="true"></span>
+                {/* Desktop Links */}
+                <ul className='md:flex hidden items-center gap-8 px-5'>
+                    <li className='font-sans text-sm font-medium text-text-secondary hover:text-text-primary transition-colors duration-200 cursor-pointer'>
+                        <a href="#problem-section">Why Apex</a>
                     </li>
-                    <li className='font-medium relative group cursor-pointer'>
-                        <a href="#about" className='group-hover:text-accent-primary transition-colors duration-300'>About</a>
-                        <span className="absolute bottom-[-4px] left-0 w-0 h-0.5 bg-accent-primary transition-all duration-300 group-hover:w-full" aria-hidden="true"></span>
+                    <li className='font-sans text-sm font-medium text-text-secondary hover:text-text-primary transition-colors duration-200 cursor-pointer'>
+                        <a href="#reading-experience">Features</a>
                     </li>
-                    <li className='font-medium relative group cursor-pointer'>
-                        <a href="#faq" className='group-hover:text-accent-primary transition-colors duration-300'>FAQ</a>
-                        <span className="absolute bottom-[-4px] left-0 w-0 h-0.5 bg-accent-primary transition-all duration-300 group-hover:w-full" aria-hidden="true"></span>
+                    <li className='font-sans text-sm font-medium text-text-secondary hover:text-text-primary transition-colors duration-200 cursor-pointer'>
+                        <a href="#faq">FAQ</a>
                     </li>
                 </ul>
+
+                {/* Desktop CTA */}
                 <div className="nav-bar-cta hidden md:flex items-center gap-4">
-                    <Link to="/login" className='text-neutral-700 font-semibold hover:text-accent-primary transition-colors'>Sign In</Link>
-                    <Link to="/signup" className='p-3 rounded-full px-6 text-center text-white bg-accent-primary font-medium transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--accent-primary-rgb),0.5)] hover:bg-opacity-90 active:scale-95 inline-block'>Get Started</Link>
+                    <Link to="/login" className='text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors'>Sign In</Link>
+                    <Link to="/signup" className='aura-btn-primary px-6 py-2.5 text-sm shadow-aura-sm'>Start learning</Link>
                 </div>
             </nav>
 
+            {/* Mobile Aside */}
             {asideIsOpen &&
                 <aside 
                     id="mobile-menu"
-                    className='aside-bar fixed inset-0 z-[150] max-h-screen w-full p-4 flex bg-[rgb(8,9,12)] flex-col gap-8' 
+                    className='aside-bar fixed inset-0 z-[150] max-h-screen w-full p-4 flex bg-surface-base flex-col gap-8' 
                     ref={asideRef}
                     role="dialog"
                     aria-modal="true"
@@ -82,33 +85,36 @@ function NavBar() {
                 >
                     <button 
                         onClick={closeAside} 
-                        className='md:hidden text-white cursor-pointer hover:text-accent-primary transition-colors p-2 self-start'
+                        className='md:hidden text-text-primary cursor-pointer hover:bg-surface-raised rounded-full transition-colors p-2 self-end'
                         aria-label="Close navigation menu"
                     >
                         <X size={24} weight="bold" />
                     </button>
-                    <div className='flex flex-col justify-between h-full pb-5'>
+                    <div className='flex flex-col justify-between h-full pb-10'>
                         <nav aria-label="Mobile Navigation Links">
-                            <ul className='flex flex-col gap-4 px-5'>
-                                <li className='text-white text-lg font-medium hover:text-accent-primary transition-colors duration-200'> 
-                                    <a href="#features" onClick={closeAside}>Features </a> 
+                            <ul className='flex flex-col gap-6 px-5'>
+                                <li className='text-text-primary font-display text-2xl font-medium hover:text-brand transition-colors duration-200'> 
+                                    <a href="#problem-section" onClick={closeAside}>Why Apex</a> 
                                 </li>
-                                <li className='text-white text-lg font-medium hover:text-accent-primary transition-colors duration-200'> 
-                                    <a href="#about" onClick={closeAside}>About </a> 
+                                <li className='text-text-primary font-display text-2xl font-medium hover:text-brand transition-colors duration-200'> 
+                                    <a href="#reading-experience" onClick={closeAside}>Features</a> 
                                 </li>
-                                <li className='text-white text-lg font-medium hover:text-accent-primary transition-colors duration-200'> 
+                                <li className='text-text-primary font-display text-2xl font-medium hover:text-brand transition-colors duration-200'> 
                                     <a href="#faq" onClick={closeAside}>FAQ</a> 
+                                </li>
+                                <li className='text-text-primary font-display text-2xl font-medium hover:text-brand transition-colors duration-200 mt-4 pt-4 border-t border-border-default/10'> 
+                                    <Link to="/login" onClick={closeAside}>Sign In</Link> 
                                 </li>
                             </ul>
                         </nav>
 
-                        <div className='h-12'>
-                            <Link to="/signup" className='p-4 rounded-full w-[272px] px-7 text-center text-white bg-accent-primary font-medium block mx-auto hover:bg-opacity-90 active:scale-95 transition-all' onClick={closeAside}>Get Started</Link>
+                        <div className='px-5'>
+                            <Link to="/signup" className='aura-btn-primary w-full py-4 text-center text-lg block shadow-aura-sm' onClick={closeAside}>Start learning</Link>
                         </div>
                     </div>
                 </aside>}
         </div>
-    )
+    );
 }
 
-export default NavBar
+export default NavBar;
