@@ -522,7 +522,7 @@ const PDFReader = ({
 
     for (const h of pageHighlights) {
       const text = h.text || h.highlightedText || '';
-      let color = h.color || '#fef08a';
+      let color = h.color || '#fde047';
       const isSimplified = h.isSimplified === true;
       const isDictionary = h.isDictionaryWord === true;
       const isTab = h.isTab === true;

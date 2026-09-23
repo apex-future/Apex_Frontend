@@ -393,7 +393,7 @@ function HighlightMenu({ selection, position, onAskAI, onSimplify, bookId, onSav
                         </div>
 
                         <div id="tour-colors" className="flex items-center justify-center gap-4 p-3 bg-bg-subtle/50 border-t border-gray-200 dark:border-neutral-800/80">
-                            {['#d1d5db', '#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff'].map(color => (
+                            {['#9ca3af', '#fde047', '#4ade80', '#60a5fa', '#c084fc', '#f87171'].map(color => (
                                 <button
                                     key={color}
                                     onClick={() => onHighlight?.(color)}

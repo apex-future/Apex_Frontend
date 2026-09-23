@@ -38,13 +38,13 @@ function HighlightsView({ highlights = [], onJumpTo, onRemove, onUpdateColor, bo
   const [filterColor, setFilterColor] = useState('all');
   const [sortOrder, setSortOrder] = useState('none');
 
-  const ALL_COLORS = ['#d1d5db', '#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff'];
+  const ALL_COLORS = ['#9ca3af', '#fde047', '#4ade80', '#60a5fa', '#c084fc', '#f87171'];
 
   const displayedHighlights = useMemo(() => {
     let result = [...highlights];
 
     if (filterColor !== 'all') {
-      result = result.filter(h => (h.color || '#fef08a') === filterColor);
+      result = result.filter(h => (h.color || '#fde047') === filterColor);
     }
 
     if (sortOrder === 'page_asc') {
@@ -140,7 +140,7 @@ function HighlightsView({ highlights = [], onJumpTo, onRemove, onUpdateColor, bo
         const page = h.page || h.pageNumber;
         const text = h.text || h.highlightedText || '';
         const displayText = text.length > 80 ? text.slice(0, 80) + '…' : text;
-        const color = h.color || '#fef08a';
+        const color = h.color || '#fde047';
         const highlightKey = h.id || h.dexieId || h.supabaseId;
         const isEditing = editingHighlightId === highlightKey;
 

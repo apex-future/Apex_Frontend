@@ -91,7 +91,7 @@ export default function HighlightShareModal({ isOpen, onClose, highlight, book }
     const [bookShareUrl, setBookShareUrl] = useState('');
 
     const highlightText = highlight?.text || highlight?.highlightedText || '';
-    const highlightColor = highlight?.color || '#fef08a';
+    const highlightColor = highlight?.color || '#fde047';
     const pageNumber = highlight?.page || highlight?.pageNumber || null;
     const bookTitle = book?.title || 'Unknown Title';
     const bookAuthor = isValidAuthor(book?.author) ? book.author : '';

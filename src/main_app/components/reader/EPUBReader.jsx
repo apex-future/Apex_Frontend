@@ -635,7 +635,7 @@ function EPUBReader({
             {},
             undefined,
             'apex-epub-highlight',
-            { fill: h.color || '#fef08a', 'fill-opacity': '0.35' }
+            { fill: h.color || '#fde047', 'fill-opacity': '0.35' }
           );
         } catch (_) {}
       }
