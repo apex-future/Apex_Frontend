@@ -206,9 +206,14 @@ function EPUBReader({
       // In vertical continuous mode:
       // 1. Disable epubjs aggressive trimming so previously rendered chapters stay in the DOM.
       //    This prevents destructive prepend/counter cycles that snap upward scrolling back down.
+      //    HOWEVER, disabling trim causes massive DOM bloat and "Aw, Snap!" OOM crashes on mobile
+      //    for large books. We only apply this hack on desktop where RAM is plentiful.
       // 2. Guard counter() against unwanted scroll pushes when already near top.
       if (isVertical && rendition.manager) {
-        rendition.manager.trim = () => Promise.resolve();
+        const isMobile = window.innerWidth < 1024;
+        if (!isMobile) {
+          rendition.manager.trim = () => Promise.resolve();
+        }
         const origCounter = rendition.manager.counter?.bind(rendition.manager);
         if (origCounter) {
           rendition.manager.counter = function (bounds) {

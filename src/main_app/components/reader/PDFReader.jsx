@@ -266,10 +266,11 @@ const PDFReader = ({
   const { pageAnimations, scrollAnimation } = useSettingsStore();
 
   // ── True CSS Zoom: eliminates flicker entirely ──
-  // We ALWAYS render the actual canvas at a high resolution (scale=2.5) to keep text crisp.
+  // We ALWAYS render the actual canvas at a high resolution to keep text crisp.
   // We never change the canvas scale after it mounts, so it never destroys/rebuilds itself.
   // All zooming is handled purely through CSS transforms, making it instant and buttery smooth.
-  const BASE_CANVAS_SCALE = 2.5;
+  // On mobile devices, OOM (Aw, Snap!) can occur with 2.5x scale on large PDFs, so we reduce to 1.5.
+  const BASE_CANVAS_SCALE = isDesktop ? 2.5 : 1.5;
   const cssZoomRatio = scale / BASE_CANVAS_SCALE;
 
   // Stable estimateSize callback — prevents virtualizer from reinitializing size cache
